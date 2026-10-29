@@ -64,6 +64,7 @@ await writeFile(path.join(vendor, "THIRD-PARTY-NOTICES.md"),
 
 await writeFile(path.join(output, "index.html"), `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="prototypes/assets/favicon.svg">
 <meta name="robots" content="noindex,nofollow"><meta http-equiv="refresh" content="0;url=prototypes/">
 <title>The True Hive | Public design review</title></head><body>
 <h1>The True Hive design and planning preview</h1><p><a href="prototypes/">Open the ten-design gallery</a></p>

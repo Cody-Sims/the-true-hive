@@ -11,12 +11,38 @@ This does **not** authorize publishing credentials, customer records, buyer iden
 | Destination | Purpose |
 |---|---|
 | [Repository](https://github.com/Cody-Sims/the-true-hive) | Approved source, issues, pull requests and workflow history |
-| [Shareable preview](https://cody-sims.github.io/the-true-hive/) | Ten design directions and mock commerce |
-| [Planning hub](https://cody-sims.github.io/the-true-hive/prototypes/plan.html) | Current owner-approved plans, requirements and business roadmap |
-| [Business plan](https://cody-sims.github.io/the-true-hive/prototypes/plan.html?doc=business) | Local-to-growth strategy |
-| [Partner workbook](https://cody-sims.github.io/the-true-hive/prototypes/plan.html?doc=questions) | Discussion agenda and unresolved decisions |
+| [Shareable preview](https://preview.thetruehive.com/) | Ten design directions and mock commerce |
+| [Planning hub](https://preview.thetruehive.com/prototypes/plan.html) | Current owner-approved plans, requirements and business roadmap |
+| [Business plan](https://preview.thetruehive.com/prototypes/plan.html?doc=business) | Local-to-growth strategy |
+| [Partner workbook](https://preview.thetruehive.com/prototypes/plan.html?doc=questions) | Discussion agenda and unresolved decisions |
 
-The URLs become available after the first successful Pages deployment. Anyone with internet access can view or forward them; this is not invited-only access.
+The first Pages deployment has completed. The custom hostname additionally requires DNS propagation and GitHub's HTTPS certificate before it is ready to share. Anyone with internet access can view or forward the deployed preview; this is not invited-only access.
+
+## Domain and contact decisions - October 29, 2026
+
+The domain stays on **Porkbun DNS**. Only this record was added for the preview:
+
+| Type | Host | Answer | TTL |
+|---|---|---|---|
+| CNAME | `preview` | `cody-sims.github.io` | 600 seconds |
+
+GitHub Pages is bound to `preview.thetruehive.com`; its existing GitHub-hosted URL redirects to the custom hostname. All seven pre-existing zone records were preserved, including root-domain parking, the existing wildcard, MX/SPF and certificate-challenge records. **`thetruehive.com` and `www` were not repointed**; they remain available for the later production site.
+
+GitHub [recommends domain ownership verification](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages) in account Settings > Pages to reduce takeover risk. Add the account-issued verification TXT value privately through the DNS dashboard when completing that hardening step; do not invent it. No wildcard was pointed at GitHub. HTTPS must be enabled once GitHub's certificate is ready; never bypass a browser certificate warning.
+
+### Email is deferred, not configured
+
+The planned future business address is **`contact@thetruehive.com`**. The owner's latest instruction is **no mail forwarding or mailbox setup now**. No alias, hosted mailbox, billing purchase, SMTP credential or email-routing change was made. Existing mail DNS was left alone; DNS alone does not establish that a forwarding destination exists or receives mail.
+
+Use the approved **phone number and Facebook/Instagram profiles** as the intended near-term contact channels. Exact phone/profile values still need to be supplied and confirmed before replacing prototype placeholders; do not invent them or publish a nonworking email contact.
+
+When email becomes necessary, evaluate a real **Porkbun hosted mailbox** for sending/receiving as the domain address, or **Google Workspace** if the Gmail web interface is required. The previously pasted free Gmail SMTP workaround is not the selected architecture:
+
+- [Porkbun forwarding documentation](https://kb.porkbun.com/article/10-how-to-set-up-email-forwarding-service) describes inbound forwarding, not custom-domain outgoing mail.
+- [Porkbun hosted email](https://kb.porkbun.com/article/24-how-to-set-up-email-hosting-services) provides a mailbox; enable its supported SPF/DKIM/DMARC configuration and verify real send/reply delivery at that future setup.
+- [Google's announced changes](https://support.google.com/mail/answer/17101213?hl=en) remove third-party Gmail "Send as" starting January 2027; Google-hosted Gmail/Workspace identities are distinguished in that guidance.
+
+Choose the receiving/sending arrangement, ownership, retention and any forwarding behavior before activation. Keep destination inboxes, mailbox passwords, provider API keys and private recovery details out of the public repository. Sending, receiving, and reply authentication need an actual end-to-end test, not just DNS records.
 
 ## Important hosting boundary
 

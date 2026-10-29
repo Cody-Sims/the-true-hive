@@ -1,5 +1,12 @@
 # Change log
 
+## October 29, 2026
+
+- Published the owner-approved preview through GitHub Pages and the gated main-branch workflow.
+- Added only the `preview.thetruehive.com` CNAME; left the main domain, existing mail DNS and other zone records unchanged.
+- Documented email as deferred, with phone/social contact planned and `contact@thetruehive.com` recorded as a future address, not an activated inbox.
+- Added an explicit local SVG favicon to prevent project previews requesting a nonexistent host-root icon.
+
 ## Unreleased - October 28, 2026
 
 ### Added

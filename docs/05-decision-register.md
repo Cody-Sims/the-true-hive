@@ -17,6 +17,8 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | F9 | Already keeping two hives and selling soaps at small scale; own-made products | Owner's business-stage answer; internal planning context |
 | F10 | Next year's honey has a purchaser through a meadery partnership | Owner-reported allocation; top-level context approved for this public review, not buyer identity/terms or final consumer marketing |
 | F11 | Complete current planning hub and prototypes may be public in Cody-Sims/the-true-hive | Explicit owner publication/visibility choice on 2026-10-28 |
+| F12 | Use preview.thetruehive.com on existing Porkbun DNS; leave the main domain for the future site | Owner's domain choices on 2026-10-29 |
+| F13 | Defer email setup; document contact@thetruehive.com and use phone/socials for now | Latest owner instruction on 2026-10-29; actual phone/profile destinations remain unprovided |
 
 ## Architecture and design decisions
 
@@ -35,6 +37,8 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | D11 | Required release boundary | Current snapshot may be public by explicit approval; future confidential material is not approved; real production excludes review/demo content | Private hosted material needs access controls, not just noindex |
 | D12 | Proposed business sequence | Improve real soap operation -> reliable local pickup/sales -> integrated commerce -> one growth experiment | Actual product/compliance/cost/capacity evidence |
 | D13 | Accepted for review | Public GitHub repository and Pages/Actions preview; no real commerce on Pages | Move production business/commerce to an appropriate host |
+| D14 | Accepted for review | One preview CNAME to GitHub; preserve root/www and all existing mail DNS | Production hosting/domain decision, with ownership verification and valid HTTPS |
+| D15 | Deferred | No mail-forwarding/mailbox purchase or SMTP setup; future Porkbun mailbox/Workspace decision | Email is needed and the owner approves the actual sending/receiving plan |
 
 ## Owner decisions by gate
 
