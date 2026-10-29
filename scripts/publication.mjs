@@ -17,6 +17,7 @@ export function publicationFiles() {
       `prototypes/${design.image}`,
     ]),
     ...products.map((product) => `prototypes/${product.image}`),
+    "prototypes/assets/favicon.svg",
     ...documents.map((document) => document.path),
   ]);
   for (const file of files) {

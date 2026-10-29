@@ -48,3 +48,13 @@ test("each shared commerce surface is explicitly a non-indexable review with a r
     assert.doesNotMatch(html, /application\/ld\+json/i, file);
   }
 });
+
+test("every review page explicitly loads the published local favicon rather than the host root", () => {
+  const pages = ["index.html", "plan.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html",
+    ...designs.map((design) => design.home)];
+  for (const file of pages) {
+    const html = readFileSync(new URL(file, prototypeRoot), "utf8");
+    assert.match(html, /<link rel="icon"[^>]+href="assets\/favicon\.svg"/, file);
+  }
+  assert(existsSync(new URL("assets/favicon.svg", prototypeRoot)));
+});

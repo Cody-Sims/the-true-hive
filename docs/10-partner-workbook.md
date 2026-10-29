@@ -1,7 +1,7 @@
 # Partner discussion workbook
 
 Status: **read-only discussion agenda; unanswered questions are intentional**.  
-Updated: **2026-10-28**. The owner approved this current planning snapshot for public review; future answers/private details are not automatically approved consumer copy.
+Updated: **2026-10-29**. The owner approved the planning snapshot for public review; future answers/private details are not automatically approved consumer copy.
 
 ## Confirmed decisions and current facts
 
@@ -16,6 +16,8 @@ Updated: **2026-10-28**. The owner approved this current planning snapshot for p
 | C7 | Explore ten broad design directions; no final style chosen | Compare customer tasks and owner fit before selecting. |
 | C8 | Future storefront belongs within the online site and connects to inventory | An unrelated outbound shop is not the default end state. |
 | C9 | Read plans, requirements and a future business plan in the UI | This hub renders the actual project documents. |
+| C10 | Keep Porkbun DNS; use preview.thetruehive.com for the prototype, not root/www | The production-domain decision remains separate from the review site. |
+| C11 | Document future contact@thetruehive.com, but do not set up email now | Phone and social channels lead; actual phone/profile values remain to be supplied. |
 
 ## First partner meeting: decide these before expanding
 
@@ -43,6 +45,7 @@ Discuss Q01, Q02, Q03, Q04, Q05, Q08, Q09 and Q11 first. Give each a named owner
 | Q16 | What conservative apiary plan and contingency covers colony health/losses, uncertain harvest, existing commitments and any proposed growth? | Two hives do not establish a guaranteed yield or spare pollination fleet. | Before honey/service expansion / apiary owner + local expertise | Open |
 | Q17 | What do existing soap buyers actually value, repurchase, ask about, and find difficult about pickup? What is the lowest-cost way to learn? | Grounds positioning and merchandising in real demand. | Local pilot / sales owner | Open |
 | Q18 | Which removal/pollination services can actually be delivered with the right experience, insurance, equipment, permissions, repair responsibilities and colony capacity? | Keeps planned beekeeper services from becoming unsupported public promises. | Before offering/bookings / apiary/service owner | Deferred |
+| Q19 | When email is needed, should contact@thetruehive.com use a real Porkbun mailbox or Google Workspace, who will operate it, and is any inbound forwarding still wanted? | Free inbound forwarding is not custom-domain sending; the personal Gmail third-party Send-as workaround is not a durable choice. Do not put inbox credentials/destinations here. | Before email activation / digital owner | Deferred |
 
 ## Decision record format
 

@@ -2,7 +2,7 @@
 
 **Ten design directions, an integrated-store preview, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
-Updated **October 28, 2026**. Status: **owner-approved public planning and interactive review**, not a production storefront.
+Updated **October 29, 2026**. Status: **owner-approved public planning and interactive review**, not a production storefront.
 
 ## Open the studio
 
@@ -32,7 +32,9 @@ open http://127.0.0.1:4173/prototypes/plan.html
 
 The only browser-rendering dependency is the locally served, pinned Markdown parser; no CDN, remote font, live social feed or third-party tracking is loaded. Core homepage concepts still use ordinary HTML/CSS/SVG. `npm test` runs the prototype's native Node behavior cases; it is not the future production application build.
 
-For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes the public preview and automatic deployment from reviewed `main` updates. After its first successful deployment, share **https://cody-sims.github.io/the-true-hive/**.
+For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes automatic deployment from reviewed `main` updates and the custom preview hostname, **https://preview.thetruehive.com/**. The main domain and mail settings remain unchanged; confirm the custom hostname's HTTPS readiness before sharing it.
+
+**Contact direction:** phone and verified social profiles for now. `contact@thetruehive.com` is documented for future use only; no forwarding/mailbox is being activated, and actual phone/profile values still need owner confirmation.
 
 ## Confirmed direction
 
