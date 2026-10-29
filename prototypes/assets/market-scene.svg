@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="640" viewBox="0 0 880 640" fill="none">
+  <title>Apiary Market collection stand</title>
+  <desc>An original imagined farmers-market stand with a striped canopy, honey jars, soap parcels, and candles. Not an actual market location or product photograph.</desc>
+  <defs>
+    <pattern id="gingham" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#fff7e8"/>
+      <path d="M0 10H40M10 0V40" stroke="#a63226" stroke-width="20" opacity=".14"/>
+    </pattern>
+    <linearGradient id="glass" x1="0" x2="1" y2="1">
+      <stop stop-color="#f4cd60"/><stop offset="1" stop-color="#b9752d"/>
+    </linearGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#fff7e8"/><stop offset="1" stop-color="#e7d8b8"/>
+    </linearGradient>
+  </defs>
+  <rect x="28" y="46" width="824" height="548" rx="3" fill="#eee7d6"/>
+  <path d="M49 105H831M49 557H831" stroke="#c1c5ae"/>
+  <circle cx="723" cy="145" r="52" fill="#f4cd60"/>
+  <path d="M65 586C133 566 172 565 238 586M636 586C710 560 779 574 837 588" stroke="#233b30" stroke-width="2"/>
+  <path d="M148 180V577M731 180V577" stroke="#233b30" stroke-width="16"/>
+  <path d="M148 180V577M731 180V577" stroke="#50634d" stroke-width="5"/>
+  <path d="M110 109H769L798 218H82L110 109Z" fill="#fff7e8" stroke="#233b30" stroke-width="2"/>
+  <path d="M132 109H199L183 218H109L132 109ZM267 109H334L327 218H254L267 109ZM402 109H469L471 218H397L402 109ZM537 109H604L615 218H541L537 109ZM672 109H739L759 218H685L672 109Z" fill="#a63226"/>
+  <path d="M82 218H798V244C798 254 786 261 774 261C761 261 750 255 750 244C750 255 738 261 726 261C713 261 702 255 702 244C702 255 690 261 678 261C665 261 654 255 654 244C654 255 642 261 630 261C617 261 606 255 606 244C606 255 594 261 582 261C569 261 558 255 558 244C558 255 546 261 534 261C521 261 510 255 510 244C510 255 498 261 486 261C473 261 462 255 462 244C462 255 450 261 438 261C425 261 414 255 414 244C414 255 402 261 390 261C377 261 366 255 366 244C366 255 354 261 342 261C329 261 318 255 318 244C318 255 306 261 294 261C281 261 270 255 270 244C270 255 258 261 246 261C233 261 222 255 222 244C222 255 210 261 198 261C185 261 174 255 174 244C174 255 162 261 150 261C137 261 126 255 126 244C126 255 114 261 102 261C91 261 82 254 82 244V218Z" fill="#233b30"/>
+  <path d="M332 139H552V193H332Z" fill="#fff7e8" stroke="#233b30" stroke-width="2"/>
+  <text x="442" y="174" fill="#233b30" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" letter-spacing="3">HIVE GOODS</text>
+  <path d="M123 467H755V564H123Z" fill="url(#cloth)" stroke="#233b30" stroke-width="2"/>
+  <path d="M123 486H755V564H123Z" fill="url(#gingham)"/>
+  <path d="M113 452H765V473H113Z" fill="#233b30"/>
+  <path d="M168 566V590M708 566V590" stroke="#233b30" stroke-width="16"/>
+  <ellipse cx="288" cy="444" rx="100" ry="9" fill="#233b30" opacity=".12"/>
+  <path d="M205 331H285V431C285 443 205 443 205 431V331Z" fill="url(#glass)" stroke="#805b29" stroke-width="2"/>
+  <rect x="202" y="319" width="86" height="20" rx="3" fill="#233b30"/>
+  <path d="M211 326H280" stroke="#fff7e8" opacity=".5"/>
+  <rect x="215" y="361" width="61" height="57" fill="#fff7e8"/>
+  <text x="245" y="386" fill="#233b30" font-family="Georgia, serif" font-size="17" text-anchor="middle">honey</text>
+  <path d="M230 398H260M236 404H254" stroke="#a63226" stroke-width="2"/>
+  <path d="M216 345V354" stroke="#fff7e8" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+  <path d="M304 354H365V434C365 444 304 444 304 434V354Z" fill="url(#glass)" stroke="#805b29" stroke-width="2"/>
+  <rect x="301" y="343" width="67" height="17" rx="3" fill="#233b30"/>
+  <rect x="312" y="377" width="45" height="47" fill="#fff7e8"/>
+  <text x="334" y="403" fill="#233b30" font-family="Georgia, serif" font-size="13" text-anchor="middle">honey</text>
+  <path d="M390 408L465 392L487 438L411 452L390 408Z" fill="#d3d9b8" stroke="#667454" stroke-width="2"/>
+  <path d="M403 407L438 399L459 444L425 450L403 407Z" fill="#fff7e8"/>
+  <path d="M400 371L479 366L485 410L407 415L400 371Z" fill="#b9c3a2" stroke="#667454" stroke-width="2"/>
+  <path d="M420 370L453 368L459 412L426 414L420 370Z" fill="#fff7e8"/>
+  <text x="440" y="396" fill="#233b30" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" transform="rotate(-4 440 396)">SOAP</text>
+  <ellipse cx="572" cy="443" rx="52" ry="7" fill="#233b30" opacity=".12"/>
+  <path d="M532 368H613V430C613 450 532 450 532 430V368Z" fill="#ba6b42"/>
+  <ellipse cx="572.5" cy="368" rx="40.5" ry="10" fill="#e1ba86" stroke="#a15c39" stroke-width="2"/>
+  <ellipse cx="572.5" cy="368" rx="31" ry="6" fill="#f4cd60"/>
+  <path d="M572 362V349" stroke="#233b30" stroke-width="3"/>
+  <path d="M543 387H602V424H543Z" fill="#fff7e8"/>
+  <text x="572" y="409" fill="#233b30" text-anchor="middle" font-family="Georgia, serif" font-size="14">candle</text>
+  <path d="M650 393H694L687 450H657L650 393Z" fill="#233b30"/>
+  <path d="M673 396C673 348 690 330 700 309M674 367C652 350 647 333 647 320" stroke="#50634d" stroke-width="3"/>
+  <path d="M682 352C677 331 684 315 700 308C707 330 697 345 682 352ZM669 363C650 358 638 343 641 325C660 327 671 341 669 363ZM674 387C687 365 703 361 714 363C712 381 697 389 674 387Z" fill="#6a805a"/>
+  <rect x="337" y="500" width="207" height="45" fill="#fff7e8" stroke="#233b30" stroke-width="2"/>
+  <text x="440" y="528" fill="#233b30" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="2">THE TRUE HIVE</text>
+  <path d="M75 558C73 522 87 508 96 497M76 544C62 537 55 526 57 515" stroke="#50634d" stroke-width="3"/>
+  <path d="M88 516C88 500 95 490 108 489C111 506 103 515 88 516ZM76 547C59 547 48 537 47 525C64 524 76 533 76 547Z" fill="#6a805a"/>
+  <path d="M787 571C789 532 803 514 814 507" stroke="#50634d" stroke-width="3"/>
+  <path d="M793 549C789 531 797 517 813 513C818 531 808 545 793 549Z" fill="#6a805a"/>
+</svg>

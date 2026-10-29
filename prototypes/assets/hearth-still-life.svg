@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="860" viewBox="0 0 1000 860" fill="none">
+  <defs>
+    <linearGradient id="backdrop" x1="140" y1="0" x2="904" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEE8F0"/>
+      <stop offset="1" stop-color="#D2C1D4"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="526" y1="279" x2="775" y2="698" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C99952"/>
+      <stop offset=".5" stop-color="#AA6B32"/>
+      <stop offset="1" stop-color="#714325"/>
+    </linearGradient>
+    <linearGradient id="vessel" x1="137" y1="377" x2="346" y2="687" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4E9D7"/>
+      <stop offset="1" stop-color="#C9B89D"/>
+    </linearGradient>
+    <linearGradient id="soap" x1="345" y1="567" x2="606" y2="777" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D2BBA2"/>
+      <stop offset="1" stop-color="#B79877"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#backdrop)" d="M0 0H1000V860H0Z"/>
+  <path d="M554 0H1000V646H554V0Z" fill="#E9E0E8" opacity=".6"/>
+  <path d="M554 0V646" stroke="#CBBBCD" stroke-width="2"/>
+  <path d="M0 651L554 594L1000 650V860H0V651Z" fill="#E9DFD3"/>
+  <path d="M73 601C73 534 127 480 194 480H711C778 480 832 534 832 601V728H73V601Z" fill="#CDBFB4"/>
+  <path d="M73 601C73 534 127 480 194 480H711C778 480 832 534 832 601V623H73V601Z" fill="#EEE5DA"/>
+  <ellipse cx="652" cy="671" rx="167" ry="29" fill="#796074" opacity=".15"/>
+  <ellipse cx="267" cy="685" rx="133" ry="25" fill="#796074" opacity=".15"/>
+  <path d="M558 290H756V331C756 349 784 364 784 394V620C784 654 758 675 726 675H586C554 675 531 652 531 620V394C531 365 558 349 558 331V290Z" fill="url(#amber)"/>
+  <path d="M548 275C548 264 557 255 568 255H747C758 255 767 264 767 275V307H548V275Z" fill="#594849"/>
+  <path d="M561 270H755M561 283H755M561 296H755" stroke="#8E786E" stroke-width="3"/>
+  <path d="M550 394C550 370 573 356 577 343V602C577 625 568 632 558 620L550 394Z" fill="#EDCE94" opacity=".28"/>
+  <rect x="552" y="432" width="211" height="153" fill="#F0E9DF"/>
+  <path d="M564 445H751V573H564V445Z" stroke="#A59488"/>
+  <text x="657" y="476" text-anchor="middle" fill="#4B3548" font-family="Georgia,serif" font-size="12" letter-spacing="3">THE TRUE HIVE</text>
+  <text x="657" y="519" text-anchor="middle" fill="#4B3548" font-family="Georgia,serif" font-size="31">Honey</text>
+  <text x="657" y="550" text-anchor="middle" fill="#695963" font-family="Arial,sans-serif" font-size="9" letter-spacing="2">PACKAGING CONCEPT</text>
+  <path d="M158 409C158 385 206 369 267 369C328 369 377 385 377 409V634C377 663 328 684 267 684C206 684 158 663 158 634V409Z" fill="url(#vessel)"/>
+  <ellipse cx="267" cy="409" rx="109" ry="36" fill="#B8A88C"/>
+  <ellipse cx="267" cy="407" rx="97" ry="27" fill="#E9D59B"/>
+  <path d="M267 406V388" stroke="#63523D" stroke-width="4" stroke-linecap="round"/>
+  <path d="M187 510H348V610H187V510Z" fill="#F5EDE2"/>
+  <text x="267" y="539" text-anchor="middle" fill="#4B3548" font-family="Georgia,serif" font-size="11" letter-spacing="2">THE TRUE HIVE</text>
+  <text x="267" y="570" text-anchor="middle" fill="#4B3548" font-family="Georgia,serif" font-size="24">Candle</text>
+  <text x="267" y="591" text-anchor="middle" fill="#695963" font-family="Arial,sans-serif" font-size="8" letter-spacing="2">CONCEPT</text>
+  <path d="M350 653L537 613C553 609 569 615 574 627L629 736C634 749 627 762 611 766L421 810C406 814 391 808 385 796L335 687C329 674 335 659 350 653Z" fill="url(#soap)"/>
+  <path d="M350 653L537 613C553 609 569 615 574 627L585 651L365 702L350 653Z" fill="#D9C3A8"/>
+  <path d="M410 640L477 625L540 782L473 797L410 640Z" fill="#EFE5DC"/>
+  <text x="473" y="707" text-anchor="middle" transform="rotate(-13 473 707)" fill="#4B3548" font-family="Georgia,serif" font-size="18">hive</text>
+  <text x="485" y="738" text-anchor="middle" transform="rotate(-13 485 738)" fill="#4B3548" font-family="Arial,sans-serif" font-size="9" letter-spacing="2">SOAP</text>
+  <g stroke="#776C66" stroke-width="3" stroke-linecap="round">
+    <path d="M830 698C799 516 843 385 891 265"/>
+    <path d="M841 435L784 377M854 388L918 338M824 513L770 471M827 567L889 510"/>
+  </g>
+  <g fill="#A5A18B">
+    <ellipse cx="792" cy="384" rx="13" ry="34" transform="rotate(-44 792 384)"/>
+    <ellipse cx="909" cy="346" rx="13" ry="34" transform="rotate(45 909 346)"/>
+    <ellipse cx="778" cy="478" rx="13" ry="34" transform="rotate(-48 778 478)"/>
+    <ellipse cx="882" cy="518" rx="13" ry="34" transform="rotate(46 882 518)"/>
+    <ellipse cx="888" cy="278" rx="12" ry="33" transform="rotate(21 888 278)"/>
+  </g>
+  <circle cx="189" cy="158" r="49" stroke="#A99AA9"/>
+  <text x="189" y="153" text-anchor="middle" fill="#6A526C" font-family="Georgia,serif" font-size="15">hive to</text>
+  <text x="189" y="174" text-anchor="middle" fill="#6A526C" font-family="Georgia,serif" font-size="15">home</text>
+</svg>

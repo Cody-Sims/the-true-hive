@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="360" viewBox="0 0 420 360" fill="none">
+  <defs>
+    <linearGradient id="vessel" x1="131" y1="108" x2="282" y2="295" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E5D6B6"/><stop offset="1" stop-color="#B4A17B"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="210" cy="307" rx="97" ry="15" fill="#6E533B" opacity=".12"/>
+  <path d="M124 127C124 106 162 91 210 91C258 91 296 106 296 127V270C296 292 258 307 210 307C162 307 124 292 124 270V127Z" fill="url(#vessel)"/>
+  <ellipse cx="210" cy="127" rx="86" ry="30" fill="#B1A07C"/>
+  <ellipse cx="210" cy="125" rx="75" ry="22" fill="#EAD79B"/>
+  <path d="M210 125V107" stroke="#665539" stroke-width="3" stroke-linecap="round"/>
+  <path d="M145 186H275V261H145V186Z" fill="#F7EEDC"/>
+  <text x="210" y="207" text-anchor="middle" fill="#4B4D36" font-family="Georgia,serif" font-size="8" letter-spacing="1.5">THE TRUE HIVE</text>
+  <text x="210" y="235" text-anchor="middle" fill="#4B4D36" font-family="Georgia,serif" font-size="23">Candle</text>
+  <text x="210" y="250" text-anchor="middle" fill="#665B43" font-family="Arial,sans-serif" font-size="6" letter-spacing="1.5">CONCEPT PRODUCT</text>
+</svg>

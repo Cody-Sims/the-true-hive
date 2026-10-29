@@ -1,0 +1,20 @@
+{
+  "repository": "Cody-Sims/the-true-hive",
+  "public": true,
+  "scope": "full-current-planning-hub",
+  "approvedOn": "2026-10-28",
+  "purpose": "Public static design and planning review only; no live orders or payments.",
+  "approvedDesigns": [
+    "meadow", "fieldwork", "hearth", "market", "honeyhouse",
+    "ridge", "golden", "quiet", "bloom", "journal"
+  ],
+  "approvedDocuments": [
+    "overview", "business", "readiness", "questions", "requirements",
+    "research", "seo", "experience", "architecture", "data", "inventory",
+    "decisions", "comparison", "phase0", "phase1", "phase2", "phase3",
+    "phase4", "phase5", "design01", "design02", "design03", "design04",
+    "design05", "design06", "design07", "design08", "design09", "design10",
+    "changes", "sharing"
+  ],
+  "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
+}

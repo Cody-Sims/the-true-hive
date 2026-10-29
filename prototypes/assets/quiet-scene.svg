@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720" fill="none">
+  <defs>
+    <pattern id="grid" width="55" height="55" patternUnits="userSpaceOnUse"><path d="M55 0H0V55" stroke="#53685B" stroke-width="1" opacity=".14"/></pattern>
+    <pattern id="paper-lines" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 0V6" stroke="#53685B" stroke-width=".6" opacity=".25"/></pattern>
+  </defs>
+  <path fill="#DFE4DC" d="M0 0H1100V720H0Z"/>
+  <path fill="url(#grid)" d="M0 0H1100V720H0Z"/>
+  <path d="M63 63H1037V657H63Z" stroke="#53685B" stroke-width="1"/>
+  <path d="M63 84V42M42 63H84M1016 63H1058M1037 42V84M42 657H84M63 636V678M1016 657H1058M1037 636V678" stroke="#1C2824" stroke-width="2"/>
+  <text x="96" y="114" fill="#1C2824" font-family="Arial,sans-serif" font-size="12" letter-spacing="2">THE TRUE HIVE / OBJECT STUDY</text>
+  <text x="1005" y="114" fill="#1C2824" font-family="Arial,sans-serif" font-size="12" letter-spacing="2" text-anchor="end">08</text>
+  <path d="M165 538H938" stroke="#1C2824" stroke-width="2"/>
+  <path d="M190 541L946 541L982 572H225Z" fill="#53685B" opacity=".08"/>
+  <path d="M266 243H415V279C415 295 444 310 444 332V506C444 525 431 538 412 538H269C250 538 237 525 237 506V332C237 310 266 295 266 279Z" fill="#F6F5F0" stroke="#1C2824" stroke-width="2"/>
+  <rect x="258" y="216" width="164" height="39" fill="#53685B" stroke="#1C2824" stroke-width="2"/>
+  <path d="M268 226H412M268 235H412M268 244H412" stroke="#F6F5F0" stroke-width=".7" opacity=".65"/>
+  <path d="M249 355H432V488H249Z" fill="#DFE4DC" stroke="#1C2824"/>
+  <text x="340" y="386" fill="#1C2824" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">THE TRUE HIVE</text>
+  <text x="340" y="430" fill="#1C2824" font-family="Arial,sans-serif" font-size="35" letter-spacing="-2" text-anchor="middle">Honey</text>
+  <text x="340" y="466" fill="#1C2824" font-family="Courier New,monospace" font-size="10" text-anchor="middle">CONCEPT / 01</text>
+  <path d="M254 336V502" stroke="#53685B" stroke-width="2"/>
+  <path d="M507 435L641 412L705 449L571 474Z" fill="#F6F5F0" stroke="#1C2824" stroke-width="2"/>
+  <path d="M507 435V502L571 538V474Z" fill="#D1D8CC" stroke="#1C2824" stroke-width="2"/>
+  <path d="M571 474L705 449V513L571 538Z" fill="#F6F5F0" stroke="#1C2824" stroke-width="2"/>
+  <path d="M556 427L602 419L665 456L619 465Z" fill="#53685B"/>
+  <path d="M619 465L665 456V521L619 530Z" fill="#53685B"/>
+  <text x="593" y="510" fill="#1C2824" font-family="Arial,sans-serif" font-size="13" transform="rotate(-10 593 510)">SOAP</text>
+  <path d="M764 344H909V511C909 526 897 538 882 538H791C776 538 764 526 764 511Z" fill="#F6F5F0" stroke="#1C2824" stroke-width="2"/>
+  <path d="M764 344H909V511C909 526 897 538 882 538H791C776 538 764 526 764 511Z" fill="url(#paper-lines)"/>
+  <ellipse cx="837" cy="344" rx="72" ry="17" fill="#F6F5F0" stroke="#1C2824" stroke-width="2"/>
+  <path d="M837 344V332" stroke="#1C2824" stroke-width="2"/>
+  <rect x="785" y="396" width="103" height="86" fill="#F6F5F0" stroke="#1C2824"/>
+  <text x="837" y="435" fill="#1C2824" font-family="Arial,sans-serif" font-size="27" letter-spacing="-2" text-anchor="middle">t/h</text>
+  <text x="837" y="462" fill="#1C2824" font-family="Courier New,monospace" font-size="8" text-anchor="middle">CONCEPT / 03</text>
+  <path d="M188 216H210M199 216V538M188 538H210M234 581H446M237 570V592M444 570V592" stroke="#53685B"/>
+  <path d="M565 575H708M571 565V586M705 565V586M761 581H913M764 570V592M909 570V592" stroke="#53685B"/>
+  <text x="340" y="613" fill="#1C2824" font-family="Courier New,monospace" font-size="11" text-anchor="middle">01 / THE TABLE</text>
+  <text x="638" y="613" fill="#1C2824" font-family="Courier New,monospace" font-size="11" text-anchor="middle">02 / THE RITUAL</text>
+  <text x="837" y="613" fill="#1C2824" font-family="Courier New,monospace" font-size="11" text-anchor="middle">03 / THE HOME</text>
+  <text x="96" y="692" fill="#1C2824" font-family="Courier New,monospace" font-size="10" letter-spacing="1">ORIGINAL ILLUSTRATION / PROPOSED PACKAGING / NOT TO SCALE</text>
+</svg>

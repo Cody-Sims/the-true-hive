@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="360" viewBox="0 0 420 360" fill="none">
+  <ellipse cx="211" cy="292" rx="121" ry="18" fill="#6E533B" opacity=".12"/>
+  <path d="M100 174L251 117C266 111 282 115 289 128L333 220C340 234 334 248 319 254L166 310C151 316 136 312 129 299L87 209C80 195 86 180 100 174Z" fill="#C0A17A"/>
+  <path d="M100 174L251 117C266 111 282 115 289 128L303 157L116 228L100 174Z" fill="#DCCAAD"/>
+  <path d="M160 151L216 130L281 269L225 289L160 151Z" fill="#F7EFDF"/>
+  <text x="204" y="190" text-anchor="middle" transform="rotate(-21 204 190)" fill="#4D5139" font-family="Georgia,serif" font-size="20">hive</text>
+  <text x="219" y="219" text-anchor="middle" transform="rotate(-21 219 219)" fill="#4D5139" font-family="Arial,sans-serif" font-size="8" letter-spacing="2">SOAP</text>
+  <path d="M88 154C62 119 83 92 107 110C112 76 147 80 143 110C177 99 180 134 153 142" stroke="#8B9773" stroke-width="3"/>
+  <path d="M93 158L119 111" stroke="#8B9773" stroke-width="3"/>
+  <circle cx="303" cy="274" r="4" fill="#D7BE8F"/><circle cx="321" cy="284" r="3" fill="#D7BE8F"/><circle cx="306" cy="294" r="3" fill="#D7BE8F"/>
+</svg>

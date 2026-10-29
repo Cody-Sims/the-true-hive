@@ -1,0 +1,17 @@
+{
+  "name": "the-true-hive-design-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local design, commerce simulation, and project-planning review artifacts.",
+  "scripts": {
+    "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory .",
+    "build:pages": "node scripts/build-pages.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "check:pages": "node scripts/check-links.mjs --built",
+    "test": "node --test prototypes/tests/*.test.mjs"
+  },
+  "dependencies": {
+    "markdown-it": "15.0.3"
+  }
+}

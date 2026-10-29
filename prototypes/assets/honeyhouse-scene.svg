@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600" fill="none">
+  <title>Honey House architectural still life</title>
+  <desc>Original geometric studio composition with an amber honey jar, two soap bars, a candle, stone plinths, a clay vessel, and a branch. It does not depict a real shop or actual products.</desc>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ebe7df"/><stop offset="1" stop-color="#d8d1c5"/>
+    </linearGradient>
+    <linearGradient id="honey" x1="0" x2="1" y2="1">
+      <stop stop-color="#e6b866"/><stop offset=".5" stop-color="#c88a3e"/><stop offset="1" stop-color="#a4642d"/>
+    </linearGradient>
+    <linearGradient id="soap" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#e0dfc7"/><stop offset="1" stop-color="#b5b69c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="600" fill="url(#wall)"/>
+  <rect x="44" y="38" width="914" height="502" stroke="#f5f4ef" stroke-opacity=".7"/>
+  <path d="M624 0V427H1000" stroke="#c3bcae" stroke-width="2"/>
+  <path d="M0 427H1000V600H0Z" fill="#c8c0b2"/>
+  <path d="M639 0H1000V427H639Z" fill="#e9e5dc" opacity=".8"/>
+  <circle cx="268" cy="214" r="151" fill="#f3efe5"/>
+  <path d="M171 360L612 600H920L476 360H171Z" fill="#a69d8d" opacity=".25"/>
+  <path d="M405 344L619 297L832 404L615 457L405 344Z" fill="#eee9df"/>
+  <path d="M405 344L615 457V600H405V344Z" fill="#c1b6a5"/>
+  <path d="M615 457L832 404V600H615V457Z" fill="#aaa08f"/>
+  <path d="M112 447L313 411L494 500L291 542L112 447Z" fill="#f5f4ef"/>
+  <path d="M112 447L291 542V600H112V447Z" fill="#d9d3c7"/>
+  <path d="M291 542L494 500V600H291V542Z" fill="#bbb2a4"/>
+  <ellipse cx="508" cy="333" rx="72" ry="15" fill="#202b29" opacity=".1"/>
+  <path d="M448 174H561V315C561 343 448 343 448 315V174Z" fill="url(#honey)" stroke="#a47137" stroke-width="2"/>
+  <ellipse cx="504.5" cy="174" rx="56.5" ry="12" fill="#e5b970"/>
+  <path d="M442 160C442 145 567 145 567 160V180C567 193 442 193 442 180V160Z" fill="#202b29"/>
+  <ellipse cx="504.5" cy="160" rx="62.5" ry="12" fill="#3e4a43"/>
+  <path d="M458 197V231" stroke="#fff7df" stroke-width="6" stroke-linecap="round" opacity=".45"/>
+  <rect x="462" y="223" width="85" height="75" fill="#f5f4ef"/>
+  <text x="504" y="250" fill="#202b29" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="10" letter-spacing="2">THE TRUE HIVE</text>
+  <text x="504" y="276" fill="#202b29" text-anchor="middle" font-family="Georgia, serif" font-size="22">honey</text>
+  <path d="M488 286H520" stroke="#b6522b" stroke-width="2"/>
+  <ellipse cx="680" cy="389" rx="58" ry="14" fill="#202b29" opacity=".12"/>
+  <path d="M636 276H726V367C726 391 636 391 636 367V276Z" fill="#e5ddcb"/>
+  <ellipse cx="681" cy="276" rx="45" ry="13" fill="#f5f0df" stroke="#b7ad99" stroke-width="2"/>
+  <ellipse cx="681" cy="277" rx="35" ry="8" fill="#e9d39f"/>
+  <path d="M681 273V257" stroke="#202b29" stroke-width="3"/>
+  <path d="M647 310H716V352H647Z" fill="#f5f4ef"/>
+  <text x="681" y="336" fill="#202b29" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" letter-spacing="2">CANDLE</text>
+  <path d="M181 421L301 397L372 436L251 463L181 421Z" fill="#e8e5ce"/>
+  <path d="M181 421L251 463V497L181 455V421Z" fill="#a9ac93"/>
+  <path d="M251 463L372 436V470L251 497V463Z" fill="url(#soap)"/>
+  <path d="M213 414L254 406L325 446L284 456L213 414Z" fill="#f5f4ef"/>
+  <path d="M284 456L325 446V480L284 490V456Z" fill="#e8e5dd"/>
+  <path d="M184 384L306 366L366 403L244 425L184 384Z" fill="#d6d9c2"/>
+  <path d="M184 384L244 425V457L184 416V384Z" fill="#929d80"/>
+  <path d="M244 425L366 403V435L244 457V425Z" fill="#b8c0a3"/>
+  <path d="M219 379L259 373L320 411L280 418L219 379Z" fill="#f5f4ef"/>
+  <path d="M280 418L320 411V443L280 450V418Z" fill="#e4e0d6"/>
+  <text x="301" y="434" fill="#202b29" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" transform="rotate(-10 301 434)">SOAP</text>
+  <ellipse cx="824" cy="485" rx="62" ry="12" fill="#202b29" opacity=".1"/>
+  <path d="M794 378C782 391 777 414 779 441C782 487 865 487 868 441C870 413 863 391 853 378L843 357H804L794 378Z" fill="#b6522b"/>
+  <ellipse cx="823" cy="357" rx="20" ry="7" fill="#7e3b24"/>
+  <path d="M820 356C826 283 822 240 793 192M821 315C844 285 867 271 894 260M815 260C791 247 773 231 760 208" stroke="#475443" stroke-width="4" stroke-linecap="round"/>
+  <path d="M794 198C771 182 764 161 768 141C793 148 807 173 794 198ZM815 251C825 226 823 207 809 193C793 214 795 238 815 251ZM841 293C842 272 861 256 883 256C883 279 862 292 841 293ZM789 238C767 237 748 224 743 205C769 203 787 219 789 238ZM875 268C884 246 902 236 918 240C913 260 898 270 875 268Z" fill="#68755d"/>
+  <path d="M803 400C798 414 798 443 808 457" stroke="#d98962" stroke-width="5" stroke-linecap="round"/>
+  <path d="M76 84H128M76 84V136" stroke="#b9b0a1" stroke-width="2"/>
+  <path d="M924 516H872M924 516V464" stroke="#b9b0a1" stroke-width="2"/>
+  <text x="76" y="565" fill="#596057" font-family="Arial, Helvetica, sans-serif" font-size="11" letter-spacing="3">MATERIAL STUDY / 05</text>
+</svg>

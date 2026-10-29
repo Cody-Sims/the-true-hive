@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" fill="none">
+  <defs>
+    <linearGradient id="sun-wall" x1="180" y1="100" x2="760" y2="890" gradientUnits="userSpaceOnUse"><stop stop-color="#F9DCBD"/><stop offset="1" stop-color="#E9A576"/></linearGradient>
+    <linearGradient id="amber-glass" x1="322" y1="352" x2="559" y2="748" gradientUnits="userSpaceOnUse"><stop stop-color="#E9B052"/><stop offset="1" stop-color="#9F4C25"/></linearGradient>
+    <linearGradient id="ceramic" x1="290" y1="563" x2="670" y2="790" gradientUnits="userSpaceOnUse"><stop stop-color="#BE6949"/><stop offset="1" stop-color="#88432E"/></linearGradient>
+    <pattern id="cloth" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M0 13H26M13 0V26" stroke="#B04B2D" stroke-width="1" opacity=".14"/></pattern>
+  </defs>
+  <path d="M32 136L794 46L934 812L160 930Z" fill="url(#sun-wall)"/>
+  <circle cx="605" cy="300" r="205" fill="#FFF5ED" opacity=".49"/>
+  <path d="M18 651L960 530V855L169 960Z" fill="#F0C4A0"/>
+  <path d="M625 61L722 49L852 538L757 551Z" fill="#FFF5ED" opacity=".43"/>
+  <path d="M807 519L960 548V678L845 659Z" fill="#B56B4B" opacity=".2"/>
+  <path d="M116 708L614 620L866 855L353 943Z" fill="#FFF5ED"/>
+  <path d="M116 708L614 620L866 855L353 943Z" fill="url(#cloth)"/>
+  <ellipse cx="516" cy="777" rx="319" ry="78" fill="#6B3427" opacity=".14"/>
+  <path d="M205 712C205 655 337 609 500 609C663 609 795 655 795 712L776 761C750 808 248 817 224 761Z" fill="url(#ceramic)"/>
+  <ellipse cx="500" cy="712" rx="295" ry="103" fill="#D98E67"/>
+  <ellipse cx="500" cy="712" rx="272" ry="86" stroke="#F0C4A0" stroke-width="3"/>
+  <ellipse cx="438" cy="714" rx="124" ry="24" fill="#5C3229" opacity=".15"/>
+  <path d="M351 322H504V367C504 387 537 398 537 429V662C537 692 514 710 486 710H366C337 710 318 690 318 662V429C318 398 351 387 351 367Z" fill="url(#amber-glass)"/>
+  <path d="M340 434C340 416 355 409 365 395V662" stroke="#FFE0A6" stroke-width="15" stroke-linecap="round" opacity=".5"/>
+  <rect x="342" y="306" width="172" height="54" rx="8" fill="#5C3229"/>
+  <path d="M353 321H503M353 339H503" stroke="#C88962" stroke-width="2"/>
+  <rect x="329" y="467" width="198" height="166" fill="#FFF5ED"/>
+  <path d="M341 480H515V620H341Z" stroke="#B04B2D" stroke-width="2"/>
+  <text x="428" y="510" fill="#5C3229" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="2" text-anchor="middle">THE TRUE HIVE</text>
+  <text x="428" y="559" fill="#5C3229" font-family="Georgia,serif" font-size="40" font-style="italic" text-anchor="middle">Honey</text>
+  <text x="428" y="595" fill="#5C3229" font-family="Arial,sans-serif" font-size="10" letter-spacing="2" text-anchor="middle">CONCEPT ONLY</text>
+  <path d="M570 462H729L718 681C715 708 585 708 582 681Z" fill="#FFF5ED"/>
+  <ellipse cx="649" cy="462" rx="80" ry="24" fill="#DCB28D"/>
+  <ellipse cx="649" cy="462" rx="62" ry="15" fill="#F2D8AF"/>
+  <path d="M649 462V448" stroke="#5C3229" stroke-width="4" stroke-linecap="round"/>
+  <path d="M597 512H702V636H597Z" stroke="#B04B2D"/>
+  <text x="649" y="555" fill="#5C3229" font-family="Georgia,serif" font-size="35" font-style="italic" text-anchor="middle">th</text>
+  <text x="649" y="588" fill="#5C3229" font-family="Arial,sans-serif" font-size="10" letter-spacing="1" text-anchor="middle">CANDLE STUDY</text>
+  <text x="649" y="610" fill="#5C3229" font-family="Arial,sans-serif" font-size="8" letter-spacing="1" text-anchor="middle">CONCEPT ONLY</text>
+  <g transform="rotate(-12 355 746)">
+    <rect x="218" y="683" width="241" height="115" rx="19" fill="#DDC9A6"/>
+    <path d="M237 703L441 703M233 779H441" stroke="#B7A58B" stroke-width="2"/>
+    <rect x="288" y="683" width="102" height="115" fill="#B04B2D"/>
+    <text x="339" y="732" fill="#FFF5ED" font-family="Georgia,serif" font-size="26" text-anchor="middle">Soap</text>
+    <text x="339" y="760" fill="#FFF5ED" font-family="Arial,sans-serif" font-size="8" letter-spacing="1" text-anchor="middle">CONCEPT ONLY</text>
+  </g>
+  <path d="M735 236V303M702 269H769M712 245L758 292M712 292L758 245" stroke="#B04B2D" stroke-width="5"/>
+  <path d="M780 366L810 362M795 348V380" stroke="#B04B2D" stroke-width="3"/>
+</svg>

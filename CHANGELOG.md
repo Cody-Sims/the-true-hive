@@ -1,0 +1,26 @@
+# Change log
+
+## Unreleased - October 28, 2026
+
+### Added
+
+- Seven additional original directions, bringing the review to ten coordinated homepage/store concepts.
+- Shared collection, product/variant, demo cart, read-only checkout and inventory-lab views.
+- In-browser project library rendering the real Markdown plans, requirements, sources, phases and design briefs.
+- Local-to-growth business plan and a copyable/printable partner discussion workbook.
+- Dedicated SEO/acquisition and inventory/fulfillment plans.
+- Business-readiness evidence separating verified federal guidance from unverified Tennessee/local confirmation gates.
+- Owner-approved public GitHub Pages review, an explicit publication allowlist, and gated CI/CD with preserved browser-dependency notices.
+
+### Changed
+
+- Product/local-sales priority and pickup-first fulfillment now drive the plan; shipping is a later gate.
+- Future commerce targets an integrated primary-domain experience, not merely an unrelated external-shop link.
+- Existing soap sales and owner-reported apiary/honey-allocation constraints shape the business roadmap; no retail honey/yield promise is invented.
+- The original three concept URLs remain, with full shop/planning routes added.
+- Interactive review uses a local HTTP server and a pinned local Markdown renderer; it does not depend on remote feeds, fonts or a CDN.
+
+### Boundaries
+
+- Samples are not real prices, stock, reservations, payments, orders or secured administration.
+- The owner approved the current planning snapshot for public review; confidential future details are not authorized. The review is not production business/commerce hosting, and noindex is not authentication.

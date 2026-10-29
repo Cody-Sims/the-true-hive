@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1000" viewBox="0 0 900 1000" fill="none">
+  <defs>
+    <g id="leaf"><path d="M0 0C-34-4-55-39-55-65C-24-64 4-31 0 0Z" fill="#72866B"/><path d="M-1-2L-46-55" stroke="#2E4938" stroke-width="1.5"/></g>
+    <g id="flower"><path d="M0 0C-40-8-45-49-25-57C-7-65 3-37 0 0Z" fill="#EAD9DB" stroke="#7B4159" stroke-width="1.5"/><path d="M0 0C-13-37 10-69 27-56C44-43 27-19 0 0Z" fill="#EAD9DB" stroke="#7B4159" stroke-width="1.5"/><path d="M0 0C26-30 65-19 59 2C52 24 22 17 0 0Z" fill="#EAD9DB" stroke="#7B4159" stroke-width="1.5"/><path d="M0 0C38 11 39 48 18 51C-5 53-10 26 0 0Z" fill="#EAD9DB" stroke="#7B4159" stroke-width="1.5"/><path d="M0 0C-1 35-39 49-46 28C-55 7-26-5 0 0Z" fill="#EAD9DB" stroke="#7B4159" stroke-width="1.5"/><circle r="9" fill="#B99550" stroke="#7B4159" stroke-width="2"/><circle r="3" fill="#7B4159"/></g>
+    <pattern id="jar-lines" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M3 0V9" stroke="#9A713A" stroke-width=".8" opacity=".35"/></pattern>
+  </defs>
+  <path fill="#EEEDDE" d="M0 0H900V1000H0Z"/>
+  <path d="M35 32H865V966H35Z" stroke="#2E4938"/>
+  <path d="M49 46H851V952H49Z" stroke="#2E4938" stroke-width=".5"/>
+  <path d="M104 876C69 755 181 655 125 502C86 393 201 317 164 160M160 669C246 618 199 504 264 435M125 501C198 489 246 384 221 313M138 401C84 370 79 324 93 258M162 235C228 222 232 177 212 129" stroke="#2E4938" stroke-width="4" stroke-linecap="round"/>
+  <path d="M786 881C835 736 715 637 770 503C816 390 746 334 757 200M786 725C714 730 690 682 677 617M754 587C696 547 698 468 656 431M773 494C849 464 852 403 827 355M754 329C688 327 665 263 679 213" stroke="#2E4938" stroke-width="4" stroke-linecap="round"/>
+  <use href="#leaf" transform="translate(131 815) rotate(45)"/>
+  <use href="#leaf" transform="translate(146 748) rotate(137)"/>
+  <use href="#leaf" transform="translate(164 651) rotate(10)"/>
+  <use href="#leaf" transform="translate(129 551) rotate(-36)"/>
+  <use href="#leaf" transform="translate(199 533) rotate(85)"/>
+  <use href="#leaf" transform="translate(187 461) rotate(135)"/>
+  <use href="#leaf" transform="translate(143 365) rotate(8)"/>
+  <use href="#leaf" transform="translate(180 295) rotate(90)"/>
+  <use href="#leaf" transform="translate(779 818) rotate(-35)"/>
+  <use href="#leaf" transform="translate(784 738) rotate(-100)"/>
+  <use href="#leaf" transform="translate(727 696) rotate(-1)"/>
+  <use href="#leaf" transform="translate(760 621) rotate(-145)"/>
+  <use href="#leaf" transform="translate(712 552) rotate(-25)"/>
+  <use href="#leaf" transform="translate(773 466) rotate(-90)"/>
+  <use href="#leaf" transform="translate(816 427) rotate(25)"/>
+  <use href="#leaf" transform="translate(751 347) rotate(-100)"/>
+  <use href="#leaf" transform="translate(715 307) rotate(15)"/>
+  <use href="#flower" transform="translate(163 170) rotate(-10) scale(.8)"/>
+  <use href="#flower" transform="translate(219 303) rotate(28) scale(.7)"/>
+  <use href="#flower" transform="translate(96 252) rotate(-22) scale(.6)"/>
+  <use href="#flower" transform="translate(262 433) rotate(18) scale(.8)"/>
+  <use href="#flower" transform="translate(758 197) rotate(15) scale(.9)"/>
+  <use href="#flower" transform="translate(675 209) rotate(-20) scale(.55)"/>
+  <use href="#flower" transform="translate(827 354) rotate(4) scale(.65)"/>
+  <use href="#flower" transform="translate(659 427) rotate(8) scale(.7)"/>
+  <text x="450" y="147" fill="#2E4938" font-family="Arial,sans-serif" font-size="12" letter-spacing="3" text-anchor="middle">A COLLECTION IN THE MAKING</text>
+  <text x="450" y="216" fill="#7B4159" font-family="Georgia,serif" font-size="63" text-anchor="middle">Bloom &amp; Field</text>
+  <path d="M347 245H553" stroke="#7B4159"/>
+  <text x="450" y="277" fill="#2E4938" font-family="Georgia,serif" font-size="20" font-style="italic" text-anchor="middle">hive goods / everyday rituals</text>
+  <g transform="translate(416 330) rotate(-14)">
+    <ellipse cx="-13" cy="-9" rx="22" ry="12" transform="rotate(32 -13 -9)" fill="#F7F5E9" stroke="#2E4938" stroke-width="2"/>
+    <ellipse cx="9" cy="-16" rx="20" ry="12" transform="rotate(-25 9 -16)" fill="#F7F5E9" stroke="#2E4938" stroke-width="2"/>
+    <ellipse cx="0" cy="8" rx="28" ry="16" fill="#C5A56E" stroke="#2E4938" stroke-width="2"/>
+    <path d="M-9-5L-9 22M3-7V23M15-3V19" stroke="#2E4938" stroke-width="5"/>
+    <circle cx="31" cy="7" r="10" fill="#2E4938"/>
+    <path d="M33 1L41-9M34 12L45 18M-9 22L-15 33M9 22L12 33" stroke="#2E4938" stroke-width="2"/>
+  </g>
+  <path d="M474 347C564 335 600 371 566 410" stroke="#7B4159" stroke-dasharray="4 7"/>
+  <ellipse cx="449" cy="819" rx="253" ry="33" fill="#2E4938" opacity=".08"/>
+  <path d="M244 763H671L654 830H265Z" fill="#D6CEAC" stroke="#2E4938" stroke-width="2"/>
+  <path d="M247 780H666M255 805H659" stroke="#2E4938" opacity=".3"/>
+  <path d="M301 448H445V480C445 497 467 509 467 532V734C467 753 453 767 434 767H312C293 767 279 753 279 734V532C279 509 301 497 301 480Z" fill="#C9A265" stroke="#2E4938" stroke-width="2"/>
+  <path d="M301 448H445V480C445 497 467 509 467 532V734C467 753 453 767 434 767H312C293 767 279 753 279 734V532C279 509 301 497 301 480Z" fill="url(#jar-lines)"/>
+  <rect x="295" y="423" width="156" height="37" rx="3" fill="#2E4938"/>
+  <path d="M304 433H443M304 445H443" stroke="#72866B"/>
+  <path d="M290 552H456V700H290Z" fill="#F7F5E9" stroke="#2E4938"/>
+  <path d="M300 562H446V690H300Z" stroke="#7B4159"/>
+  <text x="373" y="587" fill="#2E4938" font-family="Arial,sans-serif" font-size="9" letter-spacing="1.5" text-anchor="middle">THE TRUE HIVE</text>
+  <text x="373" y="636" fill="#7B4159" font-family="Georgia,serif" font-size="35" text-anchor="middle">Honey</text>
+  <text x="373" y="673" fill="#2E4938" font-family="Arial,sans-serif" font-size="9" letter-spacing="1" text-anchor="middle">CONCEPT ONLY</text>
+  <path d="M521 552H663L654 746C653 762 535 762 533 746Z" fill="#EAD9DB" stroke="#7B4159" stroke-width="2"/>
+  <ellipse cx="592" cy="552" rx="71" ry="17" fill="#E3D7BA" stroke="#7B4159" stroke-width="2"/>
+  <path d="M592 552V539" stroke="#2E4938" stroke-width="3"/>
+  <path d="M550 597H634V706H550Z" fill="#F7F5E9" stroke="#7B4159"/>
+  <text x="592" y="644" fill="#7B4159" font-family="Georgia,serif" font-size="33" text-anchor="middle">th</text>
+  <text x="592" y="677" fill="#2E4938" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">CANDLE / CONCEPT</text>
+  <g transform="rotate(7 475 786)">
+    <rect x="359" y="743" width="229" height="87" rx="12" fill="#D5C9AE" stroke="#2E4938" stroke-width="2"/>
+    <rect x="430" y="743" width="87" height="87" fill="#7B4159"/>
+    <text x="474" y="778" fill="#F7F5E9" font-family="Georgia,serif" font-size="24" text-anchor="middle">Soap</text>
+    <text x="474" y="801" fill="#F7F5E9" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">CONCEPT ONLY</text>
+  </g>
+  <path d="M235 906H665" stroke="#2E4938"/>
+  <text x="450" y="935" fill="#2E4938" font-family="Arial,sans-serif" font-size="10" letter-spacing="2" text-anchor="middle">MADISONVILLE, TENNESSEE</text>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="360" viewBox="0 0 420 360" fill="none">
+  <ellipse cx="212" cy="304" rx="143" ry="17" fill="#655441" opacity=".12"/>
+  <path d="M66 166L214 118L352 165L210 216L66 166Z" fill="#DFCCA7"/>
+  <path d="M66 166L210 216V308L66 256V166Z" fill="#B79669"/>
+  <path d="M210 216L352 165V256L210 308V216Z" fill="#C5A777"/>
+  <path d="M180 199L210 210L239 200V299L210 309L180 298V199Z" fill="#536449"/>
+  <rect x="113" y="115" width="68" height="75" rx="9" fill="#C68C32"/>
+  <rect x="118" y="99" width="58" height="23" rx="3" fill="#4B583B"/>
+  <rect x="122" y="138" width="50" height="34" fill="#F5EDDA"/>
+  <text x="147" y="159" text-anchor="middle" fill="#46523C" font-family="Georgia,serif" font-size="12">honey</text>
+  <path d="M206 129C206 116 228 107 255 107C282 107 304 116 304 129V182C304 198 282 209 255 209C228 209 206 198 206 182V129Z" fill="#BBA57F"/>
+  <ellipse cx="255" cy="127" rx="49" ry="17" fill="#E9D599"/>
+  <path d="M255 126V111" stroke="#766343" stroke-width="2"/>
+  <rect x="233" y="155" width="45" height="30" fill="#F5EDDA"/>
+  <text x="255" y="175" text-anchor="middle" fill="#46523C" font-family="Georgia,serif" font-size="11">hive</text>
+  <path d="M158 203L209 182L247 197L197 221L158 203Z" fill="#DDC9A6"/>
+  <path d="M158 203V226L197 244L247 219V197L197 221L158 203Z" fill="#C8AF88"/>
+  <path d="M207 214C174 172 195 165 211 186C228 158 250 174 214 214" stroke="#536449" stroke-width="7" stroke-linecap="round"/>
+</svg>

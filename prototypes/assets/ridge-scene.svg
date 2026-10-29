@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="640" viewBox="0 0 1440 640" fill="none">
+  <title>Blue Ridge imagined East Tennessee panorama</title>
+  <desc>An original landscape illustration of layered mountains, meadows, a winding path, flowers, and apiary boxes. It is inspired by the region and is not an actual site, pickup location, or map.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#f3f5f7"/><stop offset="1" stop-color="#c5dbe5"/>
+    </linearGradient>
+    <linearGradient id="near" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#42657a"/><stop offset="1" stop-color="#203b56"/>
+    </linearGradient>
+    <pattern id="field" width="38" height="28" patternUnits="userSpaceOnUse">
+      <path d="M8 28L12 14M12 28L18 19" stroke="#a9c1c7" stroke-width="1" opacity=".22"/>
+    </pattern>
+  </defs>
+  <rect width="1440" height="640" fill="url(#sky)"/>
+  <circle cx="1067" cy="147" r="63" fill="#f3ecdb"/>
+  <path d="M97 118C162 94 225 101 283 119M552 85C613 65 679 67 740 85M1170 84C1242 70 1311 75 1371 95" stroke="#f3f5f7" stroke-width="16" stroke-linecap="round" opacity=".7"/>
+  <path d="M0 260L88 241L169 195L259 230L355 169L414 195L490 144L551 206L624 181L706 233L797 173L867 202L963 154L1021 179L1096 169L1164 233L1255 200L1346 223L1440 191V640H0V260Z" fill="#aec5d3"/>
+  <path d="M0 318L111 269L209 293L327 231L435 285L530 256L650 325L769 278L872 224L979 269L1088 242L1194 291L1294 258L1440 313V640H0V318Z" fill="#8caabc"/>
+  <path d="M0 362C109 312 195 333 292 365C388 397 427 328 526 315C630 302 702 367 805 353C917 338 966 287 1053 300C1174 319 1252 371 1440 337V640H0V362Z" fill="#678da5"/>
+  <path d="M0 431C141 377 251 432 359 414C457 397 516 351 614 381C715 412 780 409 877 388C1002 361 1097 412 1200 400C1293 390 1367 366 1440 385V640H0V431Z" fill="#466f89"/>
+  <path d="M0 478C118 440 224 458 322 486C420 513 515 486 619 459C731 429 813 453 930 487C1061 525 1184 457 1290 451C1350 448 1399 464 1440 479V640H0V478Z" fill="#9baea6"/>
+  <path d="M0 502C147 466 289 518 423 537C553 555 626 509 770 513C904 517 951 551 1073 529C1234 501 1335 517 1440 547V640H0V502Z" fill="#ccd0b8"/>
+  <path d="M953 444C913 457 861 466 866 487C872 511 984 520 1005 540C1030 567 899 593 866 640H1011C1018 611 1107 574 1070 544C1035 515 922 505 923 487C924 474 965 461 986 450L953 444Z" fill="#f3ecdb"/>
+  <path d="M0 561C146 527 239 541 369 579C502 619 626 558 748 569C896 582 939 627 1085 594C1223 563 1332 579 1440 604V640H0V561Z" fill="url(#near)"/>
+  <path d="M0 561C146 527 239 541 369 579C502 619 626 558 748 569C896 582 939 627 1085 594C1223 563 1332 579 1440 604V640H0V561Z" fill="url(#field)"/>
+  <g stroke="#315c78" stroke-width="2">
+    <path d="M1103 438L1160 432L1187 443L1131 450L1103 438Z" fill="#f3ecdb"/>
+    <path d="M1103 438L1131 450V499L1103 487V438Z" fill="#c6bd9e"/>
+    <path d="M1131 450L1187 443V492L1131 499V450Z" fill="#e1dcc5"/>
+    <path d="M1131 468L1187 461M1131 485L1187 478M1103 456L1131 468M1103 473L1131 485"/>
+    <path d="M1099 435L1159 427L1192 441L1131 450L1099 435Z" fill="#203b56"/>
+    <path d="M1113 491V508M1175 494V505" stroke-width="5"/>
+    <path d="M1216 458L1264 452L1286 461L1237 469L1216 458Z" fill="#f3ecdb"/>
+    <path d="M1216 458L1237 469V509L1216 499V458Z" fill="#bcb99f"/>
+    <path d="M1237 469L1286 461V502L1237 509V469Z" fill="#ded9bf"/>
+    <path d="M1237 485L1286 477M1216 474L1237 485"/>
+    <path d="M1212 455L1264 447L1291 459L1237 469L1212 455Z" fill="#203b56"/>
+    <path d="M1224 504V517M1277 506V516" stroke-width="4"/>
+  </g>
+  <path d="M127 551C128 510 114 489 100 479M128 531C145 504 158 490 170 485M175 571C173 539 182 523 195 513M237 580C234 546 221 526 208 516" stroke="#b6c4b8" stroke-width="3"/>
+  <path d="M123 521C101 517 87 505 86 489C111 487 124 502 123 521ZM139 513C136 493 145 478 164 473C169 492 159 507 139 513ZM176 553C182 531 196 524 213 528C209 548 196 556 176 553Z" fill="#9bb2ab"/>
+  <g fill="#f3ecdb">
+    <ellipse cx="97" cy="476" rx="7" ry="15" transform="rotate(-25 97 476)"/>
+    <ellipse cx="98" cy="477" rx="7" ry="15" transform="rotate(45 98 477)"/>
+    <ellipse cx="98" cy="477" rx="7" ry="15" transform="rotate(110 98 477)"/>
+    <ellipse cx="172" cy="482" rx="6" ry="13" transform="rotate(-20 172 482)"/>
+    <ellipse cx="172" cy="482" rx="6" ry="13" transform="rotate(45 172 482)"/>
+    <ellipse cx="172" cy="482" rx="6" ry="13" transform="rotate(110 172 482)"/>
+    <ellipse cx="197" cy="512" rx="6" ry="12"/>
+    <ellipse cx="197" cy="512" rx="6" ry="12" transform="rotate(65 197 512)"/>
+    <ellipse cx="197" cy="512" rx="6" ry="12" transform="rotate(125 197 512)"/>
+    <ellipse cx="206" cy="515" rx="5" ry="10" transform="rotate(-30 206 515)"/>
+    <ellipse cx="206" cy="515" rx="5" ry="10" transform="rotate(40 206 515)"/>
+    <ellipse cx="206" cy="515" rx="5" ry="10" transform="rotate(105 206 515)"/>
+  </g>
+  <g fill="#d2ab5a"><circle cx="98" cy="477" r="5"/><circle cx="172" cy="482" r="5"/><circle cx="197" cy="512" r="4"/><circle cx="206" cy="515" r="4"/></g>
+  <path d="M1315 610C1312 570 1326 545 1342 529M1357 618C1354 582 1369 566 1384 559M1290 605C1288 580 1279 562 1265 553" stroke="#9bb2ab" stroke-width="3"/>
+  <path d="M1320 575C1315 555 1326 537 1344 531C1352 553 1340 569 1320 575ZM1361 595C1369 571 1383 563 1401 568C1398 589 1382 598 1361 595ZM1290 588C1266 584 1251 570 1253 553C1276 552 1290 566 1290 588Z" fill="#7e9d9b"/>
+  <path d="M425 178C432 170 439 170 446 178M446 178C453 170 460 170 467 178M1112 112C1117 106 1123 106 1128 112M1128 112C1133 106 1139 106 1144 112" stroke="#315c78" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,518 @@
+body {
+  color: #2e4938;
+  background: #f7f5e9;
+}
+
+.wrap {
+  width: min(100% - 3.5rem, 79rem);
+}
+
+.review-bar,
+.footer {
+  color: #f7f5e9;
+  background: #2e4938;
+}
+
+.bloom-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 1.8rem;
+  border-bottom: 1px solid #2e4938;
+}
+
+.bloom-brand {
+  gap: 0.8rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.bloom-brand small {
+  display: block;
+  margin-top: 0.4rem;
+  font-family: Arial, sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.flower-mark {
+  color: #7b4159;
+  font-family: Georgia, serif;
+  font-size: 4.5rem;
+  line-height: 0.7;
+}
+
+.site-nav a {
+  font-size: 0.8rem;
+}
+
+.bloom-hero {
+  display: grid;
+  grid-template-columns: 1fr 1.02fr;
+  gap: 4rem;
+  align-items: center;
+  padding-block: 3.8rem;
+}
+
+.bloom-hero > *,
+.story > *,
+.connect-grid > * {
+  min-width: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+h1 {
+  margin-block: 1.4rem;
+  color: #7b4159;
+  font-size: clamp(3.2rem, 5.7vw, 5.5rem);
+  letter-spacing: -0.06em;
+  line-height: 1.04;
+}
+
+.hero-copy > p:not(.eyebrow) {
+  max-width: 26rem;
+}
+
+.hero-copy > .fine-print {
+  margin-block: 0.8rem 0.5rem;
+}
+
+.primary {
+  color: #f7f5e9;
+  background: #7b4159;
+}
+
+.primary:hover {
+  background: #2e4938;
+}
+
+.botanical-plate {
+  padding: 1rem;
+  border: 1px solid #2e4938;
+  outline: 1px solid #2e4938;
+  outline-offset: -6px;
+  background: #eeedde;
+}
+
+.plate-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  justify-content: space-between;
+  padding: 0.2rem 0.3rem 0.8rem;
+  border-bottom: 1px solid #2e4938;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.botanical-plate img {
+  width: 100%;
+}
+
+.botanical-plate figcaption {
+  padding: 0.8rem 0.3rem 0.2rem;
+  border-top: 1px solid #2e4938;
+  font-size: 0.66rem;
+  text-align: center;
+}
+
+.catalogue-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+  justify-content: space-between;
+  padding-block: 1rem;
+  border-block: 1px solid #2e4938;
+  font-size: 0.7rem;
+}
+
+.catalogue-strip > span {
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.section-space {
+  padding-block: 5.5rem;
+}
+
+h2 {
+  font-size: clamp(2.6rem, 4.4vw, 4.2rem);
+  letter-spacing: -0.05em;
+}
+
+.section-heading > p {
+  max-width: 25rem;
+}
+
+.seed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.6rem;
+  margin-top: 3rem;
+}
+
+.seed-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.2rem;
+  border: 1px solid #2e4938;
+  background: #efeddf;
+}
+
+.seed-card:nth-child(2) {
+  background: #ead9db;
+}
+
+.seed-card:nth-child(3) {
+  background: #e6e8d8;
+}
+
+.seed-top {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 0.2rem 0.6rem;
+  border-bottom: 1px solid #2e4938;
+}
+
+.seed-top .eyebrow {
+  font-size: 0.6rem;
+}
+
+.seed-card h3 {
+  margin-top: 1rem;
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+  letter-spacing: -0.05em;
+}
+
+.seed-card h3 a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  text-decoration: none;
+}
+
+.seed-card h3 a:hover {
+  text-decoration: underline;
+}
+
+.seed-art {
+  display: block;
+}
+
+.seed-art img {
+  width: 100%;
+}
+
+.seed-copy {
+  flex: 1;
+  padding-top: 1rem;
+  border-top: 1px solid #2e4938;
+}
+
+.seed-copy p {
+  font-size: 0.85rem;
+}
+
+.seed-copy .concept-label {
+  margin-top: 1rem;
+  border-radius: 0;
+  font-size: 0.6rem;
+}
+
+.seed-caption {
+  margin-top: 1.5rem;
+  font-size: 0.6rem;
+  text-align: center;
+}
+
+.collection-link {
+  margin-top: 1.5rem;
+}
+
+.materials {
+  background: #ead9db;
+  border-block: 1px solid #7b4159;
+}
+
+.material-intro {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 4rem;
+  align-items: end;
+}
+
+.material-intro h2 {
+  margin-top: 1rem;
+  color: #7b4159;
+}
+
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.material-grid article {
+  padding-top: 1rem;
+  border-top: 1px solid #7b4159;
+}
+
+.note-number {
+  color: #7b4159;
+  font-family: Georgia, serif;
+  font-size: 1.8rem;
+  font-style: italic;
+}
+
+.material-grid h3 {
+  margin-block: 0.8rem;
+  font-size: 1.7rem;
+}
+
+.material-grid p {
+  font-size: 0.9rem;
+}
+
+.story {
+  display: grid;
+  grid-template-columns: 0.8fr 1.6fr;
+  gap: 5rem;
+}
+
+.story-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  align-self: start;
+  padding: 2.5rem 1.5rem;
+  border: 1px solid #7b4159;
+  color: #7b4159;
+  text-align: center;
+}
+
+.story-label .flower-mark {
+  margin-top: 1rem;
+  font-size: 9rem;
+}
+
+.story-copy > p {
+  max-width: 38rem;
+  margin-top: 1.5rem;
+}
+
+.pickup-note {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-left: 3px solid #2e4938;
+  background: #e6e8d8;
+}
+
+.pickup-note h3 {
+  margin-bottom: 0.8rem;
+  font-size: 1.4rem;
+}
+
+.pickup-note p {
+  font-size: 0.9rem;
+}
+
+.services {
+  border-top: 1px solid #2e4938;
+}
+
+.service-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.service-grid article {
+  padding: 2rem;
+  border: 1px solid #2e4938;
+}
+
+.service-grid h3 {
+  margin-block: 0.8rem 1.2rem;
+  font-size: 2rem;
+}
+
+.service-grid p:not(.eyebrow) {
+  font-size: 0.95rem;
+}
+
+.safety-note {
+  margin-top: 1.5rem;
+}
+
+.connect {
+  background: #e6e8d8;
+  border-top: 1px solid #2e4938;
+}
+
+.connect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+}
+
+.connect h2 {
+  margin-block: 1rem 1.5rem;
+}
+
+.connect-grid > div > p {
+  max-width: 27rem;
+}
+
+.contact-sheet {
+  padding: 2rem;
+  border: 1px solid #2e4938;
+  background: #f7f5e9;
+}
+
+.contact-sheet dl {
+  margin-block: 1.5rem 0.5rem;
+}
+
+.contact-sheet dl > div {
+  padding-block: 0.8rem;
+  border-top: 1px solid #b5bfab;
+  font-size: 0.82rem;
+}
+
+.contact-sheet dt {
+  font-weight: 700;
+}
+
+.contact-sheet dd {
+  margin: 0.15rem 0 0;
+}
+
+@media (max-width: 950px) {
+  .bloom-hero {
+    gap: 2rem;
+  }
+
+  h1 {
+    font-size: clamp(2.8rem, 5.7vw, 4rem);
+  }
+
+  .seed-grid {
+    gap: 1rem;
+  }
+
+  .seed-card {
+    padding: 0.8rem;
+  }
+
+  .seed-card h3 {
+    font-size: 1.65rem;
+  }
+
+  .material-intro,
+  .story,
+  .connect-grid {
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 650px) {
+  .wrap {
+    width: calc(100% - 2.5rem);
+  }
+
+  .bloom-header .site-nav {
+    width: 100%;
+  }
+
+  .bloom-brand {
+    font-size: 1.55rem;
+  }
+
+  .bloom-hero,
+  .seed-grid,
+  .material-intro,
+  .material-grid,
+  .story,
+  .service-grid,
+  .connect-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bloom-hero {
+    padding-block: 2.5rem;
+  }
+
+  h1 {
+    font-size: clamp(3rem, 12vw, 4.2rem);
+  }
+
+  .botanical-plate {
+    margin-top: 1rem;
+  }
+
+  .catalogue-strip {
+    gap: 0.5rem;
+  }
+
+  .catalogue-strip > * {
+    width: 100%;
+  }
+
+  .section-space {
+    padding-block: 3.5rem;
+  }
+
+  .seed-grid {
+    margin-top: 2rem;
+    gap: 1.5rem;
+  }
+
+  .seed-card {
+    padding: 1.2rem;
+  }
+
+  .seed-card h3 {
+    font-size: 2rem;
+  }
+
+  .story-label {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1.5rem;
+    text-align: left;
+  }
+
+  .story-label .flower-mark {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    margin: 0;
+    font-size: 5rem;
+  }
+
+  .story-label .fine-print {
+    grid-column: 1;
+  }
+
+  .service-grid article,
+  .contact-sheet {
+    padding: 1.5rem;
+  }
+}

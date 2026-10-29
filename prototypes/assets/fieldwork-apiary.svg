@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="780" viewBox="0 0 900 780" fill="none">
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M60 0H0V60" stroke="#54785E" stroke-width="1" opacity=".45"/>
+    </pattern>
+    <linearGradient id="ground" x1="450" y1="250" x2="450" y2="780" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5D805D"/>
+      <stop offset="1" stop-color="#284C39"/>
+    </linearGradient>
+  </defs>
+  <path fill="#173D30" d="M0 0H900V780H0Z"/>
+  <path fill="url(#grid)" d="M0 0H900V780H0Z"/>
+  <g stroke="#74946F" opacity=".4">
+    <path d="M-110 255C104 119 141 476 391 281C586 129 598 87 995 193"/>
+    <path d="M-110 280C104 144 141 501 391 306C586 154 598 112 995 218"/>
+    <path d="M-110 305C104 169 141 526 391 331C586 179 598 137 995 243"/>
+    <path d="M-110 330C104 194 141 551 391 356C586 204 598 162 995 268"/>
+    <path d="M-110 355C104 219 141 576 391 381C586 229 598 187 995 293"/>
+    <path d="M-110 380C104 244 141 601 391 406C586 254 598 212 995 318"/>
+    <path d="M-110 405C104 269 141 626 391 431C586 279 598 237 995 343"/>
+  </g>
+  <circle cx="695" cy="165" r="60" stroke="#D2E5B5" opacity=".6"/>
+  <circle cx="695" cy="165" r="43" fill="#E7C864"/>
+  <path d="M96 580L439 372L806 584L464 780L96 580Z" fill="url(#ground)"/>
+  <path d="M159 586L442 419L744 586M216 618L443 482L684 621M281 656L443 559L620 660" stroke="#86A37E" stroke-width="2"/>
+  <path d="M320 738L628 558M226 683L534 505M416 779L724 601" stroke="#86A37E" stroke-width="2"/>
+  <g transform="translate(307 264)">
+    <path d="M35 263V307M217 263V307" stroke="#B9B89A" stroke-width="14"/>
+    <path d="M0 100L136 23L269 100L132 178L0 100Z" fill="#F2EBD4"/>
+    <path d="M0 100L132 178V295L0 216V100Z" fill="#C5C6A0"/>
+    <path d="M132 178L269 100V216L132 295V178Z" fill="#E1D9B7"/>
+    <path d="M0 139L132 217L269 139M0 178L132 256L269 178" stroke="#7C8B67" stroke-width="3"/>
+    <path d="M-12 90L136 5L283 90L135 175L-12 90Z" fill="#F5D66D"/>
+    <path d="M-12 90V107L135 192V175L-12 90Z" fill="#BBA454"/>
+    <path d="M135 175L283 90V107L135 192V175Z" fill="#DBC168"/>
+    <path d="M169 252L228 218V227L169 261V252Z" fill="#304B36"/>
+  </g>
+  <g transform="translate(190 442) scale(.53)">
+    <path d="M35 263V307M217 263V307" stroke="#B9B89A" stroke-width="14"/>
+    <path d="M0 100L136 23L269 100L132 178L0 100Z" fill="#F2EBD4"/>
+    <path d="M0 100L132 178V295L0 216V100Z" fill="#C5C6A0"/>
+    <path d="M132 178L269 100V216L132 295V178Z" fill="#E1D9B7"/>
+    <path d="M0 139L132 217L269 139M0 178L132 256L269 178" stroke="#7C8B67" stroke-width="3"/>
+    <path d="M-12 90L136 5L283 90L135 175L-12 90Z" fill="#F5D66D"/>
+  </g>
+  <path d="M149 207H291L340 273" stroke="#C1D3A7" stroke-width="2"/>
+  <circle cx="340" cy="273" r="5" fill="#E7C864"/>
+  <path d="M606 465L683 392H789" stroke="#C1D3A7" stroke-width="2"/>
+  <circle cx="606" cy="465" r="5" fill="#E7C864"/>
+  <text x="57" y="77" fill="#E0EACF" font-family="Arial,sans-serif" font-size="14" letter-spacing="3">THE WORKING HIVE</text>
+  <text x="57" y="103" fill="#BDD0B1" font-family="Arial,sans-serif" font-size="11" letter-spacing="2">ILLUSTRATIVE SITE STUDY / NOT A MAP</text>
+  <text x="149" y="191" fill="#E0EACF" font-family="Arial,sans-serif" font-size="12" letter-spacing="2">CARE + COORDINATION</text>
+  <text x="672" y="376" fill="#E0EACF" font-family="Arial,sans-serif" font-size="12" letter-spacing="2">LAND + BLOOM</text>
+  <path d="M63 642V698M35 670H91" stroke="#B1C79E" stroke-width="2"/>
+  <circle cx="63" cy="670" r="19" stroke="#B1C79E"/>
+  <text x="57" y="746" fill="#D8E5C5" font-family="Arial,sans-serif" font-size="11" letter-spacing="3">HOME / FARM / HIVE</text>
+</svg>

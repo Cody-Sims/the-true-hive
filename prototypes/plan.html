@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="The True Hive owner-approved planning review: business launch, website requirements, research, inventory, SEO, roadmap, and partner questions.">
+    <title>The True Hive | Project and business planning hub</title>
+    <link rel="stylesheet" href="shared.css">
+    <link rel="stylesheet" href="plan.css">
+    <script type="module" src="scripts/plan.mjs"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#plan-content">Skip to planning document</a>
+    <div class="workspace-notice">Public planning review &middot; Current snapshot approved by the owner &middot; Not a live storefront</div>
+    <header class="hub-header hub-width">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">th</span><span><strong>The True Hive</strong><small>PROJECT + BUSINESS STUDIO</small></span></a>
+      <nav aria-label="Studio navigation"><a href="index.html">Ten design directions</a><a href="store.html?design=meadow">Store preview</a><a href="inventory.html?design=meadow">Inventory lab</a></nav>
+    </header>
+    <div class="hub-summary hub-width">
+      <div><span class="summary-label">Confirmed priority</span><strong>Products and local sales</strong><a href="plan.html?doc=business">Business launch plan &rarr;</a></div>
+      <div><span class="summary-label">Fulfillment direction</span><strong>Local pickup, then shipping</strong><a href="plan.html?doc=inventory">Inventory and operations &rarr;</a></div>
+      <div><span class="summary-label">Next owner discussion</span><strong>Decisions before promises</strong><a href="plan.html?doc=questions">Open the partner workbook &rarr;</a></div>
+    </div>
+    <div class="hub-layout hub-width">
+      <aside class="hub-sidebar">
+        <details id="document-browser" open>
+          <summary>Browse the planning library</summary>
+          <div class="document-search"><label for="document-filter">Find a document</label><input id="document-filter" type="search" placeholder="Business, SEO, inventory..." autocomplete="off"></div>
+          <nav id="document-nav" aria-label="Planning documents"></nav>
+          <p id="document-filter-status" class="fine-print" role="status"></p>
+        </details>
+      </aside>
+      <main class="document-panel">
+        <div class="document-toolbar">
+          <p id="document-group" class="eyebrow">Planning library</p>
+          <div><a id="document-source" href="../README.md">Markdown source</a><button id="copy-workbook" type="button" hidden>Copy workbook text</button><button id="print-plan" type="button">Print</button></div>
+        </div>
+        <p id="document-feedback" class="document-feedback" role="status" hidden></p>
+        <article id="plan-content" class="markdown" aria-busy="true"><h1>Loading your project plan.</h1><p>The hub reads the real Markdown documents, rather than a second copy of the plan.</p></article>
+        <noscript><p class="document-feedback">The planning viewer needs JavaScript. You can still <a href="../README.md">read the Markdown overview</a> and browse its document links.</p></noscript>
+        <nav class="document-pagination" aria-label="Adjacent planning documents"><a id="previous-document" hidden>Previous document</a><a id="next-document" hidden>Next document</a></nav>
+      </main>
+      <aside class="document-toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><nav id="document-outline" aria-label="Document headings"></nav></aside>
+    </div>
+    <footer class="hub-footer hub-width">
+      <p>One source of truth: the repository's Markdown files. Prototypes and business assumptions are not production commitments.</p>
+      <p>This public review is not the production business site. Do not add confidential details; noindex is not privacy or authentication.</p>
+    </footer>
+  </body>
+</html>

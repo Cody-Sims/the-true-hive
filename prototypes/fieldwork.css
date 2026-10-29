@@ -1,0 +1,421 @@
+:root {
+  --forest: #153d2d;
+  --muted: #526553;
+  --lime: #e4ed9a;
+  --paper: #f7f8f2;
+  --rule: #d3ddce;
+}
+
+body {
+  color: var(--forest);
+  background: var(--paper);
+}
+
+.review-bar {
+  background: #102e23;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  gap: 0.8rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.015em;
+}
+
+.field-mark {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  place-items: center;
+  color: var(--lime);
+  background: var(--forest);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.site-nav .nav-contact {
+  gap: 1.5rem;
+  padding-inline: 1rem;
+  background: var(--lime);
+  font-weight: 700;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  gap: 3rem;
+  align-items: center;
+  padding-block: 3.5rem;
+}
+
+.signal {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.35rem;
+  background: #527b37;
+}
+
+.hero h1 {
+  margin-block: 1.4rem;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.07em;
+  line-height: 1;
+}
+
+.hero h1 span {
+  color: #487044;
+}
+
+.hero-description {
+  max-width: 29rem;
+  color: var(--muted);
+}
+
+.button-primary,
+.button-dark {
+  color: #fff;
+  background: var(--forest);
+}
+
+.button-outline {
+  border-color: var(--forest);
+}
+
+.button:hover {
+  text-decoration: underline;
+}
+
+.hero-note {
+  margin-top: 1.25rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.hero-figure img {
+  width: 100%;
+}
+
+.hero-figure figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-top: 0.7rem;
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.services {
+  padding-block: 1rem 4rem;
+}
+
+.section-label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.section-label h2 {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.service-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.service-card {
+  padding: 2.25rem;
+  background: #e7eee1;
+}
+
+.pollination-card {
+  background: #eceecd;
+}
+
+.card-top {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 2rem;
+}
+
+.service-code {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.card-index {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+}
+
+.service-card h3 {
+  font-size: clamp(2rem, 3.5vw, 3.1rem);
+  letter-spacing: -0.06em;
+}
+
+.service-name {
+  margin-top: 1.5rem;
+  font-weight: 700;
+}
+
+.service-card > p:not(.service-name) {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.service-detail {
+  display: grid;
+  gap: 0.25rem;
+  margin-block: 1.5rem;
+  padding-block: 1rem;
+  border-block: 1px solid #bdcbb4;
+  font-size: 0.8rem;
+}
+
+.service-detail span:first-child {
+  font-weight: 700;
+}
+
+.service-card .button {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.service-card > .fine-print {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+}
+
+.service-boundary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+}
+
+.service-boundary p {
+  color: var(--muted);
+}
+
+.section-space {
+  padding-block: 4.5rem;
+}
+
+h2 {
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  letter-spacing: -0.06em;
+}
+
+.section-heading h2 {
+  margin-top: 1rem;
+}
+
+.section-heading > p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.process {
+  color: var(--paper);
+  background: var(--forest);
+}
+
+.process .section-heading > p {
+  color: #d5e0cc;
+}
+
+.process .eyebrow {
+  color: var(--lime);
+}
+
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  padding-top: 2rem;
+}
+
+.process-grid article {
+  padding-top: 1.5rem;
+  border-top: 1px solid #58745c;
+}
+
+.process-grid article > span {
+  color: var(--lime);
+  font-size: 0.8rem;
+}
+
+.process-grid h3 {
+  margin-block: 2rem 1rem;
+  font-size: 1.4rem;
+  letter-spacing: -0.035em;
+}
+
+.process-grid p {
+  color: #d5e0cc;
+  font-size: 0.85rem;
+}
+
+.goods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.goods-card {
+  border: 1px solid var(--rule);
+  background: #fffef7;
+}
+
+.goods-card img {
+  background: #eff0e5;
+}
+
+.goods-card > div {
+  padding: 1.5rem;
+}
+
+.goods-card h3 {
+  margin-block: 1rem;
+  font-size: 1.25rem;
+  letter-spacing: -0.035em;
+}
+
+.goods-card p {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.connect {
+  border-block: 1px solid #c7d28f;
+  background: var(--lime);
+}
+
+.connect-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.connect h2 {
+  margin-block: 1.25rem 1.5rem;
+}
+
+.connect-grid > div > p:not(.eyebrow) {
+  max-width: 30rem;
+  color: #435d37;
+  font-size: 0.95rem;
+}
+
+.inquiry-preview {
+  padding: 2rem;
+  border: 1px solid #aebd72;
+  background: #f3f5d6;
+}
+
+.inquiry-preview h3 {
+  margin-block: 1rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.inquiry-preview > p:not(.eyebrow) {
+  color: #435d37;
+  font-size: 0.85rem;
+}
+
+.inquiry-preview dl {
+  margin: 1.5rem 0 0;
+  font-size: 0.8rem;
+}
+
+.inquiry-preview dl > div {
+  padding-block: 0.75rem;
+  border-top: 1px solid #c5cea0;
+}
+
+.inquiry-preview dt {
+  font-weight: 700;
+}
+
+.inquiry-preview dd {
+  margin: 0.3rem 0 0;
+  color: #435d37;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    gap: 1.5rem;
+  }
+
+  .connect-grid {
+    gap: 2rem;
+  }
+
+  .service-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero,
+  .service-grid,
+  .process-grid,
+  .goods-grid,
+  .connect-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-block: 2.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 13vw, 5rem);
+  }
+
+  .hero-figure {
+    margin-top: 1rem;
+  }
+
+  .section-space {
+    padding-block: 3.5rem;
+  }
+
+  .service-card h3 {
+    font-size: 2.6rem;
+  }
+
+  .process-grid {
+    gap: 2.5rem;
+  }
+
+  .process-grid h3 {
+    margin-top: 1rem;
+  }
+
+  .inquiry-preview {
+    padding: 1.5rem;
+  }
+}

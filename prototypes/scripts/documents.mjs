@@ -1,0 +1,37 @@
+export const documents = [
+  { id: "overview", group: "Start here", title: "Project overview", path: "README.md" },
+  { id: "business", group: "Start here", title: "Local-to-growth business plan", path: "docs/09-local-business-launch-plan.md" },
+  { id: "readiness", group: "Start here", title: "Business readiness and evidence", path: "docs/11-business-readiness-evidence.md" },
+  { id: "questions", group: "Start here", title: "Partner discussion workbook", path: "docs/10-partner-workbook.md" },
+  { id: "requirements", group: "Start here", title: "Requirements and acceptance", path: "docs/00-project-brief.md" },
+  { id: "research", group: "Strategy and systems", title: "Market and design research", path: "docs/01-market-and-design-research.md" },
+  { id: "seo", group: "Strategy and systems", title: "SEO and customer acquisition", path: "docs/06-storefront-seo-and-acquisition.md" },
+  { id: "experience", group: "Strategy and systems", title: "Customer journeys and content", path: "docs/02-experience-and-content.md" },
+  { id: "architecture", group: "Strategy and systems", title: "Architecture and platform choice", path: "docs/03-architecture.md" },
+  { id: "data", group: "Strategy and systems", title: "Data and integration contracts", path: "docs/04-data-and-integrations.md" },
+  { id: "inventory", group: "Strategy and systems", title: "Inventory and fulfillment", path: "docs/07-inventory-and-operations.md" },
+  { id: "decisions", group: "Strategy and systems", title: "Decisions and risks", path: "docs/05-decision-register.md" },
+  { id: "comparison", group: "Strategy and systems", title: "Ten-concept comparison", path: "docs/08-prototype-expansion.md" },
+  { id: "phase0", group: "Website delivery phases", title: "0 - Discovery and selection", path: "docs/phases/00-discovery-and-design.md" },
+  { id: "phase1", group: "Website delivery phases", title: "1 - Engineering foundation", path: "docs/phases/01-engineering-foundation.md" },
+  { id: "phase2", group: "Website delivery phases", title: "2 - Landing-page launch", path: "docs/phases/02-landing-page-launch.md" },
+  { id: "phase3", group: "Website delivery phases", title: "3 - Local catalog and inquiries", path: "docs/phases/03-local-catalog-and-leads.md" },
+  { id: "phase4", group: "Website delivery phases", title: "4 - Storefront and inventory", path: "docs/phases/04-commerce-and-inventory.md" },
+  { id: "phase5", group: "Website delivery phases", title: "5 - Operations and growth", path: "docs/phases/05-operations-and-growth.md" },
+  { id: "design01", group: "Design directions", title: "01 - Meadow & Amber", path: "docs/designs/01-meadow-and-amber.md" },
+  { id: "design02", group: "Design directions", title: "02 - Fieldwork", path: "docs/designs/02-fieldwork.md" },
+  { id: "design03", group: "Design directions", title: "03 - Hive & Hearth", path: "docs/designs/03-hive-and-hearth.md" },
+  { id: "design04", group: "Design directions", title: "04 - Apiary Market", path: "docs/designs/04-apiary-market.md" },
+  { id: "design05", group: "Design directions", title: "05 - Honey House", path: "docs/designs/05-honey-house.md" },
+  { id: "design06", group: "Design directions", title: "06 - Blue Ridge", path: "docs/designs/06-blue-ridge.md" },
+  { id: "design07", group: "Design directions", title: "07 - Golden Hour", path: "docs/designs/07-golden-hour.md" },
+  { id: "design08", group: "Design directions", title: "08 - The Quiet Hive", path: "docs/designs/08-the-quiet-hive.md" },
+  { id: "design09", group: "Design directions", title: "09 - Bloom & Field", path: "docs/designs/09-bloom-and-field.md" },
+  { id: "design10", group: "Design directions", title: "10 - The Hive Journal", path: "docs/designs/10-the-hive-journal.md" },
+  { id: "changes", group: "Project record", title: "What changed", path: "CHANGELOG.md" },
+  { id: "sharing", group: "Project record", title: "Sharing and CI/CD", path: "docs/12-sharing-and-deployment.md" },
+];
+
+export function getDocument(id) {
+  return documents.find((document) => document.id === id) ?? null;
+}

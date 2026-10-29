@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1000" viewBox="0 0 1100 1000" fill="none">
+  <defs>
+    <pattern id="diagonal" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M0 9L9 0M-4 4L4-4M5 13L13 5" stroke="#302C29" stroke-width=".8" opacity=".45"/></pattern>
+    <pattern id="crosshatch" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 0L10 10M0 10L10 0" stroke="#302C29" stroke-width=".8" opacity=".4"/></pattern>
+    <pattern id="vertical" width="7" height="7" patternUnits="userSpaceOnUse"><path d="M2 0V7" stroke="#302C29" stroke-width=".8" opacity=".5"/></pattern>
+    <pattern id="stipple" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r=".8" fill="#302C29" opacity=".5"/><circle cx="11" cy="12" r=".8" fill="#302C29" opacity=".5"/></pattern>
+  </defs>
+  <path d="M0 0H1100V1000H0Z" fill="#E9DFCE"/>
+  <path d="M33 35H1067V964H33Z" stroke="#302C29" stroke-width="2"/>
+  <path d="M46 48H1054V951H46Z" stroke="#302C29" stroke-width=".8"/>
+  <path d="M70 696L1017 668V882L70 906Z" fill="#D6CAB5" stroke="#302C29" stroke-width="2"/>
+  <path d="M70 696L1017 668V882L70 906Z" fill="url(#diagonal)"/>
+  <path d="M75 800L1017 774M75 817L1017 791M75 866L1017 840" stroke="#302C29" opacity=".45"/>
+  <path d="M153 801C193 753 438 736 500 788C564 745 841 744 933 805L962 849L185 865Z" fill="url(#crosshatch)"/>
+  <path d="M246 272H451V330C451 351 489 371 489 401V754C489 783 469 803 439 803H256C225 803 204 783 204 754V401C204 371 246 351 246 330Z" fill="#DAC7A7" stroke="#302C29" stroke-width="3"/>
+  <path d="M246 272H451V330C451 351 489 371 489 401V754C489 783 469 803 439 803H256C225 803 204 783 204 754V401C204 371 246 351 246 330Z" fill="url(#vertical)"/>
+  <path d="M223 416V747C223 774 237 785 259 785M235 404V747M469 416V744C469 766 456 782 437 785M461 430V746" stroke="#302C29" stroke-width="1.4"/>
+  <rect x="232" y="234" width="231" height="55" rx="8" fill="#8F422C" stroke="#302C29" stroke-width="3"/>
+  <path d="M242 246H453M242 255H453M242 265H453M242 277H453" stroke="#302C29" stroke-width="1.5"/>
+  <path d="M216 469H478V690H216Z" fill="#F6F1E7" stroke="#302C29" stroke-width="2"/>
+  <path d="M227 480H466V679H227Z" stroke="#302C29"/>
+  <text x="347" y="519" fill="#302C29" font-family="Georgia,serif" font-size="17" letter-spacing="2" text-anchor="middle">THE TRUE HIVE</text>
+  <path d="M259 537H435" stroke="#302C29"/>
+  <text x="347" y="593" fill="#302C29" font-family="Georgia,serif" font-size="51" text-anchor="middle">Honey</text>
+  <text x="347" y="630" fill="#302C29" font-family="Georgia,serif" font-size="14" font-style="italic" text-anchor="middle">A collection study</text>
+  <text x="347" y="656" fill="#302C29" font-family="Arial,sans-serif" font-size="9" letter-spacing="2" text-anchor="middle">CONCEPT ONLY</text>
+  <path d="M649 449H890V751C890 778 870 800 844 800H694C668 800 649 778 649 751Z" fill="#E9DFCE" stroke="#302C29" stroke-width="3"/>
+  <path d="M649 449H890V751C890 778 870 800 844 800H694C668 800 649 778 649 751Z" fill="url(#vertical)"/>
+  <path d="M666 464V745C666 770 681 784 702 787M873 464V745C873 769 860 784 840 787" stroke="#302C29" stroke-width="1.5"/>
+  <ellipse cx="770" cy="449" rx="121" ry="31" fill="#F6F1E7" stroke="#302C29" stroke-width="3"/>
+  <ellipse cx="770" cy="449" rx="105" ry="22" fill="url(#stipple)" stroke="#302C29"/>
+  <path d="M770 449V426" stroke="#302C29" stroke-width="4" stroke-linecap="round"/>
+  <rect x="682" y="544" width="175" height="171" fill="#F6F1E7" stroke="#302C29" stroke-width="2"/>
+  <path d="M692 554H847V705H692Z" stroke="#302C29"/>
+  <text x="770" y="614" fill="#302C29" font-family="Georgia,serif" font-size="48" font-style="italic" text-anchor="middle">th</text>
+  <text x="770" y="653" fill="#302C29" font-family="Georgia,serif" font-size="17" text-anchor="middle">CANDLE STUDY</text>
+  <text x="770" y="682" fill="#302C29" font-family="Arial,sans-serif" font-size="9" letter-spacing="1" text-anchor="middle">CONCEPT ONLY</text>
+  <g transform="rotate(-7 556 788)">
+    <path d="M395 731H685L705 753V835H415L395 814Z" fill="#D3C4A8" stroke="#302C29" stroke-width="2"/>
+    <path d="M395 731H685L705 753H415Z" fill="#F6F1E7" stroke="#302C29"/>
+    <path d="M415 753V835L395 814V731" fill="url(#crosshatch)" stroke="#302C29"/>
+    <path d="M510 737H600V835H510Z" fill="#8F422C" stroke="#302C29"/>
+    <text x="555" y="780" fill="#F6F1E7" font-family="Georgia,serif" font-size="28" text-anchor="middle">Soap</text>
+    <text x="555" y="807" fill="#F6F1E7" font-family="Arial,sans-serif" font-size="7" letter-spacing="1" text-anchor="middle">CONCEPT ONLY</text>
+  </g>
+  <g transform="translate(787 212) rotate(-17)">
+    <ellipse cx="-18" cy="-19" rx="43" ry="21" transform="rotate(32 -18 -19)" fill="url(#diagonal)" stroke="#302C29" stroke-width="2"/>
+    <ellipse cx="25" cy="-21" rx="39" ry="22" transform="rotate(-26 25 -21)" fill="url(#diagonal)" stroke="#302C29" stroke-width="2"/>
+    <ellipse cx="0" cy="12" rx="52" ry="27" fill="#DAC7A7" stroke="#302C29" stroke-width="2"/>
+    <path d="M-25-10L-25 34M-6-15V39M14-12V38M33-6V30" stroke="#302C29" stroke-width="8"/>
+    <circle cx="54" cy="9" r="16" fill="#302C29"/>
+    <path d="M57-3L72-21M66 3L84-6M-29 34L-40 54M-6 39L-6 59M17 37L25 56" stroke="#302C29" stroke-width="2"/>
+  </g>
+  <path d="M705 273L670 309H574" stroke="#302C29"/>
+  <text x="578" y="332" fill="#302C29" font-family="Georgia,serif" font-size="14" font-style="italic">A bee study</text>
+  <text x="91" y="113" fill="#302C29" font-family="Arial,sans-serif" font-size="12" letter-spacing="2">THE EVERYDAY SHELF</text>
+  <text x="1008" y="113" fill="#302C29" font-family="Arial,sans-serif" font-size="12" letter-spacing="2" text-anchor="end">FIG. 01</text>
+  <path d="M92 132H1008" stroke="#302C29"/>
+  <text x="550" y="930" fill="#302C29" font-family="Georgia,serif" font-size="13" letter-spacing="1" text-anchor="middle">AN ORIGINAL COLLECTION ILLUSTRATION / NOT REAL STOCK</text>
+</svg>

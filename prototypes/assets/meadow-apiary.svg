@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="840" viewBox="0 0 760 840" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="380" y1="0" x2="380" y2="840" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5D99A"/>
+      <stop offset="1" stop-color="#F0E7CC"/>
+    </linearGradient>
+    <linearGradient id="honey" x1="256" y1="456" x2="512" y2="711" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E9B23E"/>
+      <stop offset="0.55" stop-color="#C77B23"/>
+      <stop offset="1" stop-color="#A65B1F"/>
+    </linearGradient>
+    <pattern id="grain" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r="0.8" fill="#403B25" opacity=".045"/>
+      <circle cx="10" cy="12" r="0.7" fill="#403B25" opacity=".045"/>
+    </pattern>
+    <clipPath id="arch">
+      <path d="M20 380C20 181.177 181.177 20 380 20C578.823 20 740 181.177 740 380V820H20V380Z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#arch)">
+    <path fill="url(#sky)" d="M0 0H760V840H0Z"/>
+    <circle cx="560" cy="198" r="78" fill="#F9F1D6"/>
+    <path d="M-50 386L134 241L308 366L485 274L809 444V840H-50V386Z" fill="#A4AE8A"/>
+    <path d="M-36 492C95 354 225 387 365 461C506 536 647 370 806 433V840H-36V492Z" fill="#6F8768"/>
+    <path d="M-36 584C111 468 213 517 355 556C520 601 619 476 806 526V840H-36V584Z" fill="#3C624C"/>
+    <path d="M0 700C198 633 409 625 760 701V840H0V700Z" fill="#D0B786"/>
+    <path d="M0 738C208 683 478 718 760 763V840H0V738Z" fill="#C5A675"/>
+    <g transform="translate(85 410)">
+      <path d="M9 115V147M112 115V147" stroke="#293D2F" stroke-width="10"/>
+      <path d="M0 25H125V113H0V25Z" fill="#E8D8AD"/>
+      <path d="M0 55H125M0 85H125" stroke="#A5986F" stroke-width="3"/>
+      <path d="M-9 13H134V29H-9V13Z" fill="#F3E9CB"/>
+      <path d="M36 103H84V111H36V103Z" fill="#40523A"/>
+    </g>
+    <g transform="translate(567 449) scale(.8)">
+      <path d="M9 115V147M112 115V147" stroke="#293D2F" stroke-width="10"/>
+      <path d="M0 25H125V113H0V25Z" fill="#E8D8AD"/>
+      <path d="M0 55H125M0 85H125" stroke="#A5986F" stroke-width="3"/>
+      <path d="M-9 13H134V29H-9V13Z" fill="#F3E9CB"/>
+      <path d="M36 103H84V111H36V103Z" fill="#40523A"/>
+    </g>
+    <ellipse cx="386" cy="739" rx="157" ry="27" fill="#655033" opacity=".2"/>
+    <path d="M286 451H478V481C478 495 514 507 514 537V696C514 726 491 742 464 742H301C273 742 252 726 252 696V537C252 508 286 495 286 481V451Z" fill="url(#honey)"/>
+    <path d="M276 439C276 430 282 424 291 424H474C483 424 489 430 489 439V465H276V439Z" fill="#3B4D36"/>
+    <path d="M288 438H478M288 449H478" stroke="#6B7951" stroke-width="3"/>
+    <path d="M273 533C275 514 296 508 299 493V679C299 702 289 709 279 699L273 533Z" fill="#F6D986" opacity=".38"/>
+    <rect x="272" y="550" width="222" height="139" rx="2" fill="#F5EFD9"/>
+    <path d="M286 564H480V675H286V564Z" stroke="#B6A67C"/>
+    <text x="383" y="588" text-anchor="middle" fill="#334C37" font-family="Georgia,serif" font-size="12" letter-spacing="3">THE TRUE HIVE</text>
+    <text x="383" y="625" text-anchor="middle" fill="#334C37" font-family="Georgia,serif" font-size="29">Honey</text>
+    <text x="383" y="653" text-anchor="middle" fill="#655D44" font-family="Arial,sans-serif" font-size="9" letter-spacing="2">PACKAGING CONCEPT</text>
+    <g stroke="#314C38" stroke-width="4" stroke-linecap="round">
+      <path d="M88 840C119 740 118 666 92 596"/>
+      <path d="M102 762L52 722M111 713L156 675M109 676L73 646"/>
+      <path d="M651 840C624 745 648 671 677 609"/>
+      <path d="M642 767L701 729M645 713L607 680M660 664L710 648"/>
+    </g>
+    <g fill="#F4EDD2">
+      <circle cx="92" cy="592" r="13"/><circle cx="78" cy="600" r="10"/><circle cx="104" cy="604" r="10"/>
+      <circle cx="676" cy="608" r="13"/><circle cx="664" cy="617" r="9"/><circle cx="688" cy="620" r="9"/>
+      <circle cx="52" cy="720" r="8"/><circle cx="157" cy="675" r="10"/><circle cx="710" cy="646" r="10"/>
+    </g>
+    <path d="M430 318C467 303 485 322 479 344C470 373 425 365 430 344C435 326 464 333 485 312" stroke="#64704D" stroke-width="2" stroke-dasharray="4 7"/>
+    <g transform="translate(491 297) rotate(-17)">
+      <ellipse cx="0" cy="-7" rx="7" ry="12" fill="#FBF3DB"/>
+      <ellipse cx="10" cy="-6" rx="7" ry="12" fill="#FBF3DB"/>
+      <ellipse cx="6" cy="4" rx="14" ry="8" fill="#D29328"/>
+      <path d="M2-3V11M10-3V11" stroke="#3C4B32" stroke-width="4"/>
+      <circle cx="21" cy="3" r="6" fill="#3C4B32"/>
+    </g>
+    <path fill="url(#grain)" d="M0 0H760V840H0Z"/>
+  </g>
+  <path d="M20 380C20 181.177 181.177 20 380 20C578.823 20 740 181.177 740 380V820H20V380Z" stroke="#D3C39A" stroke-width="2"/>
+</svg>
