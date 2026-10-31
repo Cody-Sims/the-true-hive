@@ -72,7 +72,7 @@ Use "proposed" until the relevant owner agrees. Do not mark an obligation satisf
 
 ## How to use this workbook in the hub
 
-Read it here, use **Copy workbook text** or **Print**, discuss the questions, and update the underlying Markdown with agreed non-sensitive decisions. The viewer reads that file on refresh; it does not silently store your answers or send them anywhere.
+Read it here, use **Copy workbook text** or **Print**, discuss the questions, and update the underlying Markdown with agreed non-sensitive decisions. Rebuild or deploy the curated preview, then refresh to read the updated source. The viewer does not silently store your answers or send them anywhere.
 
 The business plan is [here](09-local-business-launch-plan.md); website requirements are [here](00-project-brief.md); stock/fulfillment expectations are [here](07-inventory-and-operations.md). These are separate but connected decisions.
 

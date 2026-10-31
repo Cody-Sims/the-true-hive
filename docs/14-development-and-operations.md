@@ -28,7 +28,7 @@ npm run check:site-artifact
 npm run start
 ```
 
-The prototype viewer remains `npm run preview` on port 4173. Do not point it at the production output or ship the repository root as the business site.
+The prototype viewer remains `npm run preview` on port 4173. It builds the curated Pages artifact and serves only `dist/`, not the repository root containing private configuration. After editing review documents or prototypes, run `npm run build:pages` and refresh, or restart the viewer. Do not point it at the production output or ship the repository root as the business site.
 
 Native deployment retains the checked-out private `src/server/`, `scripts/start-site.mjs`, dependencies and `dist-site/` together. The start wrapper imports source modules for preflight, then starts the built entrypoint in the same process; `dist-site/` alone is not a complete deploy package. Serve only `dist-site/client/` as public static assets.
 
