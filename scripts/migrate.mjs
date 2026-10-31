@@ -62,6 +62,18 @@ export async function migrateDatabase(
           `Applied migration ${name} is missing from source.`,
         );
     }
+    const latestApplied = [...applied.keys()].sort().at(-1);
+    const backfilled = migrations.find(
+      (migration) =>
+        !applied.has(migration.name) &&
+        latestApplied &&
+        migration.name < latestApplied,
+    );
+    if (backfilled) {
+      throw new MigrationDriftError(
+        `Unapplied migration ${backfilled.name} precedes applied history; add a new forward migration instead.`,
+      );
+    }
     const changes = [];
     for (const migration of migrations) {
       const recorded = applied.get(migration.name);

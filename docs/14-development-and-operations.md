@@ -61,7 +61,7 @@ Provision a dedicated Neon application database and separate runtime/operator cr
 npm run db:migrate
 ```
 
-Migrations create **empty tables**, not business stock. They run transactionally under a migration lock, store checksums and reject changed/deleted applied history. Add a new forward migration after release; do not rewrite an applied file.
+Migrations create **empty tables**, not business stock. They run transactionally under a migration lock, store checksums and reject changed/deleted applied history or newly backfilled files that sort before it. Add a new forward migration after the latest applied file; do not rewrite or retroactively insert migration history.
 
 For database tests, provision a separate database named **`true_hive_test`**, set `TEST_DATABASE_URL` privately, and run:
 

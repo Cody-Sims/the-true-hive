@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import { databaseOptions } from "../../src/server/db/connection.mjs";
 import { migrateDatabase } from "../../scripts/migrate.mjs";
 import { MigrationDriftError } from "../../scripts/migrate.mjs";
-import { readFile, writeFile, mkdtemp, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdtemp, rm, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
@@ -440,5 +440,67 @@ test("startup rejects partial catalog and availability schemas even when invento
       await partial.end();
       await admin.query(`DROP SCHEMA "${partialSchema}" CASCADE`);
     }
+  }
+});
+
+test("migrations reject backfilled history without changing data and still accept forward files", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "true-hive-migration-order-"));
+  const orderedSchema = `migration_order_${randomUUID().replaceAll("-", "")}`;
+  await admin.query(`CREATE SCHEMA "${orderedSchema}"`);
+  const ordered = new Pool({
+    ...options,
+    options: `-c search_path=${orderedSchema}`,
+  });
+  const migrations = pathToFileURL(`${directory}/`);
+  try {
+    await writeFile(
+      join(directory, "001_initial.sql"),
+      "CREATE TABLE migration_order_fixture (value text NOT NULL);",
+    );
+    await writeFile(
+      join(directory, "003_later.sql"),
+      "INSERT INTO migration_order_fixture VALUES ('late');",
+    );
+    assert.deepEqual(await migrateDatabase(ordered, migrations), [
+      "001_initial.sql",
+      "003_later.sql",
+    ]);
+    await writeFile(
+      join(directory, "002_earlier.sql"),
+      "UPDATE migration_order_fixture SET value='backfilled-' || value;",
+    );
+    await assert.rejects(
+      migrateDatabase(ordered, migrations),
+      MigrationDriftError,
+    );
+    assert.deepEqual(
+      (await ordered.query("SELECT value FROM migration_order_fixture")).rows,
+      [{ value: "late" }],
+    );
+    assert.deepEqual(
+      (await ordered.query("SELECT name FROM schema_migrations ORDER BY name"))
+        .rows,
+      [{ name: "001_initial.sql" }, { name: "003_later.sql" }],
+    );
+    await unlink(join(directory, "002_earlier.sql"));
+    await writeFile(
+      join(directory, "004_forward.sql"),
+      "INSERT INTO migration_order_fixture VALUES ('forward');",
+    );
+    assert.deepEqual(await migrateDatabase(ordered, migrations), [
+      "004_forward.sql",
+    ]);
+    assert.deepEqual(
+      (
+        await ordered.query(
+          "SELECT value FROM migration_order_fixture ORDER BY value",
+        )
+      ).rows,
+      [{ value: "forward" }, { value: "late" }],
+    );
+  } finally {
+    await ordered.end();
+    await admin.query(`DROP SCHEMA "${orderedSchema}" CASCADE`);
+    await rm(directory, { recursive: true });
   }
 });
