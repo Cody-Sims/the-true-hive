@@ -1,0 +1,26 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+Astro.response.status = 404;
+---
+
+<SiteLayout
+  title="Page not found"
+  description="This page is not on The True Hive shelf."
+  notFound
+>
+  <section class="not-found wrap">
+    <p class="eyebrow">A little detour</p>
+    <h1>
+      Not on
+      <br />
+      <em>this shelf.</em>
+    </h1>
+    <p>
+      That page isn't here. Head back to the collection to find your next good
+      thing.
+    </p>
+    <a class="button button-primary" href="/goods">
+      Explore the goods <span aria-hidden="true">&rarr;</span>
+    </a>
+  </section>
+</SiteLayout>

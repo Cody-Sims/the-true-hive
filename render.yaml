@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: the-true-hive-app
+    runtime: node
+    plan: 0.5c-512mb
+    region: oregon
+    branch: main
+    autoDeployTrigger: checksPass
+    buildCommand: npm ci --ignore-scripts --no-audit --no-fund && npm run build:site && npm run check:site-artifact
+    startCommand: npm run start
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: SITE_URL
+        value: https://thetruehive.com
+      - key: SITE_INDEXABLE
+        value: "false"
+      - key: CATALOG_SOURCE
+        value: showcase
+      - key: ASTRO_TELEMETRY_DISABLED
+        value: "1"

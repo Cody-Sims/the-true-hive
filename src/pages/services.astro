@@ -1,0 +1,32 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+import ServiceCards from "../components/ServiceCards.astro";
+---
+
+<SiteLayout
+  title="Beekeeping for home and farm"
+  description="Learn about The True Hive's planned colony-removal and farm-pollination services, with scope and capacity confirmed before any work is agreed."
+>
+  <section class="page-intro wrap">
+    <p class="eyebrow">Beyond the everyday goods</p>
+    <h1>
+      For the bees.
+      <br />
+      <em>For the neighbors.</em>
+    </h1>
+    <p>
+      Keeping bees and offering professional services are different commitments.
+      These are planned directions, not an instant booking or promise of
+      availability.
+    </p>
+  </section>
+  <section
+    class="wrap collection-section"
+    aria-label="Planned beekeeping services"
+  >
+    <ServiceCards />
+    <a class="text-link" href="/#connect">
+      Find our contact channels <span aria-hidden="true">&rarr;</span>
+    </a>
+  </section>
+</SiteLayout>

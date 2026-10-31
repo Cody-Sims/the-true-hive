@@ -1,23 +1,23 @@
 # Architecture: simple now, deliberate expansion later
 
-Decision status: **recommended, subject to owner/maintainer approval in phase 0**. No production framework has been installed. The ten-concept review studio is separate from the future public build.
+Decision status: **Astro + TypeScript, native Node and custom PostgreSQL approved on 2026-10-29**. Apiary Market is selected. The ten-concept review studio remains separate. No Docker or Shopify.
 
 ## Recommendation
 
-For a pre-commerce marketing release, **Astro + strict TypeScript**, prerendered pages, ordinary design-token CSS and small typed content files remain a good fit. Use a single production application and repository; do not make ten production sites.
+Use one modular **Astro + strict TypeScript application with the Node adapter and PostgreSQL**. The frontend is HTML-first; catalog/readiness APIs and inventory transaction modules run on the server. The owner explicitly chose a custom storefront and inventory. Do not build ten production sites or introduce separate services prematurely.
 
-The clarified target is a **product-led website with an integrated future store**, pickup first, shipping later. An initial marketing release and eventual commerce release are separate deployment gates. Extensibility means stable content/URLs and explicit provider boundaries, not speculative databases or a homemade stock engine.
+The clarified target is a **product-led website with an integrated future store**, pickup first, shipping later. An initial marketing release and eventual commerce release are separate deployment gates. Extensibility means stable content/URLs and explicit provider boundaries, not speculative services or untested stock arithmetic.
 
-At the commerce gate, first evaluate a **native Shopify website/theme with services/story pages and managed administration on the primary domain**. If the selected custom experience requires headless, a server-capable Astro or Next.js frontend can own the coherent site and use Shopify for commerce/hosted checkout. A separate unrelated outbound shop is **not the target**. A prior static Astro release may require migration or integration; that cost must be accepted rather than hidden.
+**Render hosts the native Node app; Neon provides managed PostgreSQL**, both in Oregon. The selected starting tiers are the $7/month Render app in a Hobby workspace and Neon Free. We own the stock/order rules. Keep `preview.thetruehive.com` for the original review; the actual site targets `thetruehive.com` after hosting/content readiness. Payment processing, recovery requirements and authenticated owner administration remain later gates. See the [approved foundation](13-production-foundation.md) and [actual operations guide](14-development-and-operations.md).
 
-## Framework decision
+## Framework comparison and superseded alternatives
 
 | Option | Current fit | Expansion path | Principal tradeoff |
 |---|---|---|---|
-| **Astro + TypeScript** | Strong for an initial static product/story/services site | Supported runtime adapter and focused headless routes, or an explicit migration to a native store/site | Headless and migration are real work; static hosting cannot run commerce endpoints |
+| **Astro + TypeScript + Node** | Selected HTML-first site and server foundation | Our PostgreSQL catalog/inventory and future payment integration | Own the backend correctness and operational responsibility |
 | **Next.js App Router + TypeScript** | Valid, particularly for a React-experienced maintainer | Server-rendered custom workflows and headless commerce | More server/client, rendering and caching concepts for a brochure site |
-| **Shopify native theme** | Strong candidate if real local commerce is the next funded milestone | One branded primary-domain site, product/collection routes, managed checkout/stock/admin | Platform/theme constraints; subscription/operations before selling if adopted too early |
-| **Custom full-stack/admin** | Poor current fit | Maximum bespoke control | Owns auth, stock integrity and operations without a demonstrated benefit |
+| **Shopify** | Rejected by the owner | Historical alternative only | Not the selected storefront or inventory authority |
+| **Custom admin now** | Deferred | Add only after authentication/roles are specified | A private count function is not an authenticated admin |
 
 **Evidence:** Astro components "render to static HTML with no client-side runtime" ([official docs](https://docs.astro.build/en/concepts/islands/)). Next.js layouts/pages are Server Components by default ([official docs](https://nextjs.org/docs/app/getting-started/server-and-client-components)); its [static-export documentation](https://nextjs.org/docs/app/guides/static-exports) describes limitations on runtime server features. Shopify explicitly states, "A headless storefront costs more to build and run than a theme" ([official guidance](https://shopify.dev/docs/storefronts/headless/overview)).
 
@@ -25,7 +25,7 @@ These establish capabilities and tradeoffs, not a benchmark proving one framewor
 
 ### Version policy
 
-No production framework/runtime/API version is selected. These are rolling official documentation sources consulted on 2026-10-28. **Exact production framework, TypeScript, runtime, adapter and API versions remain unpinned until implementation.** At bootstrap, select compatible supported stable releases, review support/security notices and commit the lockfile/runtime choice.
+The foundation pins **Astro 7.4.4, Node adapter 11.1.9, TypeScript 6.0.3 and pg 8.23.1**, verified against package metadata. TypeScript 7 was not selected because the diagnostics package declares support for 5/6. Node 24 runs the application/native tests; CI uses supported native PostgreSQL 16. Recheck supported patches regularly, preserve the lockfile and do not use unbounded dependency versions.
 
 The prototype has its own existing package/lockfile: **markdown-it 15.0.3**, verified against the package registry and installed package, renders the planning UI locally. Its bundled browser build is served from this project, not a CDN. Native Node tests cover the prototype's pure behavior. This does not constitute selecting a production framework.
 
@@ -33,7 +33,7 @@ Do not treat a release number in a research snapshot as an instruction to instal
 
 ## Production structure
 
-The following is a **proposed future tree**, not the current prototype implementation:
+The following earlier section-component tree is a **proposed organization**, not a claim every component already exists. The actual foundation uses `src/layouts/SiteLayout.astro`, reusable product/contact/service components, `src/pages/api`, `src/server`, and SQL migrations. Production builds to **`dist-site/`**; the preserved Pages review builds to **`dist/`**.
 
 ```text
 src/
@@ -77,7 +77,7 @@ local catalog OR future provider --> explicit mapping --> public card/detail mod
 future privileged integration --> server-only code --> minimal safe public output
 ```
 
-Components receive simple business-facing props. Do not import Shopify SDK/GraphQL types into product cards, or put raw provider IDs into public routes. Application-owned product keys survive changes to slugs, SKUs and providers.
+Components receive business-facing product/variant DTOs. Internal SQL rows, stock counts, SKUs and audit details do not pass into public components. Stable application keys remain independent of mutable slugs/SKUs and any future payment-provider identifiers.
 
 `to-product-card.ts` should only exist when it performs a real mapping; do not add a one-line abstraction merely to complete the diagram.
 
@@ -112,21 +112,21 @@ Do not introduce a global state store, generic provider plugin architecture, sep
 
 ## Commerce and admin expansion
 
-**Default:** Shopify owns real products/variants, prices, orders, stock, checkout, and owner inventory adjustments. The True Hive owns its business/service story and customer-facing presentation.
+**Authority:** our PostgreSQL database owns the real product/variant/location records and physical stock. Count adjustments use one checked-out client, row locks, idempotent operation IDs and atomic append-only history. Render manages application hosting and Neon manages PostgreSQL infrastructure; neither owns our merchandising or stock rules.
 
-First try the owner workflow in Shopify Admin: add a product variant, receive stock, adjust for damage/counts, sell in person, inspect online availability, and handle a return. "We need inventory management" does not by itself mean "we need to build inventory software."
+The approved first build has read-only APIs and an internal correction function, **no public stock-write endpoint or admin login**. Owner authentication/authorization, orders, payment reservations, lot/batch requirements and returns need their own approved slices.
 
 Choose among:
 
 | Path | When appropriate | Consequence |
 |---|---|---|
-| Native Shopify website/theme | Standard commerce and owner editing fit the design | Same primary-domain brand, collection/product/cart navigation, service/story pages; migrate useful URLs if needed |
-| Astro/Next.js headless site + Shopify | A documented custom experience earns its cost | One primary-domain frontend; own cart UX, caching, integration errors, accessibility, API upgrades and monitoring |
+| Our native Node site + PostgreSQL | Selected | One application, owned inventory, read APIs now; authenticated admin/payment later |
+| Payment processor | Not selected yet | Use an appropriate hosted/tokenized payment flow without collecting card data in our app |
 | Temporary external shop link | Explicitly approved transition or outage fallback only | Not the intended completed experience; disclose the transition and preserve useful redirects/navigation |
 
-Use Shopify-hosted checkout; never handle card data in custom site code. Shopify's cart supplies a URL that "redirects customers through Shopify's web checkout" ([cart documentation](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage)).
+No payment integration is enabled. When selected, the processor handles sensitive payment details; our server owns stock/order state and must verify callbacks and handle retries transactionally. A cart is not a stock reservation.
 
-Custom admin is a phase-5 exception. Validate role, audit, lot/batch, manufacturing, reporting, or workflow gaps before approving it. Prefer configuration or an existing supported app when it meets the requirement.
+Custom inventory is now an accepted requirement, not an exception to revisit. Secure owner administration remains deferred until roles/authentication are agreed. The SQL foundation does not claim to solve manufacturing, recipes, lot traceability or recall operations.
 
 Local pickup is a real fulfillment workflow, not a static availability badge. Choose an approved pickup location and readiness process; stock from different locations must not be added into an invented pickup promise. Current honey forecasts/wholesale commitments are not retail physical inventory. See [inventory and operations](07-inventory-and-operations.md).
 
@@ -164,9 +164,9 @@ Use MFA and least privilege for domain, hosting, social and future commerce acco
 
 ## Planned quality commands
 
-**Current prototype commands:** `npm ci --ignore-scripts`, `npm run preview`, and `npm test` are implemented. The preview serves the project root on loopback so the hub can read source documents.
+**Current commands:** `npm run dev`, `npm run check`, `npm run format:check`, `npm run build:site`, `npm run start`, `npm run test:site`, `npm run test:db`, `npm run test:e2e`, and `npm run check:site-artifact`. Review commands remain `npm run preview`, `npm run test:prototypes`, `npm run build:pages` and the link/export checks. `npm test` combines prototype and application unit cases; the DB/browser gates remain separately required.
 
-The following are **future production script contracts**, not claims that Astro/check/build/browser-runner scripts already exist here. Phase 1 defines them without confusing prototype tests with the production gate.
+The following older phase contracts describe intent; the operations guide lists the implemented exact commands. Never substitute prototype tests for real PostgreSQL/browser validation.
 
 | Command | Introduced | Purpose |
 |---|---|---|

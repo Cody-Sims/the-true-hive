@@ -1,17 +1,46 @@
 {
-  "name": "the-true-hive-design-studio",
+  "name": "the-true-hive",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local design, commerce simulation, and project-planning review artifacts.",
+  "description": "The True Hive application and preserved design/planning studio.",
+  "engines": {
+    "node": ">=24.2.0 <25"
+  },
   "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 node --env-file-if-exists=.env node_modules/astro/bin/astro.mjs dev --host 127.0.0.1",
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "build:site": "ASTRO_TELEMETRY_DISABLED=1 node --env-file-if-exists=.env node_modules/astro/bin/astro.mjs build",
+    "start": "node --env-file-if-exists=.env scripts/start-site.mjs",
     "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory .",
     "build:pages": "node scripts/build-pages.mjs",
     "check:links": "node scripts/check-links.mjs",
     "check:pages": "node scripts/check-links.mjs --built",
-    "test": "node --test prototypes/tests/*.test.mjs"
+    "format:check": "prettier --check \"src/**/*.{astro,ts,mjs,css}\" \"tests/**/*.ts\" astro.config.mjs tsconfig.json playwright.config.ts scripts/migrate.mjs scripts/start-site.mjs scripts/check-site-artifact.mjs scripts/site-artifact-policy.mjs render.yaml .github/workflows/site.yml",
+    "format": "prettier --write \"src/**/*.{astro,ts,mjs,css}\" \"tests/**/*.ts\" astro.config.mjs tsconfig.json playwright.config.ts scripts/migrate.mjs scripts/start-site.mjs scripts/check-site-artifact.mjs scripts/site-artifact-policy.mjs render.yaml .github/workflows/site.yml",
+    "test": "npm run test:prototypes && npm run test:site",
+    "test:prototypes": "node --test prototypes/tests/*.test.mjs",
+    "test:site": "node --test tests/site/*.test.ts",
+    "test:db": "node --test --test-concurrency=1 tests/database/*.test.ts",
+    "test:e2e": "playwright test",
+    "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs",
+    "check:site-artifact": "node scripts/check-site-artifact.mjs"
   },
   "dependencies": {
-    "markdown-it": "15.0.3"
+    "@astrojs/node": "11.1.9",
+    "astro": "7.4.4",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "markdown-it": "15.0.3",
+    "prettier": "3.9.10",
+    "prettier-plugin-astro": "1.1.2",
+    "typescript": "6.0.3",
+    "yaml": "2.9.1"
   }
 }

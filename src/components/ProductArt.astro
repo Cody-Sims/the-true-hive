@@ -1,0 +1,23 @@
+---
+import soap from "../../prototypes/assets/soap.svg?url";
+import honey from "../../prototypes/assets/honey-jar.svg?url";
+import candle from "../../prototypes/assets/candle.svg?url";
+import type { ProductImage } from "../domain/catalog.ts";
+
+interface Props {
+  image: ProductImage;
+  alt?: string;
+  eager?: boolean;
+}
+const { image, alt = "", eager = false } = Astro.props;
+const illustrations = { soap, honey, candle };
+---
+
+<img
+  src={illustrations[image]}
+  alt={alt}
+  width="420"
+  height="360"
+  loading={eager ? "eager" : "lazy"}
+  decoding="async"
+/>

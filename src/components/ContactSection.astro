@@ -1,0 +1,71 @@
+---
+import type { SiteConfig } from "../server/config.ts";
+interface Props {
+  contact: SiteConfig["contact"];
+}
+const { contact } = Astro.props;
+const hasContact = Boolean(
+  contact.phone || contact.facebook || contact.instagram,
+);
+---
+
+<section
+  id="connect"
+  class="section-space wrap contact-layout"
+  aria-labelledby="connect-title"
+>
+  <div>
+    <p class="eyebrow">Keep it local. Keep in touch.</p>
+    <h2 id="connect-title">
+      See you around
+      <br />
+      the hive.
+    </h2>
+    <p>
+      Questions about the collection or future beekeeping services? Our phone
+      and social channels will be the first places to connect.
+    </p>
+  </div>
+  <aside class="contact-note" aria-label="Contact channels">
+    <h3>
+      {hasContact
+        ? "Let's start a conversation."
+        : "Our contact channels are getting ready."}
+    </h3>
+    {contact.phoneHref && (
+      <a class="contact-link" href={contact.phoneHref}>
+        Call {contact.phone}
+      </a>
+    )}
+    <div class="social-links">
+      {contact.facebook ? (
+        <a href={contact.facebook} rel="noopener noreferrer">
+          Facebook <span aria-hidden="true">&nearr;</span>
+        </a>
+      ) : (
+        <span>
+          Facebook <small>Profile coming soon</small>
+        </span>
+      )}
+      {contact.instagram ? (
+        <a href={contact.instagram} rel="noopener noreferrer">
+          Instagram <span aria-hidden="true">&nearr;</span>
+        </a>
+      ) : (
+        <span>
+          Instagram <small>Profile coming soon</small>
+        </span>
+      )}
+    </div>
+    {!hasContact && (
+      <p class="fine-print">
+        Phone and profile details are not published yet. This page does not send
+        messages or accept orders.
+      </p>
+    )}
+    <p class="fine-print">
+      Email and online ordering are not open yet. Pickup arrangements will be
+      confirmed before any purchase.
+    </p>
+  </aside>
+</section>

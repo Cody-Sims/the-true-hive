@@ -30,6 +30,8 @@ export const documents = [
   { id: "design10", group: "Design directions", title: "10 - The Hive Journal", path: "docs/designs/10-the-hive-journal.md" },
   { id: "changes", group: "Project record", title: "What changed", path: "CHANGELOG.md" },
   { id: "sharing", group: "Project record", title: "Sharing and CI/CD", path: "docs/12-sharing-and-deployment.md" },
+  { id: "foundation", group: "Application delivery", title: "Apiary Market application foundation", path: "docs/13-production-foundation.md" },
+  { id: "operations", group: "Application delivery", title: "Development, CI and Render", path: "docs/14-development-and-operations.md" },
 ];
 
 export function getDocument(id) {

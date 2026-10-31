@@ -4,16 +4,16 @@ Entry gate: the owner approves taking online payments, has real products and ful
 
 ## Outcome and subphases
 
-Launch a real storefront within the coherent primary-domain website, hosted checkout, pickup-first fulfillment, reliable stock and owner-operable managed admin. **Basic inventory administration is a prerequisite to selling**, not a later enhancement. Shipping is a later separately approved launch.
+Build on the approved custom Astro/Node/PostgreSQL foundation to launch our storefront, processor-supported payment, pickup fulfillment and an authenticated owner administration workflow. **Usable secure inventory administration is a prerequisite to selling**, not a later enhancement. No Shopify or Docker; shipping remains a later launch.
 
 | Subphase | Tasks | Gate |
 |---|---|---|
-| 4A - Decide | P4.1 | Native theme vs headless justified; costs/owner workflow accepted |
+| 4A - Decide | P4.1 | Custom order/admin/payment contracts, roles and operating costs agreed |
 | 4B - Prepare | P4.2-P4.3 | Real catalog, opening stock and fulfillment/policies ready |
 | 4C - Implement | P4.4-P4.6 | Customer journey and failure behavior proven |
 | 4D - Pilot | P4.7 | Owner handles an end-to-end test order and stock reconciliation |
 
-Tasks are serialized by default because they share commerce configuration and contracts. A native-shop branch deliberately avoids much of the headless code below.
+Tasks are serialized where they share stock/order/authentication contracts. The first foundation implements read APIs and private count transactions only; this phase adds the actual commerce and authorized owner workflows.
 
 ## P4.1 - Approve the commerce path
 
@@ -21,15 +21,15 @@ Tasks are serialized by default because they share commerce configuration and co
 **Dependencies:** P3.4, or an explicit approved decision to proceed directly after phase 2. **Scope:** S.  
 **Files:** architecture/data/decision documents and future `docs/commerce-runbook.md`.
 
-**Acceptance:** test a native Shopify website/theme/admin against the selected experience. Choose a unified native site or justified same-domain headless frontend, not merely an unrelated shop link. Record primary-domain routes, migration/redirects, recurring costs, staff access, markets/POS and supported API version if applicable. Payment remains hosted.
+**Acceptance:** custom ownership and initial Render-app/Neon-Free tiers are selected. Specify order/reservation/cancellation states, admin authorization, inventory roles, pickup, market/wholesale allocation and the chosen payment processor. Reassess database quotas, backups/recovery and any separately approved upgrade before real orders. Do not implement our own card-data collection or mistake a public count endpoint for administration.
 
-**Verification:** inspect the documented requirement that justifies any headless exception; have the owner try the platform's product/stock workflow. Recheck current official platform pricing/capabilities rather than using this plan as a quote.
+**Verification:** owner/maintainer approves the contracts and role matrix; verify the processor's current docs and sandbox flow. Existing native stock-correction tests are not proof of complete orders/payment behavior.
 
 ## P4.2 - Establish products and opening stock
 
 **Purpose:** make the platform the single authority for sellable variants and quantities.  
 **Dependencies:** P4.1 and approved real product/label information. **Scope:** M.  
-**Files/systems:** managed commerce catalog, SKU/import mapping, location setup; sanitized fixtures only in tests. No customer/order exports or secrets in Git.
+**Files/systems:** our PostgreSQL catalog, variant/location records, approved import and owner UI; fixtures only in tests. No real customer records, credentials or private exports in Git.
 
 **Acceptance:** approved real variants have stable mappings/SKUs, price/currency, released physical stock/location, tracked-stock and deny-oversell policies. Exclude all samples. Future harvest is not inventory; reconcile the reported honey buyer allocation before any retail offer. Record local sales consistently and resolve batch/bundle/expiry needs.
 
@@ -49,29 +49,29 @@ Tasks are serialized by default because they share commerce configuration and co
 
 **Purpose:** replace showcase/inquiry presentation with real commerce only where approved.  
 **Dependencies:** P4.3. **Scope:** M.  
-**Files/systems:** native website/theme collection/product/service routes and navigation; **or**, for headless, `src/server/commerce/`, public mapping, collection/product routes, cart components and server-capable deployment configuration.
+**Files/systems:** our collection/product routes and public DTOs, server catalog/inventory modules, runtime configuration and the approved owner workflow.
 
 **Acceptance:** authoritative products/variants/price/currency; no SDK types scattered through UI; selected-location pickup semantics, not an aggregate stock promise; explicit outages, not empty/zero defaults. Crawlable collection/product links, visible real offer data, valid canonical/schema/merchant information and preserved service URLs meet the [SEO gate](../06-storefront-seo-and-acquisition.md).
 
-**Verification:** native path: inspect configured product/variant pages and main-site/shop navigation. Headless path: `npm run test:unit -- tests/unit/commerce-mapping.test.ts` and `npm run test:e2e -- tests/e2e/commerce-catalog.spec.ts`, including provider failure/stale/unavailable states.
+**Verification:** run the relevant native application/DB cases and built-site browser selectors; inspect real published products, draft exclusion and selected-location stock/outage states. Existing commands are in the operations guide; add focused cases for new commerce behavior.
 
 ## P4.5 - Implement cart handoff to hosted checkout
 
 **Purpose:** make purchase behavior real, accessible and authoritative.  
 **Dependencies:** P4.4. **Scope:** M.  
-**Files/systems:** native theme/cart configuration; **or** headless cart UI, server/provider calls and cart tests. No custom card-entry/payment backend.
+**Files/systems:** our cart/order/reservation modules, processor integration and their tests. No custom card-entry or card-storage backend.
 
-**Acceptance:** variant/quantity selection, removal, errors and total changes are understandable. Server/provider validates inputs and calculates prices. Handle out-of-stock changes and warnings; cart addition is not a homemade stock reservation. Customer continues to the real hosted checkout.
+**Acceptance:** our server validates variants/quantities and computes authoritative merchandise prices from PostgreSQL. Define reservation expiry/release and reconcile processor payment outcomes idempotently. Handle changed stock/totals; a browser cart alone never reserves stock. Sensitive payment details stay with the selected processor.
 
-**Verification:** native test-mode purchase walkthrough; headless `npm run test:e2e -- tests/e2e/cart.spec.ts`. Exercise changed price, insufficient stock, unavailable variant, invalid quantity, provider timeout and keyboard/mobile use.
+**Verification:** run a sandbox purchase and real transactional/order integration cases for changed price, last-unit competition, payment timeout/retry, cancellation/release and mobile/keyboard behavior.
 
 ## P4.6 - Prove reliability and access controls
 
 **Purpose:** preserve correct commerce behavior during failures and retries.  
 **Dependencies:** P4.5. **Scope:** M.  
-**Files/systems:** managed account roles/MFA, cache/failure configuration; only if required, webhook receiver/durable processing/reconciliation and related tests.
+**Files/systems:** authenticated owner roles/MFA, least-privilege database access, payment callback verification/idempotency and reconciliation tests.
 
-**Acceptance:** least-privilege owner/staff access and no private credentials in public output. Native shop path does not add a sync database/webhooks unnecessarily. If a webhook consumer is needed, verify raw-body HMAC, atomically deduplicate, handle out-of-order/missing events and reconcile. Backward-compatible API/version upgrades are documented.
+**Acceptance:** authorize every owner mutation and derive audit actor identity from verified authentication. Keep secrets server-side. Verify the selected processor's documented callback scheme, atomically claim event identity and reconcile missing/out-of-order outcomes. Do not update stock through naive webhook arithmetic.
 
 **Verification:** inspect role permissions and public bundles; for custom integrations run targeted contract/webhook tests, including duplicate concurrent deliveries and invalid signatures. Rehearse outage behavior without creating fictional stock or successful orders.
 
@@ -93,4 +93,4 @@ Preserve orders, payments, stock and audit records through storefront rollback. 
 
 ## Not included by default
 
-Custom admin, custom authentication, payment processing, a separate inventory engine, manufacturing software, multi-channel event infrastructure, subscriptions or loyalty. Phase 5 may justify a bounded addition; it does not automatically authorize these systems.
+The first foundation has no authenticated admin, live payment/order flow, manufacturing software, subscriptions or loyalty. Custom storefront/inventory ownership is approved and the SQL/read/transaction foundation is included; secure administration and payment remain separate implementation gates.
