@@ -52,6 +52,15 @@ export function assertCheckedDeployment(configuration, scripts) {
   ) {
     throw new Error("Native startup must run the checked preflight wrapper.");
   }
+  if (
+    !("preview" in scripts) ||
+    scripts.preview !==
+      "npm run build:pages && python3 -m http.server 4173 --bind 127.0.0.1 --directory dist"
+  ) {
+    throw new Error(
+      "Local preview must build and serve only the curated artifact, not private repository files.",
+    );
+  }
   for (const service of configuration.services) {
     if (
       !service ||

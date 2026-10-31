@@ -27,7 +27,7 @@ Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and
 | [Store preview](prototypes/store.html?design=hearth) | Browse/filter concepts, choose variants, build a demo cart and inspect checkout handoff |
 | [Inventory lab](prototypes/inventory.html?design=hearth) | Explore fictional variant/location stock, sold-out and inventory-outage states |
 
-Use the local HTTP preview, not `file://`, for the gallery's interactive features, shop and planning viewer. If the server is already running, open **http://127.0.0.1:4173/prototypes/**. Otherwise:
+Use the local HTTP preview, not `file://`, for the gallery's interactive features, shop and planning viewer. The preview command builds and serves only the approved static artifact, never private repository files. If the server is already running, open **http://127.0.0.1:4173/prototypes/**. Otherwise:
 
 ```sh
 git clone https://github.com/Cody-Sims/the-true-hive.git
@@ -46,6 +46,8 @@ open http://127.0.0.1:4173/prototypes/plan.html
 The only studio browser-rendering dependency is the locally served, pinned Markdown parser; no CDN, remote font, live social feed or third-party tracking is loaded. Core homepage concepts still use ordinary HTML/CSS/SVG. `npm test` runs prototype and application unit cases; database and built-browser gates are separate commands in the operations guide.
 
 For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes automatic deployment from reviewed `main` updates and the custom preview hostname, **https://preview.thetruehive.com/**. The main domain and mail settings remain unchanged; confirm the custom hostname's HTTPS readiness before sharing it.
+
+After editing planning or prototype sources, run `npm run build:pages` and refresh, or restart `npm run preview`, to regenerate the curated local review.
 
 **Contact direction:** phone and verified social profiles for now. `contact@thetruehive.com` is documented for future use only; no forwarding/mailbox is being activated, and actual phone/profile values still need owner confirmation.
 

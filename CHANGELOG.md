@@ -1,5 +1,11 @@
 # Change log
 
+## Unreleased
+
+### Security
+
+- Local review now serves only the curated static artifact, preventing private environment, agent configuration and server files from being fetched through the preview.
+
 ## October 29, 2026
 
 - Selected Apiary Market for the actual application, preserving all ten prototype URLs.

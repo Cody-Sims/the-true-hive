@@ -12,7 +12,7 @@
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
     "build:site": "ASTRO_TELEMETRY_DISABLED=1 node --env-file-if-exists=.env node_modules/astro/bin/astro.mjs build",
     "start": "node --env-file-if-exists=.env scripts/start-site.mjs",
-    "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory .",
+    "preview": "npm run build:pages && python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
     "build:pages": "node scripts/build-pages.mjs",
     "check:links": "node scripts/check-links.mjs",
     "check:pages": "node scripts/check-links.mjs --built",

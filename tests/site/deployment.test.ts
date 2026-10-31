@@ -40,6 +40,8 @@ test("native app deployment must wait for CI on main rather than deploying unche
   };
   const scripts = {
     start: "node --env-file-if-exists=.env scripts/start-site.mjs",
+    preview:
+      "npm run build:pages && python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
   };
   assert.doesNotThrow(() =>
     assertCheckedDeployment({ services: [service] }, scripts),
@@ -72,6 +74,8 @@ test("deployment cannot bypass startup preflight or continually probe the databa
   };
   const scripts = {
     start: "node --env-file-if-exists=.env scripts/start-site.mjs",
+    preview:
+      "npm run build:pages && python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
   };
   for (const change of [
     { startCommand: "node dist-site/server/entry.mjs" },
@@ -102,6 +106,40 @@ test("deployment cannot bypass startup preflight or continually probe the databa
     assert.throws(
       () => assertCheckedDeployment(configuration, scripts),
       /approved|service|database|plan/i,
+    );
+  }
+});
+
+test("local preview must serve the curated artifact, not private repository files", () => {
+  const service = {
+    type: "web",
+    runtime: "node",
+    plan: "0.5c-512mb",
+    region: "oregon",
+    branch: "main",
+    autoDeployTrigger: "checksPass",
+    startCommand: "npm run start",
+    healthCheckPath: "/api/health/live",
+  };
+  const scripts = {
+    start: "node --env-file-if-exists=.env scripts/start-site.mjs",
+    preview:
+      "npm run build:pages && python3 -m http.server 4173 --bind 127.0.0.1 --directory dist",
+  };
+  assert.doesNotThrow(() =>
+    assertCheckedDeployment({ services: [service] }, scripts),
+  );
+  for (const directory of [".", "src", "prototypes"]) {
+    assert.throws(
+      () =>
+        assertCheckedDeployment(
+          { services: [service] },
+          {
+            ...scripts,
+            preview: `python3 -m http.server 4173 --bind 127.0.0.1 --directory ${directory}`,
+          },
+        ),
+      /preview|curated|private/i,
     );
   }
 });
