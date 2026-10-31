@@ -19,19 +19,24 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | F11 | Complete current planning hub and prototypes may be public in Cody-Sims/the-true-hive | Explicit owner publication/visibility choice on 2026-10-28 |
 | F12 | Use preview.thetruehive.com on existing Porkbun DNS; leave the main domain for the future site | Owner's domain choices on 2026-10-29 |
 | F13 | Defer email setup; document contact@thetruehive.com and use phone/socials for now | Latest owner instruction on 2026-10-29; actual phone/profile destinations remain unprovided |
+| F14 | Apiary Market (concept 04) is selected; create our own storefront/inventory, not Shopify | Owner's implementation direction |
+| F15 | Astro/TypeScript + native Node/PostgreSQL foundation approved; no Docker | Owner's scope confirmation and later no-Docker instruction |
+| F16 | Render selected; owner reports account created and connected to GitHub | Owner's hosting answer; no paid resource provisioning is implied |
+| F17 | Native Render app in a Hobby workspace plus Neon Free PostgreSQL, both in Oregon | Owner's later provider, tier and region approval; no paid Neon or Render database |
+| F18 | Verified database TLS with channel binding when offered using the current Node driver | Explicit owner connection-policy choice; strict required channel binding is not claimed |
 
 ## Architecture and design decisions
 
 | ID | Status | Decision / rationale | Revisit when |
 |---|---|---|---|
 | D1 | Confirmed scope | No live checkout/admin now | Owner authorizes commerce |
-| D2 | Conditional recommendation | Astro + TypeScript for an initial pre-commerce site; reassess against funded integrated-store requirements before bootstrap | Commerce timing, maintainer expertise, native-theme fit and headless operating budget |
+| D2 | Accepted | Astro + TypeScript with native Node and PostgreSQL | Proven scaling/operating need, not speculative framework changes |
 | D3 | Recommended | Typed local content before CMS | Owner updates become frequent and developer-mediated publishing is a real bottleneck |
-| D4 | Recommended | Managed commerce/inventory; evaluate a native Shopify primary-domain website/theme before custom headless | A documented requirement exceeds supported theme/app capabilities |
-| D5 | Open selection | Ten directions; product-led shortlist, with Fieldwork retained as a service-forward reference, not a conversion winner | Owner shortlist and task-based local review |
+| D4 | Superseded | Earlier Shopify recommendation rejected; our database/application own inventory | Preserve the rationale as historical comparison, not active instructions |
+| D5 | Accepted | Apiary Market, with all ten prototypes retained separately | Owner-approved changes after real customer feedback |
 | D6 | Recommended | Ordinary social links; no live feeds/pixels by default | A measurable need justifies performance/privacy cost |
 | D7 | Recommended | Direct phone/email at initial launch; form later | Owner has a receiving/response workflow |
-| D8 | Recommended | One app/repository; no speculative custom admin/database | Proven operational constraints require additional systems |
+| D8 | Accepted | One modular app/repository and an actual custom inventory database; public editing/admin remains gated | Auth/roles and payment/order specification before new mutations |
 | D9 | Confirmed target | Unified same-site store; pickup first, shipping later | Explicit owner change |
 | D10 | Required planning boundary | Future harvest/wholesale promises are not physical retail inventory; do not retail-presell allocated honey | Agreement/allocation and actual available lots are approved |
 | D11 | Required release boundary | Current snapshot may be public by explicit approval; future confidential material is not approved; real production excludes review/demo content | Private hosted material needs access controls, not just noindex |
@@ -39,6 +44,11 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | D13 | Accepted for review | Public GitHub repository and Pages/Actions preview; no real commerce on Pages | Move production business/commerce to an appropriate host |
 | D14 | Accepted for review | One preview CNAME to GitHub; preserve root/www and all existing mail DNS | Production hosting/domain decision, with ownership verification and valid HTTPS |
 | D15 | Deferred | No mail-forwarding/mailbox purchase or SMTP setup; future Porkbun mailbox/Workspace decision | Email is needed and the owner approves the actual sending/receiving plan |
+| D16 | Superseded by D18 | Earlier free Render draft and Render-database proposal; native Node/no Docker remains valid | Historical alternative, not active provisioning instructions |
+| D17 | Required | PRs and actual preview/site/native-DB checks on main; Render waits for CI before deployment | Maintain stable required contexts and do not bypass checks manually |
+| D18 | Accepted for foundation | One $7/month native Render app in a Hobby workspace; Neon Free PostgreSQL in Oregon, no paid database resource | Quotas/recovery or measured traffic justify a separately approved upgrade before live operations |
+| D19 | Accepted | Certificate-verified TLS and opportunistic channel binding; explicit `channel_binding=prefer`, reject `require` rather than pretending to enforce it | A strict channel-binding requirement needs a compatible driver |
+| D20 | Required | Validate database/schema once before listening; Render regularly checks process liveness, not database readiness | Preserve honest outage responses and avoid keeping free Neon compute awake through monitoring |
 
 ## Owner decisions by gate
 
@@ -60,7 +70,7 @@ No public pickup address, neighboring service town, acreage capacity, retail hon
 | Mock store is mistaken for a live store | Customer confusion and loss of trust | Persistent demo/sample labels, read-only checkout, no real payments/orders or offer/rating schema |
 | Unknown contact/social links leak into production | Broken conversion path | Launch-blocking owner confirmation and real-device rehearsal |
 | Generic competitor imitation loses local credibility | Weak differentiation and IP risk | Original design/assets; verified local story; borrow patterns, not branding |
-| Overbuilding for speculative commerce | Delayed landing page and needless maintenance | Static release first; gated native-versus-headless decision |
+| Expanding custom commerce before contracts/auth | Integrity/security/operating risk | Keep the foundation bounded; add tested order/reservation/payment/owner slices deliberately |
 | Static deployment is mistaken for a backend | Dropped inquiries/webhooks | Explicit hosted-provider or runtime decision before endpoints |
 | Manual catalog stock drifts from actual sales | Overselling or disappointed local shoppers | No quantity claims until authoritative inventory and a freshness policy exist |
 | In-person and online stock diverge | Overselling | Shared platform/POS or explicit reconciliation before launch |
@@ -75,7 +85,7 @@ No public pickup address, neighboring service town, acreage capacity, retail hon
 
 ## Cost and scheduling model
 
-No platform subscription or project price is quoted here; current pricing and the owner's budget have not been established.
+The selected starting infrastructure uses Render's publicly listed $7/month native app tier with a Hobby workspace and Neon Free. Recheck current public pricing before provisioning or changing tiers. This is not a complete business budget, a guarantee of future free quotas or approval for paid Neon/Render database resources.
 
 Budget separately for domain/DNS, hosting and preview controls, business email, real photography/identity, optional form/CMS, commerce subscription/payment processing, POS/apps, packaging/fulfillment, and ongoing maintenance. Headless also adds cart/integration/API-upgrade work. A static site is not automatically free to operate; a native shop is not automatically cheaper than a static brochure site.
 

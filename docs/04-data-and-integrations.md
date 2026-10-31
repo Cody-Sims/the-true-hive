@@ -1,6 +1,8 @@
 # Data and integration boundaries
 
-This document defines future contracts and invariants. It does **not** request a database, API service, or generic integration framework for the landing page.
+This document defines data contracts and invariants. The approved application now has a PostgreSQL/API foundation; later contracts do not authorize a generic integration framework or additional services.
+
+**Updated decision:** the owner now approved a custom PostgreSQL foundation and native Node APIs, with no Shopify or Docker. The [foundation specification](13-production-foundation.md) and [operations guide](14-development-and-operations.md) describe the implemented slice; later inquiry/payment/admin features remain gated.
 
 The review studio separately contains a fictional catalog/inventory snapshot and a browser-only cart. Its sample prices/stock are not business records. The future real store belongs in the coherent website experience; see [architecture](03-architecture.md).
 
@@ -11,10 +13,10 @@ The review studio separately contains a fictional catalog/inventory snapshot and
 | Name, locality, story, service scope | Approved typed content | Same, or approved CMS | Same |
 | Contact/social URLs | Approved typed content | Same | Same |
 | Showcase copy/images | Labeled local concepts | Replace only with approved real records | Provider-owned merchandising or explicitly separate editorial copy |
-| Real price/variant sellability | Not shown | Optional owner-approved informational price | Shopify authority; no independently edited duplicate |
-| Stock quantity | No live quantity claim | "Ask about availability" unless an authoritative process exists | Shopify variant/location inventory, scoped to approved fulfillment |
+| Real price/variant sellability | Not shown for concepts | Approved database records only | Our PostgreSQL authority; no prototype-price imports |
+| Stock quantity | No live quantity claim | Location-scoped database availability | Our constrained PostgreSQL levels and transaction history |
 | Inquiries | Direct phone/email | Selected hosted form/CRM or bounded endpoint | Same; not an order/booking |
-| Orders/payment | None | None | Hosted checkout/commerce provider |
+| Orders/payment | None | None | Our order/stock state plus a later selected payment processor |
 | Credentials | None needed in browser | Provider secrets remain server-side | Private integration credentials remain server-side |
 
 ## Stable identifiers and public models
@@ -102,7 +104,7 @@ Apply server-side schema validation, size bounds, abuse protection, and origin/C
 | Harvest forecast | Future honey production and a buyer agreement are not physical stock or automatically native platform committed quantities |
 | Wholesale allocation | Prevent competing retail offers using the selected platform's supported order/reservation/location workflow; do not double-sell the reported allocated harvest |
 
-Shopify documents that inventory levels connect an inventory item and location ([inventory model](https://shopify.dev/docs/apps/build/inventory-management-apps/manage-quantities-states)) and that inventory is tracked separately by location ([location guidance](https://help.shopify.com/en/manual/inventory-and-locations/setup/multi-managed-inventory)). Its admin already supports adjustments and history ([owner workflow](https://help.shopify.com/en/manual/inventory-and-locations/adjusting-inventory/adjusting-inventory-quantities)).
+The implemented schema connects one variant to one location and constrains committed/held quantities within physical on-hand stock. `adjustStock` serializes operation retries, locks the stock row, and commits the count/history together. It is private server code, not an authorized public editing API.
 
 For precise availability, read the selected API version's definitions. "Available for sale" is not necessarily a positive physical quantity at a pickup location. Do not infer a pickup promise from a generic product availability flag.
 
@@ -116,16 +118,16 @@ The owner reports current soap sales, two hives and an allocated next-year honey
 
 ## Integration boundary
 
-For a native Shopify website/theme, the platform may provide the integrated site, catalog/cart/checkout/admin without a custom commerce adapter. If an initial static marketing site exists, migration/integration and redirects are explicit work. A separate unrelated shop link alone is not the target architecture.
+Our Astro frontend and native Node APIs live in one application. Server repositories map PostgreSQL rows into safe public DTOs; the browser never maintains authoritative quantities. Production output excludes the review app and internal documents.
 
-If a headless approach is later approved:
+Current direction:
 
 ```text
-Shopify responses -> server integration/mapping -> safe public models -> UI
-customer cart request -> server/provider validation -> authoritative cart/checkout URL
+PostgreSQL -> server repository/mapping -> safe public models -> UI
+future cart/order request -> our validation/stock transaction -> payment processor
 ```
 
-No Admin credential in browser code. Use minimum scopes. Intentionally public Storefront credentials are different from private tokens. Keep provider IDs inside integration/cart contracts, not throughout presentation or public content records.
+Neon database and future payment credentials stay private on the host. Keep the direct schema-owner migration connection separate from the pooled read-only runtime connection; the public app must not use owner credentials. Keep processor identifiers out of presentation contracts. The first slice has no customer data, payment collection or public inventory mutation.
 
 ## Prototype-only contracts
 
@@ -152,14 +154,14 @@ No receiver, event bus, queue or synchronization database belongs in phases 1-2.
 
 If later maintaining a projection or side effect:
 
-1. Verify Shopify's HMAC against the **raw** body before trusting/parsing the payload.
+1. Verify the selected payment provider's documented signature/authentication scheme before trusting an event; preserve the raw body when that scheme requires it.
 2. Validate merchant/topic/version and payload shape; reject unexpected data.
 3. Atomically claim a persisted delivery identity so simultaneous duplicates cannot both act.
 4. Acknowledge only after durable receipt; process longer work asynchronously if needed.
 5. Re-fetch authoritative state or use explicit version checks; delivery order is not guaranteed.
 6. Reconcile periodically if maintaining local data; do not rely on every delivery arriving.
 
-Use the selected platform's documented delivery/event identifiers deliberately, not an in-memory set. See [verification](https://shopify.dev/docs/apps/build/webhooks/verify-deliveries) and [delivery limitations](https://shopify.dev/docs/apps/build/webhooks).
+Use the selected payment processor's documented event identifiers, verification and retry semantics. Persist claims atomically; never use only an in-memory set. The earlier Shopify examples are not the chosen integration.
 
 ## Migration checklist
 

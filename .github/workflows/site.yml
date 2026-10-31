@@ -1,0 +1,70 @@
+name: Production CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ASTRO_TELEMETRY_DISABLED: "1"
+
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check source format and types
+        run: npm run format:check && npm run check
+      - name: Check application contracts
+        run: npm run test:site
+      - name: Build and inspect native application artifact
+        run: npm run build:site && npm run check:site-artifact
+      - name: Install the test browser
+        run: npx playwright install --with-deps chromium
+      - name: Check built customer journeys and accessibility
+        run: npm run test:e2e
+
+  inventory-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Start native PostgreSQL
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres pg_isready
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE true_hive_test WITH LOGIN PASSWORD 'ci-test-fixture';"
+          sudo -u postgres createdb --owner=true_hive_test true_hive_test
+      - name: Check real inventory transactions
+        env:
+          TEST_DATABASE_URL: postgresql://true_hive_test:ci-test-fixture@127.0.0.1:5432/true_hive_test
+        run: npm run test:db

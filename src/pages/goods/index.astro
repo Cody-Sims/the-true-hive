@@ -1,0 +1,62 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ProductCard from "../../components/ProductCard.astro";
+import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
+import { readConfig } from "../../server/config.ts";
+let catalog;
+let unavailable = false;
+try {
+  catalog = await getCatalog(readConfig());
+} catch (error) {
+  if (!(error instanceof CatalogUnavailableError)) throw error;
+  unavailable = true;
+  Astro.response.status = 503;
+}
+---
+
+<SiteLayout
+  title="The good-goods collection"
+  description="Explore The True Hive's soap collection and future honey and candle concepts. Online ordering, retail honey availability, and pickup details are not open yet."
+>
+  <section class="page-intro wrap">
+    <p class="eyebrow">The neighborhood product shelf</p>
+    <h1>
+      The good-goods
+      <br />
+      <em>collection.</em>
+    </h1>
+    <p>
+      A little daily ritual. A future pantry favorite. A slower moment at home.
+      Learn what's taking shape before our online store opens.
+    </p>
+  </section>
+  <section class="wrap collection-section" aria-label="Collection">
+    {unavailable ? (
+      <div class="notice" role="status">
+        <h2>The catalog is temporarily unavailable.</h2>
+        <p>
+          Product information could not be verified. Please try again later; no
+          fictional stock has been substituted.
+        </p>
+      </div>
+    ) : catalog?.products.length ? (
+      <div class="product-shelf">
+        {catalog.products.map((product) => (
+          <ProductCard product={product} />
+        ))}
+      </div>
+    ) : (
+      <div class="notice">
+        <h2>A collection in the making.</h2>
+        <p>No products have been published yet.</p>
+      </div>
+    )}
+    <p class="fine-print collection-note">
+      Original concept illustrations, not final product photographs. No cart,
+      payment, reservation, or preorder is available.
+    </p>
+    <a class="text-link" href="/#pickup">
+      How local pickup will begin <span aria-hidden="true">&rarr;</span>
+    </a>
+  </section>
+</SiteLayout>

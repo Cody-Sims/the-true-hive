@@ -1,0 +1,114 @@
+---
+import "../styles/site.css";
+import favicon from "../../prototypes/assets/favicon.svg?url";
+import { readConfig } from "../server/config.ts";
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  notFound?: boolean;
+}
+const {
+  title,
+  description,
+  path = Astro.url.pathname,
+  notFound = false,
+} = Astro.props;
+const config = readConfig();
+const canonical = new URL(path, config.siteOrigin).href;
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "The True Hive",
+  url: config.siteOrigin,
+}).replaceAll("<", "\\u003c");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} | The True Hive</title>
+    <meta name="description" content={description} />
+    <meta
+      name="robots"
+      content={
+        config.indexable && !notFound ? "index, follow" : "noindex, follow"
+      }
+    />
+    {!notFound && <link rel="canonical" href={canonical} />}
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+    <meta property="og:title" content={`${title} | The True Hive`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <script
+      is:inline
+      type="application/ld+json"
+      nonce={Astro.locals.nonce}
+      set:html={schema}
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
+    <div class="opening-note">
+      <div class="wrap">
+        <span>A local collection in the making.</span>
+        <span>Online ordering isn't open yet.</span>
+      </div>
+    </div>
+    <header class="site-header wrap">
+      <a class="brand" href="/" aria-label="The True Hive home">
+        <span class="market-mark" aria-hidden="true">
+          TH
+        </span>
+        <span class="brand-name">
+          THE TRUE HIVE<small>Madisonville, Tennessee</small>
+        </span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a
+          href="/goods"
+          aria-current={path.startsWith("/goods") ? "page" : undefined}
+        >
+          The goods
+        </a>
+        <a href="/#pickup">Local pickup</a>
+        <a
+          href="/services"
+          aria-current={path === "/services" ? "page" : undefined}
+        >
+          Beekeeping
+        </a>
+        <a href="/about" aria-current={path === "/about" ? "page" : undefined}>
+          Our beginning
+        </a>
+        <a href="/#connect">
+          Connect <span aria-hidden="true">&nearr;</span>
+        </a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <div>
+          <strong>The True Hive</strong>
+          <p>Good things. A local beginning.</p>
+          <p class="fine-print">Madisonville, Tennessee</p>
+        </div>
+        <nav aria-label="Footer navigation">
+          <a href="/goods">The collection</a>
+          <a href="/services">Beekeeping</a>
+          <a href="/#connect">Contact channels</a>
+          <a href="/privacy">Privacy</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

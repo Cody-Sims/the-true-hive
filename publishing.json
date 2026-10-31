@@ -14,7 +14,7 @@
     "decisions", "comparison", "phase0", "phase1", "phase2", "phase3",
     "phase4", "phase5", "design01", "design02", "design03", "design04",
     "design05", "design06", "design07", "design08", "design09", "design10",
-    "changes", "sharing"
+    "changes", "sharing", "foundation", "operations"
   ],
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

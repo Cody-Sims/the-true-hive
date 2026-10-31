@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   verify-and-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Check out source
@@ -28,7 +28,7 @@ jobs:
       - name: Install pinned dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check prototype behavior and artifacts
-        run: npm test
+        run: npm run test:prototypes
       - name: Check source links
         run: npm run check:links
       - name: Build approved static preview
@@ -44,7 +44,7 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: verify-and-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read

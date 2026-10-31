@@ -2,6 +2,8 @@
 
 Status: review hypotheses, **not ten production websites or proven conversion rankings**.
 
+**Implementation decision:** Apiary Market is now selected. The actual site uses our own Astro/Node/PostgreSQL foundation, not Shopify, and the ten prototypes remain a separate archive. Earlier platform suggestions in art-direction briefs are historical options, superseded by the [approved foundation](13-production-foundation.md).
+
 ## Why expand the comparison
 
 The owner prioritizes product/local sales, pickup first and shipping later. The original three directions are retained and extended; seven additional compositions explore a broader retail identity. The actual small-scale soap operation is the near-term anchor. Honey/candle concepts do not prove retail readiness.

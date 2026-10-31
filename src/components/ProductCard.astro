@@ -1,0 +1,40 @@
+---
+import type { Product } from "../domain/catalog.ts";
+import ProductArt from "./ProductArt.astro";
+
+interface Props {
+  product: Product;
+}
+const { product } = Astro.props;
+const labels = {
+  soap: "The daily ritual",
+  honey: "For the table",
+  candles: "A slower moment",
+  gifts: "For someone good",
+};
+---
+
+<article class="shelf-product">
+  <a
+    class:list={["shelf-art", `${product.imageKey}-art`]}
+    href={`/goods/${product.slug}`}
+    aria-label={`Explore ${product.title}`}
+  >
+    <span class="shelf-ticket">{labels[product.category]}</span>
+    <ProductArt image={product.imageKey} />
+  </a>
+  <div class="shelf-copy">
+    <p class="eyebrow">
+      {product.kind === "concept" ? "A collection direction" : "Meet the goods"}
+    </p>
+    <h3>
+      <a href={`/goods/${product.slug}`}>
+        {product.title} <span aria-hidden="true">&nearr;</span>
+      </a>
+    </h3>
+    <p>{product.summary}</p>
+    <span class="pill">
+      {product.kind === "concept" ? "Concept product" : "Product information"}
+    </span>
+  </div>
+</article>

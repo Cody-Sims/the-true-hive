@@ -1,5 +1,13 @@
 node_modules/
 dist/
+dist-site/
+.astro/
+.neon
+.neon/
+.mcp.json
+.agents/skills/neon-postgres/
+playwright-report/
+test-results/
 .env
 .env.*
 !.env.example

@@ -4,6 +4,8 @@ Status: **scope confirmed; design and production details await approval**
 Date: **2026-10-28**  
 Source: the owner's requests and follow-ups: Madisonville, TN; ten total concepts; product/local-sales priority; pickup first; integrated future storefront/inventory; an in-UI planning and business hub.
 
+**Implementation approval:** Apiary Market (04), our own Astro/TypeScript native Node/PostgreSQL storefront/inventory, no Shopify or Docker. The first slice has no live checkout or public admin. Use a native Render app with Neon Free PostgreSQL in Oregon; preserve the review at `preview.thetruehive.com` and use `thetruehive.com` for the actual site after readiness. See the [current foundation specification](13-production-foundation.md).
+
 ## Objective
 
 Establish The True Hive as an approachable, credible local maker/bee business in Madisonville, Tennessee. Prioritize product discovery and local sales, building on existing small-scale soap sales and beekeeping; keep planned removal and pollination services easy to find. Start with local pickup, add shipping only when ready, and plan an integrated storefront with authoritative inventory. Provide ten design directions and an internal UI for the complete website/business plan.

@@ -1,0 +1,101 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import ProductArt from "../../components/ProductArt.astro";
+import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
+import { readConfig } from "../../server/config.ts";
+import { isRecordKey } from "../../server/inventory/rules.ts";
+let product = null;
+let unavailable = false;
+if (isRecordKey(Astro.params["slug"])) {
+  try {
+    product = await getProduct(readConfig(), Astro.params["slug"]);
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+    unavailable = true;
+  }
+}
+if (!product) Astro.response.status = unavailable ? 503 : 404;
+---
+
+<SiteLayout
+  title={
+    product?.title ??
+    (unavailable ? "Collection unavailable" : "Product not found")
+  }
+  description={
+    product?.summary ??
+    "Return to The True Hive collection to explore published product information."
+  }
+  notFound={!product}
+>
+  <div class="wrap product-detail">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a href="/goods">The goods</a>
+      {product && (
+        <>
+          <span aria-hidden="true">/</span>
+          <span>{product.title}</span>
+        </>
+      )}
+    </nav>
+    {product ? (
+      <div class="detail-layout">
+        <figure class:list={["detail-art", `${product.imageKey}-art`]}>
+          <ProductArt
+            image={product.imageKey}
+            alt={`Original concept illustration for ${product.title}.`}
+            eager
+          />
+          <figcaption>
+            Original illustration, not an approved product photograph.
+          </figcaption>
+        </figure>
+        <section class="detail-copy">
+          <p class="eyebrow">The True Hive collection</p>
+          <h1>{product.title}</h1>
+          <span class="pill">
+            {product.kind === "concept"
+              ? "Concept product"
+              : "Product information"}
+          </span>
+          <p>{product.summary}</p>
+          <ul>
+            {product.details.map((detail) => (
+              <li>{detail}</li>
+            ))}
+          </ul>
+          <div class="notice">
+            <h2>Good things take a little care.</h2>
+            <p>
+              Online ordering isn't open yet. Real formats, labels,
+              availability, and pickup instructions will be confirmed before
+              sales begin.
+            </p>
+          </div>
+          <a class="text-link" href="/#connect">
+            Find our contact channels <span aria-hidden="true">&rarr;</span>
+          </a>
+        </section>
+      </div>
+    ) : (
+      <section class="not-found">
+        <p class="eyebrow">The collection</p>
+        <h1>
+          {unavailable
+            ? "The collection needs another moment."
+            : "That good isn't on the shelf."}
+        </h1>
+        <p>
+          {unavailable
+            ? "Catalog information could not be verified. Please try again later."
+            : "This product may not be published. Explore the current collection instead."}
+        </p>
+        <a class="button button-primary" href="/goods">
+          Back to the collection <span aria-hidden="true">&rarr;</span>
+        </a>
+      </section>
+    )}
+  </div>
+</SiteLayout>

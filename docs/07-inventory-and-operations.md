@@ -4,7 +4,7 @@ Status: production requirements and operating design; the browser lab is fiction
 
 ## What must be true
 
-The future store is part of the website, but **the website is not the stock ledger**. Use one authoritative commerce/inventory system for actual variants, locations, sellability, orders, stock adjustments and audit history. Start with managed administration, not a custom `/admin`.
+The store's browser UI is not the stock ledger. **Our PostgreSQL database is the selected authority**, with native Node repositories for public reads and private inventory transactions. The owner rejected Shopify. Render hosts the app and Neon manages PostgreSQL infrastructure; stock rules remain ours. No Docker.
 
 The owner currently reports two hives, small-scale soap sales and a buyer for next year's honey. That supports a soap-led local plan, **not retail honey quantities or a pollination fleet**. Keep the buyer/forecast context private until approved for publication.
 
@@ -21,7 +21,7 @@ The owner currently reports two hives, small-scale soap sales and a buyer for ne
 | Customer cart | Desired variant IDs/quantities | **Not a homemade reservation** |
 | Order/allocation | Platform-supported commitment and fulfillment workflow | Affects sellability according to provider rules |
 
-Do not manually write a future harvest into Shopify's native `committed` state. Shopify manages committed inventory through order-related actions; a forecast/agreement needs an appropriate planning/allocation workflow before actual received stock is exposed to retail.
+Do not write a future harvest into physical on-hand stock or committed units. Forecasts/agreements need an explicit planning/allocation record; actual received, quality-released batches enter physical inventory separately. Order reservations are a later transaction design, not a count fabricated from a cart.
 
 ## System-of-record flow
 
@@ -42,7 +42,7 @@ Physical batch received -> quality/label release -> authoritative location stock
              count / damage / cancellation / return workflow
 ```
 
-No separate public JSON file maintains real stock. A headless adapter may read/cache safe projections, but the platform remains authoritative at mutation and checkout.
+No public JSON file or browser cart maintains real stock. Our server maps constrained PostgreSQL data into location-scoped availability; the internal correction operation commits count/audit together. Checkout/order reservations are not yet implemented.
 
 ## Inventory requirements and acceptance
 
@@ -53,14 +53,14 @@ No separate public JSON file maintains real stock. A headless adapter may read/c
 | I03 | Forecasts and wholesale allocation distinct from physical retail units | The reported allocated future honey cannot appear as retail stock/preorder by default |
 | I04 | Pickup availability scoped to the selected location | Stock from two locations is not combined into one pickup promise; transfers require supported configuration and disclosed timing |
 | I05 | Unknown, sold-out and not-offered are distinct | An API outage/missing record does not show zero, in-stock, or shipping eligibility |
-| I06 | Provider owns price/totals and final stock checks | A manipulated browser price or stale cart does not control payment amount/sellability |
+| I06 | Our server/database own merchandise prices and stock checks; the processor verifies payment | A manipulated browser price or stale cart does not control the payable order |
 | I07 | No custom cart-based decrements/reservations | Adding/removing a cart line does not alter physical/platform stock through local arithmetic |
 | I08 | Deny unapproved overselling | Competing orders for the last unit are resolved by the authoritative platform, with explicit customer recovery |
 | I09 | In-person sales reconcile with online availability | A market/POS sale reduces the proper real location's sellable stock, or a documented reconciliation precedes further offers |
 | I10 | Adjustments have reason, actor and history | Damage/count/receipt/transfer actions are auditable and not duplicated by event retries |
 | I11 | Refund is not automatically sellable restock | Actual receipt, product suitability and correct location determine restocking |
 | I12 | Batch/lot and quality needs are addressed | A complaint can be traced to actual materials/finished units; an appropriate supported process/app is selected if basic stock lacks it |
-| I13 | Managed roles/MFA and least privilege | Staff cannot perform unauthorized adjustments/export/access; private credentials never reach the browser |
+| I13 | Authenticated custom owner roles/MFA and least privilege | Staff cannot perform unauthorized adjustments/export/access; private credentials never reach the browser |
 | I14 | Failure/reconciliation plan is operational | Outages, duplicate/out-of-order/missing events and deployment rollback do not destroy or invent stock/orders |
 
 These are business/engineering invariants. They do not claim every feature is supplied by a basic platform plan.
@@ -80,7 +80,7 @@ The production journey must explain:
 
 If only part of an order is available, use the platform's supported rules. Do not promise split pickup/shipping, transfers or custom scheduling without checking plan/capability and customer communication.
 
-Shopify's current [pickup guidance](https://help.shopify.com/en/manual/fulfillment/setup/delivery-methods/pickup-in-store) says pickup is configured per location and discusses supported transfers/processing times. It does not establish that the business already has an approved location, eligibility or a given platform plan.
+Our future pickup workflow must implement location eligibility, preparation/ready notification and truthful timing. The current availability endpoint does not combine locations or expose a public address; it is not a reservation or fulfillment promise.
 
 ## Owner workflow rehearsals
 
@@ -98,25 +98,24 @@ Shopify's current [pickup guidance](https://help.shopify.com/en/manual/fulfillme
 
 Recipe/BOM consumption, cure/production lead time, lot expiry and bundle-component availability are separate maker requirements. Start with an adequate supported workflow and qualify any app; do not assume a simple quantity counter solves them.
 
-## Native versus headless implementation
+## Implemented foundation and later administration
 
-**Native Shopify site/theme:** prefer platform catalog, stock/admin, pickup, checkout and notification workflows when they meet the requirement. No synchronized database or webhook receiver is required merely to display the native storefront.
+The first slice provides product/variant/location tables, count constraints, checksum-verified migrations, read APIs, readiness, and an internal `adjustStock` operation. Native PostgreSQL cases cover last-unit competition, matching retries, conflicting operation reuse and rollback on history failure.
 
-**Headless site:** use server-only privileged integrations, safe public models and a documented cache/freshness policy. Keep normal content available during inventory problems, but do not claim known stock or successful cart/checkout acceptance when validation fails. Revalidate through the provider at purchase time.
+There is **no public editing API, admin login, payment or real customer order yet**. The eventual admin must authenticate/authorize the operator and use private write credentials. Public read credentials should be least-privilege. Keep useful content during outages, but never substitute mock prices/stock when the database catalog fails.
 
 If a local projection/side effect genuinely needs webhooks, verify raw-body HMAC before trust, validate the expected merchant/topic/version, atomically persist/deduplicate delivery, acknowledge durable receipt and reconcile missed/out-of-order data. Prefer re-fetching authoritative state to arithmetic based on events.
 
-Private tokens, admin credentials, customer records and webhook secrets never belong in the static site. Public Storefront tokens are a distinct intentionally public credential type; scopes still matter.
+Database, admin and payment secrets never belong in frontend bundles or public repository files. Neon Free is the initial empty-schema/pilot tier, not approval of its short history window for real orders. Confirm quotas, backup ownership and a rehearsed recovery process before storing operational inventory or enabling checkout; any paid upgrade needs separate approval.
 
 ## Primary-source evidence
 
 | Source | Supporting observation | Limit |
 |---|---|---|
-| [Shopify inventory model](https://shopify.dev/docs/apps/build/inventory-management-apps/manage-quantities-states) | "Inventory levels connect one inventory item to one location"; variants have associated inventory items | Pin and inspect the chosen API version; this is not a custom reservation recipe |
-| [Managed quantity adjustments](https://help.shopify.com/en/manual/inventory-and-locations/adjusting-inventory/adjusting-inventory-quantities) | Existing admin supports count/quantity adjustments and history | Does not prove every batch/manufacturing requirement is covered |
-| [Pickup configuration](https://help.shopify.com/en/manual/fulfillment/setup/delivery-methods/pickup-in-store) | Location-specific pickup, processing time and transfer considerations | Confirm current plan/checkout compatibility and actual business setup |
-| [Webhook verification](https://shopify.dev/docs/apps/build/webhooks/verify-deliveries) | HMAC uses raw body; duplicate deliveries require idempotent handling | Only needed for a real consumer; not permission to build unneeded sync infrastructure |
-| [Webhook limitations](https://shopify.dev/docs/apps/build/webhooks) | Ordering/delivery cannot be treated as a perfect stock ledger | Reconciliation is required when maintaining derived local state |
+| [PostgreSQL locking](https://www.postgresql.org/docs/16/explicit-locking.html) | Transaction/row locking supports serializing conflicting stock changes | Real native integration cases supplement the documented behavior |
+| [node-postgres transactions](https://node-postgres.com/features/transactions) | A transaction uses one checked-out client | Never perform a multi-statement transaction through unrelated pool queries |
+| [Neon connection pooling](https://neon.com/docs/connect/connection-pooling) | Pooled runtime and direct operator connections | Pooling does not implement stock/admin logic |
+| [Neon plans](https://neon.com/pricing) | Free quotas and short recovery history; paid tiers differ | A free project is not a rehearsed business-data recovery plan |
 
 Official rolling pages consulted on 2026-10-28. Recheck capabilities, support windows and API versions at implementation.
 
@@ -124,7 +123,7 @@ Official rolling pages consulted on 2026-10-28. Recheck capabilities, support wi
 
 The [inventory lab](../prototypes/inventory.html?design=hearth) and all ten shop themes use the same local fixture snapshot. They demonstrate variant choice, channel/location scope, explicit sold-out/unknown states, bounded cart quantities and subtotal recalculation. The sample cart stores only IDs/quantities and never reserves stock.
 
-**They do not prove:** real concurrent stock correctness, payment idempotency, secure admin authorization, physical batch traceability, real pickup eligibility or provider availability. Those require the actual platform and the operational [phase-4 gate](phases/04-commerce-and-inventory.md).
+The prototypes do not prove real inventory correctness. The new application adds separately tested native PostgreSQL transactions; these still do **not** prove payment idempotency, secure admin authorization, lot traceability, real pickup eligibility or hosted production readiness. Those remain [phase-4 gates](phases/04-commerce-and-inventory.md).
 
 ## Release and recovery gate
 

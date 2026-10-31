@@ -2,6 +2,11 @@
 
 ## October 29, 2026
 
+- Selected Apiary Market for the actual application, preserving all ten prototype URLs.
+- Added the Astro/TypeScript native Node application, custom PostgreSQL schema and private audited inventory transactions, with no Shopify or Docker.
+- Added native database, built-browser/accessibility and application-artifact CI gates, plus a CI-gated native Render configuration. Live payment, authenticated administration and mail remain deferred.
+- Selected the native Render app and Neon Free PostgreSQL in Oregon, with private runtime/operator credentials and no paid database provisioning.
+- Added database/schema preflight before server startup and routine liveness monitoring so free database compute can suspend; remote TLS remains certificate-verified with explicitly optional channel binding.
 - Published the owner-approved preview through GitHub Pages and the gated main-branch workflow.
 - Added only the `preview.thetruehive.com` CNAME; left the main domain, existing mail DNS and other zone records unchanged.
 - Documented email as deferred, with phone/social contact planned and `contact@thetruehive.com` recorded as a future address, not an activated inbox.

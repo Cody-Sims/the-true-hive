@@ -80,9 +80,9 @@ Use the business-owned Facebook/Instagram profiles, approved process/product ima
 
 **Purpose:** make a real local business easier to discover and buy from, without a second conflicting stock ledger.
 
-**Actions:** launch the product-led marketing site with approved real content and contact/social links; then introduce the integrated same-site store when ready. Prefer managed commerce/inventory and hosted checkout. Import real products, batch references where supported, physical stock and fulfillment locations; exclude every demo record.
+**Actions:** build the selected Apiary Market site and our own Node/PostgreSQL storefront/inventory. Render hosts the application and Neon manages PostgreSQL, not stock rules. Start within the approved app/free-database tiers and reassess quotas/recovery before real orders. Add an authenticated owner workflow and an appropriate payment processor only when ready. Import approved real products and released physical stock; exclude every demo record.
 
-The catalog, product pages, cart and checkout must agree on price, variant, sellability and pickup eligibility. Record local/in-person sales through the same authority or an explicitly rehearsed reconciliation process. A browser cart does not reserve stock. Staff access uses least privilege/MFA; only genuine operational gaps justify custom admin software.
+The catalog, product pages, cart and payment flow must agree on database-authoritative price, variant, sellability and pickup eligibility. Record local sales and adjustments transactionally with audit identity; a browser cart does not reserve stock. Staff access uses verified authentication, authorization and least privilege. The first foundation exposes no editing endpoint or payment.
 
 **Acceptance:** a real test-mode purchase runs through stock validation, receipt, preparation, ready notification, pickup, cancellation/refund and correct stock treatment. The owner performs the workflow without developer intervention.
 

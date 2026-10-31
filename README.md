@@ -1,8 +1,21 @@
 # The True Hive
 
-**Ten design directions, an integrated-store preview, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
+**The Apiary Market application foundation, ten preserved design directions, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
 Updated **October 29, 2026**. Status: **owner-approved public planning and interactive review**, not a production storefront.
+
+## Build the actual site
+
+Apiary Market (concept 04) is selected. The application uses **Astro + TypeScript, native Node and our own PostgreSQL inventory**, with **no Shopify or Docker**. The first slice has collection/detail pages, read APIs, health checks and private transactional inventory foundations, not live checkout or an exposed admin.
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+npm run dev
+```
+
+Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and does not invent prices/stock. For native build, database, CI and Render details, read [development and operations](docs/14-development-and-operations.md) and the [approved specification](docs/13-production-foundation.md).
+
+**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The actual application targets `thetruehive.com` on native Render after host/content readiness, with Neon PostgreSQL in the same Oregon region. The selected infrastructure is a $7/month Render app in a Hobby workspace and Neon Free, not a paid Neon or Render database. The main-domain DNS remains unchanged.
 
 ## Open the studio
 
@@ -30,7 +43,7 @@ open http://127.0.0.1:4173/prototypes/
 open http://127.0.0.1:4173/prototypes/plan.html
 ```
 
-The only browser-rendering dependency is the locally served, pinned Markdown parser; no CDN, remote font, live social feed or third-party tracking is loaded. Core homepage concepts still use ordinary HTML/CSS/SVG. `npm test` runs the prototype's native Node behavior cases; it is not the future production application build.
+The only studio browser-rendering dependency is the locally served, pinned Markdown parser; no CDN, remote font, live social feed or third-party tracking is loaded. Core homepage concepts still use ordinary HTML/CSS/SVG. `npm test` runs prototype and application unit cases; database and built-browser gates are separate commands in the operations guide.
 
 For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes automatic deployment from reviewed `main` updates and the custom preview hostname, **https://preview.thetruehive.com/**. The main domain and mail settings remain unchanged; confirm the custom hostname's HTTPS readiness before sharing it.
 
@@ -40,9 +53,9 @@ For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sh
 
 **Product-led local sales; local pickup first, shipping later.** Build on the existing small-scale soap business and beekeeping, rather than assuming every prototype product is ready. Retail honey is not available merely because a honey jar appears in a mockup: the owner reports that the next harvest already has a purchaser. See the [business plan](docs/09-local-business-launch-plan.md) for the owner-approved current context and allocation constraints.
 
-The future store is **part of the website's coherent primary-domain experience**, with authoritative inventory and hosted checkout. An unrelated outbound shop is not the target. Evaluate a native Shopify website/theme with managed administration first; use a custom Astro/Next.js storefront only if the chosen requirements justify headless cost. An initial static Astro marketing release remains possible, but any later migration/integration is real work, not a free promise.
+The future store is **our own primary-domain experience**, with PostgreSQL-authoritative stock/order rules and a later selected payment processor. Earlier Shopify recommendations are superseded. Render manages infrastructure, not merchandising/inventory ownership; admin authentication and payment lifecycle remain explicit follow-up gates.
 
-No final art direction is selected. Compare product-led **Apiary Market, Honey House, Hive & Hearth, Golden Hour and The Quiet Hive**, alongside the balanced/editorial/service-forward references. The research does not prove a universal conversion winner.
+**Apiary Market is selected.** All ten directions remain available for comparison/history. Selection is an owner decision, not a proven conversion-rate ranking.
 
 ## Ten design directions
 
@@ -80,6 +93,8 @@ All prices, product formats, packaging and quantities in the shop are **fictiona
 | [10 - Partner workbook](docs/10-partner-workbook.md) | Confirmed facts, open decisions, owners and gates |
 | [11 - Business readiness evidence](docs/11-business-readiness-evidence.md) | Verified federal guidance versus unverified Tennessee/local confirmation needs |
 | [12 - Sharing and CI/CD](docs/12-sharing-and-deployment.md) | Public approval, static artifact boundaries, deployment and recovery |
+| [13 - Application foundation](docs/13-production-foundation.md) | Approved custom frontend/backend slice, contracts and acceptance |
+| [14 - Development and operations](docs/14-development-and-operations.md) | Actual commands, native PostgreSQL, required CI, Render and recovery |
 
 The hub renders these source files directly, including tables, diagrams, citations and internal links. There is no separate stale summary masquerading as the full plan.
 
