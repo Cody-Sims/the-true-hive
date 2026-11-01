@@ -34,6 +34,9 @@ test("invalid identities, unsafe deltas and missing audit information are reject
     { reason: "   " },
     { reason: "x".repeat(501) },
     ...[0, 0.1, NaN, Infinity, 2147483648].map((delta) => ({ delta })),
+    ...[0, -1, 0.1, NaN, Infinity, 2147483648, null, "1"].map(
+      (expectedRevision) => ({ expectedRevision }),
+    ),
   ];
   for (const change of invalid) {
     assert.throws(
@@ -57,4 +60,24 @@ test("count reductions cannot consume committed or unavailable stock", () => {
     () => nextOnHand({ onHand: 2147483647, committed: 0, unavailable: 0 }, 1),
     InventoryConflictError,
   );
+});
+
+test("count reductions cannot consume checkout-held stock", () => {
+  const balance = { onHand: 5, held: 2, committed: 1, unavailable: 1 };
+  assert.equal(nextOnHand(balance, -1), 4);
+  assert.throws(() => nextOnHand(balance, -2), InventoryConflictError);
+  for (const held of [-1, 0.1, NaN, Infinity, 2147483648]) {
+    assert.throws(
+      () => nextOnHand({ ...balance, held }, 1),
+      InventoryConflictError,
+    );
+  }
+});
+
+test("expected revisions are optional for legacy corrections and preserved when supplied", () => {
+  assert.deepEqual(validateAdjustment(request), request);
+  assert.deepEqual(validateAdjustment({ ...request, expectedRevision: 7 }), {
+    ...request,
+    expectedRevision: 7,
+  });
 });
