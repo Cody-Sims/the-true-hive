@@ -242,6 +242,22 @@ Implement and validate disabled-by-default code first. Apply the forward migrati
 
 On incident, disable new checkout/admin mutations explicitly while retaining orders, holds, physical counts, commitments and history. Reconcile existing provider sessions before releasing holds. Roll back code without rolling back authoritative records; forward-fix schema if needed.
 
+### Implementation waves
+
+| Task | Prerequisite | Exclusive ownership | Completion evidence |
+|---|---|---|---|
+| Shared contracts | Owner decisions | Specification, domain DTOs, manifest/lock, publication registry | Existing gates and compatible dependency resolution |
+| Inventory schema | Shared contracts | Forward migration, held/revision-aware correction and public projection | Native PostgreSQL constraints/concurrency and legacy compatibility |
+| Admin identity | Shared contracts | Firebase/TOTP, membership/session/CSRF/host gate, auth endpoints | Rejected unauthorized/revoked/first-factor/CSRF cases; no bypass |
+| Admin/shop presentation | Shared contracts | Private UI/forms and clearly labeled test-checkout UI | Accessible forms, serialization/retry/conflict behavior; integrated browser gates |
+| Stripe adapter | Shared contracts | Test-only SDK, signature/object validation, callback/checkout and reconciliation adapter | Offline real-signature and provider-boundary cases |
+| Admin catalog | Integrated schema and identity | Product/location/history services and private management endpoints | Real database atomicity, revisions, idempotency and safe shop projection |
+| Order authority | Integrated schema and identity | Holds, paid/expiry/pickup transactions and private order endpoints | Last-unit/multiline/event/pickup replay and rollback cases |
+| Operator/integration | All streams | Private provisioning tool, role/runbook/startup/artifact integration | Combined required gates and actual access-control review |
+| Activation | Owner/provider/recovery gates | Private credentials, MFA, test rehearsal, inventory TLS/DNS | Owner/operator sign-off; no automatic live-sales activation |
+
+Schema, identity, presentation and provider-adapter work use separate branches/worktrees. Catalog/order authority follow the integrated schema/identity wave. Shared manifests, domain contracts, docs and final integration have one coordinator; merges and shared builds remain serialized.
+
 ## Research evidence
 
 Official rolling documentation reviewed on **2026-10-31**; external provider behavior is not a substitute for application integration tests.

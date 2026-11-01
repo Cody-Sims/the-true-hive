@@ -139,4 +139,60 @@ Run the smallest relevant tests during development, and all required gates for a
 
 After a deploy, check real HTTPS, routes, assets and one deliberate readiness/database-mode probe. Restore a known-good **application** commit/artifact if necessary; never overwrite current inventory with an old website build. Back up real data before migrations and rehearse restoring into a separate recovery instance.
 
-Outstanding owner decisions are in the [partner workbook](10-partner-workbook.md): real content/contacts, pickup, quota/recovery ownership, authenticated admin, payment provider and order lifecycle.
+Outstanding activation decisions are in the [partner workbook](10-partner-workbook.md): real content/contacts, pickup, quota/recovery ownership, private identity/MFA provisioning, provider configuration and live-sales policies. The next phase's identity/test-payment and stock-accounting choices are recorded below.
+
+## Inventory phase: private setup and activation
+
+The [approved next-phase specification](15-inventory-admin-and-commerce.md) selects isolated Firebase, app-enforced TOTP MFA, PostgreSQL admin membership and Stripe card-only test checkout. These are implementation choices, **not proof that the provider project, MFA, privileged roles, hostname or sandbox are configured**.
+
+Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled`, the storefront's deliberate source/indexing settings and all root/www/mail DNS unchanged until the relevant activation gate passes. The inventory hostname shares the existing Render service; no second paid service is required or approved.
+
+### Private runtime and operator configuration
+
+| Setting | Boundary |
+|---|---|
+| `INVENTORY_ORIGIN` | Exact inventory origin; HTTPS in production, explicit HTTP loopback only in development |
+| `ADMIN_DATABASE_URL` | Pooled private inventory/session/order role; never schema-owner or public-read credentials |
+| `ADMIN_CSRF_SECRET` | Private random secret for signed/session-bound CSRF; no public variable or default |
+| `FIREBASE_PROJECT_ID` | Isolated True Hive project, not copied personal-site configuration |
+| `FIREBASE_WEB_API_KEY` | Firebase browser configuration; not an admin authorization credential |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Private server credential matching the isolated project; no browser bundle/ADC fallback |
+| `INVENTORY_ADMIN_UID` | Operator-only private identity used during provisioning; never commit or print it |
+| `MIGRATION_DATABASE_URL` | Direct schema-owner connection for migration/provisioning, never a runtime fallback |
+| `CHECKOUT_MODE` | `disabled` or `stripe-test`; no live-charge mode |
+| `CHECKOUT_LOCATION_KEY` | Explicit real active pickup location, not a fictional fixture/default |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Private test-mode API/signature credentials; live keys/objects rejected |
+
+Firebase's [TOTP guide](https://firebase.google.com/docs/auth/web/totp-mfa) requires Identity Platform. **Do not enable a billed upgrade automatically.** The owner requires app-enforced MFA before deployment; upstream Google-account 2FA or a browser checkbox does not satisfy it. Configure Google sign-in/authorized inventory domain, verified-email/TOTP enrollment and recovery only after the provider/billing decision. Privately provision the intended admin; ordinary sign-in does not grant membership.
+
+### Least-privilege role matrix
+
+Provision roles deliberately with the direct owner connection after the forward migration. The inventory runtime role must not own the schema/tables or have superuser, database-creation, role-creation or inherited elevated privileges.
+
+| Records/operation | Public read role | Private inventory role | Direct owner/operator |
+|---|---|---|---|
+| Catalog/variant/location/count reads | Existing public query access | Read | Manage |
+| Product/variant/location/count writes | Denied | Required insert/update only | Manage |
+| Movement/admin-operation/payment-event history | Denied | Read/insert; no update/delete/truncate | Append-only guards still apply |
+| Orders/order snapshots | Denied | Required read/insert/order update; no snapshot rewriting | Recovery/reconciliation |
+| Admin membership | Denied | Read only; no grant/revoke | Private grant/revoke |
+| Local admin sessions | Denied | Read/insert/revoke | Recovery |
+| Schema creation, role management, migrations | Denied | Denied | Deliberate operator action |
+
+Revoke public schema creation and temporary-table privileges in the dedicated database. Verify actual denials in transactions/with the target role: product writes from public credentials, membership writes/schema creation from runtime credentials, and history/snapshot edits. Enabled-admin startup must reject elevated or incomplete runtime credentials; configuration names alone do not establish privilege.
+
+The operator access command must require `MIGRATION_DATABASE_URL` and private `INVENTORY_ADMIN_UID`, reject pooled/invalid owner connections, and never fall back to `DATABASE_URL`/`ADMIN_DATABASE_URL`. Grant/revoke membership transactionally; revocation also invalidates local sessions. Do not put private identifiers in command arguments, source, logs or public workbook answers.
+
+### Stock and sandbox rehearsals
+
+Add actual records only through the authorized admin after opening-count/recovery approval. New administrative levels start at a disclosed zero balance; counted/received units use the audited increase workflow. Product publication is separate from test-checkout enablement.
+
+Use `on_hand - held - committed - unavailable` for sellability. The safe rehearsal is: create real draft -> validate/publish -> establish a location/count -> reserve for hosted test checkout -> verify paid commitment -> Record pickup -> inspect physical/committed counts and audit. Repeat last-unit competition, stale-edit conflict, lost-response retry, invalid signature, duplicate/out-of-order event, missing expiry event and pickup rollback.
+
+Reconciliation must re-fetch provider state. Expire overdue open sessions and confirm expired/unpaid state before releasing; payment-complete races settle via the same order transition. Unknown creation/session outcomes stay quarantined, not auto-released by a clock. Financial refunds never infer restock. A manual reconciliation CLI is not proof of a scheduled job: approve ownership/scheduling without silently adding a billed service.
+
+### Inventory hostname gate
+
+Only after MFA/access-removal, least-privilege, sandbox and backup/restore rehearsals pass should the operator add **`inventory.thetruehive.com`** to the existing Render service and create its specific DNS record using Render's verified instructions. Verify TLS and direct anonymous/non-admin/API denial. Do not repoint root/www, change email, add wildcard DNS or advertise an admin link in the public storefront.
+
+Apply noindex/nofollow and no-store to inventory responses and exclude private routes from public navigation/sitemaps. Allow search crawlers to observe noindex on the non-sensitive login/error shell; robots.txt alone can leave bare URLs indexed. None of these signals replaces authentication or guarantees the hostname is invisible.
