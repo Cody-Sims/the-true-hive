@@ -115,6 +115,8 @@ The selected starting infrastructure is **one $7/month native Render web service
 
 Only apply the Blueprint after this application's PR is merged and main checks pass. The draft uses showcase mode, noindex and no checkout. Use PostgreSQL 16 to match the native integration baseline; a small fixed Neon compute fits this empty-schema pilot.
 
+**Hosting status - 2026-10-31:** the application foundation is live at **https://the-true-hive-app.onrender.com/** in deliberate showcase mode. The service is connected to `Cody-Sims/the-true-hive` on `main`, with **After CI Checks Pass** enabled and no reported auto-deploy blocker. Confirm each release's live revision and deploy trigger in Render; configuration alone is not evidence that an automatic deployment completed. Showcase readiness intentionally reports `inventoryConnected: false` and `checkoutEnabled: false`; it does not prove database connectivity or approve live sales. The main-domain DNS and email remain unchanged.
+
 Before switching to database mode:
 
 1. Confirm the target Neon organization is Free before project creation; never silently upgrade another organization.
