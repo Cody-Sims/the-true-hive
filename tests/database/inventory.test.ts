@@ -1,12 +1,11 @@
-import test, { after, before } from "node:test";
+import test, { after, afterEach, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { databaseOptions } from "../../src/server/db/connection.mjs";
 import { migrateDatabase } from "../../scripts/migrate.mjs";
 import { MigrationDriftError } from "../../scripts/migrate.mjs";
-import { readFile, writeFile, mkdtemp, rm, unlink } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, writeFile, mkdir, rm, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -31,21 +30,33 @@ assert.equal(
   "Use the dedicated test database, not production.",
 );
 const options = databaseOptions(connection, "disable");
-const schema = `true_hive_test_${randomUUID().replaceAll("-", "")}`;
+let schema: string;
 const admin = new Pool({ ...options, max: 1 });
 let pool: Pool;
 
-before(async () => {
+beforeEach(async () => {
+  schema = `true_hive_test_${randomUUID().replaceAll("-", "")}`;
   await admin.query(`CREATE SCHEMA "${schema}"`);
   pool = new Pool({ ...options, options: `-c search_path=${schema}` });
   await migrateDatabase(pool);
 });
 
-after(async () => {
+afterEach(async () => {
   await pool?.end();
   await admin.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+});
+
+after(async () => {
   await admin.end();
 });
+
+async function migrationFixtureDirectory() {
+  const directory = fileURLToPath(
+    new URL(`../../.inventory-migration-${randomUUID()}/`, import.meta.url),
+  );
+  await mkdir(directory);
+  return directory;
+}
 
 test("migrations create an empty real catalog and inventory schema without importing demo stock", async () => {
   const result = await pool.query<{
@@ -65,7 +76,12 @@ test("migrations create an empty real catalog and inventory schema without impor
   );
 });
 
-async function stockFixture(onHand: number, committed = 0, unavailable = 0) {
+async function stockFixture(
+  onHand: number,
+  committed = 0,
+  unavailable = 0,
+  held = 0,
+) {
   const suffix = randomUUID().replaceAll("-", "").slice(0, 12);
   const productKey = `product-${suffix}`;
   const variantKey = `variant-${suffix}`;
@@ -83,8 +99,8 @@ async function stockFixture(onHand: number, committed = 0, unavailable = 0) {
     [locationKey],
   );
   await pool.query(
-    "INSERT INTO inventory_levels (variant_key,location_key,on_hand,committed,unavailable) VALUES ($1,$2,$3,$4,$5)",
-    [variantKey, locationKey, onHand, committed, unavailable],
+    "INSERT INTO inventory_levels (variant_key,location_key,on_hand,committed,unavailable,held) VALUES ($1,$2,$3,$4,$5,$6)",
+    [variantKey, locationKey, onHand, committed, unavailable, held],
   );
   return { productKey, variantKey, locationKey };
 }
@@ -110,17 +126,28 @@ test("a correction commits its count and attributable history together", async (
   assert.equal(result.onHand, 5);
   assert.equal(result.replayed, false);
   const history = await pool.query(
-    "SELECT before_on_hand,after_on_hand,actor_id,reason FROM inventory_movements WHERE operation_id=$1",
+    "SELECT before_on_hand,after_on_hand,before_revision,after_revision,actor_id,reason FROM inventory_movements WHERE operation_id=$1",
     [change.operationId],
   );
   assert.deepEqual(history.rows, [
     {
       before_on_hand: 3,
       after_on_hand: 5,
+      before_revision: 1,
+      after_revision: 2,
       actor_id: "operator:test",
       reason: "Test physical count",
     },
   ]);
+  assert.deepEqual(
+    (
+      await pool.query(
+        "SELECT on_hand,revision FROM inventory_levels WHERE variant_key=$1",
+        [stock.variantKey],
+      )
+    ).rows,
+    [{ on_hand: 5, revision: 2 }],
+  );
 });
 
 test("concurrent withdrawals cannot both consume the final physical unit", async () => {
@@ -192,7 +219,7 @@ test("concurrent matching retries change stock once and mismatched reuse is a co
 });
 
 test("committed/held units and database constraints cannot be bypassed by a count correction", async () => {
-  const stock = await stockFixture(3, 2, 1);
+  const stock = await stockFixture(3, 1, 1, 1);
   await assert.rejects(
     adjustStock(pool, request(stock, -1)),
     InventoryConflictError,
@@ -209,14 +236,105 @@ test("committed/held units and database constraints cannot be bypassed by a coun
         error.code === "23514",
       ),
   );
+  assert.deepEqual(
+    (
+      await pool.query(
+        "SELECT on_hand,held,revision FROM inventory_levels WHERE variant_key=$1",
+        [stock.variantKey],
+      )
+    ).rows[0],
+    { on_hand: 3, held: 1, revision: 1 },
+  );
   assert.equal(
     (
       await pool.query(
-        "SELECT on_hand FROM inventory_levels WHERE variant_key=$1",
+        "SELECT count(*)::int AS count FROM inventory_movements WHERE variant_key=$1",
         [stock.variantKey],
       )
-    ).rows[0].on_hand,
-    3,
+    ).rows[0].count,
+    0,
+  );
+});
+
+test("revision conflicts serialize competing corrections while matching retries return the original receipt", async () => {
+  const stock = await stockFixture(2);
+  const changes = [
+    { ...request(stock, 1), expectedRevision: 1 },
+    { ...request(stock, 1), expectedRevision: 1 },
+  ];
+  const results = await Promise.allSettled(
+    changes.map((change) => adjustStock(pool, change)),
+  );
+  const accepted = results.findIndex((result) => result.status === "fulfilled");
+  assert.notEqual(accepted, -1);
+  assert.equal(
+    results.filter((result) => result.status === "fulfilled").length,
+    1,
+  );
+  const rejected = results.find((result) => result.status === "rejected");
+  assert(
+    rejected?.status === "rejected" &&
+      rejected.reason instanceof InventoryConflictError,
+  );
+  const original = changes[accepted]!;
+  await adjustStock(pool, request(stock, 1));
+  assert.deepEqual(await adjustStock(pool, original), {
+    operationId: original.operationId,
+    variantKey: stock.variantKey,
+    locationKey: stock.locationKey,
+    beforeOnHand: 2,
+    onHand: 3,
+    replayed: true,
+  });
+  await assert.rejects(
+    adjustStock(pool, { ...original, expectedRevision: 2 }),
+    InventoryConflictError,
+  );
+  await assert.rejects(
+    adjustStock(pool, { ...request(stock, -1), expectedRevision: 2 }),
+    InventoryConflictError,
+  );
+  assert.deepEqual(
+    (
+      await pool.query(
+        "SELECT on_hand,held,revision FROM inventory_levels WHERE variant_key=$1",
+        [stock.variantKey],
+      )
+    ).rows,
+    [{ on_hand: 4, held: 0, revision: 3 }],
+  );
+  assert.deepEqual(
+    (
+      await pool.query(
+        "SELECT before_revision,after_revision FROM inventory_movements WHERE variant_key=$1 ORDER BY before_revision",
+        [stock.variantKey],
+      )
+    ).rows,
+    [
+      { before_revision: 1, after_revision: 2 },
+      { before_revision: 2, after_revision: 3 },
+    ],
+  );
+});
+
+test("revision exhaustion fails without changing count or ledger", async () => {
+  const stock = await stockFixture(2);
+  await pool.query(
+    "UPDATE inventory_levels SET revision=2147483647 WHERE variant_key=$1",
+    [stock.variantKey],
+  );
+  await assert.rejects(
+    adjustStock(pool, request(stock, 1)),
+    InventoryConflictError,
+  );
+  assert.deepEqual(
+    (
+      await pool.query(
+        "SELECT on_hand,revision FROM inventory_levels WHERE variant_key=$1",
+        [stock.variantKey],
+      )
+    ).rows,
+    [{ on_hand: 2, revision: 2147483647 }],
   );
   assert.equal(
     (
@@ -248,14 +366,14 @@ test("a failed history insert rolls back the count and recorded movements cannot
           error.code === "P0001",
         ),
     );
-    assert.equal(
+    assert.deepEqual(
       (
         await pool.query(
-          "SELECT on_hand FROM inventory_levels WHERE variant_key=$1",
+          "SELECT on_hand,revision FROM inventory_levels WHERE variant_key=$1",
           [stock.variantKey],
         )
-      ).rows[0].on_hand,
-      2,
+      ).rows[0],
+      { on_hand: 2, revision: 1 },
     );
   } finally {
     await pool.query(
@@ -288,6 +406,31 @@ test("a failed history insert rolls back the count and recorded movements cannot
         "code" in error &&
         error.code === "55000",
       ),
+  );
+});
+
+test("checkout holds reduce public availability without exposing private allocations", async () => {
+  const stock = await stockFixture(5, 1, 1, 3);
+  const config = readConfig({ CATALOG_SOURCE: "database" });
+  assert.deepEqual(
+    await getAvailability(config, stock.variantKey, stock.locationKey, pool),
+    {
+      variantKey: stock.variantKey,
+      locationKey: stock.locationKey,
+      state: "out_of_stock",
+    },
+  );
+  await pool.query(
+    "UPDATE inventory_levels SET held=2 WHERE variant_key=$1 AND location_key=$2",
+    [stock.variantKey, stock.locationKey],
+  );
+  assert.deepEqual(
+    await getAvailability(config, stock.variantKey, stock.locationKey, pool),
+    {
+      variantKey: stock.variantKey,
+      locationKey: stock.locationKey,
+      state: "available",
+    },
   );
 });
 
@@ -332,7 +475,7 @@ test("published catalog and location-scoped availability omit private stock/SKU/
 
 test("repeat migrations verify checksums and reject rewritten history without changing data", async () => {
   assert.deepEqual(await migrateDatabase(pool), []);
-  const directory = await mkdtemp(join(tmpdir(), "true-hive-migration-check-"));
+  const directory = await migrationFixtureDirectory();
   try {
     const original = await readFile(
       new URL("../../migrations/001_inventory.sql", import.meta.url),
@@ -342,9 +485,17 @@ test("repeat migrations verify checksums and reject rewritten history without ch
       join(directory, "001_inventory.sql"),
       `${original}\nSELECT 2;\n`,
     );
+    await writeFile(
+      join(directory, "002_admin_commerce.sql"),
+      await readFile(
+        new URL("../../migrations/002_admin_commerce.sql", import.meta.url),
+      ),
+    );
     await assert.rejects(
       migrateDatabase(pool, pathToFileURL(`${directory}/`)),
-      MigrationDriftError,
+      (error: unknown) =>
+        error instanceof MigrationDriftError &&
+        /001_inventory.sql changed/.test(error.message),
     );
     assert.deepEqual(await migrateDatabase(pool), []);
   } finally {
@@ -444,7 +595,7 @@ test("startup rejects partial catalog and availability schemas even when invento
 });
 
 test("migrations reject backfilled history without changing data and still accept forward files", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "true-hive-migration-order-"));
+  const directory = await migrationFixtureDirectory();
   const orderedSchema = `migration_order_${randomUUID().replaceAll("-", "")}`;
   await admin.query(`CREATE SCHEMA "${orderedSchema}"`);
   const ordered = new Pool({

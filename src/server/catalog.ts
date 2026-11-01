@@ -47,7 +47,7 @@ const productQuery = `
 
 const availabilityQuery = `
   SELECT p.kind, l.active, l.pickup_enabled AS pickup,
-    s.on_hand - s.committed - s.unavailable AS available
+    s.on_hand - s.held - s.committed - s.unavailable AS available
   FROM product_variants v
   JOIN products p ON p.product_key = v.product_key
   LEFT JOIN inventory_locations l ON l.location_key = $2

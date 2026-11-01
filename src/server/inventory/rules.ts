@@ -9,6 +9,7 @@ export interface StockAdjustment {
   operationId: string;
   actorId: string;
   reason: string;
+  expectedRevision?: number;
 }
 
 export function isRecordKey(value: unknown): value is string {
@@ -54,6 +55,16 @@ export function validateAdjustment(input: unknown): StockAdjustment {
     throw new InventoryInputError(
       "An audit reason of at most 500 characters is required.",
     );
+  const expectedRevision = value["expectedRevision"];
+  if (
+    expectedRevision !== undefined &&
+    (typeof expectedRevision !== "number" ||
+      !Number.isInteger(expectedRevision) ||
+      expectedRevision < 1 ||
+      expectedRevision > 2147483647)
+  ) {
+    throw new InventoryInputError("A positive stock revision is required.");
+  }
   return {
     variantKey: value["variantKey"],
     locationKey: value["locationKey"],
@@ -61,14 +72,21 @@ export function validateAdjustment(input: unknown): StockAdjustment {
     operationId: operationId.toLowerCase(),
     actorId,
     reason,
+    ...(expectedRevision === undefined ? {} : { expectedRevision }),
   };
 }
 
 export function nextOnHand(
-  balance: { onHand: number; committed: number; unavailable: number },
+  balance: {
+    onHand: number;
+    held?: number;
+    committed: number;
+    unavailable: number;
+  },
   delta: number,
 ) {
-  const values = [balance.onHand, balance.committed, balance.unavailable];
+  const held = balance.held ?? 0;
+  const values = [balance.onHand, held, balance.committed, balance.unavailable];
   if (
     values.some(
       (value) => !Number.isInteger(value) || value < 0 || value > 2147483647,
@@ -83,10 +101,10 @@ export function nextOnHand(
     !Number.isInteger(delta) ||
     !Number.isInteger(next) ||
     next > 2147483647 ||
-    next < balance.committed + balance.unavailable
+    next < held + balance.committed + balance.unavailable
   ) {
     throw new InventoryConflictError(
-      "The correction exceeds uncommitted physical stock or the supported count.",
+      "The correction exceeds unallocated physical stock or the supported count.",
     );
   }
   return next;

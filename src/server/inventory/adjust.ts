@@ -24,12 +24,16 @@ interface HistoryRow extends QueryResultRow {
   reason: string;
   before_on_hand: number;
   after_on_hand: number;
+  before_revision: number | null;
+  after_revision: number | null;
 }
 
 interface BalanceRow extends QueryResultRow {
   on_hand: number;
+  held: number;
   committed: number;
   unavailable: number;
+  revision: number;
 }
 
 export async function adjustStock(
@@ -57,7 +61,9 @@ export async function adjustStock(
         history.location_key !== change.locationKey ||
         history.delta !== change.delta ||
         history.actor_id !== change.actorId ||
-        history.reason !== change.reason
+        history.reason !== change.reason ||
+        (change.expectedRevision !== undefined &&
+          history.before_revision !== change.expectedRevision)
       ) {
         throw new InventoryConflictError(
           "This operation ID was already used for a different correction.",
@@ -74,7 +80,7 @@ export async function adjustStock(
       };
     }
     const result = await client.query<BalanceRow>(
-      "SELECT on_hand,committed,unavailable FROM inventory_levels WHERE variant_key=$1 AND location_key=$2 FOR UPDATE",
+      "SELECT on_hand,held,committed,unavailable,revision FROM inventory_levels WHERE variant_key=$1 AND location_key=$2 FOR UPDATE",
       [change.variantKey, change.locationKey],
     );
     const balance = result.rows[0];
@@ -82,22 +88,34 @@ export async function adjustStock(
       throw new InventoryNotFoundError(
         "The variant/location stock record does not exist.",
       );
+    if (
+      change.expectedRevision !== undefined &&
+      change.expectedRevision !== balance.revision
+    ) {
+      throw new InventoryConflictError(
+        "The stock revision changed. Review the current balance before correcting it.",
+      );
+    }
+    if (balance.revision >= 2147483647) {
+      throw new InventoryConflictError("The stock revision limit was reached.");
+    }
     const onHand = nextOnHand(
       {
         onHand: balance.on_hand,
+        held: balance.held,
         committed: balance.committed,
         unavailable: balance.unavailable,
       },
       change.delta,
     );
     await client.query(
-      "UPDATE inventory_levels SET on_hand=$3 WHERE variant_key=$1 AND location_key=$2",
+      "UPDATE inventory_levels SET on_hand=$3,revision=revision+1 WHERE variant_key=$1 AND location_key=$2",
       [change.variantKey, change.locationKey, onHand],
     );
     await client.query(
       `
-      INSERT INTO inventory_movements (operation_id,variant_key,location_key,delta,actor_id,reason,before_on_hand,after_on_hand)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      INSERT INTO inventory_movements (operation_id,variant_key,location_key,delta,actor_id,reason,before_on_hand,after_on_hand,before_revision,after_revision)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     `,
       [
         change.operationId,
@@ -108,6 +126,8 @@ export async function adjustStock(
         change.reason,
         balance.on_hand,
         onHand,
+        balance.revision,
+        balance.revision + 1,
       ],
     );
     await client.query("COMMIT");
