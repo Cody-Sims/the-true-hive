@@ -119,6 +119,8 @@ Stock receipts distinguish the original adjustment's before/after result from re
 
 `CHECKOUT_MODE=disabled` is the default; the only new enabled value is `stripe-test`. Reject live secret keys/configuration and live webhook objects. `CHECKOUT_LOCATION_KEY` explicitly selects one active, pickup-enabled real location. Checkout requires database catalog mode and supplied positive prices.
 
+Enabled database catalog/checkout must use public-read and private-write credentials for the **same database/branch**; different credentials or Neon pooled/direct aliases do not mean different stock authority. Reject mismatched targets rather than presenting one catalog and mutating another. Rehearse test payments in an isolated staging/test database or branch, never against operational physical stock.
+
 | Route/operator | Contract |
 |---|---|
 | `POST /api/checkout` | UUID `operationId`, `lines: [{ variantKey, quantity }]`; at most 20 distinct lines, positive integers up to 100 per line; server location/prices; `{ checkoutUrl }` |
@@ -147,7 +149,7 @@ Add one forward migration after `001_inventory.sql`; never alter applied migrati
 | `admin_operations` | UUID operation key, trusted actor, action/resource, canonical request hash, bounded before/after/result JSON and timestamp; append-only |
 | `orders` | UUID order/idempotency key, canonical request hash, location, state, USD total, unique nullable checkout-session ID, nullable payment-intent ID/expiry, revision and lifecycle timestamps/reconciliation reason |
 | `order_lines` | Order/variant composite key, positive quantity/price and immutable title/label snapshots |
-| `payment_events` | Unique provider event ID, type, order association, timestamp/result; no full raw customer/provider payload |
+| `payment_events` | Unique provider event ID, type, order association, canonical validated receipt hash and timestamp/result; no full raw customer/provider payload |
 
 Order states: `creating`, `open`, `paid`, `expired`, `picked_up`, `reconciliation_required`. Paid/picked-up transitions are monotonic; a late conflicting payment after an already released order is quarantined, never a fresh allocation without stock validation.
 
@@ -251,12 +253,12 @@ On incident, disable new checkout/admin mutations explicitly while retaining ord
 | Admin identity | Shared contracts | Firebase/TOTP, membership/session/CSRF/host gate, auth endpoints | Rejected unauthorized/revoked/first-factor/CSRF cases; no bypass |
 | Admin/shop presentation | Shared contracts | Private UI/forms and clearly labeled test-checkout UI | Accessible forms, serialization/retry/conflict behavior; integrated browser gates |
 | Stripe adapter | Shared contracts | Test-only SDK, signature/object validation, callback/checkout and reconciliation adapter | Offline real-signature and provider-boundary cases |
-| Admin catalog | Integrated schema and identity | Product/location/history services and private management endpoints | Real database atomicity, revisions, idempotency and safe shop projection |
-| Order authority | Integrated schema and identity | Holds, paid/expiry/pickup transactions and private order endpoints | Last-unit/multiline/event/pickup replay and rollback cases |
+| Admin catalog | Integrated schema, frozen identity contract | Product/location/history services and private management endpoints | Real database atomicity, revisions, idempotency and safe shop projection |
+| Order authority | Integrated schema, frozen identity contract | Holds, paid/expiry/pickup transactions and private order endpoints | Last-unit/multiline/event/pickup replay and rollback cases |
 | Operator/integration | All streams | Private provisioning tool, role/runbook/startup/artifact integration | Combined required gates and actual access-control review |
 | Activation | Owner/provider/recovery gates | Private credentials, MFA, test rehearsal, inventory TLS/DNS | Owner/operator sign-off; no automatic live-sales activation |
 
-Schema, identity, presentation and provider-adapter work use separate branches/worktrees. Catalog/order authority follow the integrated schema/identity wave. Shared manifests, domain contracts, docs and final integration have one coordinator; merges and shared builds remain serialized.
+Schema, identity, presentation and provider-adapter work use separate branches/worktrees. Catalog/order authority start after the schema is integrated, consuming frozen identity interfaces rather than waiting unnecessarily for the identity implementation. Full private HTTP verification requires the identity implementation at integration. Shared manifests, domain contracts, docs and final integration have one coordinator; merges and shared builds remain serialized.
 
 ## Research evidence
 

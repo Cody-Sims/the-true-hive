@@ -197,6 +197,8 @@ Run grant/revoke only as deliberate operator actions against the intended databa
 
 Add actual records only through the authorized admin after opening-count/recovery approval. New administrative levels start at a disclosed zero balance; counted/received units use the audited increase workflow. Product publication is separate from test-checkout enablement.
 
+Public-read and inventory-write connections must target the same database/Neon branch, using separate least-privilege credentials. Validate that association before enabling database catalog/checkout. Use an isolated staging/test database or branch for Stripe test purchases; a simulated payment must not commit operational physical stock.
+
 Use `on_hand - held - committed - unavailable` for sellability. The safe rehearsal is: create real draft -> validate/publish -> establish a location/count -> reserve for hosted test checkout -> verify paid commitment -> Record pickup -> inspect physical/committed counts and audit. Repeat last-unit competition, stale-edit conflict, lost-response retry, invalid signature, duplicate/out-of-order event, missing expiry event and pickup rollback.
 
 Reconciliation must re-fetch provider state. Expire overdue open sessions and confirm expired/unpaid state before releasing; payment-complete races settle via the same order transition. Unknown creation/session outcomes stay quarantined, not auto-released by a clock. Financial refunds never infer restock. A manual reconciliation CLI is not proof of a scheduled job: approve ownership/scheduling without silently adding a billed service.
