@@ -1,0 +1,95 @@
+---
+import "../styles/admin.css";
+interface Props {
+  title: string;
+  publicShell?: boolean;
+}
+const { title, publicShell = false } = Astro.props;
+const admin = Astro.locals.admin;
+if (!publicShell && (!admin || !Astro.locals.csrfToken)) {
+  throw new Error("Verified inventory session required.");
+}
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+const path = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="csrf-token" content={Astro.locals.csrfToken} />
+    <title>{title} | True Hive inventory</title>
+  </head>
+  <body>
+    <a class="admin-skip" href="#main">
+      Skip to inventory
+    </a>
+    <header class="admin-header admin-wrap">
+      <a
+        class="admin-brand"
+        href={publicShell ? "/inventory/login" : "/inventory/products"}
+      >
+        THE TRUE HIVE <span>Inventory workspace</span>
+      </a>
+      {!publicShell && admin && (
+        <>
+          <p class="admin-identity">
+            Verified administrator <span>{admin.uid}</span>
+          </p>
+          <nav aria-label="Inventory navigation">
+            <a
+              href="/inventory/products"
+              aria-current={
+                path.startsWith("/inventory/products") ? "page" : undefined
+              }
+            >
+              Products
+            </a>
+            <a
+              href="/inventory/locations"
+              aria-current={
+                path.startsWith("/inventory/locations") ? "page" : undefined
+              }
+            >
+              Locations
+            </a>
+            <a
+              href="/inventory/orders"
+              aria-current={
+                path.startsWith("/inventory/orders") ? "page" : undefined
+              }
+            >
+              Orders
+            </a>
+            <a
+              href="/inventory/history"
+              aria-current={
+                path.startsWith("/inventory/history") ? "page" : undefined
+              }
+            >
+              History
+            </a>
+            <button type="button" data-admin-logout>
+              Sign out
+            </button>
+          </nav>
+          <p data-admin-logout-status role="status" tabindex="-1"></p>
+        </>
+      )}
+    </header>
+    <main id="main" class="admin-wrap" tabindex="-1">
+      <h1>{title}</h1>
+      <slot />
+    </main>
+    <footer class="admin-wrap admin-footer">
+      Private operational records. Quantities change only after a verified
+      server receipt.
+    </footer>
+    <script>
+      import "../client/admin.ts";
+    </script>
+  </body>
+</html>

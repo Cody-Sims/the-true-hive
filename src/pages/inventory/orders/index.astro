@@ -1,0 +1,60 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ReadState from "../../../components/admin/ReadState.astro";
+import Pagination from "../../../components/admin/Pagination.astro";
+import { pageQuery, money } from "../../../components/admin/presentation.ts";
+import { listAdminOrders } from "../../../server/commerce/orders.ts";
+import { getAdminPool } from "../../../server/admin/pool.ts";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+const { limit, offset } = pageQuery(Astro.url);
+let result: Awaited<ReturnType<typeof listAdminOrders>> | null = null;
+try {
+  result = await listAdminOrders(getAdminPool(), { limit, offset });
+} catch {
+  Astro.response.status = 503;
+}
+---
+
+<AdminLayout title="Test orders">
+  <p>
+    Merchandise and inventory state only. No customer or payment credentials are
+    provided.
+  </p>
+  {!result ? (
+    <ReadState unavailable />
+  ) : result.orders.length ? (
+    <table class="admin-table" role="table">
+      <caption>Private test checkout orders</caption>
+      <thead>
+        <tr>
+          <th scope="col">Order</th>
+          <th scope="col">State</th>
+          <th scope="col">Location</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {result.orders.map((order) => (
+          <tr>
+            <td data-label="Order">
+              <a href={`/inventory/orders/${encodeURIComponent(order.id)}`}>
+                {order.id}
+              </a>
+              <br />
+              <time datetime={order.createdAt}>{order.createdAt}</time>
+            </td>
+            <td data-label="State">{order.state}</td>
+            <td data-label="Location">{order.locationKey}</td>
+            <td data-label="Total">{money(order.totalMinor)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    <ReadState empty="No test orders yet." />
+  )}
+  {result && (
+    <Pagination path="/inventory/orders" offset={offset} total={result.total} />
+  )}
+</AdminLayout>

@@ -1,0 +1,33 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ReadState from "../../../components/admin/ReadState.astro";
+import OrderView from "../../../components/admin/OrderView.astro";
+import { getAdminOrder } from "../../../server/commerce/orders.ts";
+import { getAdminPool } from "../../../server/admin/pool.ts";
+import type { AdminOrder } from "../../../domain/admin.ts";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let order: AdminOrder | null = null;
+let unavailable = false;
+if (
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    Astro.params.id ?? "",
+  )
+) {
+  try {
+    order = await getAdminOrder(getAdminPool(), Astro.params.id!);
+  } catch {
+    unavailable = true;
+  }
+}
+if (!order) Astro.response.status = unavailable ? 503 : 404;
+---
+
+<AdminLayout title="Test order detail">
+  <a href="/inventory/orders">Back to orders</a>
+  {order ? (
+    <OrderView order={order} />
+  ) : (
+    <ReadState unavailable={unavailable} missing={!unavailable} />
+  )}
+</AdminLayout>

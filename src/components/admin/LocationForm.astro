@@ -1,0 +1,84 @@
+---
+import type { AdminLocation } from "../../domain/admin.ts";
+import FormFeedback from "./FormFeedback.astro";
+interface Props {
+  location?: AdminLocation;
+}
+const { location } = Astro.props;
+const endpoint = location
+  ? `/api/admin/locations/${encodeURIComponent(location.key)}`
+  : "/api/admin/locations";
+---
+
+<form
+  data-admin-form="location"
+  data-endpoint={endpoint}
+  data-method={location ? "PUT" : "POST"}
+  data-refresh="/api/admin/locations"
+  class="admin-form"
+>
+  <input
+    name="expectedRevision"
+    type="hidden"
+    value={location?.revision ?? ""}
+  />
+  <fieldset data-intent-fields>
+    <legend>
+      {location
+        ? `Edit location · revision ${location.revision}`
+        : "Establish a genuine location"}
+    </legend>
+    <label>
+      Stable location key{" "}
+      <input
+        name="key"
+        required
+        readonly={!!location}
+        value={location?.key ?? ""}
+        pattern="[a-z0-9][a-z0-9-]{0,79}"
+        maxlength="80"
+      />
+    </label>
+    <label>
+      Internal name{" "}
+      <input
+        name="name"
+        required
+        maxlength="160"
+        value={location?.name ?? ""}
+      />
+    </label>
+    <label>
+      Public label (optional, no private address){" "}
+      <input
+        name="publicLabel"
+        maxlength="160"
+        value={location?.publicLabel ?? ""}
+      />
+    </label>
+    <label class="admin-check">
+      <input
+        name="active"
+        type="checkbox"
+        checked={location?.active ?? false}
+      />{" "}
+      Active location
+    </label>
+    <label class="admin-check">
+      <input
+        name="pickupEnabled"
+        type="checkbox"
+        checked={location?.pickupEnabled ?? false}
+      />{" "}
+      Eligible for pickup
+    </label>
+    <p class="admin-muted">
+      New locations are inactive and non-pickup unless explicitly selected. No
+      stock or address is assumed.
+    </p>
+  </fieldset>
+  <button type="submit">
+    {location ? "Save location" : "Create location"}
+  </button>
+  <FormFeedback />
+</form>

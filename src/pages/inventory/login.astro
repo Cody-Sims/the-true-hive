@@ -1,0 +1,13 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import LoginShell from "../../components/admin/LoginShell.astro";
+import { getAdminLoginConfig } from "../../server/admin/config.ts";
+const config = getAdminLoginConfig();
+---
+
+<AdminLayout title="Administrator sign in" publicShell>
+  <LoginShell config={config} csrfToken={Astro.locals.csrfToken} />
+  <script>
+    import "../../client/admin-login.ts";
+  </script>
+</AdminLayout>

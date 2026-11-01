@@ -1,20 +1,58 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
 import ProductArt from "../../components/ProductArt.astro";
-import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
+import TestCheckout from "../../components/TestCheckout.astro";
+import {
+  getProduct,
+  getAvailability,
+  CatalogUnavailableError,
+} from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
+import { getCheckoutPresentation } from "../../server/commerce/stripe.ts";
+import type { Availability } from "../../domain/catalog.ts";
 import { isRecordKey } from "../../server/inventory/rules.ts";
+const config = readConfig();
+const checkout =
+  config.catalogSource === "database"
+    ? getCheckoutPresentation()
+    : { enabled: false, locationKey: null };
 let product = null;
 let unavailable = false;
 if (isRecordKey(Astro.params["slug"])) {
   try {
-    product = await getProduct(readConfig(), Astro.params["slug"]);
+    product = await getProduct(config, Astro.params["slug"]);
   } catch (error) {
     if (!(error instanceof CatalogUnavailableError)) throw error;
     unavailable = true;
   }
 }
 if (!product) Astro.response.status = unavailable ? 503 : 404;
+const availability: Record<string, Availability["state"] | "unverified"> = {};
+const testCheckoutEnabled =
+  checkout.enabled &&
+  !!checkout.locationKey &&
+  product?.kind === "active" &&
+  product.variants.some(
+    (variant) => (variant.priceMinor ?? 0) > 0 && variant.currency === "USD",
+  );
+if (testCheckoutEnabled && product && checkout.locationKey) {
+  await Promise.all(
+    product.variants
+      .filter(
+        (variant) =>
+          (variant.priceMinor ?? 0) > 0 && variant.currency === "USD",
+      )
+      .map(async (variant) => {
+        try {
+          availability[variant.key] =
+            (await getAvailability(config, variant.key, checkout.locationKey!))
+              ?.state ?? "unverified";
+        } catch {
+          availability[variant.key] = "unverified";
+        }
+      }),
+  );
+}
 ---
 
 <SiteLayout
@@ -66,14 +104,22 @@ if (!product) Astro.response.status = unavailable ? 503 : 404;
               <li>{detail}</li>
             ))}
           </ul>
-          <div class="notice">
-            <h2>Good things take a little care.</h2>
-            <p>
-              Online ordering isn't open yet. Real formats, labels,
-              availability, and pickup instructions will be confirmed before
-              sales begin.
-            </p>
-          </div>
+          {testCheckoutEnabled ? (
+            <TestCheckout
+              product={product}
+              enabled
+              availability={availability}
+            />
+          ) : (
+            <div class="notice">
+              <h2>Good things take a little care.</h2>
+              <p>
+                Online ordering isn't open yet. Real formats, labels,
+                availability, and pickup instructions will be confirmed before
+                sales begin.
+              </p>
+            </div>
+          )}
           <a class="text-link" href="/#connect">
             Find our contact channels <span aria-hidden="true">&rarr;</span>
           </a>
