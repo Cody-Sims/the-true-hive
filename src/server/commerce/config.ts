@@ -2,6 +2,7 @@ import { isIP } from "node:net";
 import { ConfigurationError, readConfig } from "../config.ts";
 import { databaseOptions } from "../db/connection.mjs";
 import { isRecordKey } from "../inventory/rules.ts";
+import { assertSameDatabaseTarget } from "../admin/config.ts";
 
 export interface StripeTestConfig {
   mode: "stripe-test";
@@ -12,22 +13,6 @@ export interface StripeTestConfig {
 }
 
 export type CheckoutConfig = { mode: "disabled" } | StripeTestConfig;
-
-function databaseTarget(connectionString: string) {
-  const url = new URL(connectionString);
-  if (url.hash) throw new Error();
-  let hostname = url.hostname.toLowerCase();
-  if (hostname.endsWith(".neon.tech")) {
-    const labels = hostname.split(".");
-    labels[0] = labels[0]!.replace(/-pooler$/, "");
-    hostname = labels.join(".");
-  }
-  return JSON.stringify([
-    hostname,
-    Number(url.port || "5432"),
-    decodeURIComponent(url.pathname.slice(1)),
-  ]);
-}
 
 export function readCheckoutConfig(
   environment: NodeJS.ProcessEnv = process.env,
@@ -46,14 +31,17 @@ export function readCheckoutConfig(
       environment["ADMIN_DATABASE_URL"] ?? "",
       "verify-full",
     );
+    assertSameDatabaseTarget(
+      publicDatabase.connectionString,
+      privateDatabase.connectionString,
+      site.databaseTls,
+    );
     const locationKey = environment["CHECKOUT_LOCATION_KEY"];
     const secretKey = environment["STRIPE_SECRET_KEY"];
     const webhookSecret = environment["STRIPE_WEBHOOK_SECRET"];
     if (
       site.catalogSource !== "database" ||
       environment["INVENTORY_ENABLED"] !== "true" ||
-      databaseTarget(publicDatabase.connectionString) !==
-        databaseTarget(privateDatabase.connectionString) ||
       environment["ADMIN_DATABASE_URL"] ===
         environment["MIGRATION_DATABASE_URL"] ||
       !isRecordKey(locationKey) ||

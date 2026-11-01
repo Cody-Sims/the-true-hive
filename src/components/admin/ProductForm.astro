@@ -57,7 +57,7 @@ const endpoint = product
       <input
         name="title"
         required
-        minlength="2"
+        minlength="1"
         maxlength="160"
         value={product?.title ?? ""}
       />
@@ -67,8 +67,8 @@ const endpoint = product
       id={`summary-${product?.key ?? "new"}`}
       name="summary"
       required
-      minlength="10"
-      maxlength="600"
+      minlength="1"
+      maxlength="1000"
       rows="3"
     >{product?.summary ?? ""}</textarea>
     <label for={`details-${product?.key ?? "new"}`}>
@@ -77,7 +77,7 @@ const endpoint = product
     <textarea
       id={`details-${product?.key ?? "new"}`}
       name="details"
-      maxlength="8000"
+      maxlength="24011"
       rows="4"
     >{product?.details.join("\n") ?? ""}</textarea>
     <div class="admin-grid">

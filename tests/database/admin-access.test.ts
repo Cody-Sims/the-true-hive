@@ -118,6 +118,7 @@ test("session revocation failure rolls back membership changes", async () => {
 test("a runtime role with membership reads cannot provision an administrator", async () => {
   runtimeRole = `hive_runtime_${randomUUID().replaceAll("-", "")}`;
   await operator.query(`CREATE ROLE "${runtimeRole}" NOLOGIN`);
+  await operator.query(`GRANT "${runtimeRole}" TO CURRENT_USER WITH SET TRUE`);
   await operator.query(`GRANT USAGE ON SCHEMA "${schema}" TO "${runtimeRole}"`);
   await operator.query(
     `GRANT SELECT ON "${schema}".admin_memberships TO "${runtimeRole}"`,

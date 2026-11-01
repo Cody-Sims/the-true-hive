@@ -7,6 +7,8 @@ export class OrderConflictError extends Error {}
 export class OrderNotFoundError extends Error {}
 
 export const MAX_INTEGER = 2147483647;
+export const MIN_TEST_TOTAL_MINOR = 50;
+export const MAX_TEST_TOTAL_MINOR = 99999999;
 
 export function record(input: unknown): Record<string, unknown> {
   if (!input || typeof input !== "object" || Array.isArray(input))

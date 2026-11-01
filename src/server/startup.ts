@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { readConfig, type SiteConfig } from "./config.ts";
 import { CatalogUnavailableError, checkDatabase } from "./catalog.ts";
 import { databaseOptions } from "./db/connection.mjs";
+import { prepareCheckoutStartup } from "./commerce/config.ts";
 import {
   readAdminConfig,
   AdminConfigurationError,
@@ -14,6 +15,7 @@ export async function prepareStartup(
   suppliedPool?: Pool,
   adminConfig: AdminConfig = readAdminConfig(),
 ): Promise<void> {
+  prepareCheckoutStartup();
   if (adminConfig.enabled && config.catalogSource === "database")
     assertSameDatabaseTarget(
       config.databaseUrl ?? "",

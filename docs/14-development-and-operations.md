@@ -205,6 +205,14 @@ Use `on_hand - held - committed - unavailable` for sellability. The safe rehears
 
 Reconciliation must re-fetch provider state. Expire overdue open sessions and confirm expired/unpaid state before releasing; payment-complete races settle via the same order transition. Unknown creation/session outcomes stay quarantined, not auto-released by a clock. Financial refunds never infer restock. A manual reconciliation CLI is not proof of a scheduled job: approve ownership/scheduling without silently adding a billed service.
 
+Run `npm run checkout:reconcile` with privately configured test credentials; `RECONCILE_CHECKOUT_LIMIT` defaults to 25 and is bounded to 100. It reports counts, not private order IDs. Retry an uncertain create using the same intent/key; never replace it with a new order. Verified signed events can recover an existing session association after a lost response, without creating a fresh payment or extending its expiry.
+
+Configure the test webhook on the **storefront/staging origin** at `/api/webhooks/stripe`, not the admin-only inventory host. The pinned SDK/event version is `2026-10-28.endive`, with the `allowed_payment_method_types` card filter. Match that endpoint version and rehearse signatures/expiry/paid/pickup before activation. Unsupported test totals are rejected before holds. Test details belong only in the isolated sandbox.
+
+Native startup validates checkout configuration, private role/schema access and Firebase TOTP readiness before listening. Astro trusts forwarded hosts only for the exact configured storefront/inventory origins; the middleware still verifies effective host/session/CSRF independently. The adapter accepts the largest bounded webhook body, while admin/checkout readers retain their smaller stream limits.
+
+CI's disposable integration role has `CREATEROLE` solely to create/drop isolated permission-test roles. Production runtime roles must never inherit that privilege. The Playwright lane runs the isolated admin DOM cases with zero skips after Chromium is installed; Node-only contract checks do not substitute for that browser gate.
+
 ### Inventory hostname gate
 
 Only after MFA/access-removal, least-privilege, sandbox and backup/restore rehearsals pass should the operator add **`inventory.thetruehive.com`** to the existing Render service and create its specific DNS record using Render's verified instructions. Verify TLS and direct anonymous/non-admin/API denial. Do not repoint root/www, change email, add wildcard DNS or advertise an admin link in the public storefront.

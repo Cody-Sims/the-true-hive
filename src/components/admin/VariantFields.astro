@@ -26,12 +26,12 @@ const { variant } = Astro.props;
       value={variant?.sku ?? ""}
       readonly={!!variant}
       required
-      maxlength="80"
+      maxlength="128"
     />
   </label>
   <label>
     Label{" "}
-    <input name="label" value={variant?.label ?? ""} required maxlength="120" />
+    <input name="label" value={variant?.label ?? ""} required maxlength="160" />
   </label>
   <label>
     Price (USD cents, optional for draft){" "}

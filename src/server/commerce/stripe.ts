@@ -16,6 +16,13 @@ import {
 } from "../inventory/rules.ts";
 import { jsonResponse } from "../http.ts";
 import { ConfigurationError } from "../config.ts";
+import {
+  OrderInputError,
+  OrderConflictError,
+  OrderNotFoundError,
+  MIN_TEST_TOTAL_MINOR,
+  MAX_TEST_TOTAL_MINOR,
+} from "./rules.ts";
 
 export { getCheckoutPresentation, prepareCheckoutStartup } from "./config.ts";
 
@@ -72,14 +79,19 @@ export function checkoutErrorResponse(error: unknown): Response {
     error instanceof ConfigurationError ||
     error instanceof InventoryInputError ||
     error instanceof InventoryConflictError ||
-    error instanceof InventoryNotFoundError
+    error instanceof InventoryNotFoundError ||
+    error instanceof OrderInputError ||
+    error instanceof OrderConflictError ||
+    error instanceof OrderNotFoundError
   ) {
     const status =
       error instanceof ConfigurationError
         ? 503
-        : error instanceof InventoryInputError
+        : error instanceof InventoryInputError ||
+            error instanceof OrderInputError
           ? 400
-          : error instanceof InventoryNotFoundError
+          : error instanceof InventoryNotFoundError ||
+              error instanceof OrderNotFoundError
             ? 404
             : 409;
     return jsonResponse(
@@ -111,6 +123,12 @@ export interface CheckoutPersistence {
     locationKey: string,
   ): Promise<CheckoutReservation>;
   attachCheckoutSession(
+    pool: Pool,
+    orderId: string,
+    sessionId: string,
+    expiresAt: string,
+  ): Promise<CheckoutReservation>;
+  recoverCheckoutSession(
     pool: Pool,
     orderId: string,
     sessionId: string,
@@ -264,7 +282,8 @@ function validReservation(order: CheckoutReservation): boolean {
       !line.title.trim() ||
       typeof line.label !== "string" ||
       !line.label.trim() ||
-      lineName(line).length > 250
+      [...line.title].length > 160 ||
+      [...line.label].length > 160
     )
       return false;
     keys.add(line.variantKey);
@@ -272,8 +291,8 @@ function validReservation(order: CheckoutReservation): boolean {
   }
   return (
     Number.isSafeInteger(total) &&
-    total > 0 &&
-    total <= 99_999_999 &&
+    total >= MIN_TEST_TOTAL_MINOR &&
+    total <= MAX_TEST_TOTAL_MINOR &&
     total === order.totalMinor
   );
 }
@@ -456,7 +475,9 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
         await quarantine(order, "checkout_reservation_mismatch");
         throw unavailable();
       }
-      if (!["creating", "open"].includes(order.state)) {
+      if (
+        !["creating", "open", "reconciliation_required"].includes(order.state)
+      ) {
         throw new CheckoutBoundaryError(
           "CHECKOUT_CONFLICT",
           409,
@@ -602,8 +623,11 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
           !/^evt_[a-zA-Z0-9_]{1,240}$/.test(event.id)
         )
           throw unavailable();
-        const order = await persistence.getCheckoutReservation(pool, id);
+        let order = await persistence.getCheckoutReservation(pool, id);
         if (!order) throw unavailable();
+        const sessionId =
+          order.checkoutSessionId ??
+          (typeof object?.["id"] === "string" ? object["id"] : "");
         if (
           event.livemode !== false ||
           event.account ||
@@ -613,13 +637,29 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
           !validSession(
             object as unknown as Stripe.Checkout.Session,
             order,
-            order.checkoutSessionId ?? "",
+            sessionId,
           )
         )
           return await quarantine(order, "checkout_event_association_mismatch");
-        const session = await retrieve(order);
+        const session = await retrieve({
+          ...order,
+          checkoutSessionId: sessionId,
+        });
         if (!session)
           return await quarantine(order, "checkout_session_unknown");
+        if (!order.checkoutSessionId) {
+          if (
+            !validSession(session, order, sessionId) ||
+            !validLines(session, order)
+          )
+            return await quarantine(order, "checkout_session_mismatch");
+          order = await persistence.recoverCheckoutSession(
+            pool,
+            order.id,
+            session.id,
+            order.checkoutExpiresAt,
+          );
+        }
         return await settle(order, session, event.id);
       } catch {
         throw unavailable();

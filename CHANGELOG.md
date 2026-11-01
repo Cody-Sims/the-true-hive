@@ -7,10 +7,13 @@
 - Secure inventory-phase specification and operator runbook, with isolated Firebase/app-enforced MFA, Stripe card-only test checkout and separate held/paid/physical stock approved for implementation.
 - Private owner-only admin-access provisioning with transactional membership/session revocation and no runtime-credential fallback.
 - Forward-compatible held stock and revision constraints; count corrections preserve checkout allocations and return retry-safe audit receipts.
+- Disabled-by-default private product/location/count/history/order workspace and APIs, with shared PostgreSQL shop data.
+- Card-only Stripe test checkout, signed/idempotent payment and expiry processing, same-intent recovery and atomic physical pickup accounting; no live charges.
 
 ### Security
 
 - Local review now serves only the curated static artifact, preventing private environment, agent configuration and server files from being fetched through the preview.
+- Inventory host/session/MFA/member/CSRF controls, locally revocable sessions and private runtime permission preflight; no personal-site admin-claim or owner-email fallback.
 
 ## October 29, 2026
 

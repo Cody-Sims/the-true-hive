@@ -16,7 +16,7 @@ export function assertPublicFiles(files) {
       );
     }
     if (
-      /postgres(?:ql)?:\/\/|DATABASE_URL|MIGRATION_DATABASE_URL|inventory_movements|pg_advisory_xact_lock/.test(
+      /postgres(?:ql)?:\/\/|DATABASE_URL|MIGRATION_DATABASE_URL|FIREBASE_SERVICE_ACCOUNT_JSON|ADMIN_CSRF_SECRET|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|firebase-admin\/(?:app|auth)|admin_memberships|admin_sessions|payment_events|inventory_movements|pg_advisory_xact_lock/.test(
         file.contents,
       )
     ) {

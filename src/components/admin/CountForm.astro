@@ -9,7 +9,7 @@ import Quantities from "./Quantities.astro";
 interface Props {
   variant: AdminVariant;
   level: AdminInventoryLevel;
-  location?: AdminLocation;
+  location?: AdminLocation | undefined;
   productKey: string;
 }
 const { variant, level, location, productKey } = Astro.props;
@@ -58,7 +58,7 @@ const { variant, level, location, productKey } = Astro.props;
         <textarea
           name="reason"
           required
-          minlength="3"
+          minlength="1"
           maxlength="500"
           rows="2"
         ></textarea>

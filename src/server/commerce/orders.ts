@@ -13,6 +13,8 @@ import type {
 } from "../../domain/commerce.ts";
 import {
   MAX_INTEGER,
+  MIN_TEST_TOTAL_MINOR,
+  MAX_TEST_TOTAL_MINOR,
   OrderConflictError,
   OrderNotFoundError,
   requestHash,
@@ -302,9 +304,9 @@ export async function reserveCheckout(
       (sum, line) => sum + line.quantity * line.priceMinor,
       0,
     );
-    if (total > MAX_INTEGER)
+    if (total < MIN_TEST_TOTAL_MINOR || total > MAX_TEST_TOTAL_MINOR)
       throw new OrderConflictError(
-        "The checkout total exceeds the supported amount.",
+        "The checkout total is outside the supported USD test-payment range.",
       );
     const stocks = await lockStock(client, lines, intent.locationKey);
     for (const line of lines) {
@@ -352,6 +354,25 @@ export async function attachCheckoutSession(
   sessionId: string,
   expiresAt: string,
 ): Promise<CheckoutReservation> {
+  return associateCheckoutSession(pool, orderId, sessionId, expiresAt, false);
+}
+
+export async function recoverCheckoutSession(
+  pool: Pool,
+  orderId: string,
+  sessionId: string,
+  expiresAt: string,
+): Promise<CheckoutReservation> {
+  return associateCheckoutSession(pool, orderId, sessionId, expiresAt, true);
+}
+
+async function associateCheckoutSession(
+  pool: Pool,
+  orderId: string,
+  sessionId: string,
+  expiresAt: string,
+  verifiedRecovery: boolean,
+): Promise<CheckoutReservation> {
   const id = uuid(orderId);
   const session = providerId(sessionId);
   const expiry = expiryDate(expiresAt);
@@ -374,7 +395,7 @@ export async function attachCheckoutSession(
     }
     if (
       (row.state !== "creating" && row.state !== "reconciliation_required") ||
-      row.checkout_expires_at.getTime() <= Date.now()
+      (!verifiedRecovery && row.checkout_expires_at.getTime() <= Date.now())
     )
       throw new OrderConflictError(
         "The reservation cannot attach a new checkout session.",

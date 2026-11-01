@@ -1,6 +1,6 @@
 # Specification: secure inventory administration and connected checkout
 
-Status: **next-phase outcome and implementation choices approved on 2026-10-31**. Implementation is in progress, not a claim of deployed administration or live sales.
+Status: **next-phase outcome and implementation choices approved on 2026-10-31; code implemented locally, disabled by default**. Provider setup, final review and hostname activation are separate from implementation; no deployed administration or live sales is claimed.
 
 The owner approved an **isolated True Hive Firebase project**, **app-enforced MFA before deployment**, and **Stripe Checkout in card-only test mode**. Physical on-hand, checkout holds and paid commitments remain separate; an authorized **Record pickup** action records physical departure. No Firebase billing upgrade, live payment, new paid service, production-domain cutover or email setup is authorized.
 
@@ -103,8 +103,8 @@ Use the types in `src/domain/admin.ts`. JSON success envelopes name their resour
 | `GET /api/admin/products/:key` | `{ product }`, including private variant/location balances and revision |
 | `POST /api/admin/products` | UUID `operationId`, `product` fields and `variants`; atomic unpublished product creation and zero stock records |
 | `PUT /api/admin/products/:key` | UUID operation, `expectedRevision`, action `save/publish/archive`, product/variant fields; preserve stable referenced keys |
-| `GET/POST /api/admin/locations` | List or create a genuine location; new locations are inactive/non-pickup unless deliberately selected |
-| `PUT /api/admin/locations/:key` | Validated name/public label/eligibility and expected revision |
+| `GET/POST /api/admin/locations` | List or create `{ operationId, location: { key, name, publicLabel, active, pickupEnabled } }`; new locations default inactive/non-pickup |
+| `PUT /api/admin/locations/:key` | `{ operationId, expectedRevision, location: { key, name, publicLabel, active, pickupEnabled } }` |
 | `POST /api/admin/adjustments` | UUID operation, variant/location keys, signed integer delta, reason and expected stock revision; actor is server-derived |
 | `GET /api/admin/history` | Bounded movement history, optionally scoped by variant/location |
 | `GET /api/admin/orders` | Bounded private order summaries, no customer/payment credentials |
@@ -112,6 +112,8 @@ Use the types in `src/domain/admin.ts`. JSON success envelopes name their resour
 | `POST /api/admin/orders/:id/pickup` | UUID operation and expected order revision; only paid orders; atomic ledger/count/commitment/order transition |
 
 Product fields are bounded existing keys/slug/title/summary/details/category/image choice. A draft still needs the existing minimum title/summary/category; it may lack a price. Publication requires an active real product, at least one active positive-price USD variant and valid content. Publication does not enable checkout. Archive unpublishes without removing stock, held orders or history. No destructive delete endpoint.
+
+`product.kind` is explicit on edits (`draft/concept/active`), with `draft` as the creation default. Each variant supplies stable key/SKU/label, integer-or-null `priceMinor`, `currency: "USD"` and explicit `active`. Existing keys and SKUs are retained; deactivate rather than delete. Private services take numeric pagination; HTTP/page adapters validate and convert query strings. USD prices are explicitly labeled cents in the admin, not silently rounded dollar amounts.
 
 Stock receipts distinguish the original adjustment's before/after result from refreshed current balances. Identical retries return the recorded operation; changed payload/actor under the same ID is a conflict. Stale revisions require a new reviewed intent, not a force-save.
 
@@ -129,6 +131,8 @@ Enabled database catalog/checkout must use public-read and private-write credent
 | Operator reconciliation CLI | Bounded unresolved orders; re-fetch/expire sessions safely and apply the same settlement functions; never infer release from time alone |
 
 The provider session uses the order ID as the create idempotency key and immutable database line/price snapshots. Persist the reservation before external calls; attach the resulting provider session separately. A failed/uncertain provider request never creates a fresh order or blindly releases stock. Retry the same intent/key; quarantine states that cannot be safely recovered.
+
+The initial test-payment total must be at least 50 USD cents and no more than the application's conservative 99,999,999-cent cap. Validate that range before holding stock; the cap is not a claim about every card network's maximum. The pinned Stripe API uses `allowed_payment_method_types: ["card"]`; validate the returned filter and eligible methods. Unsupported totals fail without creating a hold or provider session.
 
 Signed events alone do not bypass order association: re-fetch the expected session and match test mode, metadata, session/order identity, currency, authoritative total and quantities. Require `payment_status=paid` for paid commitment; no zero-cost/no-payment-required flow. Card-only checkout is explicit; unexpected delayed-method outcomes require reconciliation rather than guessed fulfillment.
 
@@ -172,6 +176,7 @@ listAdminHistory(pool, query?) => Promise<AdminMovement[]>
 // src/server/commerce/orders.ts; DTOs in src/domain/commerce.ts
 reserveCheckout(pool, input, locationKey) => Promise<CheckoutReservation>
 attachCheckoutSession(pool, orderId, sessionId, expiresAt) => Promise<CheckoutReservation>
+recoverCheckoutSession(pool, orderId, sessionId, expiresAt) => Promise<CheckoutReservation>
 getCheckoutReservation(pool, orderId) => Promise<CheckoutReservation | null>
 applyCheckoutPayment(pool, input: CheckoutPayment) => Promise<CheckoutSettlement>
 releaseExpiredCheckout(pool, input: CheckoutExpiry) => Promise<CheckoutSettlement>
@@ -183,6 +188,8 @@ recordOrderPickup(pool, orderId, input, actorId) => Promise<{ order: AdminOrder,
 ```
 
 `reserveCheckout` persists a deterministic one-hour requested checkout expiry with its immutable order before external calls; the adapter must not extend or replace an uncertain session on retries. Cases where the stored expiry can no longer be created safely are quarantined for operator reconciliation, not silently released. Reconciliation may actively expire an open session, then re-fetch it; only confirmed `expired` and unpaid state releases stock.
+
+`recoverCheckoutSession` associates an **already existing, independently verified provider session**, including after the original deadline; it never creates a new payment or changes the original expiry. A signed event followed by fresh API/session/line verification can recover a lost association and then use the normal idempotent settlement/release transaction. Customer requests cannot supply a recovery/session ID. Recoverable uncertain attempts retry the same immutable provider key; paid/expired/picked-up sessions never reopen.
 
 ## Security and privacy
 

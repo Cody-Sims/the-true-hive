@@ -6,7 +6,7 @@ interface Props {
     authDomain: string | null;
     projectId: string | null;
   };
-  csrfToken?: string;
+  csrfToken?: string | undefined;
 }
 const { config, csrfToken } = Astro.props;
 const publicConfig = JSON.stringify({

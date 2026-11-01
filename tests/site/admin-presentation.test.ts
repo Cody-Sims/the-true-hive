@@ -24,15 +24,13 @@ async function componentModule(file: URL): Promise<string> {
     pending = (async () => {
       const source = await readFile(file, "utf8");
       let code = file.pathname.endsWith(".astro")
-        ? (
-            await transform(source, {
-              filename: file.pathname,
-              internalURL: "astro/compiler-runtime",
-              resolvePath: (specifier) => specifier,
-            })
-          ).code
+        ? transform(source, {
+            filename: file.pathname,
+            internalURL: "astro/compiler-runtime",
+            resolvePath: (specifier) => specifier,
+          }).code
         : stripTypeScriptTypes(source, { mode: "transform" });
-      const [imports] = await parse(code);
+      const [imports] = parse(code);
       for (const item of [...imports].reverse()) {
         if (!item.specifier) continue;
         let resolved: string;

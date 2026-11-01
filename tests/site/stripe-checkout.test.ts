@@ -143,6 +143,9 @@ function harness() {
       stored.state = "open";
       return structuredClone(stored);
     },
+    async recoverCheckoutSession(pool, id, sid, expiry) {
+      return persistence.attachCheckoutSession(pool, id, sid, expiry);
+    },
     async getCheckoutReservation(_pool, id) {
       effects.push("get");
       assert.equal(id, orderId);
@@ -307,7 +310,7 @@ test("invalid intents cannot reserve inventory", async () => {
   }
 });
 
-test("uncertain create keeps/quarantines the hold and does not invent a retry order/session", async () => {
+test("uncertain create retries the identical provider intent without inventing an order or releasing stock", async () => {
   const h = harness();
   h.provider.checkout.sessions.create = async (input, options) => {
     h.effects.push("create");
@@ -318,7 +321,8 @@ test("uncertain create keeps/quarantines the hold and does not invent a retry or
   assert.deepEqual(h.effects, ["reserve", "create", "quarantine"]);
   assert.equal(h.creations[0]!.options.idempotencyKey, orderId);
   await assert.rejects(h.services.createCheckout(intent));
-  assert.equal(h.creations.length, 1);
+  assert.equal(h.creations.length, 2);
+  assert.deepEqual(h.creations[1], h.creations[0]);
   assert.equal(h.expiries.length, 0);
 });
 
@@ -353,12 +357,7 @@ test("stored expiry inside provider minimum is quarantined, never extended or lo
 });
 
 test("terminal orders and completed/expired sessions cannot start a second payment", async () => {
-  for (const state of [
-    "paid",
-    "picked_up",
-    "expired",
-    "reconciliation_required",
-  ] as const) {
+  for (const state of ["paid", "picked_up", "expired"] as const) {
     const h = harness();
     h.stored.state = state;
     await assert.rejects(h.services.createCheckout(intent));
@@ -367,7 +366,7 @@ test("terminal orders and completed/expired sessions cannot start a second payme
   for (const status of ["complete", "expired"] as const) {
     const h = harness();
     h.stored.checkoutSessionId = sessionId;
-    h.stored.state = "open";
+    h.stored.state = "reconciliation_required";
     h.current.status = status;
     await assert.rejects(h.services.createCheckout(intent));
     assert.equal(h.creations.length, 0);

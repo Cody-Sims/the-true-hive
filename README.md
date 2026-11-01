@@ -57,7 +57,7 @@ After editing planning or prototype sources, run `npm run build:pages` and refre
 
 The future store is **our own primary-domain experience**, with PostgreSQL-authoritative stock/order rules and approved Stripe card-only test integration in the next phase. Earlier Shopify recommendations are superseded. Render manages infrastructure, not merchandising/inventory ownership; secure admin/provider activation and live sales remain explicit gates.
 
-**Next phase:** [secure inventory administration and connected checkout](docs/15-inventory-admin-and-commerce.md) at `inventory.thetruehive.com`, using an isolated Firebase identity project, mandatory app-enforced MFA and PostgreSQL admin membership. Stripe card-only test checkout is approved for implementation, with separate held/paid/physical stock and an admin Record pickup action. Provider setup, recovery, domain activation and live sales remain gated; no paid upgrades or live charges are approved.
+**Inventory phase, local implementation:** [secure inventory administration and connected checkout](docs/15-inventory-admin-and-commerce.md) targets `inventory.thetruehive.com`, using an isolated Firebase identity project, mandatory app-enforced MFA and PostgreSQL admin membership. Product/location management, audited count changes, Stripe card-only test checkout and Record pickup are implemented behind disabled-by-default flags, sharing the same PostgreSQL authority. Provider setup, recovery, domain activation and live sales remain gated; no paid upgrades or live charges are approved.
 
 **Apiary Market is selected.** All ten directions remain available for comparison/history. Selection is an owner decision, not a proven conversion-rate ranking.
 

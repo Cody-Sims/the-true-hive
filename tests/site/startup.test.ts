@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readConfig } from "../../src/server/config.ts";
+import { ConfigurationError, readConfig } from "../../src/server/config.ts";
 import { CatalogUnavailableError } from "../../src/server/catalog.ts";
 import {
   prepareStartup,
@@ -19,6 +19,20 @@ test("database-mode startup must not proceed without its configured backend", as
 
 test("deliberate showcase startup does not require a running database", async () => {
   await assert.doesNotReject(prepareStartup(readConfig({})));
+});
+
+test("native startup rejects an unsupported checkout mode before serving", async () => {
+  const previous = process.env["CHECKOUT_MODE"];
+  process.env["CHECKOUT_MODE"] = "stripe-live";
+  try {
+    await assert.rejects(
+      prepareStartup(readConfig({}), undefined, readAdminConfig({})),
+      ConfigurationError,
+    );
+  } finally {
+    if (previous === undefined) delete process.env["CHECKOUT_MODE"];
+    else process.env["CHECKOUT_MODE"] = previous;
+  }
 });
 
 test("explicit disabled admin startup invokes neither database nor provider", async () => {
