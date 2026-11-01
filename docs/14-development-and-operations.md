@@ -181,7 +181,17 @@ Provision roles deliberately with the direct owner connection after the forward 
 
 Revoke public schema creation and temporary-table privileges in the dedicated database. Verify actual denials in transactions/with the target role: product writes from public credentials, membership writes/schema creation from runtime credentials, and history/snapshot edits. Enabled-admin startup must reject elevated or incomplete runtime credentials; configuration names alone do not establish privilege.
 
-The operator access command must require `MIGRATION_DATABASE_URL` and private `INVENTORY_ADMIN_UID`, reject pooled/invalid owner connections, and never fall back to `DATABASE_URL`/`ADMIN_DATABASE_URL`. Grant/revoke membership transactionally; revocation also invalidates local sessions. Do not put private identifiers in command arguments, source, logs or public workbook answers.
+The operator access command requires `MIGRATION_DATABASE_URL` and private `INVENTORY_ADMIN_UID`, rejects pooled/invalid owner connections, and never falls back to `DATABASE_URL`/`ADMIN_DATABASE_URL`. It grants/revokes membership transactionally; revocation also invalidates local sessions and later re-granting never resurrects them. Do not put private identifiers in command arguments, source, logs or public workbook answers.
+
+After privately configuring the direct owner connection and intended identity:
+
+```sh
+npm run admin:access -- --help
+npm run admin:access -- grant
+npm run admin:access -- revoke
+```
+
+Run grant/revoke only as deliberate operator actions against the intended database. The command prints no identity or connection values; a help call performs no database/provider work. Real PostgreSQL cases cover grant, session revocation, rollback and runtime-role denial.
 
 ### Stock and sandbox rehearsals
 
