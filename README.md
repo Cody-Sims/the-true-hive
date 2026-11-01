@@ -55,7 +55,9 @@ After editing planning or prototype sources, run `npm run build:pages` and refre
 
 **Product-led local sales; local pickup first, shipping later.** Build on the existing small-scale soap business and beekeeping, rather than assuming every prototype product is ready. Retail honey is not available merely because a honey jar appears in a mockup: the owner reports that the next harvest already has a purchaser. See the [business plan](docs/09-local-business-launch-plan.md) for the owner-approved current context and allocation constraints.
 
-The future store is **our own primary-domain experience**, with PostgreSQL-authoritative stock/order rules and a later selected payment processor. Earlier Shopify recommendations are superseded. Render manages infrastructure, not merchandising/inventory ownership; admin authentication and payment lifecycle remain explicit follow-up gates.
+The future store is **our own primary-domain experience**, with PostgreSQL-authoritative stock/order rules and approved Stripe card-only test integration in the next phase. Earlier Shopify recommendations are superseded. Render manages infrastructure, not merchandising/inventory ownership; secure admin/provider activation and live sales remain explicit gates.
+
+**Next phase:** [secure inventory administration and connected checkout](docs/15-inventory-admin-and-commerce.md) at `inventory.thetruehive.com`, using an isolated Firebase identity project, mandatory app-enforced MFA and PostgreSQL admin membership. Stripe card-only test checkout is approved for implementation, with separate held/paid/physical stock and an admin Record pickup action. Provider setup, recovery, domain activation and live sales remain gated; no paid upgrades or live charges are approved.
 
 **Apiary Market is selected.** All ten directions remain available for comparison/history. Selection is an owner decision, not a proven conversion-rate ranking.
 
@@ -97,6 +99,7 @@ All prices, product formats, packaging and quantities in the shop are **fictiona
 | [12 - Sharing and CI/CD](docs/12-sharing-and-deployment.md) | Public approval, static artifact boundaries, deployment and recovery |
 | [13 - Application foundation](docs/13-production-foundation.md) | Approved custom frontend/backend slice, contracts and acceptance |
 | [14 - Development and operations](docs/14-development-and-operations.md) | Actual commands, native PostgreSQL, required CI, Render and recovery |
+| [15 - Secure inventory phase](docs/15-inventory-admin-and-commerce.md) | Approved admin/MFA and test-checkout contracts, shared stock accounting, parallel ownership and activation gates |
 
 The hub renders these source files directly, including tables, diagrams, citations and internal links. There is no separate stale summary masquerading as the full plan.
 

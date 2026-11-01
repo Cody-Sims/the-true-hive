@@ -1,7 +1,7 @@
 # Partner discussion workbook
 
 Status: **read-only discussion agenda; unanswered questions are intentional**.  
-Updated: **2026-10-29**. The owner approved the planning snapshot for public review; future answers/private details are not automatically approved consumer copy.
+Updated: **2026-10-31**. The owner approved the planning snapshot for public review; future answers/private details are not automatically approved consumer copy.
 
 ## Confirmed decisions and current facts
 
@@ -23,10 +23,13 @@ Updated: **2026-10-29**. The owner approved the planning snapshot for public rev
 | C14 | Render account created/connected; no live checkout in this first slice | Roles, recovery, payment and production cutover remain gates. |
 | C15 | Native Render app plus Neon Free PostgreSQL, both in Oregon | One app tier; no paid Neon, Render database or Pro workspace without new approval. |
 | C16 | Current Node driver with verified TLS and channel binding when available | Do not claim strict channel binding or silently accept a URL requiring it. |
+| C17 | Admin-only inventory.thetruehive.com; product creation/updates and stock increases/reductions, connected to shop purchases | Build the secure admin phase next; indexing controls supplement authorization. |
+| C18 | Isolated Firebase project and app-enforced MFA before deployment | No paid provider upgrade is approved; privately provision admin membership and verify MFA. |
+| C19 | Stripe card-only test checkout; separate physical/held/paid commitments and admin Record pickup | No live charges; payment commits held stock once, pickup records physical departure, refunds do not auto-restock. |
 
 ## First partner meeting: decide these before expanding
 
-Discuss Q01, Q02, Q03, Q04, Q05, Q08, Q09 and Q11 first. Give each a named owner and next action; it is fine to record "needs qualified advice" instead of guessing. Later shipping and custom-admin decisions do not need to hold up safe local planning.
+Discuss Q01, Q02, Q03, Q04, Q05, Q08, Q09 and Q11 first. Give each a named owner and next action; it is fine to record "needs qualified advice" instead of guessing. Resolve Q12/Q21 for the requested admin phase; shipping and live-sales readiness remain separate gates.
 
 ## Open questions
 
@@ -43,7 +46,7 @@ Discuss Q01, Q02, Q03, Q04, Q05, Q08, Q09 and Q11 first. Give each a named owner
 | Q09 | What are the owners' private spending limits, available work time, near-term goals and stop conditions for a pilot? | Makes local growth and platform costs realistic without inventing revenue targets. | Before committing spend / both owners | Open |
 | Q10 | Who will edit content, receive inquiries, reconcile stock, prepare orders and manage returns? What access should each role have? | Determines whether managed admin/CMS is sufficient. | Before commerce / operations owner | Open |
 | Q11 | For each real formula/claim/channel, what Tennessee/local, FDA/product-category, labeling, safety, insurance and tax requirements apply? Has appropriate qualified confirmation been obtained? | A true soap, cosmetic, food and candle may have different obligations. | Before category/channel expansion / operating owner + qualified sources | Open |
-| Q12 | Custom storefront/inventory is selected. Which owner tasks and access roles should its first authenticated admin support? | Define authorization before exposing inventory mutations; no Shopify evaluation remains required. | Before admin implementation / owner + maintainer | Ownership answered; roles open |
+| Q12 | Product creation/updates and count increases/reductions are requested for an admin-only hostname. Which verified identities may administer it, and who provisions/revokes access? | Deny access to ordinary signed-in users; derive trusted audit identity server-side. Do not publish account emails/UIDs or credentials here. | Before admin exposure / owner + maintainer | Workflows/admin-only scope answered; provisioning open |
 | Q13 | How will batches, supplier lots, quality checks, complaints, returns, damaged stock and any recall be tracked? Do gift sets need component stock? | Simple finished-unit counts may not cover maker operations. | Before catalog/volume expansion / production owner | Open |
 | Q14 | Which products and regions could ship later, with verified packaging, breakage/leakage handling, shipping economics, taxes, labels and returns? | Prevents treating "shipping later" as an already configured service. | Shipping pilot / fulfillment owner + advisers | Deferred |
 | Q15 | Which local markets/outlets are a good fit, and what applications, vendor rules, fees, insurance, product eligibility, wholesale terms and POS processes apply? | Builds channels without unverified venue assumptions. | Before each local channel / sales owner | Open |
@@ -52,7 +55,7 @@ Discuss Q01, Q02, Q03, Q04, Q05, Q08, Q09 and Q11 first. Give each a named owner
 | Q18 | Which removal/pollination services can actually be delivered with the right experience, insurance, equipment, permissions, repair responsibilities and colony capacity? | Keeps planned beekeeper services from becoming unsupported public promises. | Before offering/bookings / apiary/service owner | Deferred |
 | Q19 | When email is needed, should contact@thetruehive.com use a real Porkbun mailbox or Google Workspace, who will operate it, and is any inbound forwarding still wanted? | Free inbound forwarding is not custom-domain sending; the personal Gmail third-party Send-as workaround is not a durable choice. Do not put inbox credentials/destinations here. | Before email activation / digital owner | Deferred |
 | Q20 | Render app/Neon Free in Oregon is selected. Who owns quota monitoring and backups, and what recovery window/restore rehearsal is required before real inventory/orders? | The provider choice is answered; short free history is not a business-data recovery guarantee. Keep credentials and private spending limits off this page. | Before real inventory/launch / owner + maintainer | Tiers/region answered; recovery open |
-| Q21 | Which authentication and payment providers, order/reservation states, and refund/reconciliation process will be used? | Custom stock ownership does not justify homemade passwords or card-data handling. | Before admin or payment / owner + maintainer | Deferred |
+| Q21 | Isolated Firebase/MFA and Stripe card-only test checkout are selected. Who approves/provisions Identity Platform, provider credentials/endpoints and reconciliation scheduling before activation? | Selected providers do not prove setup, MFA, recovery or live-sales readiness. Keep identities/credentials private; do not enable billing or live charges automatically. | Before admin/test-checkout activation / owner + maintainer | Technical choices answered; provisioning/activation open |
 
 ## Decision record format
 

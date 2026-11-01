@@ -6,6 +6,8 @@ Source: the owner's requests and follow-ups: Madisonville, TN; ten total concept
 
 **Implementation approval:** Apiary Market (04), our own Astro/TypeScript native Node/PostgreSQL storefront/inventory, no Shopify or Docker. The first slice has no live checkout or public admin. Use a native Render app with Neon Free PostgreSQL in Oregon; preserve the review at `preview.thetruehive.com` and use `thetruehive.com` for the actual site after readiness. See the [current foundation specification](13-production-foundation.md).
 
+**Next-phase direction - 2026-10-31:** build authenticated inventory administration at **`inventory.thetruehive.com`**, accessible only to an authorized admin and excluded from indexing. The owner selected an isolated Firebase project with app-enforced MFA, PostgreSQL admin membership and Stripe card-only test checkout. Admin edits and verified purchases use the same PostgreSQL authority. Payment converts held stock to paid commitments; an admin Record pickup action records physical departure. See the [approved inventory phase](15-inventory-admin-and-commerce.md). Private provider/provisioning, recovery, hostname activation and live-sales readiness remain gates; no paid upgrade or live charges are approved.
+
 ## Objective
 
 Establish The True Hive as an approachable, credible local maker/bee business in Madisonville, Tennessee. Prioritize product discovery and local sales, building on existing small-scale soap sales and beekeeping; keep planned removal and pollination services easy to find. Start with local pickup, add shipping only when ready, and plan an integrated storefront with authoritative inventory. Provide ten design directions and an internal UI for the complete website/business plan.
@@ -34,13 +36,14 @@ Establish The True Hive as an approachable, credible local maker/bee business in
 | R6 | Include an owner-approved story, local context, and only substantiated trust claims. Do not invent reviews, credentials, awards, hive counts, founding dates, or sustainability certifications. |
 | R7 | Keep core production marketing content/navigation/contact usable without client-side JavaScript. Real collections/products must be crawlable and rendered for search; the internal interactive demo and planning viewer may require JavaScript with honest fallbacks. |
 | R8 | Prepare honest page metadata and local search information; publish structured data only for verified facts and eligible content. |
-| R9 | Define future boundaries for catalog, hosted checkout, and owner inventory administration without shipping payment, authentication, or an inventory database now. |
+| R9 | Preserve the bounded landing/foundation releases while specifying and implementing the separately approved inventory/admin and hosted-payment phases. A landing page does not require checkout or administration to launch. |
 | R10 | Deliver ten distinct responsive homepage compositions and coordinated collection/product/cart/checkout previews, with design rationales and a linked multiphase plan. |
 | R11 | Plan the future storefront as part of the coherent primary-domain website experience, not merely an unrelated outbound shop. Managed hosted checkout may handle payment. |
 | R12 | Define authoritative variant/location inventory, pickup eligibility, market/wholesale allocation, error/freshness behavior and owner administration; distinguish future production forecasts from physical stock. |
 | R13 | Render the actual planning documents, requirements, research, roadmap and unanswered questions inside a navigable browser UI. |
 | R14 | Include an actionable local-to-growth business plan based on owner-reported existing soap sales, two hives and next-harvest allocation; identify assumptions, costs, operating gates and partner decisions without inventing revenue/yield forecasts. |
 | R15 | Include sourced product/local SEO and customer-acquisition practices; keep prototypes non-indexable and free of fake offer/rating markup. |
+| R16 | Provide admin-only inventory management at `inventory.thetruehive.com`, with server-side authorization, robots exclusion, product management and audited variant/location stock changes. The shop uses the same authority; only verified, idempotently processed purchases commit stock. |
 
 ### Non-functional
 
@@ -124,6 +127,7 @@ Keep home/property addresses, colony photos, and exact hive locations out of pub
 | R13 | The UI displays the real Markdown contents, including requirements, business plan and partner workbook; navigation/source links resolve and unknown documents fail clearly. |
 | R14 | The business roadmap starts from actual owner facts, contains bounded actions/gates and an illustrative cost worksheet, and preserves unanswered questions and private-copy boundaries. |
 | R15 | SEO/acquisition recommendations cite primary sources, separate facts from hypotheses, and prohibit indexing/mock offer markup in review artifacts. |
+| R16 | Anonymous/non-admin requests cannot read private inventory or mutate products/stock; admin routes are non-indexable. An authorized admin can create/update a product and adjust counts, storefront reads reflect committed data, and competing/retried purchases cannot oversell or double-decrement. Live launch remains gated. |
 | N1 | Named widths and 200% zoom expose no content loss or unintended horizontal scrolling. |
 | N2 | Automated accessibility checks and manual keyboard/screen-reader review meet the selected production criteria; unresolved issues block release. |
 | N3 | Lab results meet the approved release budget; field p75 is reviewed when representative traffic exists, or recorded as unavailable. |
@@ -141,8 +145,8 @@ Product priority, own-made production and pickup-first direction are now confirm
 
 - **Astro + TypeScript:** recommended for a content-led static site with focused later integration points.
 - **Next.js App Router:** valid if committed custom application requirements or team expertise justify the additional rendering/caching concepts.
-- **Shopify native theme now:** best if commerce becomes imminent or owner-managed merchandising outweighs the custom marketing-site preference.
-- **Custom inventory/admin now:** rejected; an unverified need does not justify custom auth, stock logic, or operational responsibility.
+- **Shopify native theme:** earlier recommendation superseded by the owner's custom storefront/PostgreSQL decision.
+- **Custom inventory/admin:** now explicitly requested as the next phase. Use a proven identity provider and specified transaction rules; do not build homemade passwords or collect payment-card details.
 - **Social-only presence:** useful acquisition channel, but does not replace an independently accessible local-service website.
 
 ## Rollout and Rollback

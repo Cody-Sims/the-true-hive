@@ -17,7 +17,7 @@ The clarified target is a **product-led website with an integrated future store*
 | **Astro + TypeScript + Node** | Selected HTML-first site and server foundation | Our PostgreSQL catalog/inventory and future payment integration | Own the backend correctness and operational responsibility |
 | **Next.js App Router + TypeScript** | Valid, particularly for a React-experienced maintainer | Server-rendered custom workflows and headless commerce | More server/client, rendering and caching concepts for a brochure site |
 | **Shopify** | Rejected by the owner | Historical alternative only | Not the selected storefront or inventory authority |
-| **Custom admin now** | Deferred | Add only after authentication/roles are specified | A private count function is not an authenticated admin |
+| **Custom admin next** | Owner-requested inventory phase | Specify identity/admin authorization before exposing mutations at `inventory.thetruehive.com` | A private count function is not an authenticated admin |
 
 **Evidence:** Astro components "render to static HTML with no client-side runtime" ([official docs](https://docs.astro.build/en/concepts/islands/)). Next.js layouts/pages are Server Components by default ([official docs](https://nextjs.org/docs/app/getting-started/server-and-client-components)); its [static-export documentation](https://nextjs.org/docs/app/guides/static-exports) describes limitations on runtime server features. Shopify explicitly states, "A headless storefront costs more to build and run than a theme" ([official guidance](https://shopify.dev/docs/storefronts/headless/overview)).
 
@@ -121,12 +121,16 @@ Choose among:
 | Path | When appropriate | Consequence |
 |---|---|---|
 | Our native Node site + PostgreSQL | Selected | One application, owned inventory, read APIs now; authenticated admin/payment later |
-| Payment processor | Not selected yet | Use an appropriate hosted/tokenized payment flow without collecting card data in our app |
+| Stripe Checkout | Card-only test integration approved for the inventory phase | Hosted test payment; live charges and delayed methods remain gated |
 | Temporary external shop link | Explicitly approved transition or outage fallback only | Not the intended completed experience; disclose the transition and preserve useful redirects/navigation |
 
-No payment integration is enabled. When selected, the processor handles sensitive payment details; our server owns stock/order state and must verify callbacks and handle retries transactionally. A cart is not a stock reservation.
+No payment integration is enabled in the deployed foundation. The [next inventory phase](15-inventory-admin-and-commerce.md) adds Stripe card-only test checkout; Stripe handles sensitive payment details while our server owns stock/order state, verifies callbacks and handles retries transactionally. A cart is not a stock reservation.
 
-Custom inventory is now an accepted requirement, not an exception to revisit. Secure owner administration remains deferred until roles/authentication are agreed. The SQL foundation does not claim to solve manufacturing, recipes, lot traceability or recall operations.
+Custom inventory and secure owner administration are now explicit requirements. The next phase targets **`inventory.thetruehive.com`** for authorized admins only; provider/role contracts must be agreed before exposing it. Product edits and audited count corrections use the same PostgreSQL records that the shop reads. Verified purchase processing must commit stock transactionally and idempotently, never through browser-cart arithmetic. The SQL foundation does not yet implement these admin/payment workflows or claim to solve manufacturing, recipes, lot traceability or recall operations.
+
+Robots exclusion, noindex headers and omission from the public sitemap/navigation are supplementary discovery controls, **not authorization**. Every private page/read/write requires server-side access checks; a hidden hostname or login-screen redirect alone does not protect inventory.
+
+The owner chose an **isolated Firebase project**, app-enforced MFA and current PostgreSQL admin membership rather than inheriting the personal site's owner-email/admin-claim access. Keep one Render service with exact inventory-origin routing and host-only, locally revocable sessions. The approved stock model separates held/paid/physical counts: payment moves held to committed; Record pickup decreases committed and on-hand together. Provider setup/billing approval, role provisioning, recovery and live activation remain separate.
 
 Local pickup is a real fulfillment workflow, not a static availability badge. Choose an approved pickup location and readiness process; stock from different locations must not be added into an invented pickup promise. Current honey forecasts/wholesale commitments are not retail physical inventory. See [inventory and operations](07-inventory-and-operations.md).
 
