@@ -18,7 +18,7 @@ export class AdminError extends Error {
     super(message);
     this.status = status;
     this.code = code;
-    this.fields = fields;
+    if (fields !== undefined) this.fields = fields;
   }
 }
 

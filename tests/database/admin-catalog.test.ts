@@ -116,7 +116,9 @@ test("draft creation is atomic, private, zero-balanced across genuine locations 
     result.product.variants.map((v) => v.key),
     ["test-bar", "test-box"],
   );
-  assert.deepEqual(result.product.variants[0].levels, [
+  const bar = result.product.variants[0];
+  assert(bar);
+  assert.deepEqual(bar.levels, [
     {
       variantKey: "test-bar",
       locationKey: "test-room",
@@ -128,8 +130,8 @@ test("draft creation is atomic, private, zero-balanced across genuine locations 
       revision: 1,
     },
   ]);
-  assert.equal(result.product.variants[0].sku, "TEST-BAR");
-  assert.equal(result.product.variants[0].priceMinor, null);
+  assert.equal(bar.sku, "TEST-BAR");
+  assert.equal(bar.priceMinor, null);
   assert.deepEqual(await getCatalog(config, pool), {
     source: "database",
     products: [],
@@ -491,9 +493,11 @@ test("stock requires a reviewed revision, trusts only the server actor, protects
     limit: 1,
   });
   assert.equal(history.length, 1);
-  assert.equal(history[0].actorId, actor);
-  assert.equal(history[0].onHand, 7);
-  assert.equal(typeof history[0].createdAt, "string");
+  const movement = history[0];
+  assert(movement);
+  assert.equal(movement.actorId, actor);
+  assert.equal(movement.onHand, 7);
+  assert.equal(typeof movement.createdAt, "string");
   assert.equal(
     (await pool.query("SELECT count(*)::int AS n FROM inventory_movements"))
       .rows[0].n,
@@ -593,7 +597,9 @@ test("private listing bounds search and pagination, keeps drafts and inactive va
   });
   assert.equal(result.total, 1);
   assert.equal(result.products.length, 1);
-  assert.equal(result.products[0].variants.length, 2);
+  const product = result.products[0];
+  assert(product);
+  assert.equal(product.variants.length, 2);
   assert.deepEqual(result.locations, []);
   assert.deepEqual((await listAdminProducts(pool, { offset: 1 })).products, []);
   assert.equal((await listAdminProducts(pool, { search: "%" })).total, 0);
