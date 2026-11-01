@@ -50,6 +50,8 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     )
     AND NOT has_schema_privilege(current_user, 'public', 'CREATE')
     AND has_schema_privilege(current_user, 'public', 'USAGE')
+    AND current_schema() = 'public'
+    AND current_schemas(false) = ARRAY['public']::name[]
     AND NOT EXISTS (
       SELECT 1 FROM pg_database d
       WHERE d.datname = current_database() AND pg_has_role(d.datdba, 'MEMBER')

@@ -6,6 +6,7 @@ import {
   readAdminConfig,
   AdminConfigurationError,
   type AdminConfig,
+  assertSameDatabaseTarget,
 } from "./admin/config.ts";
 
 export async function prepareStartup(
@@ -13,6 +14,12 @@ export async function prepareStartup(
   suppliedPool?: Pool,
   adminConfig: AdminConfig = readAdminConfig(),
 ): Promise<void> {
+  if (adminConfig.enabled && config.catalogSource === "database")
+    assertSameDatabaseTarget(
+      config.databaseUrl ?? "",
+      adminConfig.databaseUrl ?? "",
+      config.databaseTls,
+    );
   await prepareAdminStartup(adminConfig);
   if (config.catalogSource === "showcase") return;
   let pool = suppliedPool;

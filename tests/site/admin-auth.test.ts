@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import {
   readAdminConfig,
   AdminConfigurationError,
+  assertSameDatabaseTarget,
   type AdminConfig,
 } from "../../src/server/admin/config.ts";
 import {
@@ -522,5 +523,126 @@ test("unauthenticated quota remains bounded even when attackers rotate proxy hea
       )
     ).status,
     200,
+  );
+});
+
+test("database authority matches credentials-independent Neon pooler aliases, default ports and encoded database names", () => {
+  assert.doesNotThrow(() =>
+    assertSameDatabaseTarget(
+      "postgres://public_reader@EP-STAGING-pooler.us-east-2.aws.neon.tech/hive%2Dstaging?sslmode=require",
+      "postgresql://private_writer@ep-staging.us-east-2.aws.neon.tech:5432/hive-staging?sslmode=verify-full",
+    ),
+  );
+  assert.doesNotThrow(() =>
+    assertSameDatabaseTarget(
+      "postgres://reader@127.0.0.1/hive?sslmode=disable",
+      "postgres://writer@127.0.0.1:5432/hive",
+      "disable",
+    ),
+  );
+});
+
+test("database authority rejects other branches, ports, databases, arbitrary pooler aliases and schema overrides safely", () => {
+  const publicUrl =
+    "postgres://reader@ep-staging-pooler.us-east-2.aws.neon.tech/hive-staging";
+  for (const adminUrl of [
+    "postgres://writer@ep-operational.us-east-2.aws.neon.tech/hive-staging",
+    "postgres://writer@ep-staging.us-west-2.aws.neon.tech/hive-staging",
+    "postgres://writer@ep-staging.us-east-2.aws.neon.tech:6432/hive-staging",
+    "postgres://writer@ep-staging.us-east-2.aws.neon.tech/operational",
+    "postgres://writer@ep-staging.us-east-2.aws.neon.tech/Hive-staging",
+    "postgres://writer@ep-staging.us-east-2.aws.neon.tech/hive-staging?schema=private",
+    "postgres://writer@ep-staging.us-east-2.aws.neon.tech/hive-staging?options=-c%20search_path%3Dprivate",
+    "postgres://writer@ep-staging.us-east-2.aws.neon.tech/hive-staging#private",
+  ]) {
+    assert.throws(
+      () => assertSameDatabaseTarget(publicUrl, adminUrl),
+      (error: unknown) =>
+        error instanceof AdminConfigurationError &&
+        !error.message.includes("postgres") &&
+        !error.message.includes("ep-staging"),
+    );
+  }
+  for (const [reader, writer] of [
+    ["db-pooler.example", "db.example"],
+    ["ep-staging-pooler.neon.tech.example", "ep-staging.neon.tech.example"],
+    ["ep-staging.region-pooler.neon.tech", "ep-staging.region.neon.tech"],
+  ]) {
+    assert.throws(
+      () =>
+        assertSameDatabaseTarget(
+          `postgres://reader@${reader}/hive`,
+          `postgres://writer@${writer}/hive`,
+        ),
+      AdminConfigurationError,
+    );
+  }
+});
+
+test("enabled database catalog cannot drift from the private writer, while showcase staging and disabled mode remain offline", () => {
+  const env = enabledEnvironment();
+  assert.throws(
+    () =>
+      readAdminConfig({
+        ...env,
+        CATALOG_SOURCE: "database",
+        DATABASE_URL: "postgres://reader@other-database.example/hive",
+      }),
+    AdminConfigurationError,
+  );
+  assert.throws(
+    () =>
+      readAdminConfig({
+        ...env,
+        CATALOG_SOURCE: "database",
+      }),
+    AdminConfigurationError,
+  );
+  assert.doesNotThrow(() =>
+    readAdminConfig({
+      ...env,
+      CATALOG_SOURCE: "database",
+      DATABASE_URL: "postgres://reader@database.example:5432/hive",
+    }),
+  );
+  assert.doesNotThrow(() =>
+    readAdminConfig({
+      ...env,
+      CATALOG_SOURCE: "showcase",
+      DATABASE_URL: "postgres://reader@other-database.example/hive",
+    }),
+  );
+  assert.equal(
+    readAdminConfig({
+      INVENTORY_ENABLED: "false",
+      CATALOG_SOURCE: "database",
+      DATABASE_URL: "not-configured",
+      ADMIN_DATABASE_URL: "not-configured",
+    }).enabled,
+    false,
+  );
+});
+
+test("stripe-test activation cannot skip enabled inventory authentication or database-mode startup", () => {
+  assert.throws(
+    () =>
+      readAdminConfig({
+        INVENTORY_ENABLED: "false",
+        CHECKOUT_MODE: "stripe-test",
+        CATALOG_SOURCE: "database",
+      }),
+    AdminConfigurationError,
+  );
+  const env = { ...enabledEnvironment(), CHECKOUT_MODE: "stripe-test" };
+  assert.throws(
+    () => readAdminConfig({ ...env, CATALOG_SOURCE: "showcase" }),
+    AdminConfigurationError,
+  );
+  assert.doesNotThrow(() =>
+    readAdminConfig({
+      ...env,
+      CATALOG_SOURCE: "database",
+      DATABASE_URL: "postgres://reader@database.example/hive",
+    }),
   );
 });

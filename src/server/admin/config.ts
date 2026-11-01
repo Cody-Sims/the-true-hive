@@ -1,3 +1,5 @@
+import { databaseOptions } from "../db/connection.mjs";
+
 export class AdminConfigurationError extends Error {
   constructor() {
     super("Inventory administration is not configured safely.");
@@ -24,6 +26,11 @@ export function readAdminConfig(
 ): AdminConfig {
   const flag = environment["INVENTORY_ENABLED"] ?? "false";
   if (!["true", "false"].includes(flag)) throw new AdminConfigurationError();
+  if (
+    environment["CHECKOUT_MODE"] === "stripe-test" &&
+    (flag !== "true" || environment["CATALOG_SOURCE"] !== "database")
+  )
+    throw new AdminConfigurationError();
   let origin: URL;
   try {
     origin = new URL(
@@ -99,6 +106,16 @@ export function readAdminConfig(
       new Set(csrfSecret).size < 12
     )
       throw new AdminConfigurationError();
+    if ((environment["CATALOG_SOURCE"] ?? "showcase") === "database") {
+      const tls = environment["DATABASE_TLS"] ?? "verify-full";
+      if (tls !== "verify-full" && tls !== "disable")
+        throw new AdminConfigurationError();
+      assertSameDatabaseTarget(
+        environment["DATABASE_URL"]?.trim() || "",
+        databaseUrl,
+        tls,
+      );
+    }
   }
   return {
     enabled,
@@ -120,4 +137,34 @@ export function getAdminLoginConfig() {
     authDomain: config.projectId ? `${config.projectId}.firebaseapp.com` : null,
     projectId: config.projectId,
   };
+}
+
+export function assertSameDatabaseTarget(
+  publicUrl: string,
+  adminUrl: string,
+  publicTls: "verify-full" | "disable" = "verify-full",
+): void {
+  function target(connectionString: string, tls: "verify-full" | "disable") {
+    const url = new URL(
+      databaseOptions(connectionString, tls).connectionString,
+    );
+    if (url.hash) throw new AdminConfigurationError();
+    let hostname = url.hostname.toLowerCase();
+    if (hostname.endsWith(".neon.tech")) {
+      const labels = hostname.split(".");
+      labels[0] = labels[0]!.replace(/-pooler$/, "");
+      hostname = labels.join(".");
+    }
+    const port = Number(url.port || 5432);
+    const database = decodeURIComponent(url.pathname.slice(1));
+    if (port < 1 || port > 65535 || !database || database.includes("\0"))
+      throw new AdminConfigurationError();
+    return JSON.stringify([hostname, port, database]);
+  }
+  try {
+    if (target(publicUrl, publicTls) !== target(adminUrl, "verify-full"))
+      throw new AdminConfigurationError();
+  } catch {
+    throw new AdminConfigurationError();
+  }
 }
