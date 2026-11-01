@@ -25,13 +25,42 @@ export function isInventoryRequest(request: Request, config: AdminConfig) {
   );
 }
 
-export function isAdminPath(path: string) {
+function normalizedPath(path: string) {
+  let decoded = path;
+  // Astro repeatedly decodes routes; conservatively include encoded separators too.
+  for (let iteration = 0; iteration <= 10; iteration++) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      if (iteration === 0) throw new AdminAuthError(400, "INVALID_PATH");
+      break;
+    }
+    if (next === decoded) break;
+    if (iteration === 10) throw new AdminAuthError(400, "INVALID_PATH");
+    decoded = next;
+  }
+  return new URL(
+    decoded.replaceAll("\\", "/").replace(/\/+/g, "/"),
+    "https://route.invalid",
+  ).pathname;
+}
+
+function privatePrefix(path: string) {
   return (
     path === "/inventory" ||
     path.startsWith("/inventory/") ||
     path === "/api/admin" ||
     path.startsWith("/api/admin/")
   );
+}
+
+export function isAdminPath(path: string) {
+  try {
+    return privatePrefix(normalizedPath(path));
+  } catch {
+    return false;
+  }
 }
 
 function errorResponse(error: unknown) {
@@ -117,8 +146,15 @@ export function createAdminBoundary(
         cookies: [] as string[],
       };
       const path = new URL(request.url).pathname;
+      let canonicalPath: string;
+      try {
+        canonicalPath = normalizedPath(path);
+      } catch (error) {
+        return { ...result, response: errorResponse(error) };
+      }
+      const privatePath = privatePrefix(canonicalPath);
       const inventory = isInventoryRequest(request, config);
-      if (!inventory && !isAdminPath(path)) return result;
+      if (!inventory && !privatePath) return result;
       if (!inventory)
         return {
           ...result,
@@ -126,6 +162,8 @@ export function createAdminBoundary(
         };
       try {
         requireAvailable();
+        if (privatePath && canonicalPath !== path)
+          throw new AdminAuthError(400, "INVALID_PATH");
         if (path === "/" && ["GET", "HEAD"].includes(request.method))
           return {
             ...result,
@@ -134,7 +172,7 @@ export function createAdminBoundary(
               headers: { location: "/inventory/products" },
             }),
           };
-        if (!isAdminPath(path)) {
+        if (!privatePath) {
           if (
             request.method === "GET" &&
             (path.startsWith("/_astro/") || path === "/favicon.svg")

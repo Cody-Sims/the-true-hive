@@ -646,3 +646,63 @@ test("stripe-test activation cannot skip enabled inventory authentication or dat
     }),
   );
 });
+
+test("wrong-host encoded and noncanonical private prefixes never continue to Astro routing", async () => {
+  const f = fixture();
+  let verifications = 0;
+  const verify = f.dependencies.verifySessionCookie;
+  f.dependencies.verifySessionCookie = async (cookie) => {
+    verifications++;
+    return verify(cookie);
+  };
+  const boundary = createAdminBoundary(config, f.auth);
+  for (const path of [
+    "/%69nventory/products",
+    "/%2569nventory/products",
+    "/inventory//products",
+    "//inventory/products",
+    "/%61pi/admin/products",
+    "/api/%61dmin/products",
+    "/api//admin/products",
+    "/api%2Fadmin/products",
+    "/shop/%252e%252e/inventory/products",
+  ]) {
+    const locals: AdminLocals = {};
+    const result = await boundary.gate(
+      new Request(`https://shop.example${path}`, {
+        headers: {
+          cookie: "__Host-hive-admin=signed-provider-session",
+          "x-forwarded-host": "inventory.example",
+        },
+      }),
+      locals,
+    );
+    assert.equal(result.response?.status, 404, path);
+    assert.deepEqual(locals, {});
+  }
+  assert.equal(verifications, 0);
+  assert.equal(f.writes(), 0);
+});
+
+test("noncanonical inventory login and auth endpoint aliases are rejected rather than exempted", async () => {
+  const f = fixture();
+  const boundary = createAdminBoundary(config, f.auth);
+  for (const [path, method] of [
+    ["/%69nventory/login", "GET"],
+    ["/api/%61dmin/session", "POST"],
+    ["/api//admin/enrollment", "POST"],
+  ] as const) {
+    const locals: AdminLocals = {};
+    const result = await boundary.gate(
+      new Request(`${config.origin}${path}`, {
+        method,
+        headers: { origin: config.origin },
+      }),
+      locals,
+    );
+    assert.equal(result.response?.status, 400, path);
+    assert.deepEqual(locals, {});
+    assert.equal(result.cookies.length, 0);
+  }
+  assert.equal(f.writes(), 0);
+});
