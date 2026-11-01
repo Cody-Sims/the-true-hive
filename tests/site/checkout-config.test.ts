@@ -50,7 +50,7 @@ test("checkout roles share one normalized database target without sharing creden
       "postgresql://reader:readOnly@ep-hive-test-pooler.us-east-2.aws.neon.tech/hive",
       "postgresql://writer:privateWrite@ep-hive-test.us-east-2.aws.neon.tech:5432/hive",
     ],
-  ]) {
+  ] as const) {
     const environment = {
       ...configured,
       DATABASE_URL: publicUrl,
@@ -106,7 +106,7 @@ test("different database targets and schema overrides fail closed without URL di
       "postgresql://reader:readOnly@ep-hive-test-pooler.aws.neon.tech.attacker.example/hive",
       "postgresql://writer:privateWrite@ep-hive-test.aws.neon.tech.attacker.example/hive",
     ],
-  ]) {
+  ] as const) {
     const environment = {
       ...configured,
       DATABASE_URL: publicUrl,

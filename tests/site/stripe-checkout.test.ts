@@ -70,6 +70,7 @@ function session(): Stripe.Checkout.Session {
     mode: "payment",
     status: "open",
     payment_status: "unpaid",
+    allowed_payment_method_types: ["card"],
     payment_method_types: ["card"],
     payment_intent: "pi_offlineFixture",
     currency: "usd",
@@ -113,7 +114,7 @@ function session(): Stripe.Checkout.Session {
         },
       ],
     },
-  } as Stripe.Checkout.Session;
+  } as unknown as Stripe.Checkout.Session;
 }
 
 function harness() {
@@ -264,7 +265,7 @@ test("reserve precedes card-only creation using immutable prices, stable identit
   assert.deepEqual(h.effects.slice(0, 3), ["reserve", "create", "attach"]);
   const { input, options } = h.creations[0]!;
   assert.equal(options.idempotencyKey, orderId);
-  assert.deepEqual(input.payment_method_types, ["card"]);
+  assert.deepEqual(input.allowed_payment_method_types, ["card"]);
   assert.equal(
     input.expires_at,
     Math.floor(Date.parse(h.stored.checkoutExpiresAt) / 1000),
@@ -663,7 +664,7 @@ test("public checkout enforces exact storefront/Origin and attempt budget before
       "https://shop.example.attacker.example",
     ],
     ["https://inventory.example/api/checkout", config.siteOrigin],
-  ]) {
+  ] as const) {
     const response = await handler(
       new Request(url, {
         method: "POST",

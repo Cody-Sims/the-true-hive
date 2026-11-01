@@ -298,6 +298,8 @@ function validSession(
     session.amount_subtotal === order.totalMinor &&
     session.expires_at ===
       Math.floor(Date.parse(order.checkoutExpiresAt) / 1000) &&
+    session.allowed_payment_method_types?.length === 1 &&
+    session.allowed_payment_method_types[0] === "card" &&
     session.payment_method_types?.length === 1 &&
     session.payment_method_types[0] === "card" &&
     session.total_details?.amount_discount === 0 &&
@@ -492,7 +494,7 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
         const session = await provider.checkout.sessions.create(
           {
             mode: "payment",
-            payment_method_types: ["card"],
+            allowed_payment_method_types: ["card"],
             client_reference_id: order.id,
             metadata: { app: "the-true-hive", orderId: order.id },
             payment_intent_data: {
