@@ -1,0 +1,5 @@
+---
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+return Astro.redirect("/inventory/products", 302);
+---

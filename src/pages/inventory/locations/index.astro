@@ -1,0 +1,61 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import LocationForm from "../../../components/admin/LocationForm.astro";
+import ReadState from "../../../components/admin/ReadState.astro";
+import { listAdminLocations } from "../../../server/admin/catalog.ts";
+import { getAdminPool } from "../../../server/admin/pool.ts";
+import type { AdminLocation } from "../../../domain/admin.ts";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let locations: AdminLocation[] | null = null;
+try {
+  locations = await listAdminLocations(getAdminPool());
+} catch {
+  Astro.response.status = 503;
+}
+---
+
+<AdminLayout title="Locations">
+  {!locations ? (
+    <ReadState unavailable />
+  ) : locations.length ? (
+    <table class="admin-table" role="table">
+      <caption>Explicit inventory and pickup locations</caption>
+      <thead>
+        <tr>
+          <th scope="col">Location</th>
+          <th scope="col">Public label</th>
+          <th scope="col">Eligibility</th>
+          <th scope="col">Revision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {locations.map((location) => (
+          <tr>
+            <td data-label="Location">
+              <a
+                href={`/inventory/locations/${encodeURIComponent(location.key)}`}
+              >
+                {location.name}
+              </a>
+              <br />
+              <small>{location.key}</small>
+            </td>
+            <td data-label="Public label">
+              {location.publicLabel ?? "Not published"}
+            </td>
+            <td data-label="Eligibility">
+              {location.active ? "Active" : "Inactive"} ·{" "}
+              {location.pickupEnabled ? "Pickup enabled" : "No pickup"}
+            </td>
+            <td data-label="Revision">{location.revision}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    <ReadState empty="No locations established." />
+  )}
+  <h2>Create location</h2>
+  <LocationForm />
+</AdminLayout>

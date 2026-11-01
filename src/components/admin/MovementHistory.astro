@@ -1,0 +1,27 @@
+---
+import type { AdminMovement } from "../../domain/admin.ts";
+interface Props {
+  movements: AdminMovement[];
+}
+const { movements } = Astro.props;
+---
+
+<ol class="admin-history">
+  {movements.map((movement) => (
+    <li>
+      <p>
+        <strong>{movement.variantKey}</strong> at {movement.locationKey} ·{" "}
+        {movement.delta > 0 ? "+" : ""}
+        {movement.delta} units
+      </p>
+      <p>
+        Recorded on hand: {movement.beforeOnHand} → {movement.onHand}.{" "}
+        <time datetime={movement.createdAt}>{movement.createdAt}</time>
+      </p>
+      <p>Reason: {movement.reason}</p>
+      <p class="admin-muted">
+        Actor: {movement.actorId} · operation {movement.operationId}
+      </p>
+    </li>
+  ))}
+</ol>

@@ -1,0 +1,33 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import LocationForm from "../../../components/admin/LocationForm.astro";
+import ReadState from "../../../components/admin/ReadState.astro";
+import { listAdminLocations } from "../../../server/admin/catalog.ts";
+import { getAdminPool } from "../../../server/admin/pool.ts";
+import { isRecordKey } from "../../../server/inventory/rules.ts";
+import type { AdminLocation } from "../../../domain/admin.ts";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let location: AdminLocation | null = null;
+let unavailable = false;
+if (isRecordKey(Astro.params.key)) {
+  try {
+    location =
+      (await listAdminLocations(getAdminPool())).find(
+        (item) => item.key === Astro.params.key,
+      ) ?? null;
+  } catch {
+    unavailable = true;
+  }
+}
+if (!location) Astro.response.status = unavailable ? 503 : 404;
+---
+
+<AdminLayout title={location ? `Edit ${location.name}` : "Location record"}>
+  <a href="/inventory/locations">Back to locations</a>
+  {location ? (
+    <LocationForm location={location} />
+  ) : (
+    <ReadState unavailable={unavailable} missing={!unavailable} />
+  )}
+</AdminLayout>

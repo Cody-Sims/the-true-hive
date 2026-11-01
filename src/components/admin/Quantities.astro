@@ -1,0 +1,39 @@
+---
+import type { AdminInventoryLevel } from "../../domain/admin.ts";
+interface Props {
+  level: AdminInventoryLevel;
+}
+const { level } = Astro.props;
+---
+
+<dl
+  class="admin-quantities"
+  data-level
+  data-variant={level.variantKey}
+  data-location={level.locationKey}
+>
+  <div>
+    <dt>On hand</dt>
+    <dd data-quantity="onHand">{level.onHand}</dd>
+  </div>
+  <div>
+    <dt>Held</dt>
+    <dd data-quantity="held">{level.held}</dd>
+  </div>
+  <div>
+    <dt>Committed</dt>
+    <dd data-quantity="committed">{level.committed}</dd>
+  </div>
+  <div>
+    <dt>Unavailable</dt>
+    <dd data-quantity="unavailable">{level.unavailable}</dd>
+  </div>
+  <div>
+    <dt>Sellable</dt>
+    <dd data-quantity="sellable">{level.sellable}</dd>
+  </div>
+  <div>
+    <dt>Revision</dt>
+    <dd data-quantity="revision">{level.revision}</dd>
+  </div>
+</dl>

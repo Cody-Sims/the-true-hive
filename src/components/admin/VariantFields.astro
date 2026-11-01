@@ -1,0 +1,58 @@
+---
+import type { AdminVariant } from "../../domain/admin.ts";
+interface Props {
+  variant?: AdminVariant;
+}
+const { variant } = Astro.props;
+---
+
+<fieldset data-admin-variant class="admin-panel">
+  <legend>Variant</legend>
+  <label>
+    Stable variant key{" "}
+    <input
+      name="variantKey"
+      value={variant?.key ?? ""}
+      readonly={!!variant}
+      required
+      pattern="[a-z0-9][a-z0-9-]{0,79}"
+      maxlength="80"
+    />
+  </label>
+  <label>
+    Real SKU{" "}
+    <input
+      name="sku"
+      value={variant?.sku ?? ""}
+      readonly={!!variant}
+      required
+      maxlength="80"
+    />
+  </label>
+  <label>
+    Label{" "}
+    <input name="label" value={variant?.label ?? ""} required maxlength="120" />
+  </label>
+  <label>
+    Price (USD cents, optional for draft){" "}
+    <input
+      name="priceMinor"
+      type="number"
+      min="1"
+      step="1"
+      max="2147483647"
+      value={variant?.priceMinor ?? ""}
+    />
+  </label>
+  <label class="admin-check">
+    <input
+      name="variantActive"
+      type="checkbox"
+      checked={variant?.active ?? false}
+    />{" "}
+    Active variant
+  </label>
+  <p class="admin-muted">
+    Referenced keys are permanent. Deactivate a variant instead of deleting it.
+  </p>
+</fieldset>
