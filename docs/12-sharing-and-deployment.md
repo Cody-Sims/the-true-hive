@@ -16,7 +16,7 @@ This does **not** authorize publishing credentials, customer records, buyer iden
 | [Business plan](https://preview.thetruehive.com/prototypes/plan.html?doc=business) | Local-to-growth strategy |
 | [Partner workbook](https://preview.thetruehive.com/prototypes/plan.html?doc=questions) | Discussion agenda and unresolved decisions |
 
-The first Pages deployment has completed. The custom hostname additionally requires DNS propagation and GitHub's HTTPS certificate before it is ready to share. Anyone with internet access can view or forward the deployed preview; this is not invited-only access.
+The Pages preview is live. On **2026-10-31**, the custom hostname served successfully over HTTPS, GitHub reported an approved certificate, and HTTPS enforcement was enabled. Anyone with internet access can view or forward the deployed preview; this is not invited-only access.
 
 ## Domain and contact decisions - October 29, 2026
 
@@ -28,7 +28,7 @@ The domain stays on **Porkbun DNS**. Only this record was added for the preview:
 
 GitHub Pages is bound to `preview.thetruehive.com`; its existing GitHub-hosted URL redirects to the custom hostname. All seven pre-existing zone records were preserved, including root-domain parking, the existing wildcard, MX/SPF and certificate-challenge records. **`thetruehive.com` and `www` were not repointed**; they remain available for the later production site.
 
-GitHub [recommends domain ownership verification](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages) in account Settings > Pages to reduce takeover risk. Add the account-issued verification TXT value privately through the DNS dashboard when completing that hardening step; do not invent it. No wildcard was pointed at GitHub. HTTPS must be enabled once GitHub's certificate is ready; never bypass a browser certificate warning.
+GitHub [recommends domain ownership verification](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages) in account Settings > Pages to reduce takeover risk. Add the account-issued verification TXT value privately through the DNS dashboard when completing that hardening step; do not invent it. No wildcard was pointed at GitHub. HTTPS is enforced for the preview; never bypass a browser certificate warning.
 
 ### Email is deferred, not configured
 

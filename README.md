@@ -2,7 +2,7 @@
 
 **The Apiary Market application foundation, ten preserved design directions, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
-Updated **October 29, 2026**. Status: **owner-approved public planning and interactive review**, not a production storefront.
+Updated **October 31, 2026**. Status: **owner-approved public planning and interactive review**, not a production storefront.
 
 ## Build the actual site
 
@@ -15,7 +15,7 @@ npm run dev
 
 Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and does not invent prices/stock. For native build, database, CI and Render details, read [development and operations](docs/14-development-and-operations.md) and the [approved specification](docs/13-production-foundation.md).
 
-**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The actual application targets `thetruehive.com` on native Render after host/content readiness, with Neon PostgreSQL in the same Oregon region. The selected infrastructure is a $7/month Render app in a Hobby workspace and Neon Free, not a paid Neon or Render database. The main-domain DNS remains unchanged.
+**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The application foundation is live at **https://the-true-hive-app.onrender.com/** in deliberate showcase mode; Render is connected to this repository's `main` branch with **After CI Checks Pass** deployment enabled. The actual application targets `thetruehive.com` after content readiness, with Neon PostgreSQL in the same Oregon region. The selected infrastructure is a $7/month Render app in a Hobby workspace and Neon Free, not a paid Neon or Render database. The main-domain DNS remains unchanged.
 
 ## Open the studio
 
@@ -45,7 +45,7 @@ open http://127.0.0.1:4173/prototypes/plan.html
 
 The only studio browser-rendering dependency is the locally served, pinned Markdown parser; no CDN, remote font, live social feed or third-party tracking is loaded. Core homepage concepts still use ordinary HTML/CSS/SVG. `npm test` runs prototype and application unit cases; database and built-browser gates are separate commands in the operations guide.
 
-For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes automatic deployment from reviewed `main` updates and the custom preview hostname, **https://preview.thetruehive.com/**. The main domain and mail settings remain unchanged; confirm the custom hostname's HTTPS readiness before sharing it.
+For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes automatic deployment from reviewed `main` updates and the custom preview hostname, **https://preview.thetruehive.com/**. Its valid HTTPS certificate and enforced HTTPS were verified on October 31, 2026. The main domain and mail settings remain unchanged.
 
 After editing planning or prototype sources, run `npm run build:pages` and refresh, or restart `npm run preview`, to regenerate the curated local review.
 
