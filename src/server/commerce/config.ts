@@ -13,6 +13,22 @@ export interface StripeTestConfig {
 
 export type CheckoutConfig = { mode: "disabled" } | StripeTestConfig;
 
+function databaseTarget(connectionString: string) {
+  const url = new URL(connectionString);
+  if (url.hash) throw new Error();
+  let hostname = url.hostname.toLowerCase();
+  if (hostname.endsWith(".neon.tech")) {
+    const labels = hostname.split(".");
+    labels[0] = labels[0]!.replace(/-pooler$/, "");
+    hostname = labels.join(".");
+  }
+  return JSON.stringify([
+    hostname,
+    Number(url.port || "5432"),
+    decodeURIComponent(url.pathname.slice(1)),
+  ]);
+}
+
 export function readCheckoutConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): CheckoutConfig {
@@ -22,13 +38,22 @@ export function readCheckoutConfig(
     if (mode !== "stripe-test") throw new Error();
     const site = readConfig(environment);
     const origin = new URL(environment["SITE_URL"] ?? "");
-    databaseOptions(site.databaseUrl ?? "", site.databaseTls);
-    databaseOptions(environment["ADMIN_DATABASE_URL"] ?? "", "verify-full");
+    const publicDatabase = databaseOptions(
+      site.databaseUrl ?? "",
+      site.databaseTls,
+    );
+    const privateDatabase = databaseOptions(
+      environment["ADMIN_DATABASE_URL"] ?? "",
+      "verify-full",
+    );
     const locationKey = environment["CHECKOUT_LOCATION_KEY"];
     const secretKey = environment["STRIPE_SECRET_KEY"];
     const webhookSecret = environment["STRIPE_WEBHOOK_SECRET"];
     if (
       site.catalogSource !== "database" ||
+      environment["INVENTORY_ENABLED"] !== "true" ||
+      databaseTarget(publicDatabase.connectionString) !==
+        databaseTarget(privateDatabase.connectionString) ||
       environment["ADMIN_DATABASE_URL"] ===
         environment["MIGRATION_DATABASE_URL"] ||
       !isRecordKey(locationKey) ||

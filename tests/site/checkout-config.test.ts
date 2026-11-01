@@ -11,6 +11,7 @@ import type { APIContext } from "astro";
 
 const configured: NodeJS.ProcessEnv = {
   CHECKOUT_MODE: "stripe-test",
+  INVENTORY_ENABLED: "true",
   CATALOG_SOURCE: "database",
   DATABASE_URL: "postgresql://offline:offline@db.example/hive",
   ADMIN_DATABASE_URL: "postgresql://offline_writer:offline@db.example/hive",
@@ -37,6 +38,116 @@ test("only explicitly configured database/test checkout is presented as enabled"
   assert.equal(readCheckoutConfig(configured).mode, "stripe-test");
   assert.doesNotThrow(() => prepareCheckoutStartup(configured));
   assert(!JSON.stringify(getCheckoutPresentation(configured)).includes("sk_"));
+});
+
+test("checkout roles share one normalized database target without sharing credentials", () => {
+  for (const [publicUrl, privateUrl] of [
+    [
+      "postgresql://reader:readOnly@DB.EXAMPLE:5432/true%5Fhive",
+      "postgres://writer:privateWrite@db.example/true_hive",
+    ],
+    [
+      "postgresql://reader:readOnly@ep-hive-test-pooler.us-east-2.aws.neon.tech/hive",
+      "postgresql://writer:privateWrite@ep-hive-test.us-east-2.aws.neon.tech:5432/hive",
+    ],
+  ]) {
+    const environment = {
+      ...configured,
+      DATABASE_URL: publicUrl,
+      ADMIN_DATABASE_URL: privateUrl,
+    };
+    assert.doesNotThrow(() => prepareCheckoutStartup(environment));
+    assert.deepEqual(getCheckoutPresentation(environment), {
+      enabled: true,
+      locationKey: "pickup-main",
+    });
+  }
+});
+
+test("different database targets and schema overrides fail closed without URL disclosure", () => {
+  for (const [publicUrl, privateUrl] of [
+    [
+      "postgresql://reader:readOnly@db.example/hive",
+      "postgresql://writer:privateWrite@other.example/hive",
+    ],
+    [
+      "postgresql://reader:readOnly@db.example/hive",
+      "postgresql://writer:privateWrite@db.example/other_database",
+    ],
+    [
+      "postgresql://reader:readOnly@db.example/hive",
+      "postgresql://writer:privateWrite@db.example:5433/hive",
+    ],
+    [
+      "postgresql://reader:readOnly@db.example/hive",
+      "postgresql://writer:privateWrite@db.example/Hive",
+    ],
+    [
+      "postgresql://reader:readOnly@db.example/hive",
+      "postgresql://writer:privateWrite@db.example/hive?options=-csearch_path%3Dother",
+    ],
+    [
+      "postgresql://reader:readOnly@db.example/hive",
+      "postgresql://writer:privateWrite@db.example/hive#other_schema",
+    ],
+    [
+      "postgresql://reader:readOnly@ep-hive-test-pooler.us-east-2.aws.neon.tech/hive",
+      "postgresql://writer:privateWrite@ep-other-test.us-east-2.aws.neon.tech/hive",
+    ],
+    [
+      "postgresql://reader:readOnly@ep-hive-test-pooler.us-east-2.aws.neon.tech/hive",
+      "postgresql://writer:privateWrite@ep-hive-test.us-west-2.aws.neon.tech/hive",
+    ],
+    [
+      "postgresql://reader:readOnly@ep-hive-test-pooler.example/hive",
+      "postgresql://writer:privateWrite@ep-hive-test.example/hive",
+    ],
+    [
+      "postgresql://reader:readOnly@ep-hive-test-pooler.aws.neon.tech.attacker.example/hive",
+      "postgresql://writer:privateWrite@ep-hive-test.aws.neon.tech.attacker.example/hive",
+    ],
+  ]) {
+    const environment = {
+      ...configured,
+      DATABASE_URL: publicUrl,
+      ADMIN_DATABASE_URL: privateUrl,
+    };
+    assert.throws(
+      () => readCheckoutConfig(environment),
+      (error: unknown) => {
+        assert(error instanceof Error);
+        assert(!error.message.includes(publicUrl));
+        assert(!error.message.includes(privateUrl));
+        assert(!error.message.includes("privateWrite"));
+        assert(!error.message.includes("other_database"));
+        return true;
+      },
+    );
+    assert.deepEqual(getCheckoutPresentation(environment), {
+      enabled: false,
+      locationKey: null,
+    });
+  }
+  assert.deepEqual(
+    readCheckoutConfig({
+      ...configured,
+      CHECKOUT_MODE: "disabled",
+      DATABASE_URL: "not-a-database",
+      ADMIN_DATABASE_URL: "different-not-a-database",
+    }),
+    { mode: "disabled" },
+  );
+});
+
+test("test checkout cannot skip the enabled inventory deployment startup gate", () => {
+  for (const value of [undefined, "false", "yes"]) {
+    const environment = { ...configured, INVENTORY_ENABLED: value };
+    assert.throws(() => prepareCheckoutStartup(environment));
+    assert.deepEqual(getCheckoutPresentation(environment), {
+      enabled: false,
+      locationKey: null,
+    });
+  }
 });
 
 test("invalid checkout configuration fails closed without credential echoes", () => {

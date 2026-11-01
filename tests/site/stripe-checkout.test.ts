@@ -816,6 +816,7 @@ test("streamed oversized webhook bytes are rejected before SDK/persistence effec
 test("CLI bounds private-environment batches and closes resources without IDs/keys in arguments", async () => {
   const environment = {
     CHECKOUT_MODE: "stripe-test",
+    INVENTORY_ENABLED: "true",
     CATALOG_SOURCE: "database",
     DATABASE_URL: "postgresql://offline:offline@db.example/hive",
     ADMIN_DATABASE_URL: "postgresql://offline_writer:offline@db.example/hive",
