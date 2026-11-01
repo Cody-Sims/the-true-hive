@@ -153,7 +153,7 @@ Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled`, the storefront's delib
 |---|---|
 | `INVENTORY_ORIGIN` | Exact inventory origin; HTTPS in production, explicit HTTP loopback only in development |
 | `ADMIN_DATABASE_URL` | Pooled private inventory/session/order role; never schema-owner or public-read credentials |
-| `ADMIN_CSRF_SECRET` | Private random secret for signed/session-bound CSRF; no public variable or default |
+| `ADMIN_CSRF_SECRET` | Canonical base64 of at least 32 random bytes for signed/session-bound CSRF; no public variable or default |
 | `FIREBASE_PROJECT_ID` | Isolated True Hive project, not copied personal-site configuration |
 | `FIREBASE_WEB_API_KEY` | Firebase browser configuration; not an admin authorization credential |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Private server credential matching the isolated project; no browser bundle/ADC fallback |
@@ -164,6 +164,8 @@ Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled`, the storefront's delib
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Private test-mode API/signature credentials; live keys/objects rejected |
 
 Firebase's [TOTP guide](https://firebase.google.com/docs/auth/web/totp-mfa) requires Identity Platform. **Do not enable a billed upgrade automatically.** The owner requires app-enforced MFA before deployment; upstream Google-account 2FA or a browser checkbox does not satisfy it. Configure Google sign-in/authorized inventory domain, verified-email/TOTP enrollment and recovery only after the provider/billing decision. Privately provision the intended admin; ordinary sign-in does not grant membership.
+
+Admin sessions last eight hours, with revocation checked on every private request. Signed CSRF tokens last one hour; page loads refresh them without invalidating another tab's still-valid token. After long idle periods, reload and review current revisions before submitting. Source preflight and the bundled server share the same project-checked Firebase app in the native process.
 
 ### Least-privilege role matrix
 

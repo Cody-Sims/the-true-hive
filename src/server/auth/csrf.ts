@@ -7,8 +7,16 @@ function signature(secret: string, payload: string, session: string) {
     .digest("base64url");
 }
 
-export function issueCsrf(secret: string, session: string, now = Date.now()) {
-  const nonce = randomBytes(32).toString("base64url");
+export function issueCsrf(
+  secret: string,
+  session: string,
+  now = Date.now(),
+  existingNonce?: string,
+) {
+  const nonce =
+    existingNonce && /^[A-Za-z0-9_-]{43}$/.test(existingNonce)
+      ? existingNonce
+      : randomBytes(32).toString("base64url");
   const payload = `v1.${Math.floor(now / 1000) + 3600}.${nonce}`;
   return { nonce, token: `${payload}.${signature(secret, payload, session)}` };
 }

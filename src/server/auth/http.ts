@@ -134,8 +134,13 @@ export function createAdminBoundary(
     );
     return cookies;
   }
-  function shell(session: string, locals: AdminLocals) {
-    const { nonce, token } = issueCsrf(config.csrfSecret!, session);
+  function shell(session: string, locals: AdminLocals, existingNonce?: string) {
+    const { nonce, token } = issueCsrf(
+      config.csrfSecret!,
+      session,
+      Date.now(),
+      existingNonce,
+    );
     locals.csrfToken = token;
     return serializeCookie(config, cookieNames(config).csrf, nonce, 3600);
   }
@@ -182,9 +187,8 @@ export function createAdminBoundary(
         }
         if (path === "/inventory/login" && request.method === "GET") {
           attempts.consume();
-          result.cookies.push(
-            shell(readCookies(request, config).session, locals),
-          );
+          const cookies = readCookies(request, config);
+          result.cookies.push(shell(cookies.session, locals, cookies.nonce));
           return result;
         }
         if (
@@ -198,7 +202,7 @@ export function createAdminBoundary(
           // These exact handlers enforce their own limiter, origin and signed CSRF.
           return result;
         }
-        const { session } = readCookies(request, config);
+        const { session, nonce } = readCookies(request, config);
         if (!session) {
           attempts.consume();
           throw new AdminAuthError(401, "UNAUTHORIZED");
@@ -208,7 +212,7 @@ export function createAdminBoundary(
         if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) csrf(request);
         locals.admin = identity;
         if (request.method === "GET" && path.startsWith("/inventory/"))
-          result.cookies.push(shell(session, locals));
+          result.cookies.push(shell(session, locals, nonce));
         return result;
       } catch (error) {
         if (
