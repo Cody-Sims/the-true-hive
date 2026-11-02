@@ -15,11 +15,14 @@
 - Idle inventory database disconnects no longer escape the pool and terminate the shared storefront service; diagnostics omit connection details.
 - Bounded reconciliation rotates open and uncertain orders so later missed payment/expiry work is not permanently starved, without releasing unverified holds.
 - Native admin/order suites retain isolated-database safeguards without requiring a machine-specific PostgreSQL port.
+- Rate-limited checkout retries keep the same frozen intent instead of permitting a second unresolved hold.
+- The exact inventory root and private HEAD requests receive the CSRF shell required by their layouts.
 
 ### Security
 
 - Local review now serves only the curated static artifact, preventing private environment, agent configuration and server files from being fetched through the preview.
 - Inventory host/session/MFA/member/CSRF controls, locally revocable sessions and private runtime permission preflight; no personal-site admin-claim or owner-email fallback.
+- Session creation serializes with membership revocation, and runtime permission checks reject protected column-only write grants.
 
 ## October 29, 2026
 

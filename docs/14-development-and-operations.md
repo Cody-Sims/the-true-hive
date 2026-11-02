@@ -165,7 +165,7 @@ Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled`, the storefront's delib
 
 Firebase's [TOTP guide](https://firebase.google.com/docs/auth/web/totp-mfa) requires Identity Platform. **Do not enable a billed upgrade automatically.** The owner requires app-enforced MFA before deployment; upstream Google-account 2FA or a browser checkbox does not satisfy it. Configure Google sign-in/authorized inventory domain, verified-email/TOTP enrollment and recovery only after the provider/billing decision. Privately provision the intended admin; ordinary sign-in does not grant membership.
 
-Admin sessions last eight hours, with revocation checked on every private request. Signed CSRF tokens last one hour; page loads refresh them without invalidating another tab's still-valid token. After long idle periods, reload and review current revisions before submitting. Source preflight and the bundled server share the same project-checked Firebase app in the native process.
+Admin sessions last eight hours, with revocation checked on every private request. Signed CSRF tokens last one hour; GET/HEAD page loads, including the exact `/inventory` root, supply the shell without invalidating another tab's still-valid token. After long idle periods, reload and review current revisions before submitting. Source preflight and the bundled server share the same project-checked Firebase app in the native process.
 
 ### Least-privilege role matrix
 
@@ -181,9 +181,9 @@ Provision roles deliberately with the direct owner connection after the forward 
 | Local admin sessions | Denied | Read/insert/revoke | Recovery |
 | Schema creation, role management, migrations | Denied | Denied | Deliberate operator action |
 
-Revoke public schema creation and temporary-table privileges in the dedicated database. Verify actual denials in transactions/with the target role: product writes from public credentials, membership writes/schema creation from runtime credentials, and history/snapshot edits. Enabled-admin startup must reject elevated or incomplete runtime credentials; configuration names alone do not establish privilege.
+Revoke public schema creation and temporary-table privileges in the dedicated database. Verify actual denials in transactions/with the target role: product writes from public credentials, membership writes/schema creation from runtime credentials, and history/snapshot edits. Forbidden INSERT/UPDATE checks also detect column-only grants; table-level ACL checks alone are insufficient. Enabled-admin startup must reject elevated or incomplete runtime credentials; configuration names alone do not establish privilege.
 
-The operator access command requires `MIGRATION_DATABASE_URL` and private `INVENTORY_ADMIN_UID`, rejects pooled/invalid owner connections, and never falls back to `DATABASE_URL`/`ADMIN_DATABASE_URL`. It grants/revokes membership transactionally; revocation also invalidates local sessions and later re-granting never resurrects them. Do not put private identifiers in command arguments, source, logs or public workbook answers.
+The operator access command requires `MIGRATION_DATABASE_URL` and private `INVENTORY_ADMIN_UID`, rejects pooled/invalid owner connections, and never falls back to `DATABASE_URL`/`ADMIN_DATABASE_URL`. Session creation and membership grant/revoke share a per-UID transaction lock; creation rechecks active membership after acquiring it. Revocation invalidates local sessions, including a concurrent creation that committed first, and later re-granting never resurrects them. Do not put private identifiers in command arguments, source, logs or public workbook answers.
 
 After privately configuring the direct owner connection and intended identity:
 
@@ -205,7 +205,7 @@ Use `on_hand - held - committed - unavailable` for sellability. The safe rehears
 
 Reconciliation must re-fetch provider state. Expire overdue open sessions and confirm expired/unpaid state before releasing; payment-complete races settle via the same order transition. Unknown creation/session outcomes stay quarantined, not auto-released by a clock. Financial refunds never infer restock. A manual reconciliation CLI is not proof of a scheduled job: approve ownership/scheduling without silently adding a billed service.
 
-Run `npm run checkout:reconcile` with privately configured test credentials; `RECONCILE_CHECKOUT_LIMIT` defaults to 25 and is bounded to 100. It reports counts, not private order IDs. Retry an uncertain create using the same intent/key; never replace it with a new order. Verified signed events can recover an existing session association after a lost response, without creating a fresh payment or extending its expiry.
+Run `npm run checkout:reconcile` with privately configured test credentials; `RECONCILE_CHECKOUT_LIMIT` defaults to 25 and is bounded to 100. It reports counts, not private order IDs. Retry an uncertain create using the same intent/key; never replace it with a new order. A rate-limited browser retry retains the frozen serialized intent, because rejection before provider work cannot disprove an earlier hold. Verified signed events can recover an existing session association after a lost response, without creating a fresh payment or extending its expiry.
 
 Each bounded batch locks the least-recently-updated pending orders, skips orders claimed by another batch, and advances their update timestamps before provider work. Open or repeatedly uncertain sessions therefore rotate behind other pending work instead of permanently blocking later reconciliation. This scheduling touch changes neither order revisions/snapshots nor physical stock, commitments, holds or requested expiry.
 

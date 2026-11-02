@@ -1,12 +1,12 @@
 # Owner checklist: what I need from you
 
-Reviewed **2026-11-01**. The inventory/admin and Stripe test-checkout code is implemented and published for review in [PR #5](https://github.com/Cody-Sims/the-true-hive/pull/5), but **inventory.thetruehive.com is not activated**. Check items only after they are actually completed or approved.
+Reviewed **2026-11-01**. The inventory/admin and Stripe test-checkout implementation is tracked in [PR #5](https://github.com/Cody-Sims/the-true-hive/pull/5), but **inventory.thetruehive.com is not activated**. The owner authorized fixing review findings and merging after required CI, with hosted inventory and checkout still disabled. Check items only after they are actually completed or approved.
 
 Start with account access and approvals. Technical setup and a controlled local/staging rehearsal follow; this is not a requirement to complete sign-in on an unactivated hostname.
 
 **This repository is public.** Do not put passwords, keys, service-account JSON, database URLs, administrator emails/UIDs, authenticator secrets, recovery codes, private addresses or real stock records in this file, commits, chat or screenshots. Use provider secret settings or an approved private configuration workflow.
 
-**Verified setup:** the separate Firebase project has Google sign-in and authenticator TOTP enabled on Spark, with SMS disabled and no paid upgrade. A private pre-migration database backup was successfully created and fully read without restoring it; both forward migrations and their checksums are verified. The separate inventory runtime role passes the application's permission checks and rolled-back denial probes; existing public-read access is preserved. Private local runtime configuration is stored securely. The owner privately chose one administrator identity, enrolled TOTP and completed a fresh MFA sign-in; the actual local workspace and private API are authorized. The owner also approved storing the runtime credentials on the existing Render service: all eight persisted settings were privately compared, the public database target matches, and hosted inventory/checkout remain disabled. No products, stock or orders were created during setup. Access-removal rehearsal, implementation merge/deployment, recovery rehearsal and Stripe setup remain pending.
+**Verified setup:** the separate Firebase project has Google sign-in and authenticator TOTP enabled on Spark, with SMS disabled and no paid upgrade. A private pre-migration database backup was successfully created and fully read without restoring it; both forward migrations and their checksums are verified. The separate inventory runtime role passes the application's permission checks and rolled-back denial probes; existing public-read access is preserved. Private local runtime configuration is stored securely. The owner privately chose one administrator identity, enrolled TOTP and completed a fresh MFA sign-in; the actual local workspace and private API are authorized. The owner also approved storing the runtime credentials on the existing Render service: all eight persisted settings were privately compared, the public database target matches, and hosted inventory/checkout remain disabled. No products, stock or orders were created during setup. Access-removal rehearsal, recovery rehearsal, Stripe setup and hosted inventory activation remain pending.
 
 The approved local admin uses the configured Neon database, not a throwaway stock sandbox: edits made there persist. Hosted inventory and checkout remain disabled. The already-authorized localhost OAuth domain was reused without adding or removing domains.
 
@@ -40,6 +40,8 @@ You can provide authorized console access instead of manually collecting/configu
 
 ## 4. Recovery and reconciliation ownership
 
+**Verified technical rehearsal:** the private pre-migration archive was restored into a new isolated local database; its original migration checksum, empty business records and application of the forward admin migration were verified. No Neon restore/rollback was performed. This empty-backup rehearsal does not prove recovery of future operational records or current administrator/session state, nor establish a recovery window or schedule.
+
 - [ ] Decide the acceptable data-loss/recovery window and who owns backups, restore checks and outage response.
 - [ ] Agree who reviews uncertain payments/stock holds and how reconciliation will be run and monitored.
 - [ ] Approve any separately billed backup or scheduling service before provisioning it.
@@ -60,7 +62,7 @@ These inputs are not required just to review an empty private admin, but they ar
 ## 6. Release approval and hands-on rehearsal
 
 - [x] Authorize publishing the implementation branch and this checklist through a PR. This permission does not authorize merging or activation.
-- [ ] Review the PR and passing required CI, then explicitly approve merge and the intended deployment. The separately authorized database migration/role setup is complete; opening a PR alone does not deploy the inventory implementation.
+- [x] Authorize fixing PR findings and merging after required CI, with the existing service's deployment keeping inventory and checkout disabled. Inventory-domain activation is still separate; the merge must not bypass review fixes or checks.
 - [ ] Participate in the admin/test-flow rehearsal: create/edit a draft, publish information, increase/reduce stock, retry an uncertain operation, complete a test checkout and record pickup. Confirm that payment commits stock once and pickup records physical departure once.
 - [ ] After MFA, access-removal, sandbox and recovery gates pass, authorize adding **only inventory.thetruehive.com** to the existing Render service and its specific Porkbun DNS record. Review any domain-quota cost first.
 
