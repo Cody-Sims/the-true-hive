@@ -1,0 +1,146 @@
+---
+import type { Product, Availability } from "../domain/catalog.ts";
+interface Props {
+  product: Product;
+  enabled?: boolean;
+  availability: Record<string, Availability["state"] | "unverified">;
+}
+const { product, enabled = false, availability } = Astro.props;
+const variants = product.variants.filter(
+  (variant) => variant.currency === "USD" && (variant.priceMinor ?? 0) > 0,
+);
+const offered = variants.filter(
+  (variant) => availability[variant.key] === "available",
+);
+const labels = {
+  available: "Available for test checkout",
+  out_of_stock: "Out of stock",
+  not_offered: "Not offered for pickup",
+  concept: "Concept only",
+  unverified: "Availability could not be verified",
+};
+const money = (minor: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    minor / 100,
+  );
+---
+
+{enabled && product.kind === "active" && variants.length > 0 && (
+  <section
+    id="test-checkout"
+    class="test-checkout"
+    aria-labelledby="test-checkout-title"
+  >
+    <h2 id="test-checkout-title">Test checkout — no real purchase</h2>
+    <p>
+      Card-only Stripe test flow. No real payment is accepted. Prices and stock
+      are verified by the server; a browser selection is not a stock or payment
+      confirmation.
+    </p>
+    <ul>
+      {variants.map((variant) => (
+        <li>
+          {variant.label} · {money(variant.priceMinor!)} ·{" "}
+          {labels[availability[variant.key] ?? "unverified"]}
+        </li>
+      ))}
+    </ul>
+    {offered.length ? (
+      <form data-test-checkout>
+        <fieldset data-checkout-fields>
+          <legend>Select merchandise for this test only</legend>
+          <label>
+            Variant{" "}
+            <select name="variantKey" required>
+              {offered.map((variant) => (
+                <option value={variant.key}>
+                  {variant.label} · {money(variant.priceMinor!)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Quantity{" "}
+            <input
+              name="quantity"
+              type="number"
+              min="1"
+              max="100"
+              step="1"
+              value="1"
+              required
+            />
+          </label>
+        </fieldset>
+        <button type="submit" class="button button-primary">
+          Continue to test checkout
+        </button>
+        <button type="button" data-checkout-retry class="button" hidden>
+          Retry the same test checkout
+        </button>
+        <p data-checkout-status role="status" tabindex="-1"></p>
+      </form>
+    ) : (
+      <p role="status">
+        Test checkout is not available for these variants. Unverified
+        availability is not zero stock.
+      </p>
+    )}
+    <noscript>
+      JavaScript is required for retry-safe test checkout. No reservation has
+      been created.
+    </noscript>
+  </section>
+)}
+<script>
+  import "../client/test-checkout.ts";
+</script>
+<style>
+  .test-checkout {
+    margin-block: 1.5rem;
+    padding: 1rem;
+    border: 2px solid var(--forest);
+  }
+  .test-checkout fieldset {
+    min-width: 0;
+    border: 1px solid var(--line);
+    margin-block: 1rem;
+    padding: 0.75rem;
+  }
+  .test-checkout label {
+    display: block;
+    margin-bottom: 1rem;
+  }
+  .test-checkout input,
+  .test-checkout select {
+    display: block;
+    max-width: 100%;
+    width: 100%;
+    min-height: 2.75rem;
+    font: inherit;
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    background: var(--paper);
+    color: var(--forest);
+    border: 1px solid var(--forest);
+  }
+  .test-checkout button {
+    cursor: pointer;
+    white-space: normal;
+    max-width: 100%;
+  }
+  .test-checkout button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  .test-checkout [hidden] {
+    display: none;
+  }
+  .test-checkout :focus-visible {
+    outline: 3px solid var(--tomato);
+    outline-offset: 3px;
+  }
+  .test-checkout p {
+    overflow-wrap: anywhere;
+  }
+</style>

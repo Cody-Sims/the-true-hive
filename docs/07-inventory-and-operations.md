@@ -2,6 +2,8 @@
 
 Status: production requirements and operating design; the browser lab is fictional and read-only.
 
+**Next phase requested - 2026-10-31:** an authorized admin manages products and real counts at **`inventory.thetruehive.com`**. The shop reads the same PostgreSQL catalog/stock, and verified purchases update it exactly once. Secure admin access and robots exclusion are separate requirements; the current read-only foundation does not yet satisfy either the admin or payment workflow.
+
 ## What must be true
 
 The store's browser UI is not the stock ledger. **Our PostgreSQL database is the selected authority**, with native Node repositories for public reads and private inventory transactions. The owner rejected Shopify. Render hosts the app and Neon manages PostgreSQL infrastructure; stock rules remain ours. No Docker.
@@ -54,8 +56,8 @@ No public JSON file or browser cart maintains real stock. Our server maps constr
 | I04 | Pickup availability scoped to the selected location | Stock from two locations is not combined into one pickup promise; transfers require supported configuration and disclosed timing |
 | I05 | Unknown, sold-out and not-offered are distinct | An API outage/missing record does not show zero, in-stock, or shipping eligibility |
 | I06 | Our server/database own merchandise prices and stock checks; the processor verifies payment | A manipulated browser price or stale cart does not control the payable order |
-| I07 | No custom cart-based decrements/reservations | Adding/removing a cart line does not alter physical/platform stock through local arithmetic |
-| I08 | Deny unapproved overselling | Competing orders for the last unit are resolved by the authoritative platform, with explicit customer recovery |
+| I07 | Cart edits do not decrement/reserve stock | Adding/removing a cart line does not alter physical stock; only an approved server-side checkout transaction may acquire a hold |
+| I08 | Deny unapproved overselling | Competing checkout holds or stock reductions for the last unit are resolved transactionally by PostgreSQL, with explicit customer recovery |
 | I09 | In-person sales reconcile with online availability | A market/POS sale reduces the proper real location's sellable stock, or a documented reconciliation precedes further offers |
 | I10 | Adjustments have reason, actor and history | Damage/count/receipt/transfer actions are auditable and not duplicated by event retries |
 | I11 | Refund is not automatically sellable restock | Actual receipt, product suitability and correct location determine restocking |
@@ -102,7 +104,9 @@ Recipe/BOM consumption, cure/production lead time, lot expiry and bundle-compone
 
 The first slice provides product/variant/location tables, count constraints, checksum-verified migrations, read APIs, readiness, and an internal `adjustStock` operation. Native PostgreSQL cases cover last-unit competition, matching retries, conflicting operation reuse and rollback on history failure.
 
-There is **no public editing API, admin login, payment or real customer order yet**. The eventual admin must authenticate/authorize the operator and use private write credentials. Public read credentials should be least-privilege. Keep useful content during outages, but never substitute mock prices/stock when the database catalog fails.
+There is **no public editing API, admin login, payment or real customer order in the deployed foundation yet**. The [approved next phase](15-inventory-admin-and-commerce.md) adds private product management and count adjustments at `inventory.thetruehive.com`, using an isolated Firebase project, app-enforced MFA and PostgreSQL admin membership. Derive audit identity from the verified operator, not request-body email/actor fields, and keep write credentials private and separately scoped. Public read credentials should remain least-privilege. Keep useful content during outages, but never substitute mock prices/stock when the database catalog fails.
+
+Stripe card-only **test** checkout is approved for implementation. Sellable stock is `on_hand - held - committed - unavailable`; verified payment moves held to committed without a second sellability subtraction. Record pickup reduces committed and on-hand together. Provider-confirmed expiry releases a hold; uncertain/open sessions require reconciliation, and financial refunds never infer a physical restock. Real sales, identity activation and recovery readiness remain gates.
 
 If a local projection/side effect genuinely needs webhooks, verify raw-body HMAC before trust, validate the expected merchant/topic/version, atomically persist/deduplicate delivery, acknowledge durable receipt and reconcile missed/out-of-order data. Prefer re-fetching authoritative state to arithmetic based on events.
 

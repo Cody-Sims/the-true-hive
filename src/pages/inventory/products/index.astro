@@ -1,0 +1,86 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ReadState from "../../../components/admin/ReadState.astro";
+import Pagination from "../../../components/admin/Pagination.astro";
+import { pageQuery, money } from "../../../components/admin/presentation.ts";
+import { listAdminProducts } from "../../../server/admin/catalog.ts";
+import { getAdminPool } from "../../../server/admin/pool.ts";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+const query = pageQuery(Astro.url);
+let result: Awaited<ReturnType<typeof listAdminProducts>> | null = null;
+try {
+  result = await listAdminProducts(getAdminPool(), query);
+} catch {
+  Astro.response.status = 503;
+}
+---
+
+<AdminLayout title="Products">
+  <div class="admin-actions">
+    <a href="/inventory/products/new">Create unpublished product</a>
+  </div>
+  <form method="get" class="admin-form" role="search">
+    <label>
+      Search products{" "}
+      <input name="search" value={query.search} maxlength="120" type="search" />
+    </label>
+    <button type="submit">Search</button>
+  </form>
+  {!result ? (
+    <ReadState unavailable />
+  ) : result.products.length === 0 ? (
+    <ReadState
+      empty={
+        query.search ? "No products match this search." : "No products yet."
+      }
+    />
+  ) : (
+    <table class="admin-table" role="table">
+      <caption>Private products, publication and real variant prices</caption>
+      <thead>
+        <tr>
+          <th scope="col">Product</th>
+          <th scope="col">Status</th>
+          <th scope="col">Variants</th>
+          <th scope="col">Revision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {result.products.map((product) => (
+          <tr>
+            <td data-label="Product">
+              <a
+                href={`/inventory/products/${encodeURIComponent(product.key)}`}
+              >
+                {product.title}
+              </a>
+              <br />
+              <small>{product.key}</small>
+            </td>
+            <td data-label="Status">
+              {product.status} · {product.kind}
+            </td>
+            <td data-label="Variants">
+              {product.variants.map((variant) => (
+                <p>
+                  {variant.label} · {variant.sku} · {money(variant.priceMinor)}{" "}
+                  · {variant.active ? "active" : "inactive"}
+                </p>
+              ))}
+            </td>
+            <td data-label="Revision">{product.revision}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+  {result && (
+    <Pagination
+      path="/inventory/products"
+      offset={query.offset}
+      total={result.total}
+      search={query.search}
+    />
+  )}
+</AdminLayout>

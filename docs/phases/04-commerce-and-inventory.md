@@ -1,10 +1,12 @@
 # Phase 4: commerce and authoritative inventory
 
-Entry gate: the owner approves taking online payments, has real products and fulfillment capacity, and funds ongoing operations. This is **not part of the landing-page release**.
+Entry gate for secure inventory administration: the owner requests the admin phase and agrees identity/access and transaction contracts. Real products/counts are supplied deliberately after recovery readiness. Online-payment approval is **not required to build a safely gated admin**. Entry gate for live sales: real products, fulfillment, payment/policy approval and operating readiness. Neither is part of the original landing-page release.
 
 ## Outcome and subphases
 
 Build on the approved custom Astro/Node/PostgreSQL foundation to launch our storefront, processor-supported payment, pickup fulfillment and an authenticated owner administration workflow. **Usable secure inventory administration is a prerequisite to selling**, not a later enhancement. No Shopify or Docker; shipping remains a later launch.
+
+**Current direction - 2026-10-31:** build admin-only **`inventory.thetruehive.com`** for product creation/updates and audited stock increases/reductions, excluded from indexing and protected by server-side authorization. The [approved inventory-phase specification](../15-inventory-admin-and-commerce.md) selects isolated Firebase/app-enforced MFA, PostgreSQL admin membership and Stripe card-only test checkout. Held/paid/physical stock stay separate, with admin Record pickup. Provider activation, recovery and live sales remain later gates; no paid upgrade or live charges are approved.
 
 | Subphase | Tasks | Gate |
 |---|---|---|

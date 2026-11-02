@@ -2,9 +2,27 @@
 
 ## Unreleased
 
+### Added
+
+- Secure inventory-phase specification and operator runbook, with isolated Firebase/app-enforced MFA, Stripe card-only test checkout and separate held/paid/physical stock approved for implementation.
+- Private owner-only admin-access provisioning with transactional membership/session revocation and no runtime-credential fallback.
+- Forward-compatible held stock and revision constraints; count corrections preserve checkout allocations and return retry-safe audit receipts.
+- Disabled-by-default private product/location/count/history/order workspace and APIs, with shared PostgreSQL shop data.
+- Card-only Stripe test checkout, signed/idempotent payment and expiry processing, same-intent recovery and atomic physical pickup accounting; no live charges.
+
+### Fixed
+
+- Idle inventory database disconnects no longer escape the pool and terminate the shared storefront service; diagnostics omit connection details.
+- Bounded reconciliation rotates open and uncertain orders so later missed payment/expiry work is not permanently starved, without releasing unverified holds.
+- Native admin/order suites retain isolated-database safeguards without requiring a machine-specific PostgreSQL port.
+- Rate-limited checkout retries keep the same frozen intent instead of permitting a second unresolved hold.
+- The exact inventory root and private HEAD requests receive the CSRF shell required by their layouts.
+
 ### Security
 
 - Local review now serves only the curated static artifact, preventing private environment, agent configuration and server files from being fetched through the preview.
+- Inventory host/session/MFA/member/CSRF controls, locally revocable sessions and private runtime permission preflight; no personal-site admin-claim or owner-email fallback.
+- Session creation serializes with membership revocation, and runtime permission checks reject protected column-only write grants.
 
 ## October 29, 2026
 

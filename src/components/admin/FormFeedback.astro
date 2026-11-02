@@ -1,0 +1,37 @@
+<p data-admin-status role="status" tabindex="-1" class="admin-feedback"></p>
+<ul data-admin-errors class="admin-errors" hidden></ul>
+<div class="admin-actions">
+  <button type="button" data-admin-retry hidden>
+    Retry the same operation
+  </button>
+  <button type="button" data-admin-refresh hidden>
+    Refresh authoritative record
+  </button>
+  <button type="button" data-admin-review hidden>
+    I reviewed the current record; allow a new intent
+  </button>
+</div>
+<section
+  data-admin-receipt
+  class="admin-panel"
+  hidden
+  aria-label="Server receipt"
+>
+  <h3>Recorded operation</h3>
+  <p data-admin-receipt-text></p>
+</section>
+<section
+  data-admin-current
+  class="admin-panel"
+  hidden
+  aria-label="Current authoritative record"
+>
+  <h3>Current server record — review before a new intent</h3>
+  <pre data-admin-current-text></pre>
+</section>
+<noscript>
+  <p class="admin-notice">
+    JavaScript is required for signed, retry-safe mutations. Nothing has been
+    submitted.
+  </p>
+</noscript>

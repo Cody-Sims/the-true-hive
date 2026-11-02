@@ -1,0 +1,77 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ProductForm from "../../../components/admin/ProductForm.astro";
+import CountForm from "../../../components/admin/CountForm.astro";
+import ReadState from "../../../components/admin/ReadState.astro";
+import {
+  getAdminProduct,
+  listAdminLocations,
+} from "../../../server/admin/catalog.ts";
+import { getAdminPool } from "../../../server/admin/pool.ts";
+import { isRecordKey } from "../../../server/inventory/rules.ts";
+import type { AdminProduct, AdminLocation } from "../../../domain/admin.ts";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let product: AdminProduct | null = null;
+let locations: AdminLocation[] = [];
+let unavailable = false;
+if (isRecordKey(Astro.params.key)) {
+  try {
+    const pool = getAdminPool();
+    [product, locations] = await Promise.all([
+      getAdminProduct(pool, Astro.params.key),
+      listAdminLocations(pool),
+    ]);
+  } catch {
+    unavailable = true;
+  }
+}
+if (!product) Astro.response.status = unavailable ? 503 : 404;
+---
+
+<AdminLayout title={product ? `Edit ${product.title}` : "Product record"}>
+  <a href="/inventory/products">Back to products</a>
+  {product ? (
+    <>
+      <ProductForm product={product} />
+      <section aria-label="Location balances">
+        <h2>Physical stock and allocations</h2>
+        <p>
+          Held, paid commitments and unavailable units are not physical
+          departures. Only recorded pickup reduces paid merchandise on hand.
+        </p>
+        {product.variants.map((variant) => (
+          <section>
+            <h3>
+              {variant.label} · {variant.sku}
+            </h3>
+            {variant.levels.length ? (
+              variant.levels.map((level) => (
+                <CountForm
+                  variant={variant}
+                  level={level}
+                  location={locations.find(
+                    (location) => location.key === level.locationKey,
+                  )}
+                  productKey={product.key}
+                />
+              ))
+            ) : (
+              <p class="admin-notice">
+                No location balance is available for this variant. This is not
+                proof of zero stock.
+              </p>
+            )}
+            <a
+              href={`/inventory/history?variantKey=${encodeURIComponent(variant.key)}`}
+            >
+              Review this variant's history
+            </a>
+          </section>
+        ))}
+      </section>
+    </>
+  ) : (
+    <ReadState unavailable={unavailable} missing={!unavailable} />
+  )}
+</AdminLayout>

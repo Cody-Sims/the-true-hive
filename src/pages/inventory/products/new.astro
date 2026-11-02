@@ -1,0 +1,11 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ProductForm from "../../../components/admin/ProductForm.astro";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+---
+
+<AdminLayout title="Create product">
+  <a href="/inventory/products">Back to products</a>
+  <ProductForm />
+</AdminLayout>

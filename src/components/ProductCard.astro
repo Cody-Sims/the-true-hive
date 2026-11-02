@@ -4,8 +4,15 @@ import ProductArt from "./ProductArt.astro";
 
 interface Props {
   product: Product;
+  testCheckoutEnabled?: boolean;
 }
-const { product } = Astro.props;
+const { product, testCheckoutEnabled = false } = Astro.props;
+const canTestCheckout =
+  testCheckoutEnabled &&
+  product.kind === "active" &&
+  product.variants.some(
+    (variant) => variant.currency === "USD" && (variant.priceMinor ?? 0) > 0,
+  );
 const labels = {
   soap: "The daily ritual",
   honey: "For the table",
@@ -36,5 +43,10 @@ const labels = {
     <span class="pill">
       {product.kind === "concept" ? "Concept product" : "Product information"}
     </span>
+    {canTestCheckout && (
+      <a class="text-link" href={`/goods/${product.slug}#test-checkout`}>
+        Test checkout
+      </a>
+    )}
   </div>
 </article>

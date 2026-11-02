@@ -2,6 +2,8 @@
 
 Status: **scope approved by the owner on 2026-10-29**. This supersedes earlier Shopify recommendations for this project.
 
+This records the **original foundation slice**, not the full current backlog. On 2026-10-31 the owner requested the next, separately specified secure inventory-admin and connected-purchase phase at `inventory.thetruehive.com`. The no-admin/no-checkout boundaries below describe the first slice; they do not reject that new phase or approve its unresolved provider/launch decisions.
+
 ## Objective
 
 Build the real True Hive application from **concept 04, Apiary Market**, with a custom storefront and custom PostgreSQL inventory foundation. Preserve all ten prototypes at `preview.thetruehive.com`. The eventual customer-facing site belongs at **`thetruehive.com`**, using native Render application hosting and Neon PostgreSQL.

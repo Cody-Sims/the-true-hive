@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { checkDatabase } from "../../../server/catalog.ts";
 import { readConfig } from "../../../server/config.ts";
 import { errorResponse, jsonResponse } from "../../../server/http.ts";
+import { getCheckoutPresentation } from "../../../server/commerce/config.ts";
 
 export const GET: APIRoute = async () => {
   try {
@@ -11,7 +12,7 @@ export const GET: APIRoute = async () => {
       status: "ready",
       catalogSource: config.catalogSource,
       inventoryConnected: config.catalogSource === "database",
-      checkoutEnabled: false,
+      checkoutEnabled: getCheckoutPresentation().enabled,
     });
   } catch (error) {
     return errorResponse(error);

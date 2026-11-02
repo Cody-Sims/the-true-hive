@@ -1,0 +1,168 @@
+---
+import type { AdminProduct } from "../../domain/admin.ts";
+import VariantFields from "./VariantFields.astro";
+import FormFeedback from "./FormFeedback.astro";
+interface Props {
+  product?: AdminProduct;
+}
+const { product } = Astro.props;
+const endpoint = product
+  ? `/api/admin/products/${encodeURIComponent(product.key)}`
+  : "/api/admin/products";
+---
+
+<form
+  data-admin-form="product"
+  data-endpoint={endpoint}
+  data-method={product ? "PUT" : "POST"}
+  data-refresh={product ? endpoint : undefined}
+  class="admin-form"
+>
+  <input
+    type="hidden"
+    name="expectedRevision"
+    value={product?.revision ?? ""}
+  />
+  <fieldset data-intent-fields>
+    <legend>
+      {product
+        ? `Edit ${product.status} product · revision ${product.revision}`
+        : "Create an unpublished product"}
+    </legend>
+    <div class="admin-grid">
+      <label>
+        Stable product key{" "}
+        <input
+          name="key"
+          required
+          value={product?.key ?? ""}
+          readonly={!!product}
+          pattern="[a-z0-9][a-z0-9-]{0,79}"
+          maxlength="80"
+        />
+      </label>
+      <label>
+        Slug{" "}
+        <input
+          name="slug"
+          required
+          value={product?.slug ?? ""}
+          pattern="[a-z0-9][a-z0-9-]{0,79}"
+          maxlength="80"
+        />
+      </label>
+    </div>
+    <label>
+      Title{" "}
+      <input
+        name="title"
+        required
+        minlength="1"
+        maxlength="160"
+        value={product?.title ?? ""}
+      />
+    </label>
+    <label for={`summary-${product?.key ?? "new"}`}>Summary</label>
+    <textarea
+      id={`summary-${product?.key ?? "new"}`}
+      name="summary"
+      required
+      minlength="1"
+      maxlength="1000"
+      rows="3"
+    >{product?.summary ?? ""}</textarea>
+    <label for={`details-${product?.key ?? "new"}`}>
+      Details (one paragraph per line)
+    </label>
+    <textarea
+      id={`details-${product?.key ?? "new"}`}
+      name="details"
+      maxlength="24011"
+      rows="4"
+    >{product?.details.join("\n") ?? ""}</textarea>
+    <div class="admin-grid">
+      <label>
+        Category{" "}
+        <select name="category" required>
+          <option value="" selected={!product}>
+            Choose a category
+          </option>
+          {["soap", "honey", "candles", "gifts"].map((category) => (
+            <option value={category} selected={product?.category === category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Illustration choice{" "}
+        <select name="imageKey" required>
+          <option value="" selected={!product}>
+            Choose an illustration
+          </option>
+          {["soap", "honey", "candle"].map((image) => (
+            <option value={image} selected={product?.imageKey === image}>
+              {image}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Record kind{" "}
+        <select name="kind">
+          {["draft", "concept", "active"].map((kind) => (
+            <option value={kind} selected={(product?.kind ?? "draft") === kind}>
+              {kind}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+    <h2>Variants</h2>
+    <p>
+      No fictional SKU, price or inventory is supplied. A new record starts with
+      zero administrative balance; counted stock requires a separate audited
+      adjustment.
+    </p>
+    <div data-admin-variants>
+      {product?.variants.length ? (
+        product.variants.map((variant) => <VariantFields variant={variant} />)
+      ) : (
+        <VariantFields />
+      )}
+    </div>
+    <template data-admin-variant-template>
+      <VariantFields />
+    </template>
+    <button type="button" data-admin-add-variant>
+      Add another variant
+    </button>
+  </fieldset>
+  <p class="admin-notice">
+    Save keeps publication unchanged. Publish requires valid content and an
+    active real product with an active positive-price USD variant. Archive
+    unpublishes without deleting inventory or history.
+  </p>
+  <div class="admin-actions">
+    <button type="submit" name="action" value="save">
+      {product ? "Save changes" : "Create unpublished product"}
+    </button>
+    {product && product.status !== "archived" && (
+      <>
+        <button type="submit" name="action" value="publish">
+          Publish product
+        </button>
+        <button
+          type="submit"
+          name="action"
+          value="archive"
+          formnovalidate
+          class="admin-danger"
+        >
+          Archive product
+        </button>
+      </>
+    )}
+  </div>
+  <FormFeedback />
+</form>

@@ -1,0 +1,94 @@
+---
+interface Props {
+  config: {
+    enabled: boolean;
+    apiKey: string | null;
+    authDomain: string | null;
+    projectId: string | null;
+  };
+  csrfToken?: string | undefined;
+}
+const { config, csrfToken } = Astro.props;
+const publicConfig = JSON.stringify({
+  enabled: config.enabled,
+  apiKey: config.apiKey,
+  authDomain: config.authDomain,
+  projectId: config.projectId,
+})
+  .replaceAll("<", "\\u003c")
+  .replaceAll("&", "\\u0026");
+---
+
+<section data-admin-login data-csrf-token={csrfToken} class="admin-panel">
+  <script
+    is:inline
+    type="application/json"
+    data-firebase-config
+    nonce={Astro.locals.nonce}
+    set:html={publicConfig}
+  />
+  <p>
+    Use your authorized Google identity, then verify an authenticator code.
+    Google sign-in alone does not grant inventory access.
+  </p>
+  {config.enabled ? (
+    <>
+      <button type="button" data-admin-google>
+        Sign in with Google
+      </button>
+      <form data-admin-totp-form hidden class="admin-form">
+        <label>
+          Authenticator code{" "}
+          <input
+            name="totp"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            minlength="6"
+            maxlength="6"
+            autocomplete="one-time-code"
+            required
+          />
+        </label>
+        <button type="submit">Verify code and sign in</button>
+      </form>
+      <section data-admin-enrollment hidden class="admin-panel">
+        <h2>Set up your authenticator</h2>
+        <p>
+          This secret is displayed only for your authorized enrollment. Add it
+          to your authenticator, then verify its code. Do not share it.
+        </p>
+        <output
+          data-admin-enrollment-secret
+          class="admin-secret"
+          aria-label="Authenticator enrollment secret"
+        ></output>
+        <form data-admin-enrollment-form class="admin-form">
+          <label>
+            Enrollment code{" "}
+            <input
+              name="enrollmentCode"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]{6}"
+              minlength="6"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required
+            />
+          </label>
+          <button type="submit">Confirm authenticator enrollment</button>
+        </form>
+      </section>
+    </>
+  ) : (
+    <p class="admin-notice">
+      Administrator sign-in is unavailable. No inventory access or enrollment
+      bypass is enabled.
+    </p>
+  )}
+  <p data-admin-login-status role="status" tabindex="-1"></p>
+  <noscript>
+    JavaScript is required for Google sign-in and authenticator verification.
+  </noscript>
+</section>

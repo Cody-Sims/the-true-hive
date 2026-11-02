@@ -1,0 +1,29 @@
+---
+interface Props {
+  unavailable?: boolean;
+  missing?: boolean;
+  empty?: string;
+}
+const {
+  unavailable = false,
+  missing = false,
+  empty = "No records yet.",
+} = Astro.props;
+---
+
+<section class="admin-notice" role="status">
+  <h2>
+    {unavailable
+      ? "Records temporarily unavailable"
+      : missing
+        ? "Record not found"
+        : empty}
+  </h2>
+  <p>
+    {unavailable
+      ? "The server could not verify these records. Unknown stock is not zero. Try refreshing later."
+      : missing
+        ? "This key does not identify a current record."
+        : "No substitute products, prices, locations or quantities have been supplied."}
+  </p>
+</section>

@@ -1,0 +1,25 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout
+  title="Test checkout return"
+  description="An honest test checkout outcome, not a payment confirmation."
+  notFound
+>
+  <section class="wrap page-intro">
+    <p class="eyebrow">Stripe test flow — no real purchase</p>
+    <h1>You're back from test checkout.</h1>
+    <p>
+      This browser return cannot confirm payment, pickup or inventory. Only
+      verified provider events and server reconciliation establish the outcome.
+    </p>
+    <p>
+      No private order or customer information is shown here. A hold may still
+      exist while the server verifies the test flow.
+    </p>
+    <a class="text-link" href="/goods">
+      Return to the collection
+    </a>
+  </section>
+</SiteLayout>

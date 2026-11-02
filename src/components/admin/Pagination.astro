@@ -1,0 +1,26 @@
+---
+import { pageHref } from "./presentation.ts";
+interface Props {
+  path: string;
+  offset: number;
+  total: number;
+  search?: string;
+}
+const { path, offset, total, search = "" } = Astro.props;
+---
+
+<nav class="admin-pagination" aria-label="Result pages">
+  <p>
+    {total === 0
+      ? "No results"
+      : offset >= total
+        ? "No results on this page"
+        : `${offset + 1}–${Math.min(offset + 20, total)} of ${total}`}
+  </p>
+  {offset > 0 && (
+    <a href={pageHref(path, offset - 20, search)}>Previous page</a>
+  )}
+  {offset + 20 < total && offset + 20 <= 10000 && (
+    <a href={pageHref(path, offset + 20, search)}>Next page</a>
+  )}
+</nav>

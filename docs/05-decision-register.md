@@ -11,7 +11,7 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | F3 | Initial focus is landing page with Facebook/Instagram connections | Owner's original request |
 | F4 | Planned services include hive removal and farm pollination | Owner's original request; exact operational scope still unknown |
 | F5 | Planned goods include honey/honey-related products, soaps and candles; mock information is acceptable | Owner's original request |
-| F6 | Future store is part of the website, connected to properly handled inventory | Owner's expansion request; custom admin not mandated |
+| F6 | Future store is part of the website, connected to properly handled inventory | Owner's expansion request; admin workflows explicitly requested on 2026-10-31 |
 | F7 | Ten total designs, coordinated shop flows and a UI for plans/requirements/business roadmap | Owner's expansion requests |
 | F8 | Product/local sales lead; local pickup first and shipping later; broad style exploration | Owner's design/fulfillment answers |
 | F9 | Already keeping two hives and selling soaps at small scale; own-made products | Owner's business-stage answer; internal planning context |
@@ -24,12 +24,15 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | F16 | Render selected; owner reports account created and connected to GitHub | Owner's hosting answer; no paid resource provisioning is implied |
 | F17 | Native Render app in a Hobby workspace plus Neon Free PostgreSQL, both in Oregon | Owner's later provider, tier and region approval; no paid Neon or Render database |
 | F18 | Verified database TLS with channel binding when offered using the current Node driver | Explicit owner connection-policy choice; strict required channel binding is not claimed |
+| F19 | Admin-only inventory at inventory.thetruehive.com; add/update products and increase/reduce stock, connected to purchase-driven inventory changes | Owner's next-phase request on 2026-10-31 |
+| F20 | Isolated True Hive Firebase project and app-enforced MFA before deployment; no paid feature upgrade without approval | Owner's inventory access decisions on 2026-10-31 |
+| F21 | Stripe card-only test checkout; separate physical/held/paid commitments and admin Record pickup | Owner's checkout scope/accounting decisions on 2026-10-31; no live charges |
 
 ## Architecture and design decisions
 
 | ID | Status | Decision / rationale | Revisit when |
 |---|---|---|---|
-| D1 | Confirmed scope | No live checkout/admin now | Owner authorizes commerce |
+| D1 | Foundation scope; admin deferral superseded by D21 | The original first slice has no live checkout/admin; the next phase explicitly adds secure administration | Preserve the foundation history; gate live sales separately |
 | D2 | Accepted | Astro + TypeScript with native Node and PostgreSQL | Proven scaling/operating need, not speculative framework changes |
 | D3 | Recommended | Typed local content before CMS | Owner updates become frequent and developer-mediated publishing is a real bottleneck |
 | D4 | Superseded | Earlier Shopify recommendation rejected; our database/application own inventory | Preserve the rationale as historical comparison, not active instructions |
@@ -49,6 +52,11 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | D18 | Accepted for foundation | One $7/month native Render app in a Hobby workspace; Neon Free PostgreSQL in Oregon, no paid database resource | Quotas/recovery or measured traffic justify a separately approved upgrade before live operations |
 | D19 | Accepted | Certificate-verified TLS and opportunistic channel binding; explicit `channel_binding=prefer`, reject `require` rather than pretending to enforce it | A strict channel-binding requirement needs a compatible driver |
 | D20 | Required | Validate database/schema once before listening; Render regularly checks process liveness, not database readiness | Preserve honest outage responses and avoid keeping free Neon compute awake through monitoring |
+| D21 | Confirmed next-phase outcome | Admin-only inventory.thetruehive.com, product management, audited stock adjustments and one shared shop inventory authority | Agree identity/admin provisioning and payment lifecycle before exposing new capabilities |
+| D22 | Required boundary | Robots exclusion/noindex are not authorization; verify access server-side for private reads and every mutation | Unauthorized requests, revoked sessions and wrong-host access must be denied |
+| D23 | Accepted implementation choice | Isolated Firebase project, app-enforced MFA and PostgreSQL admin membership; reuse only the existing integration pattern | Identity Platform/billing setup needs explicit approval; do not weaken MFA or import personal-site access |
+| D24 | Accepted test scope | Stripe card-only test checkout; hold before hosted checkout, paid commitment after verified payment, physical decrement at Record pickup | Live charges/delayed methods, pickup policies and operational activation need separate approval |
+| D25 | Required | Idempotent signed-event settlement and provider-confirmed expiry/reconciliation; refunds do not automatically restock | A local timer, return redirect or refunded amount is not stock authority |
 
 ## Owner decisions by gate
 
@@ -58,7 +66,7 @@ Start with honey allocation Q01, real soap records Q02, partner/operating setup 
 
 ## Explicit assumptions
 
-One business, English content, an initially small catalog, no online payments or customer accounts, and service inquiries rather than automated booking. A single maintainer can deploy content initially. These are planning assumptions and can be changed before implementation.
+One business, English content, an initially small catalog, no enabled online payments or customer accounts, and service inquiries rather than automated booking. The original developer-mediated catalog workflow is being replaced by the requested admin phase, not assumed to remain sufficient. These are planning assumptions and can be changed before implementation.
 
 No public pickup address, neighboring service town, acreage capacity, retail honey allocation, price, formula, sellable quantity, certification, emergency availability or company history is assumed. The numerical catalog/stock is explicitly fictional, not evidence about the business.
 

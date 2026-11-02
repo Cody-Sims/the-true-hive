@@ -1,0 +1,81 @@
+---
+import type { AdminOrder } from "../../domain/admin.ts";
+import FormFeedback from "./FormFeedback.astro";
+import { money } from "./presentation.ts";
+interface Props {
+  order: AdminOrder;
+}
+const { order } = Astro.props;
+---
+
+<section class="admin-panel">
+  <h2>Order {order.id}</h2>
+  <p>
+    State: <strong data-order-state>{order.state}</strong> · revision{" "}
+    <span data-order-revision>{order.revision}</span>
+  </p>
+  <p>
+    Location: {order.locationKey} · immutable total {money(order.totalMinor)}
+  </p>
+  <p>
+    Created: {order.createdAt} · paid: {order.paidAt ?? "Not confirmed"} ·
+    picked up: {order.pickedUpAt ?? "Not recorded"}
+  </p>
+  {order.reconciliationReason && (
+    <p class="admin-notice">
+      Reconciliation required: {order.reconciliationReason}
+    </p>
+  )}
+</section>
+<table class="admin-table" role="table">
+  <caption>Immutable merchandise snapshots</caption>
+  <thead>
+    <tr>
+      <th scope="col">Merchandise</th>
+      <th scope="col">Variant</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">Unit price</th>
+    </tr>
+  </thead>
+  <tbody>
+    {order.lines.map((line) => (
+      <tr>
+        <td data-label="Merchandise">
+          {line.title} · {line.label}
+        </td>
+        <td data-label="Variant">{line.variantKey}</td>
+        <td data-label="Quantity">{line.quantity}</td>
+        <td data-label="Unit price">{money(line.priceMinor)}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+{order.state === "paid" ? (
+  <form
+    data-admin-form="pickup"
+    data-endpoint={`/api/admin/orders/${order.id}/pickup`}
+    data-method="POST"
+    data-refresh={`/api/admin/orders/${order.id}`}
+    class="admin-form"
+  >
+    <input name="expectedRevision" type="hidden" value={order.revision} />
+    <fieldset data-intent-fields>
+      <legend>Record physical departure</legend>
+      <label class="admin-check">
+        <input name="confirmedPickup" type="checkbox" required /> I confirm all
+        listed merchandise has physically been picked up.
+      </label>
+      <p>
+        This decreases physical on-hand and paid commitments together, once. It
+        does not refund or automatically restock anything.
+      </p>
+    </fieldset>
+    <button type="submit">Record pickup</button>
+    <FormFeedback />
+  </form>
+) : (
+  <p class="admin-notice">
+    Pickup can be recorded only after the server confirms payment. Browser
+    callbacks do not prove payment or release.
+  </p>
+)}

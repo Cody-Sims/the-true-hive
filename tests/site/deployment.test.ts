@@ -27,6 +27,30 @@ test("public output cannot contain planning, server source, environment files or
     );
 });
 
+test("inventory browser configuration does not permit server identity or payment code in public assets", () => {
+  assert.doesNotThrow(() =>
+    assertPublicFiles([
+      {
+        path: "_astro/login.js",
+        contents: 'import { getAuth } from "firebase/auth";',
+      },
+    ]),
+  );
+  for (const contents of [
+    "FIREBASE_SERVICE_ACCOUNT_JSON",
+    "ADMIN_CSRF_SECRET",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    'import { getAuth } from "firebase-admin/auth";',
+    "SELECT uid FROM admin_memberships",
+  ]) {
+    assert.throws(
+      () => assertPublicFiles([{ path: "_astro/leak.js", contents }]),
+      /private|server|artifact/i,
+    );
+  }
+});
+
 test("native app deployment must wait for CI on main rather than deploying unchecked commits", () => {
   const service = {
     type: "web",

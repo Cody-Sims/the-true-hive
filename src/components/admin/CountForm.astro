@@ -1,0 +1,74 @@
+---
+import type {
+  AdminInventoryLevel,
+  AdminLocation,
+  AdminVariant,
+} from "../../domain/admin.ts";
+import FormFeedback from "./FormFeedback.astro";
+import Quantities from "./Quantities.astro";
+interface Props {
+  variant: AdminVariant;
+  level: AdminInventoryLevel;
+  location?: AdminLocation | undefined;
+  productKey: string;
+}
+const { variant, level, location, productKey } = Astro.props;
+---
+
+<section class="admin-panel">
+  <h3>
+    {variant.label} · {location?.name ?? level.locationKey}
+  </h3>
+  <p class="admin-muted">Current server balance, not a browser estimate.</p>
+  <Quantities level={level} />
+  <form
+    data-admin-form="adjustment"
+    data-endpoint="/api/admin/adjustments"
+    data-method="POST"
+    data-refresh={`/api/admin/products/${encodeURIComponent(productKey)}`}
+    class="admin-form"
+  >
+    <input name="variantKey" type="hidden" value={variant.key} />
+    <input name="locationKey" type="hidden" value={level.locationKey} />
+    <input name="expectedRevision" type="hidden" value={level.revision} />
+    <fieldset data-intent-fields>
+      <legend>Audited count correction</legend>
+      <div class="admin-grid">
+        <label>
+          Direction{" "}
+          <select name="direction" required>
+            <option value="increase">Increase on hand</option>
+            <option value="reduce">Reduce on hand</option>
+          </select>
+        </label>
+        <label>
+          Positive whole units{" "}
+          <input
+            name="amount"
+            type="number"
+            min="1"
+            max="2147483647"
+            step="1"
+            required
+          />
+        </label>
+      </div>
+      <label>
+        Reason{" "}
+        <textarea
+          name="reason"
+          required
+          minlength="1"
+          maxlength="500"
+          rows="2"
+        ></textarea>
+      </label>
+      <p>
+        The server rejects reductions below held + committed + unavailable. An
+        uncertain response must be retried unchanged before another intent.
+      </p>
+    </fieldset>
+    <button type="submit">Confirm count correction</button>
+    <FormFeedback />
+  </form>
+</section>

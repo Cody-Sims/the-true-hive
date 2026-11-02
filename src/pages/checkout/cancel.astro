@@ -1,0 +1,25 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout
+  title="Test checkout left"
+  description="Leaving a test checkout does not prove a stock release."
+  notFound
+>
+  <section class="wrap page-intro">
+    <p class="eyebrow">Stripe test flow — no real purchase</p>
+    <h1>You left test checkout.</h1>
+    <p>
+      Returning here does not cancel an order, prove payment failed or release
+      stock. A hold may remain until the provider confirms an expired, unpaid
+      session and the server records that outcome.
+    </p>
+    <p>
+      No real purchase or private order information is provided by this page.
+    </p>
+    <a class="text-link" href="/goods">
+      Return to the collection
+    </a>
+  </section>
+</SiteLayout>

@@ -62,7 +62,7 @@ jobs:
         run: |
           sudo systemctl start postgresql.service
           sudo -u postgres pg_isready
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE true_hive_test WITH LOGIN PASSWORD 'ci-test-fixture';"
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE true_hive_test WITH LOGIN CREATEROLE PASSWORD 'ci-test-fixture';"
           sudo -u postgres createdb --owner=true_hive_test true_hive_test
       - name: Check real inventory transactions
         env:
