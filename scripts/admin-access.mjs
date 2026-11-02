@@ -43,6 +43,10 @@ export async function changeAdminAccess(pool, uid, active) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await client.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended($1::text,0))",
+      [`admin-access:${uid}`],
+    );
     if (active) {
       await client.query(
         `INSERT INTO admin_memberships(uid,active) VALUES ($1,true)

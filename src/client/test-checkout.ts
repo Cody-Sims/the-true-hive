@@ -50,7 +50,8 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
         error?: { message?: string };
       };
       if (!response.ok) {
-        if (response.status >= 500) throw new Error("Outcome unverified.");
+        if (response.status === 429 || response.status >= 500)
+          throw new Error("Outcome unverified.");
         body = null;
         state(
           "idle",

@@ -19,13 +19,31 @@ export function createAdminPersistence(pool: Pool) {
       return result.rowCount === 1;
     },
     async saveSession(hash: string, uid: string, expiresAt: Date) {
-      // The current membership is checked again in the same database statement.
-      const result = await pool.query(
-        `INSERT INTO public.admin_sessions (session_hash, uid, expires_at)
-         SELECT $1, uid, $3 FROM public.admin_memberships WHERE uid = $2 AND active = true`,
-        [hash, uid, expiresAt],
-      );
-      if (result.rowCount !== 1) throw new AdminConfigurationError();
+      const client = await pool.connect();
+      let discard = false;
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtextextended($1::text,0))",
+          [`admin-access:${uid}`],
+        );
+        const result = await client.query(
+          `INSERT INTO public.admin_sessions (session_hash, uid, expires_at)
+           SELECT $1, uid, $3 FROM public.admin_memberships WHERE uid = $2 AND active = true`,
+          [hash, uid, expiresAt],
+        );
+        if (result.rowCount !== 1) throw new AdminConfigurationError();
+        await client.query("COMMIT");
+      } catch (error) {
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          discard = true;
+        }
+        throw error;
+      } finally {
+        client.release(discard);
+      }
     },
     async revokeSession(hash: string) {
       await pool.query(
@@ -95,8 +113,14 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     ),
   ];
   const result = await pool.query<{ safe: boolean }>(
-    `SELECT bool_and(COALESCE(has_table_privilege(current_user,
-      to_regclass('public.' || (entry->>'table')), entry->>'privilege') = (entry->>'expected')::boolean, false)) AS safe
+    `SELECT bool_and(COALESCE(
+      has_table_privilege(current_user,
+        to_regclass('public.' || (entry->>'table')), entry->>'privilege') = (entry->>'expected')::boolean
+      AND CASE WHEN (entry->>'expected')::boolean = false
+        AND entry->>'privilege' IN ('INSERT','UPDATE')
+        THEN NOT has_any_column_privilege(current_user,
+          to_regclass('public.' || (entry->>'table')), entry->>'privilege')
+        ELSE true END, false)) AS safe
       FROM jsonb_array_elements($1::jsonb) AS entry`,
     [JSON.stringify(checks)],
   );

@@ -151,6 +151,8 @@ export function createAdminBoundary(
         cookies: [] as string[],
       };
       const path = new URL(request.url).pathname;
+      const inventoryPage =
+        path === "/inventory" || path.startsWith("/inventory/");
       let canonicalPath: string;
       try {
         canonicalPath = normalizedPath(path);
@@ -185,7 +187,10 @@ export function createAdminBoundary(
             return result;
           throw new AdminAuthError(404, "NOT_FOUND");
         }
-        if (path === "/inventory/login" && request.method === "GET") {
+        if (
+          path === "/inventory/login" &&
+          ["GET", "HEAD"].includes(request.method)
+        ) {
           attempts.consume();
           const cookies = readCookies(request, config);
           result.cookies.push(shell(cookies.session, locals, cookies.nonce));
@@ -211,14 +216,14 @@ export function createAdminBoundary(
         const identity = await auth.authenticate(session);
         if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) csrf(request);
         locals.admin = identity;
-        if (request.method === "GET" && path.startsWith("/inventory/"))
+        if (["GET", "HEAD"].includes(request.method) && inventoryPage)
           result.cookies.push(shell(session, locals, nonce));
         return result;
       } catch (error) {
         if (
           error instanceof AdminAuthError &&
           [401, 403].includes(error.status) &&
-          path.startsWith("/inventory/") &&
+          inventoryPage &&
           ["GET", "HEAD"].includes(request.method)
         )
           result.response = new Response(null, {

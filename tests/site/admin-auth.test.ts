@@ -303,6 +303,41 @@ async function loginShell(boundary: ReturnType<typeof createAdminBoundary>) {
   };
 }
 
+test("inventory root and private HEAD requests receive authenticated CSRF shell locals", async () => {
+  const f = fixture();
+  const login = await f.auth.login("id-token");
+  const boundary = createAdminBoundary(config, f.auth);
+  for (const path of ["/inventory", "/inventory/products"]) {
+    for (const method of ["GET", "HEAD"]) {
+      const locals: AdminLocals = {};
+      const result = await boundary.gate(
+        new Request(`${config.origin}${path}`, {
+          method,
+          headers: { cookie: `${cookieNames(config).session}=${login.cookie}` },
+        }),
+        locals,
+      );
+      assert.equal(result.response, null);
+      assert.equal(locals.admin?.uid, login.uid);
+      assert(locals.csrfToken);
+      assert.equal(result.cookies.length, 1);
+    }
+  }
+});
+
+test("anonymous login HEAD receives the public CSRF shell without a private session", async () => {
+  const f = fixture();
+  const locals: AdminLocals = {};
+  const result = await createAdminBoundary(config, f.auth).gate(
+    new Request(`${config.origin}/inventory/login`, { method: "HEAD" }),
+    locals,
+  );
+  assert.equal(result.response, null);
+  assert(locals.csrfToken);
+  assert.equal(locals.admin, undefined);
+  assert.equal(f.writes(), 0);
+});
+
 function mutation(
   path: string,
   cookie: string,

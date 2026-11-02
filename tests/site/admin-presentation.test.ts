@@ -1268,3 +1268,59 @@ domTest(
     }
   },
 );
+
+domTest(
+  "rate limited checkout retries preserve an uncertain serialized intent",
+  { timeout: 10000 },
+  async () => {
+    const page = await fixturePage(
+      "src/components/TestCheckout.astro",
+      {
+        product: {
+          ...product,
+          variants: [{ ...product.variants[0], priceMinor: 725 }],
+        },
+        enabled: true,
+        availability: { [level.variantKey]: "available" },
+      },
+      "test-checkout.ts",
+    );
+    const bodies: string[] = [];
+    await page.route("**/api/checkout", (route) => {
+      bodies.push(route.request().postData()!);
+      return route.fulfill({
+        status: bodies.length === 2 ? 429 : 503,
+        json: { error: { message: "Fixture retry needed" } },
+      });
+    });
+    try {
+      await page
+        .getByRole("button", { name: "Continue to test checkout" })
+        .click();
+      await waitPhase(page, "uncertain", "[data-test-checkout]");
+      await page.locator("[data-checkout-retry]").click();
+      await page
+        .locator('[data-test-checkout]:not([data-phase="pending"])')
+        .waitFor();
+      assert.equal(
+        await page.locator("[data-test-checkout]").getAttribute("data-phase"),
+        "uncertain",
+      );
+      assert.equal(await page.getByLabel("Quantity").isDisabled(), true);
+      assert.equal(await page.getByLabel("Variant").isDisabled(), true);
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Continue to test checkout" })
+          .isDisabled(),
+        true,
+      );
+      await page.locator("[data-checkout-retry]").click();
+      await waitPhase(page, "uncertain", "[data-test-checkout]");
+      assert.equal(bodies.length, 3);
+      assert.equal(bodies[1], bodies[0]);
+      assert.equal(bodies[2], bodies[0]);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
