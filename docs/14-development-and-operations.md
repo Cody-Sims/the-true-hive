@@ -207,6 +207,8 @@ Reconciliation must re-fetch provider state. Expire overdue open sessions and co
 
 Run `npm run checkout:reconcile` with privately configured test credentials; `RECONCILE_CHECKOUT_LIMIT` defaults to 25 and is bounded to 100. It reports counts, not private order IDs. Retry an uncertain create using the same intent/key; never replace it with a new order. Verified signed events can recover an existing session association after a lost response, without creating a fresh payment or extending its expiry.
 
+Each bounded batch locks the least-recently-updated pending orders, skips orders claimed by another batch, and advances their update timestamps before provider work. Open or repeatedly uncertain sessions therefore rotate behind other pending work instead of permanently blocking later reconciliation. This scheduling touch changes neither order revisions/snapshots nor physical stock, commitments, holds or requested expiry.
+
 Configure the test webhook on the **storefront/staging origin** at `/api/webhooks/stripe`, not the admin-only inventory host. The pinned SDK/event version is `2026-10-28.endive`, with the `allowed_payment_method_types` card filter. Match that endpoint version and rehearse signatures/expiry/paid/pickup before activation. Unsupported test totals are rejected before holds. Test details belong only in the isolated sandbox.
 
 Native startup validates checkout configuration, private role/schema access and Firebase TOTP readiness before listening. Astro trusts forwarded hosts only for the exact configured storefront/inventory origins; the middleware still verifies effective host/session/CSRF independently. The adapter accepts the largest bounded webhook body, while admin/checkout readers retain their smaller stream limits.

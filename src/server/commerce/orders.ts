@@ -674,22 +674,24 @@ export async function listPendingCheckoutReservations(
   limit: number,
 ): Promise<CheckoutReservation[]> {
   const bounded = positiveInteger(limit, 100);
-  return transaction(
-    pool,
-    async (client) => {
-      const rows = (
-        await client.query<OrderRow>(
-          `SELECT * FROM orders WHERE state IN ('creating','open','reconciliation_required')
-       ORDER BY created_at,order_key LIMIT $1`,
-          [bounded],
-        )
-      ).rows;
-      const reservations: CheckoutReservation[] = [];
-      for (const row of rows) reservations.push(await reservation(client, row));
-      return reservations;
-    },
-    true,
-  );
+  return transaction(pool, async (client) => {
+    const rows = (
+      await client.query<OrderRow>(
+        `SELECT * FROM orders WHERE state IN ('creating','open','reconciliation_required')
+       ORDER BY updated_at,order_key LIMIT $1 FOR UPDATE SKIP LOCKED`,
+        [bounded],
+      )
+    ).rows;
+    // Rotate every selected batch, including open/unknown sessions, without changing holds.
+    if (rows.length)
+      await client.query(
+        "UPDATE orders SET updated_at=clock_timestamp() WHERE order_key=ANY($1::uuid[])",
+        [rows.map((row) => row.order_key)],
+      );
+    const reservations: CheckoutReservation[] = [];
+    for (const row of rows) reservations.push(await reservation(client, row));
+    return reservations;
+  });
 }
 export async function listAdminOrders(
   pool: Pool,

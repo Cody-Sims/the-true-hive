@@ -19,6 +19,11 @@ export function getAdminPool(config?: Pick<AdminConfig, "databaseUrl">): Pool {
       max: 3,
       allowExitOnIdle: true,
     });
+    pool.on("error", () =>
+      console.error(
+        "An idle inventory database connection closed unexpectedly.",
+      ),
+    );
     writerUrl = databaseUrl;
   }
   return pool;

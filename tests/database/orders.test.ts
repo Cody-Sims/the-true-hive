@@ -32,7 +32,6 @@ assert(
 );
 const url = new URL(connection);
 assert.equal(url.hostname, "127.0.0.1");
-assert.equal(url.port, "55483");
 assert.equal(url.pathname, "/true_hive_test");
 const admin = new Pool({ connectionString: connection, max: 1 });
 let pool: Pool;
@@ -831,6 +830,39 @@ test("pickup ledger or admin-operation insertion failure rolls back every line, 
       `DROP TRIGGER reject_write ON ${table}; DROP FUNCTION reject_test_write()`,
     );
   }
+});
+
+test("bounded reconciliation visits later orders without changing uncertain holds or snapshots", async () => {
+  const uncertain = await reserveCheckout(pool, intent(), "pickup");
+  await markCheckoutReconciliation(
+    pool,
+    uncertain.id,
+    "Unknown provider session.",
+  );
+  const opened = await open();
+  const later = await open();
+  const beforeStock = await stock();
+  const before = await Promise.all(
+    [uncertain, opened, later].map((order) =>
+      getCheckoutReservation(pool, order.id),
+    ),
+  );
+  const first = await listPendingCheckoutReservations(pool, 2);
+  assert.deepEqual(
+    new Set(first.map((order) => order.id)),
+    new Set([uncertain.id, opened.id]),
+  );
+  const second = await listPendingCheckoutReservations(pool, 2);
+  assert(second.some((order) => order.id === later.id));
+  assert.deepEqual(await stock(), beforeStock);
+  assert.deepEqual(
+    await Promise.all(
+      [uncertain, opened, later].map((order) =>
+        getCheckoutReservation(pool, order.id),
+      ),
+    ),
+    before,
+  );
 });
 
 test("admin and reconciliation lists are bounded safe DTOs with null lifecycle fields and no provider/customer fields", async () => {

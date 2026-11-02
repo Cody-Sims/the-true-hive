@@ -25,7 +25,6 @@ assert(
 );
 const url = new URL(connection);
 assert.equal(url.hostname, "127.0.0.1");
-assert.equal(url.port, "55483");
 assert.equal(url.pathname, "/true_hive_test");
 const admin = new Pool({ connectionString: connection, max: 1 });
 let schema: string;

@@ -168,3 +168,29 @@ test("cross-module Firebase reuse rejects a different identity project", async (
     await closeFixtureApp();
   }
 });
+
+test("idle private database errors are handled without exposing connection details", async (context) => {
+  const url = new URL("../../src/server/admin/pool.ts", import.meta.url);
+  url.searchParams.set("test-load", randomUUID());
+  const { getAdminPool } = await import(url.href);
+  const pool = getAdminPool({
+    databaseUrl:
+      "postgresql://fixture:fixture@127.0.0.1:55484/true_hive_test?sslmode=verify-full",
+  });
+  const log = context.mock.method(console, "error", () => {});
+  const privateDetail = "fixture-private-connection-detail";
+  try {
+    assert.doesNotThrow(() => pool.emit("error", new Error(privateDetail)));
+    assert(log.mock.calls.length > 0);
+    assert(
+      log.mock.calls.every((call) =>
+        call.arguments.every(
+          (value) =>
+            typeof value === "string" && !value.includes(privateDetail),
+        ),
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+});
