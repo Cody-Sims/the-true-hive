@@ -46,7 +46,7 @@ export function readCheckoutConfig(
         environment["MIGRATION_DATABASE_URL"] ||
       !isRecordKey(locationKey) ||
       typeof secretKey !== "string" ||
-      !/^sk_test_[a-zA-Z0-9]{8,240}$/.test(secretKey) ||
+      !/^(?:sk|rk)_test_[a-zA-Z0-9]{8,240}$/.test(secretKey) ||
       typeof webhookSecret !== "string" ||
       !/^whsec_[a-zA-Z0-9]{8,240}$/.test(webhookSecret) ||
       origin.protocol !== "https:" ||

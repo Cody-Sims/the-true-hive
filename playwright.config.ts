@@ -39,7 +39,7 @@ export default defineConfig({
         HOST: "127.0.0.1",
         PORT: "4326",
         CATALOG_SOURCE: "database",
-        SITE_INDEXABLE: "false",
+        SITE_INDEXABLE: "true",
         SITE_URL: "http://127.0.0.1:4326",
         DATABASE_URL: "",
         CONTACT_PHONE: "",

@@ -40,6 +40,25 @@ test("only explicitly configured database/test checkout is presented as enabled"
   assert(!JSON.stringify(getCheckoutPresentation(configured)).includes("sk_"));
 });
 
+test("restricted test keys support least privilege without enabling live or disabled checkout", () => {
+  const restricted = {
+    ...configured,
+    STRIPE_SECRET_KEY: "rk_test_offlineFixture",
+  };
+  assert.deepEqual(getCheckoutPresentation(restricted), {
+    enabled: true,
+    locationKey: "pickup-main",
+  });
+  assert.doesNotThrow(() => prepareCheckoutStartup(restricted));
+  assert(!JSON.stringify(getCheckoutPresentation(restricted)).includes("rk_"));
+  assert.deepEqual(
+    readCheckoutConfig({ ...restricted, CHECKOUT_MODE: "disabled" }),
+    {
+      mode: "disabled",
+    },
+  );
+});
+
 test("checkout roles share one normalized database target without sharing credentials", () => {
   for (const [publicUrl, privateUrl] of [
     [
@@ -171,7 +190,10 @@ test("invalid checkout configuration fails closed without credential echoes", ()
     { CHECKOUT_LOCATION_KEY: "" },
     { CHECKOUT_LOCATION_KEY: "../private" },
     { STRIPE_SECRET_KEY: "sk_live_privateSentinel" },
-    { STRIPE_SECRET_KEY: "rk_test_privateSentinel" },
+    { STRIPE_SECRET_KEY: "rk_live_privateSentinel" },
+    { STRIPE_SECRET_KEY: "sk_org_privateSentinel" },
+    { STRIPE_SECRET_KEY: "rk_test_short" },
+    { STRIPE_SECRET_KEY: `rk_test_${"a".repeat(241)}` },
     { STRIPE_WEBHOOK_SECRET: "" },
     { STRIPE_WEBHOOK_SECRET: "privateSentinel" },
     { SITE_URL: "" },

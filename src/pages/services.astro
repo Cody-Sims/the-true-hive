@@ -4,29 +4,303 @@ import ServiceCards from "../components/ServiceCards.astro";
 ---
 
 <SiteLayout
-  title="Beekeeping for home and farm"
-  description="Learn about The True Hive's planned colony-removal and farm-pollination services, with scope and capacity confirmed before any work is agreed."
+  title="Planned beekeeping for home and farm"
+  description="Explore The True Hive's planned colony-removal and farm-pollination paths. Services need assessment, confirmed scope, and capacity; booking is not open."
 >
-  <section class="page-intro wrap">
-    <p class="eyebrow">Beyond the everyday goods</p>
-    <h1>
-      For the bees.
-      <br />
-      <em>For the neighbors.</em>
-    </h1>
-    <p>
-      Keeping bees and offering professional services are different commitments.
-      These are planned directions, not an instant booking or promise of
-      availability.
-    </p>
+  <section
+    class="wrap services-page-intro"
+    aria-labelledby="services-page-title"
+  >
+    <div>
+      <p class="eyebrow">Beekeeping / Beyond the collection</p>
+      <h1 id="services-page-title">
+        For the bees.
+        <br />
+        <em>And the neighbors.</em>
+      </h1>
+      <p class="services-page-lede">
+        A home and a growing field have different needs. Both deserve a careful
+        conversation before any work is agreed.
+      </p>
+      <a class="text-link" href="#service-paths">
+        Explore the planned paths <span aria-hidden="true">&darr;</span>
+      </a>
+    </div>
+    <aside class="services-page-note" aria-label="Service planning status">
+      <p class="eyebrow">Before anything is agreed</p>
+      <p class="services-page-note-title">
+        A conversation.
+        <br />
+        An assessment.
+        <br />
+        <em>Then a decision.</em>
+      </p>
+      <p>
+        These services are planned, not bookable. Scope, capability, coverage,
+        and capacity must be confirmed individually.
+      </p>
+    </aside>
   </section>
   <section
-    class="wrap collection-section"
-    aria-label="Planned beekeeping services"
+    id="service-paths"
+    class="services-page-paths"
+    aria-labelledby="services-page-paths-title"
   >
-    <ServiceCards />
-    <a class="text-link" href="/#connect">
-      Find our contact channels <span aria-hidden="true">&rarr;</span>
-    </a>
+    <div class="wrap">
+      <div class="services-page-heading">
+        <p class="eyebrow">Two directions / No instant booking</p>
+        <h2 id="services-page-paths-title">
+          Different settings.
+          <br />
+          The same careful start.
+        </h2>
+      </div>
+      <ServiceCards detailed />
+    </div>
+  </section>
+  <section
+    class="wrap services-page-process"
+    aria-labelledby="services-page-process-title"
+  >
+    <div class="services-page-process-intro">
+      <p class="eyebrow">If services become available</p>
+      <h2 id="services-page-process-title">A useful first conversation.</h2>
+      <p>
+        An inquiry would begin with understanding the situation, not a payment
+        or a promise. Here is what that process would need to establish.
+      </p>
+    </div>
+    <ol class="services-page-steps">
+      <li>
+        <span aria-hidden="true">01</span>
+        <div>
+          <h3>Understand the setting</h3>
+          <p>
+            Describe the property or crop and the general situation. Do not
+            approach bees or disturb a colony to gather more information.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span aria-hidden="true">02</span>
+        <div>
+          <h3>Check the fit</h3>
+          <p>
+            The proposed work would need an assessment of access, scope,
+            capability, timing, and capacity. An inquiry is not an agreement.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span aria-hidden="true">03</span>
+        <div>
+          <h3>Agree before proceeding</h3>
+          <p>
+            Any work, responsibilities, and arrangements would need explicit
+            agreement first. A request may be outside the available scope.
+          </p>
+        </div>
+      </li>
+    </ol>
+  </section>
+  <section
+    class="wrap services-page-ending"
+    aria-labelledby="services-page-ending-title"
+  >
+    <div class="services-page-ending-panel">
+      <div>
+        <p class="eyebrow">
+          Keep a little distance. Start with a conversation.
+        </p>
+        <h2 id="services-page-ending-title">
+          The next step,
+          <br />
+          <em>when it's ready.</em>
+        </h2>
+      </div>
+      <div class="services-page-ending-copy">
+        <p>
+          Check our contact section for confirmed phone and profile links, or an
+          honest update if they are not published yet. There is no online
+          booking, message form, or emergency response channel here.
+        </p>
+        <a class="button button-primary" href="/#connect">
+          Check our contact channels <span aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+    </div>
   </section>
 </SiteLayout>
+
+<style>
+  .services-page-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+    padding-block: clamp(3rem, 6vw, 5.5rem);
+  }
+  .services-page-intro h1 {
+    margin-block: 1.5rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(3rem, 5.8vw, 5.75rem);
+    font-weight: 400;
+    letter-spacing: -0.06em;
+    line-height: 1.08;
+  }
+  .services-page-intro h1 em {
+    letter-spacing: inherit;
+  }
+  .services-page-lede {
+    max-width: 32rem;
+    font-size: 1.05rem;
+    line-height: 1.9;
+  }
+  .services-page-intro .text-link {
+    margin-top: 1.5rem;
+  }
+  .services-page-note {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border: 1px solid var(--forest);
+    background: var(--ochre);
+  }
+  .services-page-note > .eyebrow {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--forest);
+    font-size: 0.65rem;
+  }
+  .services-page-note-title {
+    margin-block: 1.75rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+    letter-spacing: -0.045em;
+    line-height: 1.3;
+  }
+  .services-page-note > p:last-child {
+    font-size: 0.85rem;
+    line-height: 1.85;
+  }
+  .services-page-paths {
+    padding-block: 4.5rem;
+    border-block: 1px solid var(--line);
+    background: #eee9dc;
+  }
+  .services-page-heading {
+    margin-bottom: 2.5rem;
+  }
+  .services-page-heading h2 {
+    margin-top: 1rem;
+    font-size: clamp(2.3rem, 4vw, 3.75rem);
+    line-height: 1.12;
+  }
+  .services-page-process {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 3rem 5rem;
+    padding-block: 5.5rem;
+  }
+  .services-page-process-intro h2 {
+    margin-block: 1rem 1.5rem;
+    font-size: clamp(2.3rem, 3.8vw, 3.5rem);
+    line-height: 1.12;
+  }
+  .services-page-process-intro > p:last-child {
+    max-width: 30rem;
+    font-size: 0.9rem;
+    line-height: 1.9;
+  }
+  .services-page-steps {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .services-page-steps li {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .services-page-steps li:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+  .services-page-steps li > span {
+    color: var(--tomato);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.3rem;
+    font-style: italic;
+    line-height: 1.3;
+  }
+  .services-page-steps h3 {
+    margin-bottom: 0.75rem;
+    font-size: 1.65rem;
+  }
+  .services-page-steps p {
+    max-width: 31rem;
+    font-size: 0.85rem;
+    line-height: 1.9;
+  }
+  .services-page-ending {
+    padding-bottom: 5rem;
+  }
+  .services-page-ending-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem 4rem;
+    align-items: center;
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+    border: 1px solid var(--forest);
+  }
+  .services-page-ending h2 {
+    margin-top: 1.25rem;
+    font-size: clamp(2.5rem, 4vw, 3.75rem);
+    line-height: 1.1;
+  }
+  .services-page-ending h2 em {
+    color: var(--tomato);
+  }
+  .services-page-ending-copy > p {
+    max-width: 31rem;
+    font-size: 0.9rem;
+    line-height: 1.9;
+  }
+  .services-page-ending-copy .button {
+    margin-top: 1.5rem;
+  }
+  @media (max-width: 56rem) {
+    .services-page-intro {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2.5rem;
+    }
+    .services-page-intro > div {
+      max-width: 42rem;
+    }
+    .services-page-note {
+      max-width: 36rem;
+    }
+    .services-page-process {
+      gap: 3rem;
+    }
+    .services-page-ending-panel {
+      gap: 2rem;
+    }
+  }
+  @media (max-width: 42rem) {
+    .services-page-intro,
+    .services-page-paths,
+    .services-page-process {
+      padding-block: 3rem;
+    }
+    .services-page-intro h1 {
+      font-size: clamp(2.75rem, 9.5vw, 4rem);
+    }
+    .services-page-process,
+    .services-page-ending-panel {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .services-page-ending {
+      padding-bottom: 3rem;
+    }
+  }
+</style>

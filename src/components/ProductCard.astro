@@ -19,6 +19,12 @@ const labels = {
   candles: "A slower moment",
   gifts: "For someone good",
 };
+const categories = {
+  soap: "Soap",
+  honey: "Honey",
+  candles: "Candles",
+  gifts: "Gifts",
+};
 ---
 
 <article class="shelf-product">
@@ -29,24 +35,142 @@ const labels = {
   >
     <span class="shelf-ticket">{labels[product.category]}</span>
     <ProductArt image={product.imageKey} />
+    <span class="art-caption">Original illustration</span>
   </a>
   <div class="shelf-copy">
-    <p class="eyebrow">
-      {product.kind === "concept" ? "A collection direction" : "Meet the goods"}
-    </p>
+    <p class="eyebrow">{categories[product.category]}</p>
     <h3>
       <a href={`/goods/${product.slug}`}>
         {product.title} <span aria-hidden="true">&nearr;</span>
       </a>
     </h3>
-    <p>{product.summary}</p>
-    <span class="pill">
-      {product.kind === "concept" ? "Concept product" : "Product information"}
-    </span>
-    {canTestCheckout && (
-      <a class="text-link" href={`/goods/${product.slug}#test-checkout`}>
-        Test checkout
-      </a>
-    )}
+    <p class="shelf-description">{product.summary}</p>
+    <div class="shelf-meta">
+      <span class="pill">
+        {product.kind === "concept" ? "Concept product" : "Product information"}
+      </span>
+      {canTestCheckout && (
+        <a class="text-link" href={`/goods/${product.slug}#test-checkout`}>
+          Test checkout
+        </a>
+      )}
+    </div>
   </div>
 </article>
+
+<style>
+  .shelf-product {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border: 1px solid var(--line);
+  }
+  .shelf-art {
+    position: relative;
+    display: grid;
+    min-height: 0;
+    aspect-ratio: 1.08;
+    isolation: isolate;
+    padding: 2rem 0.75rem 1.6rem;
+    border: 1px solid transparent;
+    border-radius: 0.2rem;
+    text-decoration: none;
+  }
+  .shelf-art::before {
+    position: absolute;
+    z-index: -1;
+    inset: 14% 12%;
+    border: 1px solid var(--forest);
+    border-radius: 50%;
+    opacity: 0.14;
+    content: "";
+  }
+  .shelf-art:hover {
+    border-color: var(--forest);
+  }
+  .soap-art {
+    background: #e8e9dc;
+  }
+  .honey-art {
+    background: #f3e4b7;
+  }
+  .candle-art {
+    background: #efdfd2;
+  }
+  .shelf-ticket {
+    z-index: 1;
+    top: 1rem;
+    left: 1rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+  }
+  .art-caption {
+    position: absolute;
+    right: 1rem;
+    bottom: 0.75rem;
+    left: 1rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+  .shelf-copy {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.4rem 1.4rem 1.5rem;
+  }
+  .shelf-copy > .eyebrow {
+    color: var(--tomato);
+  }
+  .shelf-copy h3 {
+    margin-block: 0.35rem 0.65rem;
+    font-size: clamp(1.65rem, 2.5vw, 2rem);
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+  }
+  .shelf-copy h3 a {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .shelf-copy h3 a span {
+    flex-shrink: 0;
+    color: var(--tomato);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.15rem;
+  }
+  .shelf-copy > .shelf-description {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.75;
+  }
+  .shelf-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 1.25rem;
+  }
+  .shelf-meta .pill {
+    margin: 0;
+    padding: 0.35rem 0.6rem;
+    border-color: var(--line);
+    border-radius: 0.15rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+  @media (max-width: 700px) {
+    .shelf-art {
+      aspect-ratio: 1.2;
+    }
+    .shelf-copy {
+      padding: 1.25rem 1.25rem 1.4rem;
+    }
+  }
+</style>

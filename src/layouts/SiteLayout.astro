@@ -1,6 +1,8 @@
 ---
 import "../styles/site.css";
-import favicon from "../../prototypes/assets/favicon.svg?url";
+import BrandMark from "../components/BrandMark.astro";
+import favicon from "../assets/favicon.svg?url";
+import shareImage from "../assets/social-card.png?url";
 import { readConfig } from "../server/config.ts";
 
 interface Props {
@@ -16,7 +18,17 @@ const {
   notFound = false,
 } = Astro.props;
 const config = readConfig();
-const canonical = new URL(path, config.siteOrigin).href;
+const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
+const isSearchResults =
+  (Astro.url.pathname === "/goods" || Astro.url.pathname === "/goods/") &&
+  Astro.url.searchParams.has("q");
+const omitCanonical = isErrorDocument || isSearchResults;
+const canonicalUrl = new URL(config.siteOrigin);
+canonicalUrl.pathname = new URL(path, config.siteOrigin).pathname;
+const canonical = canonicalUrl.href;
+const shareImageUrl = new URL(shareImage, config.siteOrigin).href;
+const shareImageAlt =
+  "The True Hive - original illustrated brand card for Madisonville, Tennessee.";
 const schema = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Organization",
@@ -35,15 +47,29 @@ const schema = JSON.stringify({
     <meta
       name="robots"
       content={
-        config.indexable && !notFound ? "index, follow" : "noindex, follow"
+        config.indexable && !omitCanonical ? "index, follow" : "noindex, follow"
       }
     />
-    {!notFound && <link rel="canonical" href={canonical} />}
+    {!omitCanonical && <link rel="canonical" href={canonical} />}
     <link rel="icon" type="image/svg+xml" href={favicon} />
     <meta property="og:title" content={`${title} | The True Hive`} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="The True Hive" />
+    {!omitCanonical && <meta property="og:url" content={canonical} />}
+    {!omitCanonical && (
+      <>
+        <meta property="og:image" content={shareImageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={shareImageAlt} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${title} | The True Hive`} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={shareImageUrl} />
+        <meta name="twitter:image:alt" content={shareImageAlt} />
+      </>
+    )}
     <script
       is:inline
       type="application/ld+json"
@@ -61,53 +87,73 @@ const schema = JSON.stringify({
         <span>Online ordering isn't open yet.</span>
       </div>
     </div>
-    <header class="site-header wrap">
-      <a class="brand" href="/" aria-label="The True Hive home">
-        <span class="market-mark" aria-hidden="true">
-          TH
-        </span>
-        <span class="brand-name">
-          THE TRUE HIVE<small>Madisonville, Tennessee</small>
-        </span>
-      </a>
-      <nav class="site-nav" aria-label="Main navigation">
-        <a
-          href="/goods"
-          aria-current={path.startsWith("/goods") ? "page" : undefined}
-        >
-          The goods
+    <div class="site-header-frame">
+      <header class="site-header wrap">
+        <a class="brand" href="/" aria-label="The True Hive home">
+          <span class="market-mark">
+            <BrandMark />
+          </span>
+          <span class="brand-name">
+            THE TRUE HIVE<small>Madisonville, Tennessee</small>
+          </span>
         </a>
-        <a href="/#pickup">Local pickup</a>
-        <a
-          href="/services"
-          aria-current={path === "/services" ? "page" : undefined}
-        >
-          Beekeeping
-        </a>
-        <a href="/about" aria-current={path === "/about" ? "page" : undefined}>
-          Our beginning
-        </a>
-        <a href="/#connect">
-          Connect <span aria-hidden="true">&nearr;</span>
-        </a>
-      </nav>
-    </header>
-    <main id="main">
+        <nav class="site-nav" aria-label="Main navigation">
+          <a
+            href="/goods"
+            aria-current={
+              path === "/goods" || path.startsWith("/goods/")
+                ? "page"
+                : undefined
+            }
+          >
+            The goods
+          </a>
+          <a href="/#pickup">Local pickup</a>
+          <a
+            href="/services"
+            aria-current={path === "/services" ? "page" : undefined}
+          >
+            Beekeeping
+          </a>
+          <a
+            href="/about"
+            aria-current={path === "/about" ? "page" : undefined}
+          >
+            Our beginning
+          </a>
+          <a class="nav-connect" href="/#connect">
+            Connect <span aria-hidden="true">&nearr;</span>
+          </a>
+        </nav>
+      </header>
+    </div>
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">
       <div class="wrap footer-inner">
-        <div>
-          <strong>The True Hive</strong>
-          <p>Good things. A local beginning.</p>
+        <div class="footer-brand">
+          <p class="eyebrow">The True Hive</p>
+          <strong>
+            A slower rhythm.
+            <br />A local beginning.
+          </strong>
           <p class="fine-print">Madisonville, Tennessee</p>
         </div>
         <nav aria-label="Footer navigation">
+          <a href="/">Home</a>
           <a href="/goods">The collection</a>
+          <a href="/#pickup">Local pickup</a>
+          <a href="/about">Our beginning</a>
           <a href="/services">Beekeeping</a>
           <a href="/#connect">Contact channels</a>
           <a href="/privacy">Privacy</a>
+          <a href="/accessibility">Accessibility</a>
         </nav>
+      </div>
+      <div class="wrap footer-colophon">
+        <span>Good things, thoughtfully taking shape.</span>
+        <span>Online ordering is not open yet.</span>
       </div>
     </footer>
   </body>

@@ -4,14 +4,21 @@
 
 ### Added
 
+- Local-only website refresh with URL-based collection search/filter/reset, practical accessibility guidance and original brand-sharing artwork; publication remains owner-gated.
 - Secure inventory-phase specification and operator runbook, with isolated Firebase/app-enforced MFA, Stripe card-only test checkout and separate held/paid/physical stock approved for implementation.
 - Private owner-only admin-access provisioning with transactional membership/session revocation and no runtime-credential fallback.
 - Forward-compatible held stock and revision constraints; count corrections preserve checkout allocations and return retry-safe audit receipts.
 - Disabled-by-default private product/location/count/history/order workspace and APIs, with shared PostgreSQL shop data.
 - Card-only Stripe test checkout, signed/idempotent payment and expiry processing, same-intent recovery and atomic physical pickup accounting; no live charges.
 
+### Changed
+
+- Give the public homepage, collection, product, story and service pages one consistent Apiary Market visual identity without third-party fonts, tracking or invented business claims.
+- Explain search URLs/history in the draft privacy guidance and accept restricted Stripe test keys without changing any payment-activation gate.
+
 ### Fixed
 
+- Skip navigation transfers keyboard focus to the main content, genuine missing pages offer recovery routes, and search/error pages no longer advertise normal-page canonical/share URLs.
 - Idle inventory database disconnects no longer escape the pool and terminate the shared storefront service; diagnostics omit connection details.
 - Bounded reconciliation rotates open and uncertain orders so later missed payment/expiry work is not permanently starved, without releasing unverified holds.
 - Native admin/order suites retain isolated-database safeguards without requiring a machine-specific PostgreSQL port.
