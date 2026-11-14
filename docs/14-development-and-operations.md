@@ -97,6 +97,14 @@ No public stock editing, admin, payment or inquiry submission route exists. The 
 
 `npm run start` validates the selected configuration and, in database mode, the actual public query shapes and read permissions **before listening**. PostgreSQL `EXPLAIN` checks catalog and availability tables/columns without scanning stock; one surviving table is not enough to pass. It does not run migrations automatically. Its temporary preflight pool is closed afterward. Render's routine health path is `/api/health/live`; continuously polling `/api/health/ready` would wake free Neon compute and consume its quota. Use readiness deliberately during setup, releases or incident diagnosis. Runtime database failures still return explicit unavailable responses rather than fictional fallback data.
 
+Render can choose any verified custom domain as the `Host` for its
+[HTTP health checks](https://render.com/docs/health-checks). Exact GET/HEAD
+`/api/health/live` therefore remains reachable on the inventory hostname even
+while inventory is disabled. It exposes only process status, not database or
+business data. Inventory APIs, private pages and `/api/health/ready` retain their
+existing private-host gates; do not replace the liveness probe with a stock or
+database query.
+
 ## CI gates and branch safety
 
 | Required check | Evidence |

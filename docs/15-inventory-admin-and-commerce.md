@@ -4,6 +4,13 @@ Status: **next-phase outcome and implementation choices approved on 2026-10-31; 
 
 The owner approved an **isolated True Hive Firebase project**, **app-enforced MFA before deployment**, and **Stripe Checkout in card-only test mode**. Physical on-hand, checkout holds and paid commitments remain separate; an authorized **Record pickup** action records physical departure. No Firebase billing upgrade, live payment, new paid service, production-domain cutover or email setup is authorized.
 
+**2026-11-14 inventory-only authorization:** the owner separately approved
+`inventory.thetruehive.com` setup for private catalog preparation. This uses the
+existing service and remaining included custom-domain slot. Checkout stays
+disabled and the public site stays in showcase mode; no real records are seeded.
+This narrower rollout does not wait for Stripe setup, approve live sales or
+claim the remaining hands-on operational/recovery rehearsals are complete.
+
 ## Objective
 
 Give an authorized administrator a usable inventory workspace at **`inventory.thetruehive.com`**, connected to the same PostgreSQL catalog and stock that the shop reads. Product management, counted-stock corrections, checkout holds, verified payments and pickup must remain attributable, transactional and retry-safe.
@@ -78,6 +85,11 @@ Checkout holds reduce sellability before payment. Payment makes that allocation 
 ### Host and authentication boundary
 
 The inventory hostname's root redirects to `/inventory/products`; private UI lives under `/inventory/` and JSON under `/api/admin/`. Both prefixes return no private content on the storefront/preview/default Render hostname. The inventory host does not expose the public shop as an alternate route around the gate.
+
+The sole additional shared-host process endpoint is exact GET/HEAD
+`/api/health/live`, which remains public even with inventory disabled so Render
+can probe any attached hostname. It does not expose database readiness or
+inventory data; `/api/health/ready` is not exempted on the inventory host.
 
 `INVENTORY_ENABLED=false` is the default. `INVENTORY_ORIGIN` identifies the exact allowed origin; production requires HTTPS. Explicit HTTP loopback origins are development-only. Do not trust arbitrary forwarded-host headers or caller-supplied actor fields.
 

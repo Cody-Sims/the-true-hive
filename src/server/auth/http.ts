@@ -167,6 +167,12 @@ export function createAdminBoundary(
           ...result,
           response: errorResponse(new AdminAuthError(404, "NOT_FOUND")),
         };
+      // Shared-service probes can use any attached custom hostname.
+      if (
+        path === "/api/health/live" &&
+        ["GET", "HEAD"].includes(request.method)
+      )
+        return result;
       try {
         requireAvailable();
         if (privatePath && canonicalPath !== path)

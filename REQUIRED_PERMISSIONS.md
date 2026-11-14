@@ -6,7 +6,8 @@ phase. It records **pending authorization and business facts**, not secrets.
 On 2026-11-14 the owner approved the redesign and publishing it, and requested
 proper hosting at **thetruehive.com**. AP-01 is complete: the approved redesign
 is published and apex/www HTTPS routing is verified on the existing Render service.
-This does not activate inventory, checkout, email, tax or new paid resources.
+That website release did not activate inventory, checkout, email or tax.
+The owner separately approved inventory-only setup below; payments remain off.
 
 The repository is public. Do not enter credentials, private account identifiers,
 authenticator codes, personal addresses or real stock records here.
@@ -44,6 +45,7 @@ These are static local assets and metadata, not a social integration or tracker.
 | ID | Authorization | Boundary |
 |---|---|---|
 | AP-01 | Completed: owner-approved redesign merged through PR #6 and verified live at `https://thetruehive.com` on 2026-11-14 | Existing CI-gated Render service; verified apex/www TLS and redirects; mail, preview and inventory records preserved; no plan upgrade or operational sales activation |
+| AP-09 | Inventory-only hostname setup authorized on 2026-11-14 for private catalog preparation; deployment/verification in progress | Existing Google/TOTP admin and private database, public showcase unchanged, checkout disabled, no seeded records; live workspace usage confirmed the hostname fits within the two included domain slots |
 
 ## Still blocked: needs the owner
 
@@ -56,7 +58,6 @@ These are static local assets and metadata, not a social integration or tracker.
 | AP-06 | Approve any Invoice/Tax fees, confirm invoice use cases and applicable tax registrations/product classifications | Selecting product interests does not approve live invoicing, paid features or tax/legal decisions | Document proposal gaps; do not send invoices, register tax or collect money |
 | AP-07 | Participate in real sign-out/access-removal, purchase/expiry/pickup and operational recovery rehearsals | Existing local MFA and empty-backup restore do not prove all real operational journeys | Automated regressions and honest evidence/limits |
 | AP-08 | Set backup/recovery ownership, acceptable data-loss window and reconciliation scheduling/monitoring | A script and free-tier history are not an operating agreement or verified schedule | Local restore/testing and operator documentation |
-| AP-09 | Authorize inventory-only DNS/TLS and feature activation after the gates pass | `inventory.thetruehive.com` activation is separate from the newly approved apex/www website hosting; email remains unchanged | Keep hosted inventory/checkout disabled |
 | AP-10 | Approve any future paid assets/resources or analytics/marketing capture if later requested | Conditional boundary, not a current technical blocker; none is proposed or enabled | Local fonts/assets and no-tracking discovery |
 
 AP-01 is complete. The remaining rows
@@ -104,5 +105,6 @@ skills, private credentials, backend authority and the ten-prototype studio are
 preserved.
 
 The owner's recorded approval permits this redesign release and apex/www hosting.
-No inventory, payment, invoice, tax, email or paid-upgrade action is authorized
-by that approval.
+The separate inventory-only approval permits private catalog preparation, not
+payments, invoices, tax, email or a paid upgrade. Operational/test-commerce
+rehearsals remain separate from this private-preparation rollout.
