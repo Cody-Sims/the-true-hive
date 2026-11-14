@@ -197,6 +197,65 @@ button:disabled {
 .admin-form > fieldset > textarea {
   margin-bottom: 1rem;
 }
+.admin-field {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+.admin-field > label {
+  grid-area: 1 / 1 / 2 / -1;
+  margin-bottom: 0;
+}
+.admin-field > label > span {
+  display: block;
+  padding-right: 2.5rem;
+}
+.admin-field > textarea {
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
+}
+.admin-field-help {
+  grid-area: 1 / 2;
+  justify-self: end;
+}
+.admin-field-help summary {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--forest);
+  border-radius: 50%;
+  background: var(--paper);
+  list-style: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-field-help summary::-webkit-details-marker {
+  display: none;
+}
+.admin-field-help[open] {
+  z-index: 3;
+}
+.admin-field-help[open] summary {
+  background: var(--ochre);
+}
+.admin-field-help-body {
+  position: absolute;
+  z-index: 2;
+  top: 2rem;
+  right: 0;
+  left: 0;
+  padding: 1rem;
+  border: 1px solid var(--forest);
+  background: #fffdf7;
+  box-shadow: 0 0.3rem 0.8rem #233b3020;
+  font-size: 0.9rem;
+}
 .admin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
