@@ -1,6 +1,6 @@
 # Owner checklist: what I need from you
 
-Reviewed **2026-11-01**. The inventory/admin and Stripe test-checkout implementation is tracked in [PR #5](https://github.com/Cody-Sims/the-true-hive/pull/5), but **inventory.thetruehive.com is not activated**. The owner authorized fixing review findings and merging after required CI, with hosted inventory and checkout still disabled. Check items only after they are actually completed or approved.
+Reviewed **2026-11-14**. The inventory/admin and Stripe test-checkout implementation merged through [PR #5](https://github.com/Cody-Sims/the-true-hive/pull/5), but **inventory.thetruehive.com is not activated**. The owner-approved redesign merged through [PR #6](https://github.com/Cody-Sims/the-true-hive/pull/6) and is hosted at **https://thetruehive.com/** with verified HTTPS and a `www` redirect. Hosted inventory and checkout remain disabled. Check items only after they are actually completed or approved.
 
 Start with account access and approvals. Technical setup and a controlled local/staging rehearsal follow; this is not a requirement to complete sign-in on an unactivated hostname.
 
@@ -55,7 +55,7 @@ These inputs are not required just to review an empty private admin, but they ar
 - [ ] Supply approved product titles, descriptions, genuine SKUs/variants, unit definitions and USD prices, with appropriate label/claim/content approval.
 - [ ] Supply genuine inventory locations, any explicitly approved public pickup label, and a counted opening balance by variant/location. Separate unavailable/allocated units and future forecasts; do not copy prototype stock or retail-sell already allocated future honey.
 - [ ] Confirm pickup eligibility and operating arrangements without inadvertently publishing a home/apiary address.
-- [ ] Before the public business-site launch, confirm approved photographs/copy, public phone and exact Facebook/Instagram destinations. These are not prerequisites for an empty private admin.
+- [ ] Supply real photographs/new factual claims, public phone and exact Facebook/Instagram destinations before replacing the approved showcase's illustrations, neutral copy and honest pending-contact states. These remain required for operational sales, not for the approved showcase release.
 
 **Completion:** you review the entered records against actual products and counts. Confidential inputs stay out of public planning documents.
 
@@ -63,6 +63,7 @@ These inputs are not required just to review an empty private admin, but they ar
 
 - [x] Authorize publishing the implementation branch and this checklist through a PR. This permission does not authorize merging or activation.
 - [x] Authorize fixing PR findings and merging after required CI, with the existing service's deployment keeping inventory and checkout disabled. Inventory-domain activation is still separate; the merge must not bypass review fixes or checks.
+- [x] Approve the redesigned public showcase and apex/www hosting; verify the merged release, actual HTTPS, redirects, public assets and preservation of mail/preview DNS.
 - [ ] Participate in the admin/test-flow rehearsal: create/edit a draft, publish information, increase/reduce stock, retry an uncertain operation, complete a test checkout and record pickup. Confirm that payment commits stock once and pickup records physical departure once.
 - [ ] After MFA, access-removal, sandbox and recovery gates pass, authorize adding **only inventory.thetruehive.com** to the existing Render service and its specific Porkbun DNS record. Review any domain-quota cost first.
 
@@ -76,7 +77,7 @@ Your essential contribution is **access, approvals, private identity/credential 
 
 ## Still deferred
 
-Keep `INVENTORY_ENABLED=false` and `CHECKOUT_MODE=disabled` until the relevant activation gates pass. Do not enable paid upgrades automatically, accept live charges, repoint root/www, configure business email, enable shipping or add wildcard DNS.
+Keep `INVENTORY_ENABLED=false` and `CHECKOUT_MODE=disabled` until the relevant activation gates pass. Do not enable paid upgrades automatically, accept live charges, alter the approved root/www hosting as part of inventory setup, configure business email, enable shipping or add wildcard DNS.
 
 Live selling needs a separate release decision and the remaining product, pickup, tax/privacy/refund and operational policies. The current checkout implementation is card-only **test mode**.
 

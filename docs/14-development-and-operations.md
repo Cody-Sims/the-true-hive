@@ -1,15 +1,15 @@
 # Development, deployment, and inventory operations
 
-Status: **first application foundation**, not an approved live store. No Shopify, Docker, payment, email setup or public admin endpoint.
+Status: **owner-approved public showcase**, not an activated store. No Shopify, Docker, active checkout, email setup or enabled hosted inventory.
 
 ## Two independent sites
 
 | Surface | Source | Build | Hosting |
 |---|---|---|---|
 | Ten-design review and planning hub | `prototypes/` and registered documents | `dist/` | Existing GitHub Pages / `preview.thetruehive.com` |
-| Apiary Market application | `src/` and `migrations/` | `dist-site/` | Native Node on Render with Neon PostgreSQL; eventual `thetruehive.com` |
+| Apiary Market application | `src/` and `migrations/` | `dist-site/` | Existing native Render service at `https://thetruehive.com`; Neon PostgreSQL remains the selected database |
 
-Production imports only original illustration assets from the prototype collection, not its HTML, scripts, demo prices or browser cart. Application public output excludes plans, database code and review files.
+Production uses original prototype illustrations and first-party brand assets in `src/assets/`, not prototype HTML, scripts, demo prices or browser cart. Application public output excludes plans, database code and review files.
 
 ## Run the application
 
@@ -115,7 +115,55 @@ The selected starting infrastructure is **one $7/month native Render web service
 
 Only apply the Blueprint after this application's PR is merged and main checks pass. The draft uses showcase mode, noindex and no checkout. Use PostgreSQL 16 to match the native integration baseline; a small fixed Neon compute fits this empty-schema pilot.
 
-**Hosting status - 2026-10-31:** the application foundation is live at **https://the-true-hive-app.onrender.com/** in deliberate showcase mode. The service is connected to `Cody-Sims/the-true-hive` on `main`, with **After CI Checks Pass** enabled and no reported auto-deploy blocker. Confirm each release's live revision and deploy trigger in Render; configuration alone is not evidence that an automatic deployment completed. Showcase readiness intentionally reports `inventoryConnected: false` and `checkoutEnabled: false`; it does not prove database connectivity or approve live sales. The main-domain DNS and email remain unchanged.
+**Hosting status - 2026-11-14:** the owner-approved redesign is live at
+**https://thetruehive.com/** in deliberate showcase mode, after PR #6 merged
+with all required checks passing. Render's actual service UI identified release
+`9fffa65e1ff423a9417da1d3cff7440a892d8547` as **Live**. The service remains
+connected to this repository's `main` branch with **After CI Checks Pass**.
+The existing `https://the-true-hive-app.onrender.com/` endpoint remains enabled.
+Readiness reports `inventoryConnected: false` and `checkoutEnabled: false`;
+the website's release does not activate inventory, prove database connectivity
+or approve live sales.
+
+### Apex/www hosting and rollback
+
+The owner approved this website routing on 2026-11-14. Porkbun remains the
+authoritative DNS provider; no nameserver, email or inventory-host change was
+made.
+
+| Type | Host | Target | TTL |
+|---|---|---|---|
+| ALIAS | Apex / empty host | `the-true-hive-app.onrender.com` | 600 seconds |
+| CNAME | `www` | `the-true-hive-app.onrender.com` | 600 seconds |
+
+Render's custom-domain setup registers the apex and redirects its paired `www`
+hostname to it. Both HTTPS endpoints were checked with certificate validation
+enabled. HTTP upgrades to HTTPS; the `www` redirect preserves the requested path
+and query. `SITE_URL` was already `https://thetruehive.com` and was verified from
+the served canonical metadata, so no private runtime-setting rewrite was needed.
+`SITE_INDEXABLE=false` and showcase mode remain intentional until genuine
+catalog/content and operational release gates pass.
+
+The complete eight-record pre-cutover DNS view and nine-record post-cutover
+view were saved privately. Only the existing apex ALIAS answer was edited and
+one explicit `www` CNAME added; all seven other original records matched after
+the change, including MX/SPF, preview, wildcard and certificate challenges.
+The separate Pages preview was also checked over HTTPS.
+
+For a website-routing rollback, use the private before/after record snapshots:
+restore only the apex ALIAS's previous `uixie.porkbun.com` answer and remove only
+the newly added `www` CNAME if the old parking/forwarding behavior is intended.
+Do not bulk-restore an old zone over subsequent mail, preview or inventory work.
+Keep the Render endpoint available for diagnosis, and allow DNS-cache expiry.
+An application rollback is a separate reviewed Git revert/redeployment, never
+a database restore.
+
+Follow Render's current [custom-domain](https://render.com/docs/custom-domains)
+and [DNS-provider](https://render.com/docs/configure-other-dns) instructions
+for future changes. Review workspace domain quota/pricing before adding the
+separately gated inventory hostname; an extra hostname can be separately billed.
+
+### Database activation and existing infrastructure
 
 Before switching to database mode:
 
@@ -123,7 +171,7 @@ Before switching to database mode:
 2. Run migrations with the direct schema-owner connection and verify empty tables. Do not seed prototype products or physical stock.
 3. Create a separate SQL runtime login without elevated role membership. Grant only database connection, schema usage and required catalog/availability/readiness reads; deny stock writes, audit reads and table creation. Revoke public creation/temporary-table privileges in this dedicated database. Prove denials in rolled-back transactions, not just through a read-only session setting.
 4. Supply the pooled runtime connection privately on Render, not the migration owner connection. Set `CATALOG_SOURCE=database` only when real approved catalog data is ready, then confirm startup/readiness and outage behavior.
-5. Resolve quota monitoring, backups and a restore rehearsal before real inventory/orders. Approve real content/contact/pickup before adding `thetruehive.com`/`www` to the host and changing DNS.
+5. Resolve quota monitoring, backups and a restore rehearsal before real inventory/orders. Real content/contact/pickup and sales approval remain separate from the already-approved apex/www showcase hosting.
 
 **TLS/authentication choice:** remote connections require certificate verification. The owner approved the current Node driver's **opportunistic channel binding** (`enableChannelBinding: true`), as documented by [node-postgres](https://node-postgres.com/features/ssl). Configure the Node-specific URL with `sslmode=verify-full&channel_binding=prefer`; the adapter removes those supported hints before passing its verified TLS options to the driver. A generic Neon URL containing `channel_binding=require` is deliberately rejected: this driver does not strictly enforce that requirement. Do not silently drop it, claim strict binding, set `rejectUnauthorized: false` or disable remote TLS.
 
@@ -145,7 +193,7 @@ Outstanding activation decisions are in the [partner workbook](10-partner-workbo
 
 The [approved next-phase specification](15-inventory-admin-and-commerce.md) selects isolated Firebase, app-enforced TOTP MFA, PostgreSQL admin membership and Stripe card-only test checkout. These are implementation choices, **not proof that the provider project, MFA, privileged roles, hostname or sandbox are configured**.
 
-Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled`, the storefront's deliberate source/indexing settings and all root/www/mail DNS unchanged until the relevant activation gate passes. The inventory hostname shares the existing Render service; no second paid service is required or approved.
+Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled` and the storefront's deliberate source/indexing settings until the relevant activation gate passes. Inventory activation must preserve the approved apex/www website routing and existing mail/preview DNS. The inventory hostname shares the existing Render service; no second paid service is required or approved.
 
 ### Private runtime and operator configuration
 

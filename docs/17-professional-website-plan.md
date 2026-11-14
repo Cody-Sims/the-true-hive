@@ -1,6 +1,6 @@
 # Professional website experience: phased implementation
 
-Status: **redesign publication and apex/www hosting approved; operational activation gated**  
+Status: **redesign published; apex/www HTTPS hosting verified; operational activation gated**\
 Version: WX3 (WX1/WX2 results retained below)  
 Date: 2026-11-14  
 Agreement evidence: the owner requested a professional, unique site, a detailed
@@ -478,6 +478,33 @@ private settings and generated review artifacts.
 Domain work is limited to the approved apex/www site, HTTPS/canonical redirects
 and the existing service's canonical origin. Preserve Porkbun mail/TXT records,
 `preview.thetruehive.com`, unrelated domains and inventory activation gates.
-Current public DNS still resolves the apex/www to Porkbun's old link redirect;
-this is an observed cutover task, not proof of completed hosting. Configure and
-verify the actual provider target before changing website records.
+At the start of this work, public DNS still resolved the apex/www to Porkbun's
+old link redirect. The provider target was verified before the website-record
+cutover; the completed result is recorded below.
+
+### Publication and hosting completion checkpoint
+
+- PR #6 merged as `9fffa65e1ff423a9417da1d3cff7440a892d8547` after all
+  three mandatory checks passed; the main-branch checks also passed. A bounded
+  independent source review approved the redesign before publication.
+- Render's actual service UI identified that exact revision as **Live**.
+  **https://thetruehive.com/** now serves the approved redesign with strict
+  certificate validation; `www` redirects to the apex and preserves paths and
+  queries. HTTP upgrades to HTTPS.
+- Only the root ALIAS answer was updated and one `www` CNAME added, both to the
+  existing Render hostname. Private before/after snapshots prove the seven
+  other original DNS records were preserved. The separate Pages preview
+  remains healthy over HTTPS.
+- Real production checks covered five no-JS desktop/mobile routes, real filter
+  results, actual skip-target focus, genuine 404s, canonical/robots metadata,
+  no external browser origins and a byte-for-byte match of the served share
+  image to the committed asset. The mobile collection was visually inspected.
+- Production readiness still reports deliberate showcase mode with inventory
+  and checkout disabled. No stock, provider key, invoice, tax setting, email,
+  database record, plan upgrade or inventory hostname was changed.
+
+Current public screenshots and `verification.json` are in private session
+artifact directory `website-production-2026-11-14/`. The public
+[hosting/rollback runbook](14-development-and-operations.md#apexwww-hosting-and-rollback)
+and permission ledger now distinguish completed publication from remaining
+real-content and operational activation gates.
