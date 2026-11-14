@@ -13,6 +13,7 @@
 
 ### Changed
 
+- Enable the separately authorized MFA-gated inventory hostname for private catalog preparation, while public showcase mode and disabled checkout remain unchanged.
 - Host the approved showcase at `https://thetruehive.com` with managed HTTPS and a path-preserving `www` redirect, retaining existing mail and preview DNS.
 - Give the public homepage, collection, product, story and service pages one consistent Apiary Market visual identity without third-party fonts, tracking or invented business claims.
 - Explain search URLs/history in the draft privacy guidance and accept restricted Stripe test keys without changing any payment-activation gate.
