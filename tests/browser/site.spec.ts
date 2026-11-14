@@ -35,7 +35,7 @@ test("Apiary Market reflows without horizontal overflow at all required widths",
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      /GOOD THINGS/,
+      /Good things,.*closer to home/i,
     );
     await expect(
       page.getByRole("link", { name: /Explore the collection/ }),
@@ -186,6 +186,9 @@ test("core customer pages meet the automated accessibility gate", async ({
     "/goods/everyday-soap",
     "/services",
     "/about",
+    "/privacy",
+    "/accessibility",
+    "/not-a-published-page",
   ]) {
     await page.goto(path);
     const results = await new AxeBuilder({ page })

@@ -1,30 +1,190 @@
-<div class="service-grid">
-  <article class="service-card">
-    <p class="eyebrow">Homes &amp; properties / 01</p>
+---
+interface Props {
+  detailed?: boolean;
+}
+const { detailed = false } = Astro.props;
+---
+
+<div class="service-path-grid">
+  <article id="colony-removal" class="service-path-card">
+    <div class="service-path-topline">
+      <p class="eyebrow">Homes &amp; properties</p>
+      <span aria-hidden="true">01</span>
+    </div>
+    <p class="service-path-status">Planned / Assessment first</p>
     <h3>Colony removal</h3>
     <p>
-      A planned service, beginning with identification, location, and safe
-      access. Swarm collection, structural work, and repairs need individual
-      assessment; coverage and capability will be confirmed.
+      Every setting is different. Identification, colony location, and safe
+      access would be the starting points for deciding whether work is within
+      scope.
     </p>
-    <a class="text-link" href="/#connect">
-      Find our contact channels <span aria-hidden="true">&rarr;</span>
-    </a>
+    {detailed ? (
+      <>
+        <details class="service-path-details">
+          <summary>What an assessment would consider</summary>
+          <ul>
+            <li>The setting and where bees have been noticed.</li>
+            <li>
+              Access, site conditions, and whether a structure is involved.
+            </li>
+            <li>
+              Whether swarm collection, removal, or another response is
+              appropriate and within confirmed capability.
+            </li>
+            <li>
+              Any structural work or repairs, which are not included or promised
+              here.
+            </li>
+          </ul>
+        </details>
+        <a class="text-link service-path-link" href="/#connect">
+          Find our contact channels <span aria-hidden="true">&rarr;</span>
+        </a>
+      </>
+    ) : (
+      <a class="text-link service-path-link" href="/services#colony-removal">
+        Explore colony removal <span aria-hidden="true">&rarr;</span>
+      </a>
+    )}
   </article>
-  <article class="service-card">
-    <p class="eyebrow">Farms &amp; growers / 02</p>
+  <article id="farm-pollination" class="service-path-card">
+    <div class="service-path-topline">
+      <p class="eyebrow">Farms &amp; growers</p>
+      <span aria-hidden="true">02</span>
+    </div>
+    <p class="service-path-status">Planned / Assessment first</p>
     <h3>Farm pollination</h3>
     <p>
-      A future conversation around crop, acreage, bloom, hive capacity, access,
-      and an agreed care plan. No hive supply, date, or crop result is
-      guaranteed here.
+      A future conversation about the crop, the bloom, and the setting. Any plan
+      would depend on hive capacity, site access, and an agreed approach to
+      care.
     </p>
-    <a class="text-link" href="/#connect">
-      Find our contact channels <span aria-hidden="true">&rarr;</span>
-    </a>
+    {detailed ? (
+      <>
+        <details class="service-path-details">
+          <summary>What a conversation would cover</summary>
+          <ul>
+            <li>The crop, acreage, and anticipated bloom window.</li>
+            <li>Site access, placement, and relevant crop-care practices.</li>
+            <li>Actual hive capacity and timing before any agreement.</li>
+            <li>
+              Responsibilities and a care plan. No hive supply, date, or crop
+              result is guaranteed.
+            </li>
+          </ul>
+        </details>
+        <a class="text-link service-path-link" href="/#connect">
+          Find our contact channels <span aria-hidden="true">&rarr;</span>
+        </a>
+      </>
+    ) : (
+      <a class="text-link service-path-link" href="/services#farm-pollination">
+        Explore farm pollination <span aria-hidden="true">&rarr;</span>
+      </a>
+    )}
   </article>
 </div>
-<p class="fine-print safety-note">
-  Give bees space. Do not disturb colonies or approach them for a photograph.
-  This is not an emergency service; online booking is not offered.
+<p class="fine-print service-path-safety">
+  <strong>Give bees space.</strong> Do not disturb a colony or approach it for a
+  photograph. These are planned services, not emergency assistance; online
+  booking is not offered.
 </p>
+
+<style>
+  .service-path-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  .service-path-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: start;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border: 1px solid var(--forest);
+    background: var(--paper);
+    scroll-margin-top: 2rem;
+  }
+  .service-path-topline {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .service-path-topline > span {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.5rem;
+    font-style: italic;
+    line-height: 1;
+  }
+  .service-path-status {
+    margin-top: 1.75rem;
+    color: var(--tomato);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .service-path-card h3 {
+    margin-block: 0.75rem 1.15rem;
+    font-size: clamp(2rem, 3vw, 2.75rem);
+    line-height: 1.1;
+  }
+  .service-path-card > p:not(.service-path-status) {
+    max-width: 31rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.9;
+  }
+  .service-path-link {
+    margin-top: auto;
+  }
+  .service-path-details {
+    width: 100%;
+    margin-bottom: 1.25rem;
+    border-block: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+  .service-path-details summary {
+    min-height: 3rem;
+    padding-block: 0.85rem;
+    font-weight: 700;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+  .service-path-details summary:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .service-path-details summary:focus-visible {
+    outline: 3px solid var(--forest);
+    outline-offset: 4px;
+  }
+  .service-path-details ul {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0 0 1.25rem 1.25rem;
+    margin: 0;
+    line-height: 1.8;
+  }
+  .service-path-safety {
+    max-width: 57rem;
+    margin-top: 1.5rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--tomato);
+    font-size: 0.8rem;
+  }
+  @media (max-width: 46rem) {
+    .service-path-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .service-path-card {
+      padding: 1.5rem;
+    }
+  }
+</style>

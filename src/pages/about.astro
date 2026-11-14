@@ -1,44 +1,349 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
+import scene from "../../prototypes/assets/market-scene.svg?url";
 ---
 
 <SiteLayout
   title="Our local beginning"
-  description="The True Hive brings soap-making, beekeeping, and a future collection of hive goods together in Madisonville, Tennessee."
+  description="Meet The True Hive's Madisonville beginning: soap-making, beekeeping, and a collection of everyday goods taking shape at an honest pace."
 >
-  <section class="page-intro wrap">
-    <p class="eyebrow">Meet the hands behind the hive</p>
-    <h1>
-      A local beginning.
-      <br />
-      <em>Good things ahead.</em>
-    </h1>
-    <p>
-      Soap-making and beekeeping are where The True Hive begins. We're growing a
-      collection close to home in Madisonville, Tennessee.
-    </p>
+  <section class="wrap story-page-intro" aria-labelledby="story-page-title">
+    <div class="story-page-opening">
+      <div>
+        <p class="eyebrow">Our beginning / Madisonville, Tennessee</p>
+        <h1 id="story-page-title">
+          A local beginning.
+          <br />
+          <em>Good things ahead.</em>
+        </h1>
+        <p class="story-page-lede">
+          Soap-making. Beekeeping. The possibility of a little collection that
+          finds a place in the everyday.
+        </p>
+        <a class="text-link" href="/goods">
+          Get to know the goods <span aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+      <figure class="story-page-illustration">
+        <img
+          src={scene}
+          alt="Original concept illustration of The True Hive's imagined market stand."
+          width="880"
+          height="640"
+        />
+        <figcaption>
+          A picture of the possibilities. Original illustration, not a real
+          store, apiary, or product photograph.
+        </figcaption>
+      </figure>
+    </div>
   </section>
-  <section class="wrap prose-section">
-    <h2>People before polish.</h2>
-    <p>
-      Our products and plans will be explained honestly: what is ready, what is
-      still being developed, and how local pickup can work when online sales
-      open.
-    </p>
-    <p>
-      The illustrations you see here are original design studies. They aren't
-      photographs of our apiary, a public store, or finished packaging. Real
-      photographs and approved product details will take their place as the
-      collection develops.
-    </p>
-    <h2>A thoughtful pace.</h2>
-    <p>
-      Soap leads the near-term collection. Honey retail availability is
-      unconfirmed, candles remain planned, and future beekeeping services need
-      their own assessment and capacity decisions.
-    </p>
-    <a class="text-link" href="/goods">
-      Explore the collection <span aria-hidden="true">&rarr;</span>
-    </a>
+  <section
+    class="wrap story-page-beginning"
+    aria-labelledby="story-page-beginning-title"
+  >
+    <div class="story-page-margin">
+      <p class="eyebrow">01 / Close to home</p>
+      <p class="story-page-place">
+        Madisonville,
+        <br />
+        <em>Tennessee.</em>
+      </p>
+    </div>
+    <div class="story-page-narrative">
+      <h2 id="story-page-beginning-title">
+        Everyday goods.
+        <br />A story still being made.
+      </h2>
+      <p>
+        The True Hive brings soap-making and beekeeping together in
+        Madisonville. Soap leads the near-term collection, with honey and
+        candles as future directions.
+      </p>
+      <p>
+        This is a beginning, not a finished story. Real product information,
+        photographs, and more about the making will be shared as the collection
+        develops. For now, you can get to know the direction without mistaking
+        an idea for something ready to buy.
+      </p>
+    </div>
+  </section>
+  <section
+    class="story-page-directions"
+    aria-labelledby="story-page-directions-title"
+  >
+    <div class="wrap">
+      <div class="story-page-section-heading">
+        <p class="eyebrow">02 / Room to grow</p>
+        <h2 id="story-page-directions-title">
+          One beginning.
+          <br />
+          <em>A few possible paths.</em>
+        </h2>
+      </div>
+      <div class="story-page-collection">
+        <article>
+          <span class="story-page-index" aria-hidden="true">
+            01
+          </span>
+          <h3>Soap, to start.</h3>
+          <p>
+            The starting point for the collection. Published product pages will
+            distinguish confirmed information from design concepts.
+          </p>
+          <a class="text-link" href="/goods?category=soap">
+            Explore soap <span aria-hidden="true">&rarr;</span>
+          </a>
+        </article>
+        <article>
+          <span class="story-page-index" aria-hidden="true">
+            02
+          </span>
+          <h3>Hive goods, ahead.</h3>
+          <p>
+            Honey availability is unconfirmed and candles remain planned.
+            Illustrations offer a look at those possibilities, not stock.
+          </p>
+          <a class="text-link" href="/goods">
+            See the collection <span aria-hidden="true">&rarr;</span>
+          </a>
+        </article>
+        <article>
+          <span class="story-page-index" aria-hidden="true">
+            03
+          </span>
+          <h3>Beekeeping, thoughtfully.</h3>
+          <p>
+            Colony removal and farm pollination are planned paths. Each needs
+            its own assessment, confirmed scope, and capacity before any
+            agreement.
+          </p>
+          <a class="text-link" href="/services">
+            Read the service plans <span aria-hidden="true">&rarr;</span>
+          </a>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section class="wrap story-page-next" aria-labelledby="story-page-next-title">
+    <div>
+      <p class="eyebrow">03 / A local first step</p>
+      <h2 id="story-page-next-title">
+        A little closer.
+        <br />
+        <em>When it's ready.</em>
+      </h2>
+    </div>
+    <div class="story-page-next-copy">
+      <p>
+        Local pickup is the plan for the first online collection. Exact
+        arrangements come before purchasing opens; a public shop, collection
+        hours, and shipping are not offered yet.
+      </p>
+      <p>
+        Come for a look around now. Know what to expect before taking the next
+        step.
+      </p>
+      <div class="story-page-actions">
+        <a class="button button-primary" href="/goods">
+          Explore the collection <span aria-hidden="true">&rarr;</span>
+        </a>
+        <a class="text-link" href="/#pickup">
+          Read the pickup plan <span aria-hidden="true">&nearr;</span>
+        </a>
+      </div>
+    </div>
   </section>
 </SiteLayout>
+
+<style>
+  .story-page-intro {
+    padding-block: clamp(3rem, 6vw, 5.5rem) 4rem;
+  }
+  .story-page-opening {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: clamp(2rem, 4vw, 4rem);
+    align-items: center;
+  }
+  .story-page-opening h1 {
+    margin-block: 1.5rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(3rem, 5.5vw, 5.5rem);
+    font-weight: 400;
+    letter-spacing: -0.06em;
+    line-height: 1.08;
+  }
+  .story-page-opening h1 em {
+    letter-spacing: inherit;
+  }
+  .story-page-lede {
+    max-width: 29rem;
+    font-size: 1.05rem;
+    line-height: 1.9;
+  }
+  .story-page-opening .text-link {
+    margin-top: 1.5rem;
+  }
+  .story-page-illustration {
+    padding: 1.25rem 0 0;
+    border-top: 1px solid var(--forest);
+  }
+  .story-page-illustration img {
+    width: 100%;
+    border-radius: 45% 45% 0 0;
+    background: #eee7d6;
+  }
+  .story-page-illustration figcaption {
+    max-width: 25rem;
+    margin: 0.9rem auto 0;
+    font-size: 0.7rem;
+    line-height: 1.7;
+  }
+  .story-page-beginning,
+  .story-page-next {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 2rem 5rem;
+    padding-block: 4.5rem 5.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .story-page-place {
+    margin-top: 2rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    letter-spacing: -0.035em;
+    line-height: 1.3;
+  }
+  .story-page-place em {
+    color: var(--tomato);
+  }
+  .story-page-narrative h2,
+  .story-page-next h2 {
+    margin-bottom: 1.5rem;
+    font-size: clamp(2.2rem, 3.8vw, 3.5rem);
+    line-height: 1.12;
+  }
+  .story-page-narrative > p,
+  .story-page-next-copy > p {
+    max-width: 37rem;
+    font-size: 0.95rem;
+    line-height: 1.95;
+  }
+  .story-page-directions {
+    padding-block: 4.5rem;
+    color: var(--paper);
+    background: var(--forest);
+  }
+  .story-page-section-heading {
+    margin-bottom: 3rem;
+  }
+  .story-page-section-heading h2 {
+    margin-top: 1rem;
+    font-size: clamp(2.5rem, 4.7vw, 4.25rem);
+    line-height: 1.1;
+  }
+  .story-page-section-heading h2 em {
+    color: var(--ochre);
+  }
+  .story-page-collection {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.25rem;
+  }
+  .story-page-collection article {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+  .story-page-index {
+    color: var(--ochre);
+    font-size: 0.75rem;
+  }
+  .story-page-collection h3 {
+    margin-block: 1.5rem 1rem;
+    font-size: 1.8rem;
+    line-height: 1.2;
+  }
+  .story-page-collection p {
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.95;
+  }
+  .story-page-collection .text-link {
+    margin-top: auto;
+  }
+  .story-page-collection a:focus-visible {
+    outline-color: var(--ochre);
+  }
+  .story-page-next {
+    padding-top: 5rem;
+    border-top: 0;
+  }
+  .story-page-next h2 {
+    margin-top: 1rem;
+  }
+  .story-page-next h2 em {
+    color: var(--tomato);
+  }
+  .story-page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    align-items: center;
+    margin-top: 1.75rem;
+  }
+  @media (max-width: 56rem) {
+    .story-page-opening {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2.5rem;
+    }
+    .story-page-opening > div {
+      max-width: 40rem;
+    }
+    .story-page-illustration {
+      width: min(100%, 33rem);
+      margin-inline: auto;
+    }
+    .story-page-beginning,
+    .story-page-next {
+      gap: 2rem;
+    }
+    .story-page-collection {
+      gap: 1.5rem;
+    }
+  }
+  @media (max-width: 42rem) {
+    .story-page-intro {
+      padding-block: 3rem;
+    }
+    .story-page-opening h1 {
+      font-size: clamp(2.75rem, 9.5vw, 4rem);
+    }
+    .story-page-beginning,
+    .story-page-next,
+    .story-page-collection {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .story-page-beginning,
+    .story-page-next,
+    .story-page-directions {
+      padding-block: 3rem;
+    }
+    .story-page-place {
+      margin-top: 1rem;
+    }
+    .story-page-collection {
+      gap: 2rem;
+    }
+    .story-page-collection h3 {
+      margin-top: 1rem;
+    }
+    .story-page-section-heading {
+      margin-bottom: 2rem;
+    }
+  }
+</style>

@@ -14,6 +14,7 @@ const illustrations = { soap, honey, candle };
 ---
 
 <img
+  class="product-illustration"
   src={illustrations[image]}
   alt={alt}
   width="420"
@@ -21,3 +22,15 @@ const illustrations = { soap, honey, candle };
   loading={eager ? "eager" : "lazy"}
   decoding="async"
 />
+
+<style>
+  .product-illustration {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    max-width: 30rem;
+    margin-inline: auto;
+    object-fit: contain;
+  }
+</style>

@@ -1,10 +1,15 @@
 :root {
   color-scheme: light;
-  --paper: #fff7e8;
-  --forest: #233b30;
+  --paper: #fbf7ee;
+  --forest: #243d35;
   --tomato: #a63226;
-  --ochre: #f4cd60;
-  --line: #c2c4ae;
+  --ochre: #edc86a;
+  --line: #c9cbb9;
+  --muted: #52635a;
+  --surface: #f1edde;
+  --white: #fffdf7;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
 * {
@@ -12,12 +17,15 @@
 }
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 1.5rem;
 }
 body {
   margin: 0;
   color: var(--forest);
-  background: var(--paper);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse at 100% 0, #edc86a18, transparent 40rem),
+    var(--paper);
+  font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.7;
 }
@@ -45,7 +53,7 @@ a {
   color: inherit;
   text-underline-offset: 0.25em;
 }
-a:focus-visible {
+:is(a, button, input, select, summary):focus-visible {
   outline: 3px solid var(--forest);
   outline-offset: 4px;
   box-shadow: 0 0 0 3px var(--paper);
@@ -76,14 +84,18 @@ a {
 .opening-note {
   color: var(--paper);
   background: var(--forest);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 .opening-note .wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
   justify-content: space-between;
-  padding-block: 0.75rem;
+  padding-block: 0.65rem;
+}
+.site-header-frame {
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
 }
 .site-header {
   display: flex;
@@ -91,8 +103,7 @@ a {
   gap: 1rem 2rem;
   align-items: center;
   justify-content: space-between;
-  padding-block: 1.6rem;
-  border-bottom: 2px solid var(--forest);
+  padding-block: 1.25rem;
 }
 .brand {
   display: inline-flex;
@@ -103,24 +114,25 @@ a {
 }
 .market-mark {
   display: grid;
-  width: 3.2rem;
-  height: 3.2rem;
+  flex: 0 0 3.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
   place-items: center;
-  border: 2px solid var(--forest);
-  background: var(--ochre);
-  font-size: 1.1rem;
-  font-weight: 900;
-  transform: rotate(-5deg);
+  color: var(--forest);
+}
+.market-mark svg {
+  display: block;
+  max-width: 100%;
 }
 .brand-name {
-  font-size: 1.12rem;
-  font-weight: 900;
-  letter-spacing: -0.035em;
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
   line-height: 1.3;
 }
 .brand-name small {
   display: block;
-  margin-top: 0.35rem;
+  margin-top: 0.45rem;
   font-size: 0.65rem;
   font-weight: 400;
   letter-spacing: 0.035em;
@@ -128,20 +140,30 @@ a {
 .site-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.35rem;
+  gap: 0.25rem 1.25rem;
+  align-items: center;
 }
 .site-nav a {
   display: inline-flex;
   min-height: 2.75rem;
   gap: 0.5rem;
   align-items: center;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: none;
 }
 .site-nav a:hover,
 .site-nav a[aria-current] {
   text-decoration: underline;
+}
+.site-nav .nav-connect {
+  gap: 1rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.2rem;
+}
+.site-nav .nav-connect:hover {
+  border-color: var(--forest);
 }
 .eyebrow {
   font-size: 0.7rem;
@@ -156,11 +178,11 @@ a {
   vertical-align: middle;
 }
 h1 {
-  font-family: "Arial Black", Arial, Helvetica, sans-serif;
-  font-size: clamp(3rem, 5.5vw, 5.8rem);
-  font-weight: 900;
-  letter-spacing: -0.065em;
-  line-height: 0.98;
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 5.5vw, 5.8rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 1.02;
 }
 h1 em {
   color: var(--tomato);
@@ -193,8 +215,9 @@ h3 {
   gap: 0.8rem;
   align-items: center;
   justify-content: center;
-  padding: 0.8rem 1.3rem;
+  padding: 0.9rem 1.45rem;
   border: 1px solid transparent;
+  border-radius: 0.2rem;
   font-size: 0.85rem;
   font-weight: 700;
   line-height: 1.4;
@@ -216,7 +239,7 @@ h3 {
   font-weight: 700;
 }
 .fine-print {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   line-height: 1.7;
 }
 .market-hero {
@@ -308,13 +331,17 @@ figcaption {
 .product-shelf {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid var(--forest);
+  gap: 1.5rem;
 }
 .shelf-product {
   min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--white);
 }
 .shelf-product + .shelf-product {
-  border-left: 1px solid var(--forest);
+  border-left: 1px solid var(--line);
 }
 .shelf-art {
   position: relative;
@@ -322,7 +349,7 @@ figcaption {
   min-height: 17rem;
   padding: 2.3rem 0.75rem 0.5rem;
   place-items: center;
-  border-bottom: 8px solid var(--forest);
+  border-bottom: 1px solid var(--line);
 }
 .shelf-art img {
   width: 100%;
@@ -352,7 +379,7 @@ figcaption {
   text-transform: uppercase;
 }
 .shelf-copy {
-  padding: 1.6rem;
+  padding: 1.75rem;
 }
 .shelf-copy h3 {
   margin-block: 0.75rem 1rem;
@@ -375,7 +402,7 @@ figcaption {
   display: inline-block;
   margin-top: 1.1rem;
   padding: 0.35rem 0.65rem;
-  border: 1px solid var(--forest);
+  border: 1px solid var(--line);
   border-radius: 2rem;
   font-size: 0.65rem;
   font-weight: 700;
@@ -436,8 +463,9 @@ figcaption {
 }
 .service-card {
   padding: 2rem;
-  border: 1px solid var(--forest);
-  background: #f3ecda;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--surface);
 }
 .service-card h3 {
   margin-block: 1rem;
@@ -510,8 +538,9 @@ figcaption {
 }
 .contact-note {
   padding: 2rem;
-  border: 1px dashed var(--forest);
-  background: #f3ecda;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--surface);
 }
 .contact-note h3 {
   margin-bottom: 1rem;
@@ -547,7 +576,7 @@ figcaption {
   font-size: 0.65rem;
 }
 .site-footer {
-  padding-block: 2.5rem;
+  padding-block: 4rem 1.5rem;
   color: var(--paper);
   background: var(--forest);
 }
@@ -555,25 +584,42 @@ figcaption {
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
 }
 .footer-inner strong {
-  font-size: 1.25rem;
+  display: block;
+  margin-block: 0.8rem 1.2rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
 }
 .footer-inner p {
   font-size: 0.85rem;
 }
 .site-footer nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
 }
 .site-footer a {
   display: inline-flex;
   min-height: 2.75rem;
   align-items: center;
   font-size: 0.8rem;
+}
+.footer-colophon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  justify-content: space-between;
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #ffffff30;
+  color: #e4e9dc;
+  font-size: 0.75rem;
 }
 .page-intro {
   max-width: 76rem;
@@ -597,7 +643,7 @@ figcaption {
   padding: 1.5rem;
   border: 1px solid var(--line);
   border-left: 4px solid var(--tomato);
-  background: #f3ecda;
+  background: var(--surface);
 }
 .notice h2,
 .notice h3 {
@@ -725,6 +771,9 @@ figcaption {
     width: 100%;
     gap: 0.15rem 1rem;
   }
+  .site-nav .nav-connect {
+    padding-inline: 0.75rem;
+  }
   .market-hero,
   .product-shelf,
   .pickup-layout,
@@ -750,8 +799,7 @@ figcaption {
     padding-block: 3.5rem;
   }
   .shelf-product + .shelf-product {
-    border-top: 1px solid var(--forest);
-    border-left: 0;
+    border: 1px solid var(--line);
   }
   .shelf-art {
     min-height: 15rem;
@@ -788,6 +836,17 @@ figcaption {
   }
   .detail-art {
     padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button,
+  .site-nav a,
+  .shelf-art {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease;
   }
 }
 

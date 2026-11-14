@@ -161,7 +161,7 @@ Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled`, the storefront's delib
 | `MIGRATION_DATABASE_URL` | Direct schema-owner connection for migration/provisioning, never a runtime fallback |
 | `CHECKOUT_MODE` | `disabled` or `stripe-test`; no live-charge mode |
 | `CHECKOUT_LOCATION_KEY` | Explicit real active pickup location, not a fictional fixture/default |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Private test-mode API/signature credentials; live keys/objects rejected |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Private test API/signature credentials; restricted `rk_test_` or standard `sk_test_` API keys only, never live/organization keys or objects |
 
 Firebase's [TOTP guide](https://firebase.google.com/docs/auth/web/totp-mfa) requires Identity Platform. **Do not enable a billed upgrade automatically.** The owner requires app-enforced MFA before deployment; upstream Google-account 2FA or a browser checkbox does not satisfy it. Configure Google sign-in/authorized inventory domain, verified-email/TOTP enrollment and recovery only after the provider/billing decision. Privately provision the intended admin; ordinary sign-in does not grant membership.
 

@@ -9,18 +9,76 @@ Astro.response.status = 404;
   notFound
 >
   <section class="not-found wrap">
-    <p class="eyebrow">A little detour</p>
-    <h1>
-      Not on
-      <br />
-      <em>this shelf.</em>
-    </h1>
-    <p>
-      That page isn't here. Head back to the collection to find your next good
-      thing.
-    </p>
-    <a class="button button-primary" href="/goods">
-      Explore the goods <span aria-hidden="true">&rarr;</span>
-    </a>
+    <div class="recovery-copy">
+      <p class="eyebrow">404 · A little detour</p>
+      <h1>
+        Not on
+        <br />
+        <em>this shelf.</em>
+      </h1>
+      <p>
+        That address doesn't lead to a published page. Choose a familiar path to
+        keep exploring The True Hive.
+      </p>
+    </div>
+    <nav class="recovery-routes" aria-label="Page recovery">
+      <p class="eyebrow">Find your way</p>
+      <h2>A fresh beginning.</h2>
+      <a class="button button-primary" href="/">
+        Back home <span aria-hidden="true">&rarr;</span>
+      </a>
+      <a class="button recovery-secondary" href="/goods">
+        Explore the goods <span aria-hidden="true">&rarr;</span>
+      </a>
+      <a class="text-link" href="/services">
+        Beekeeping <span aria-hidden="true">&nearr;</span>
+      </a>
+    </nav>
   </section>
 </SiteLayout>
+
+<style>
+  .not-found {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
+    padding-block: clamp(3rem, 7vw, 6rem);
+  }
+  .recovery-copy > p:last-child {
+    color: var(--muted);
+  }
+  .recovery-routes {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .recovery-routes h2 {
+    margin-block: 0.75rem 1.5rem;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+  }
+  .recovery-routes .button {
+    justify-content: space-between;
+    margin-top: 0;
+  }
+  .recovery-routes .button + .button {
+    margin-top: 0.75rem;
+  }
+  .recovery-secondary {
+    border-color: var(--forest);
+  }
+  .recovery-secondary:hover {
+    background: var(--paper);
+  }
+  .recovery-routes .text-link {
+    align-self: flex-start;
+    margin-top: 0.75rem;
+  }
+  @media (max-width: 700px) {
+    .not-found {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
