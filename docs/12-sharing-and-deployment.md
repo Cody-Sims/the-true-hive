@@ -26,7 +26,14 @@ The domain stays on **Porkbun DNS**. Only this record was added for the preview:
 |---|---|---|---|
 | CNAME | `preview` | `cody-sims.github.io` | 600 seconds |
 
-GitHub Pages is bound to `preview.thetruehive.com`; its existing GitHub-hosted URL redirects to the custom hostname. All seven pre-existing zone records were preserved, including root-domain parking, the existing wildcard, MX/SPF and certificate-challenge records. **`thetruehive.com` and `www` were not repointed**; they remain available for the later production site.
+GitHub Pages is bound to `preview.thetruehive.com`; its existing GitHub-hosted URL redirects to the custom hostname. At that initial setup, all seven pre-existing zone records were preserved, including root-domain parking, the existing wildcard, MX/SPF and certificate-challenge records. The apex and `www` were not repointed at that time.
+
+On **2026-11-14**, the owner approved the redesigned business showcase and its
+apex/www cutover to the existing Render service. **https://thetruehive.com/**
+now serves that application over verified HTTPS; `www` redirects to the apex
+while preserving paths and queries. The Pages review remains a separate HTTPS
+site, and existing mail/TXT, wildcard and certificate-challenge records were
+preserved. See the [current hosting and rollback runbook](14-development-and-operations.md#apexwww-hosting-and-rollback).
 
 GitHub [recommends domain ownership verification](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages) in account Settings > Pages to reduce takeover risk. Add the account-issued verification TXT value privately through the DNS dashboard when completing that hardening step; do not invent it. No wildcard was pointed at GitHub. HTTPS is enforced for the preview; never bypass a browser certificate warning.
 
