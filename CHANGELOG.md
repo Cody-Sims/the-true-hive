@@ -19,6 +19,7 @@
 
 ### Fixed
 
+- Keep process-only liveness available on the inventory hostname so shared-service health probes can succeed without opening private inventory or database readiness routes.
 - Skip navigation transfers keyboard focus to the main content, genuine missing pages offer recovery routes, and search/error pages no longer advertise normal-page canonical/share URLs.
 - Idle inventory database disconnects no longer escape the pool and terminate the shared storefront service; diagnostics omit connection details.
 - Bounded reconciliation rotates open and uncertain orders so later missed payment/expiry work is not permanently starved, without releasing unverified holds.

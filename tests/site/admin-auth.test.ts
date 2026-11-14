@@ -478,6 +478,42 @@ test("disabled boundary never needs auth or persistence and does not expose logi
   );
 });
 
+test("shared-service liveness remains available on the inventory host without opening private routes", async () => {
+  for (const enabled of [false, true]) {
+    const f = fixture();
+    const boundary = createAdminBoundary({ ...config, enabled }, f.auth);
+    for (const method of ["GET", "HEAD"]) {
+      const locals: AdminLocals = {};
+      const result = await boundary.gate(
+        new Request(`${config.origin}/api/health/live`, {
+          method,
+          headers: { cookie: "__Host-hive-admin=not-an-admin-session" },
+        }),
+        locals,
+      );
+      assert.equal(result.response, null);
+      assert.deepEqual(result.cookies, []);
+      assert.deepEqual(locals, {});
+    }
+    for (const [path, method, status] of [
+      ["/api/health/live", "POST", enabled ? 404 : 503],
+      ["/api/health/ready", "GET", enabled ? 404 : 503],
+      ["/api/admin/products", "GET", enabled ? 401 : 503],
+    ] as const) {
+      const result = await boundary.gate(
+        new Request(`${config.origin}${path}`, { method }),
+        {},
+      );
+      assert.equal(
+        result.response?.status,
+        status,
+        `${enabled} ${method} ${path}`,
+      );
+    }
+    assert.equal(f.writes(), 0);
+  }
+});
+
 test("CSRF expiry and session binding reject a correctly signed token from a different session", () => {
   const signed = issueCsrf(config.csrfSecret!, "first-session", now);
   const request = mutation("logout", "", signed.token);
