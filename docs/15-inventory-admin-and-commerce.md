@@ -1,8 +1,8 @@
 # Specification: secure inventory administration and connected checkout
 
-Status: **next-phase outcome and implementation choices approved on 2026-10-31; code implemented locally, disabled by default**. Provider setup, final review and hostname activation are separate from implementation; no deployed administration or live sales is claimed.
+Status: **implementation merged; private inventory preparation enabled on 2026-11-14; checkout and live sales disabled**. The code remains disabled by default for an unconfigured deployment. Hosted setup does not complete the remaining operating/payment/recovery rehearsals.
 
-The owner approved an **isolated True Hive Firebase project**, **app-enforced MFA before deployment**, and **Stripe Checkout in card-only test mode**. Physical on-hand, checkout holds and paid commitments remain separate; an authorized **Record pickup** action records physical departure. No Firebase billing upgrade, live payment, new paid service, production-domain cutover or email setup is authorized.
+The original 2026-10-31 approval selected an **isolated True Hive Firebase project**, **app-enforced MFA before deployment**, and **Stripe Checkout in card-only test mode**. Physical on-hand, checkout holds and paid commitments remain separate; an authorized **Record pickup** action records physical departure. That initial authorization did not include a Firebase billing upgrade, live payment, new paid service, production-domain cutover or email setup. Later hostname approvals are recorded separately.
 
 **2026-11-14 inventory-only authorization:** the owner separately approved
 `inventory.thetruehive.com` setup for private catalog preparation. This uses the
@@ -10,6 +10,8 @@ existing service and remaining included custom-domain slot. Checkout stays
 disabled and the public site stays in showcase mode; no real records are seeded.
 This narrower rollout does not wait for Stripe setup, approve live sales or
 claim the remaining hands-on operational/recovery rehearsals are complete.
+The hostname, TLS, runtime preflight, login client and unauthenticated access
+boundaries are now verified. Normal owner Google/TOTP sign-in remains interactive.
 
 ## Objective
 
@@ -58,11 +60,11 @@ Use the Apiary Market paper/forest/tomato/ochre palette with compact operational
 
 ## Non-goals
 
-Live charges; customer accounts; email activation; shipping; public role registration; a role editor; automatic financial-refund restocking; manufacturing/BOM/lot software; arbitrary image uploads; bulk imports; real product/stock seeding; paid provider upgrades; or immediate hostname/DNS activation.
+Live charges; customer accounts; email activation; shipping; public role registration; a role editor; automatic financial-refund restocking; manufacturing/BOM/lot software; arbitrary image uploads; bulk imports; real product/stock seeding; paid provider upgrades; or unapproved public-catalog/checkout activation.
 
 ## Existing-system constraints and gaps
 
-The foundation already has catalog/variant/location/count tables, append-only stock movements, protected public reads and an internal idempotent `adjustStock`. It does **not** yet have admin authentication, product writes, session/member records, checkout holds, order snapshots, verified payment events or pickup settlement.
+The initial foundation had catalog/variant/location/count tables, append-only stock movements, protected public reads and an internal idempotent `adjustStock`. This phase implemented the additional admin authentication, product writes, session/member records, checkout holds, order snapshots, verified payment events and pickup settlement. Their implementation is distinct from approval to enable operational/test-commerce workflows.
 
 The existing cody-sims.com application demonstrates Firebase browser Google sign-in and server Admin SDK verification. Reuse that **pattern**, not its private configuration, credentials, user population, claims or owner-email authorization. The isolated project is an explicit owner decision.
 

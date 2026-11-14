@@ -45,7 +45,7 @@ These are static local assets and metadata, not a social integration or tracker.
 | ID | Authorization | Boundary |
 |---|---|---|
 | AP-01 | Completed: owner-approved redesign merged through PR #6 and verified live at `https://thetruehive.com` on 2026-11-14 | Existing CI-gated Render service; verified apex/www TLS and redirects; mail, preview and inventory records preserved; no plan upgrade or operational sales activation |
-| AP-09 | Inventory-only hostname setup authorized on 2026-11-14 for private catalog preparation; deployment/verification in progress | Existing Google/TOTP admin and private database, public showcase unchanged, checkout disabled, no seeded records; live workspace usage confirmed the hostname fits within the two included domain slots |
+| AP-09 | Completed: separately approved inventory-only hostname, TLS and private preparation runtime are live on 2026-11-14 | Existing Google/TOTP admin and database, anonymous/forged-session and wrong-host denial verified, public showcase unchanged, checkout disabled, no seeded records; 2 of 2 included domain slots used, no additional charge or plan upgrade |
 
 ## Still blocked: needs the owner
 
@@ -60,7 +60,7 @@ These are static local assets and metadata, not a social integration or tracker.
 | AP-08 | Set backup/recovery ownership, acceptable data-loss window and reconciliation scheduling/monitoring | A script and free-tier history are not an operating agreement or verified schedule | Local restore/testing and operator documentation |
 | AP-10 | Approve any future paid assets/resources or analytics/marketing capture if later requested | Conditional boundary, not a current technical blocker; none is proposed or enabled | Local fonts/assets and no-tracking discovery |
 
-AP-01 is complete. The remaining rows
+AP-01 and AP-09 are complete. The remaining blocked rows
 gate final business content or operational features, not publication of the
 approved honest showcase.
 No new sign-in, payment or legal choice was guessed to get around them.
@@ -75,6 +75,10 @@ loops and consent manipulation are not part of this design.
 
 - **Live website: https://thetruehive.com/**; `www` redirects to the apex while
   preserving paths/queries, and both hostnames have verified HTTPS.
+- **Private inventory: https://inventory.thetruehive.com/**; sign in using the
+  previously enrolled Google account and authenticator. The hosted login client
+  and access boundaries are verified; a new-host authenticated owner rehearsal
+  remains manual. Checkout is disabled and the public shop remains showcase.
 - PR #6 merged after all three required CI checks; Render identified the exact
   merged release as Live. Real no-JS desktop/mobile routes, assets, focus,
   category filtering, 404 recovery and disabled inventory/checkout were checked.
@@ -98,7 +102,7 @@ loops and consent manipulation are not part of this design.
 
 **WX1-WX3 are complete locally and verified. All authorized local website
 requirements are satisfied; the owner-dependent decisions above remain deferred
-as requested. The approved redesign is published and apex/www hosting is verified.**
+as requested. The redesign and private inventory hostname are live; checkout and public-catalog activation remain separate.**
 The local preview remains loopback-only and leaves inventory/checkout off.
 Approved source was released through the required PR/CI process. Existing installed
 skills, private credentials, backend authority and the ten-prototype studio are

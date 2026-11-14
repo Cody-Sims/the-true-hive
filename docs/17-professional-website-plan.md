@@ -76,8 +76,10 @@ payments, services, email, shipping, invoicing, analytics or tax collection.
 - Astro 7.4.4, strict TypeScript, native Node adapter, existing CSS and lockfile.
 - Current frontend: `src/layouts/SiteLayout.astro`, `src/styles/site.css`,
   public pages and small components. Existing code is HTML-first.
-- The application has real private inventory/order authority, but hosted
-  `INVENTORY_ENABLED=false` and `CHECKOUT_MODE=disabled` remain unchanged.
+- During WX1-WX3, hosted `INVENTORY_ENABLED=false` and
+  `CHECKOUT_MODE=disabled` remained unchanged. The later separately approved
+  inventory-only rollout is recorded in the inventory specification/runbook;
+  it does not activate checkout or replace the public showcase.
 - Public showcase records are explicitly conceptual, unpriced and not stock.
   Their original illustrations are not product or farm photographs.
 - The selected design and factual boundaries are in

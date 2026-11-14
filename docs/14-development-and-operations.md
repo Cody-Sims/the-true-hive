@@ -1,13 +1,14 @@
 # Development, deployment, and inventory operations
 
-Status: **owner-approved public showcase**, not an activated store. No Shopify, Docker, active checkout, email setup or enabled hosted inventory.
+Status: **owner-approved public showcase and private inventory preparation**, not an activated store. No Shopify, Docker, active checkout or email setup.
 
-## Two independent sites
+## Public application, private workspace and preserved review
 
 | Surface | Source | Build | Hosting |
 |---|---|---|---|
 | Ten-design review and planning hub | `prototypes/` and registered documents | `dist/` | Existing GitHub Pages / `preview.thetruehive.com` |
 | Apiary Market application | `src/` and `migrations/` | `dist-site/` | Existing native Render service at `https://thetruehive.com`; Neon PostgreSQL remains the selected database |
+| Private inventory workspace | Same application, `/inventory/` and `/api/admin/` | Same `dist-site/` | `https://inventory.thetruehive.com`; same service and database, Google/TOTP and server-side membership required |
 
 Production uses original prototype illustrations and first-party brand assets in `src/assets/`, not prototype HTML, scripts, demo prices or browser cart. Application public output excludes plans, database code and review files.
 
@@ -130,8 +131,9 @@ with all required checks passing. Render's actual service UI identified release
 connected to this repository's `main` branch with **After CI Checks Pass**.
 The existing `https://the-true-hive-app.onrender.com/` endpoint remains enabled.
 Readiness reports `inventoryConnected: false` and `checkoutEnabled: false`;
-the website's release does not activate inventory, prove database connectivity
-or approve live sales.
+`inventoryConnected` describes whether the **public catalog source** is database
+mode, not whether private administration is enabled. The public website release
+did not activate sales. The subsequent inventory-only activation is separate.
 
 ### Apex/www hosting and rollback
 
@@ -181,6 +183,44 @@ Before switching to database mode:
 4. Supply the pooled runtime connection privately on Render, not the migration owner connection. Set `CATALOG_SOURCE=database` only when real approved catalog data is ready, then confirm startup/readiness and outage behavior.
 5. Resolve quota monitoring, backups and a restore rehearsal before real inventory/orders. Real content/contact/pickup and sales approval remain separate from the already-approved apex/www showcase hosting.
 
+### Private inventory preparation - 2026-11-14
+
+The separately authorized private workspace is live at
+**https://inventory.thetruehive.com/**. The existing service uses
+`INVENTORY_ENABLED=true` and exact `INVENTORY_ORIGIN=https://inventory.thetruehive.com`.
+`CHECKOUT_MODE=disabled`, `CATALOG_SOURCE=showcase` and `SITE_INDEXABLE=false`
+remain unchanged. Real products entered privately will not replace the public
+showcase until a separate catalog-source release.
+
+Only the `inventory` CNAME was added, targeting the existing Render hostname
+with TTL 600. Private before/after snapshots verified all nine prior DNS records
+were unchanged. The live workspace billing view showed **2 of 2 included custom
+domains used** after registration; no extra domain charge, new service or plan
+upgrade was needed.
+
+Read-only checks confirmed the current private database privileges, matching
+public/private database targets, enabled Firebase TOTP, existing authorized
+Google administrator membership/enrollment and Firebase authorized hostname.
+A fresh Git-excluded mode-600 pre-activation database archive was created and
+fully listed successfully; this is not a new full restore rehearsal.
+
+PR #8 repaired the shared-host liveness path. Render verified its exact merged
+revision `b262efa5d9446e91f06b08fdfba837c7ca2b2c34` Live. Real HTTPS checks
+confirmed the initialized login client, secure host-only CSRF cookie,
+noindex/no-store headers, anonymous/forged-session denial, sibling/default-host
+isolation and rejected cross-origin session creation. Public showcase mode and
+disabled checkout were checked independently.
+
+The owner still signs in normally with the previously enrolled Google account
+and authenticator. A new-host authenticated workspace/sign-out/access-removal
+rehearsal was not performed by automation. Do not equate these setup checks with
+completed operating-stock, payment, pickup or recovery rehearsals.
+
+For an inventory incident, disable only `INVENTORY_ENABLED` on the existing
+service and deploy a checked revision. Leave public site routing and existing
+credentials intact. Liveness remains available even when private administration
+is disabled; do not roll back business data to undo a website/configuration change.
+
 **TLS/authentication choice:** remote connections require certificate verification. The owner approved the current Node driver's **opportunistic channel binding** (`enableChannelBinding: true`), as documented by [node-postgres](https://node-postgres.com/features/ssl). Configure the Node-specific URL with `sslmode=verify-full&channel_binding=prefer`; the adapter removes those supported hints before passing its verified TLS options to the driver. A generic Neon URL containing `channel_binding=require` is deliberately rejected: this driver does not strictly enforce that requirement. Do not silently drop it, claim strict binding, set `rejectUnauthorized: false` or disable remote TLS.
 
 **Free-tier limits:** Neon's [current pricing](https://neon.com/pricing) lists 100 CU-hours and 1 GB storage per project, suspension after five inactive minutes, and a six-hour history window with a size limit. These are quotas, not business recovery guarantees; scheduled snapshots and longer history differ on paid plans. Avoid unnecessary polling and reassess before live orders. Render's [native Node deployment](https://render.com/docs/deploy-node-express-app), [CI-gated deploys](https://render.com/docs/deploys) and Neon's [connection pooling](https://neon.com/docs/connect/connection-pooling) provide infrastructure capabilities, not inventory correctness.
@@ -201,7 +241,7 @@ Outstanding activation decisions are in the [partner workbook](10-partner-workbo
 
 The [approved next-phase specification](15-inventory-admin-and-commerce.md) selects isolated Firebase, app-enforced TOTP MFA, PostgreSQL admin membership and Stripe card-only test checkout. These are implementation choices, **not proof that the provider project, MFA, privileged roles, hostname or sandbox are configured**.
 
-Keep `INVENTORY_ENABLED=false`, `CHECKOUT_MODE=disabled` and the storefront's deliberate source/indexing settings until the relevant activation gate passes. Inventory activation must preserve the approved apex/www website routing and existing mail/preview DNS. The inventory hostname shares the existing Render service; no second paid service is required or approved.
+Inventory-only catalog preparation is now enabled under the separate owner approval above. Keep `CHECKOUT_MODE=disabled` and the storefront's deliberate source/indexing settings until their release gates pass. Preserve approved apex/www routing and existing mail/preview DNS. The inventory hostname shares the existing Render service; no second paid service is required or approved.
 
 ### Private runtime and operator configuration
 

@@ -1,14 +1,27 @@
 # Owner checklist: what I need from you
 
-Reviewed **2026-11-14**. The inventory/admin and Stripe test-checkout implementation merged through [PR #5](https://github.com/Cody-Sims/the-true-hive/pull/5), but **inventory.thetruehive.com is not activated**. The owner-approved redesign merged through [PR #6](https://github.com/Cody-Sims/the-true-hive/pull/6) and is hosted at **https://thetruehive.com/** with verified HTTPS and a `www` redirect. Hosted inventory and checkout remain disabled. Check items only after they are actually completed or approved.
+Reviewed **2026-11-14**. The inventory/admin and Stripe test-checkout implementation merged through [PR #5](https://github.com/Cody-Sims/the-true-hive/pull/5). The separately approved **https://inventory.thetruehive.com/** is now enabled for private catalog preparation using the existing Google/TOTP admin; checkout remains disabled. The owner-approved redesign from [PR #6](https://github.com/Cody-Sims/the-true-hive/pull/6) is hosted at **https://thetruehive.com/** with verified HTTPS and a `www` redirect. Check items only after they are actually completed or approved.
 
 Start with account access and approvals. Technical setup and a controlled local/staging rehearsal follow; this is not a requirement to complete sign-in on an unactivated hostname.
 
 **This repository is public.** Do not put passwords, keys, service-account JSON, database URLs, administrator emails/UIDs, authenticator secrets, recovery codes, private addresses or real stock records in this file, commits, chat or screenshots. Use provider secret settings or an approved private configuration workflow.
 
-**Verified setup:** the separate Firebase project has Google sign-in and authenticator TOTP enabled on Spark, with SMS disabled and no paid upgrade. A private pre-migration database backup was successfully created and fully read without restoring it; both forward migrations and their checksums are verified. The separate inventory runtime role passes the application's permission checks and rolled-back denial probes; existing public-read access is preserved. Private local runtime configuration is stored securely. The owner privately chose one administrator identity, enrolled TOTP and completed a fresh MFA sign-in; the actual local workspace and private API are authorized. The owner also approved storing the runtime credentials on the existing Render service: all eight persisted settings were privately compared, the public database target matches, and hosted inventory/checkout remain disabled. No products, stock or orders were created during setup. Access-removal rehearsal, recovery rehearsal, Stripe setup and hosted inventory activation remain pending.
+**Verified setup:** the separate Firebase project has Google sign-in and
+authenticator TOTP enabled on Spark, with SMS disabled and no paid upgrade.
+Both migrations/checksums and least-privilege runtime permissions are verified.
+The owner previously chose an administrator privately, enrolled TOTP and
+completed local MFA/workspace access. All eight original Render settings were
+privately compared and public/private database targets match.
 
-The approved local admin uses the configured Neon database, not a throwaway stock sandbox: edits made there persist. Hosted inventory and checkout remain disabled. The already-authorized localhost OAuth domain was reused without adding or removing domains.
+The subsequent inventory-only rollout verified current administrator membership,
+Google/TOTP enrollment, Firebase's authorized hostname, production startup
+preflight, hosted login-client initialization and anonymous/forged-session/
+wrong-host denial. A fresh mode-600 ignored pre-activation database archive
+was created and fully listed, not restored. No products, stock or orders were
+seeded. New-host owner sign-in and operating access-removal/recovery/Stripe
+rehearsals remain separate.
+
+The local and hosted private admin use the configured Neon database, not a throwaway stock sandbox: edits persist. Hosted inventory preparation is enabled; checkout remains disabled and the public shop remains showcase. The already-authorized localhost OAuth domain was preserved.
 
 ## 1. Account access and spending approval
 
@@ -22,6 +35,7 @@ The approved local admin uses the configured Neon database, not a throwaway stoc
 
 - [x] Choose which Google identity may administer inventory and arrange its Firebase UID provisioning privately. Ordinary Google sign-in does not grant inventory access.
 - [x] After membership provisioning and provider setup, complete authenticator enrollment and a fresh Google + TOTP sign-in in the approved local inventory browser.
+- [ ] Complete normal Google + authenticator sign-in on the new hosted inventory hostname and confirm the workspace. Its HTTPS/login/access boundaries are verified, but automation has not completed this human sign-in.
 - [ ] Complete the sign-out/access-removal rehearsal; a successful MFA sign-in alone does not verify revocation behavior.
 - [ ] Keep recovery information privately and agree who can revoke access if the account/device is compromised.
 
@@ -65,7 +79,7 @@ These inputs are not required just to review an empty private admin, but they ar
 - [x] Authorize fixing PR findings and merging after required CI, with the existing service's deployment keeping inventory and checkout disabled. Inventory-domain activation is still separate; the merge must not bypass review fixes or checks.
 - [x] Approve the redesigned public showcase and apex/www hosting; verify the merged release, actual HTTPS, redirects, public assets and preservation of mail/preview DNS.
 - [ ] Participate in the admin/test-flow rehearsal: create/edit a draft, publish information, increase/reduce stock, retry an uncertain operation, complete a test checkout and record pickup. Confirm that payment commits stock once and pickup records physical departure once.
-- [ ] After MFA, access-removal, sandbox and recovery gates pass, authorize adding **only inventory.thetruehive.com** to the existing Render service and its specific Porkbun DNS record. Review any domain-quota cost first.
+- [x] Authorize inventory-only catalog preparation, add its exact hostname/DNS/TLS to the existing service and verify access boundaries while checkout/public database mode remain off. Live usage confirmed this uses the remaining included domain slot, without a new charge or plan upgrade.
 
 **Completion:** valid HTTPS, denied anonymous/non-admin access, and your successful authorized admin journey are verified on the actual hostname. Robots/noindex settings supplement authorization; they do not protect private data themselves.
 
@@ -77,7 +91,7 @@ Your essential contribution is **access, approvals, private identity/credential 
 
 ## Still deferred
 
-Keep `INVENTORY_ENABLED=false` and `CHECKOUT_MODE=disabled` until the relevant activation gates pass. Do not enable paid upgrades automatically, accept live charges, alter the approved root/www hosting as part of inventory setup, configure business email, enable shipping or add wildcard DNS.
+Inventory-only preparation now uses `INVENTORY_ENABLED=true`; keep `CHECKOUT_MODE=disabled` and public showcase mode until their separate gates pass. Do not enable paid upgrades automatically, accept live charges, alter approved root/www/mail/preview routing, configure business email, enable shipping or add wildcard DNS.
 
 Live selling needs a separate release decision and the remaining product, pickup, tax/privacy/refund and operational policies. The current checkout implementation is card-only **test mode**.
 
