@@ -2,6 +2,7 @@
 import type { AdminProduct } from "../../domain/admin.ts";
 import VariantFields from "./VariantFields.astro";
 import FormFeedback from "./FormFeedback.astro";
+import FieldHelp from "./FieldHelp.astro";
 interface Props {
   product?: AdminProduct;
 }
@@ -29,100 +30,172 @@ const endpoint = product
         ? `Edit ${product.status} product · revision ${product.revision}`
         : "Create an unpublished product"}
     </legend>
-    <div class="admin-grid">
-      <label>
-        Stable product key{" "}
-        <input
-          name="key"
-          required
-          value={product?.key ?? ""}
-          readonly={!!product}
-          pattern="[a-z0-9][a-z0-9-]{0,79}"
-          maxlength="80"
-        />
-      </label>
-      <label>
-        Slug{" "}
-        <input
-          name="slug"
-          required
-          value={product?.slug ?? ""}
-          pattern="[a-z0-9][a-z0-9-]{0,79}"
-          maxlength="80"
-        />
-      </label>
-    </div>
+    {!product && (
+      <p class="admin-muted">
+        Start with the product name. We suggest the two identifiers below;
+        review them and change them if needed. Select an (i) for help; select it
+        again or press Escape to close. Nothing is published or added to stock
+        when you create a draft.
+      </p>
+    )}
     <label>
-      Title{" "}
+      Product name{" "}
       <input
         name="title"
         required
         minlength="1"
         maxlength="160"
         value={product?.title ?? ""}
+        placeholder="e.g. Lavender soap (4 oz)"
       />
     </label>
-    <label for={`summary-${product?.key ?? "new"}`}>Summary</label>
-    <textarea
-      id={`summary-${product?.key ?? "new"}`}
-      name="summary"
-      required
-      minlength="1"
-      maxlength="1000"
-      rows="3"
-    >{product?.summary ?? ""}</textarea>
-    <label for={`details-${product?.key ?? "new"}`}>
-      Details (one paragraph per line)
-    </label>
-    <textarea
-      id={`details-${product?.key ?? "new"}`}
-      name="details"
-      maxlength="24011"
-      rows="4"
-    >{product?.details.join("\n") ?? ""}</textarea>
     <div class="admin-grid">
-      <label>
-        Category{" "}
-        <select name="category" required>
-          <option value="" selected={!product}>
-            Choose a category
-          </option>
-          {["soap", "honey", "candles", "gifts"].map((category) => (
-            <option value={category} selected={product?.category === category}>
-              {category}
-            </option>
-          ))}
-        </select>
+      <div class="admin-field">
+        <FieldHelp label="Product key">
+          A permanent internal identifier for the whole product, such as
+          <code>lavender-soap-4oz</code>. Use a unique combination of lowercase
+          letters, numbers and hyphens, up to 80 characters. It is suggested
+          from the name for new products and cannot change after saving.
+        </FieldHelp>
+        <label>
+          <span>Product key</span>
+          <input
+            name="key"
+            required
+            value={product?.key ?? ""}
+            readonly={!!product}
+            pattern="[a-z0-9][a-z0-9-]{0,79}"
+            maxlength="80"
+          />
+        </label>
+      </div>
+      <div class="admin-field">
+        <FieldHelp label="Store URL name">
+          Also called a slug: the readable part of a product's storefront link.
+          For example, <code>/goods/lavender-soap-4oz</code>. Use unique
+          lowercase letters, numbers and hyphens, up to 80 characters. Changing
+          an existing slug changes its link; old links are not automatically
+          redirected.
+        </FieldHelp>
+        <label>
+          <span>Store URL name (slug)</span>
+          <input
+            name="slug"
+            required
+            value={product?.slug ?? ""}
+            pattern="[a-z0-9][a-z0-9-]{0,79}"
+            maxlength="80"
+          />
+        </label>
+      </div>
+    </div>
+    <div class="admin-field">
+      <FieldHelp label="Summary">
+        A short description for the collection card. Describe what the product
+        is using confirmed facts; save longer instructions for Details.
+      </FieldHelp>
+      <label for={`summary-${product?.key ?? "new"}`}>
+        <span>Summary</span>
       </label>
-      <label>
-        Illustration choice{" "}
-        <select name="imageKey" required>
-          <option value="" selected={!product}>
-            Choose an illustration
-          </option>
-          {["soap", "honey", "candle"].map((image) => (
-            <option value={image} selected={product?.imageKey === image}>
-              {image}
-            </option>
-          ))}
-        </select>
+      <textarea
+        id={`summary-${product?.key ?? "new"}`}
+        name="summary"
+        required
+        minlength="1"
+        maxlength="1000"
+        rows="3"
+      >{product?.summary ?? ""}</textarea>
+    </div>
+    <div class="admin-field">
+      <FieldHelp label="Details">
+        Longer confirmed information, such as ingredients, size, care or use.
+        Put each paragraph on its own line. Do not include private addresses or
+        unverified claims.
+      </FieldHelp>
+      <label for={`details-${product?.key ?? "new"}`}>
+        <span>Details (one paragraph per line)</span>
       </label>
-      <label>
-        Record kind{" "}
-        <select name="kind">
-          {["draft", "concept", "active"].map((kind) => (
-            <option value={kind} selected={(product?.kind ?? "draft") === kind}>
-              {kind}
+      <textarea
+        id={`details-${product?.key ?? "new"}`}
+        name="details"
+        maxlength="24011"
+        rows="4"
+      >{product?.details.join("\n") ?? ""}</textarea>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-field">
+        <FieldHelp label="Category">
+          The collection used to group this product in the shop. Choose the
+          closest match; it does not change stock or publish the product.
+        </FieldHelp>
+        <label>
+          <span>Category</span>
+          <select name="category" required>
+            <option value="" selected={!product}>
+              Choose a category
             </option>
-          ))}
-        </select>
-      </label>
+            {["soap", "honey", "candles", "gifts"].map((category) => (
+              <option
+                value={category}
+                selected={product?.category === category}
+              >
+                {category}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div class="admin-field">
+        <FieldHelp label="Placeholder illustration">
+          Original placeholder artwork, not a product photograph. Choose the
+          closest illustration for now. Product-photo upload storage still needs
+          its separate setup and billing authorization.
+        </FieldHelp>
+        <label>
+          <span>Placeholder illustration</span>
+          <select name="imageKey" required>
+            <option value="" selected={!product}>
+              Choose an illustration
+            </option>
+            {["soap", "honey", "candle"].map((image) => (
+              <option value={image} selected={product?.imageKey === image}>
+                {image}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div class="admin-field">
+        <FieldHelp label="Record type">
+          Draft is work in progress. Real product describes actual goods;
+          Concept is only an illustrative idea. Choosing Real product does not
+          publish it: publication is a separate reviewed action.
+        </FieldHelp>
+        <label>
+          <span>Record type</span>
+          <select name="kind">
+            {["draft", "concept", "active"].map((kind) => (
+              <option
+                value={kind}
+                selected={(product?.kind ?? "draft") === kind}
+              >
+                {kind === "active"
+                  ? "Real product"
+                  : kind === "draft"
+                    ? "Draft"
+                    : "Concept"}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     </div>
     <h2>Variants</h2>
     <p>
-      No fictional SKU, price or inventory is supplied. A new record starts with
-      zero administrative balance; counted stock requires a separate audited
-      adjustment.
+      A variant is one sellable size, scent or format of this product. Even a
+      product sold in just one format needs one variant. Enter your own stock
+      code; prices may stay blank for a draft. Counted stock is added separately
+      through an audited adjustment, not this form.
     </p>
     <div data-admin-variants>
       {product?.variants.length ? (

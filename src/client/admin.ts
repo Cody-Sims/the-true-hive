@@ -226,6 +226,33 @@ function setup(form: HTMLFormElement) {
     ...form.querySelectorAll<HTMLButtonElement>('button[type="submit"]'),
   ];
 
+  if (form.dataset.adminForm === "product" && form.dataset.method === "POST") {
+    const name = input(form, "title")!;
+    const identifiers = ["key", "slug"].map((key) => ({
+      field: input(form, key)!,
+      suggested: !input(form, key)!.value,
+    }));
+    for (const identifier of identifiers) {
+      identifier.field.addEventListener("input", () => {
+        identifier.suggested = false;
+      });
+    }
+    name.addEventListener("input", () => {
+      if (phase !== "idle") return;
+      const suggestion = name.value
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80)
+        .replace(/-+$/g, "");
+      for (const identifier of identifiers) {
+        if (identifier.suggested) identifier.field.value = suggestion;
+      }
+    });
+  }
+
   function state(next: Phase, message: string) {
     phase = next;
     form.dataset.phase = next;
@@ -418,6 +445,17 @@ function setup(form: HTMLFormElement) {
     }
     if (response.status === 409) {
       fieldErrors(body.error?.fields);
+      if (
+        form.dataset.adminForm === "product" &&
+        body.error?.code === "DUPLICATE_RECORD"
+      ) {
+        intent = null;
+        state(
+          "idle",
+          "A product key, URL name or SKU is already in use. Change the duplicate identifier and try again. Your other draft details are preserved.",
+        );
+        return;
+      }
       state(
         "conflict",
         "Conflict: refreshing the authoritative record before another intent.",
@@ -579,6 +617,30 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
   "[data-admin-form]",
 ))
   setup(form);
+
+function dismissFieldHelp(event: Event) {
+  for (const help of document.querySelectorAll<HTMLDetailsElement>(
+    ".admin-field-help[open]",
+  )) {
+    if (event.target instanceof Node && !help.contains(event.target))
+      help.open = false;
+  }
+}
+document.addEventListener("pointerdown", dismissFieldHelp);
+document.addEventListener("focusin", dismissFieldHelp);
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  const help = document.querySelector<HTMLDetailsElement>(
+    ".admin-field-help[open]",
+  );
+  if (!help) return;
+  event.preventDefault();
+  for (const open of document.querySelectorAll<HTMLDetailsElement>(
+    ".admin-field-help[open]",
+  ))
+    open.open = false;
+  help.querySelector<HTMLElement>("summary")?.focus();
+});
 
 const logout = document.querySelector<HTMLButtonElement>("[data-admin-logout]");
 logout?.addEventListener("click", async () => {

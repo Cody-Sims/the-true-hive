@@ -13,6 +13,7 @@
 
 ### Changed
 
+- Guide product creation with name-first fields, editable identifier suggestions and keyboard-accessible `(i)` help for keys, URLs, variants, stock codes and prices; preserve existing record identifiers.
 - Enable the separately authorized MFA-gated inventory hostname for private catalog preparation, while public showcase mode and disabled checkout remain unchanged.
 - Host the approved showcase at `https://thetruehive.com` with managed HTTPS and a path-preserving `www` redirect, retaining existing mail and preview DNS.
 - Give the public homepage, collection, product, story and service pages one consistent Apiary Market visual identity without third-party fonts, tracking or invented business claims.
@@ -20,6 +21,7 @@
 
 ### Fixed
 
+- Keep product drafts editable after an explicitly rejected duplicate key/slug/SKU instead of trapping creation in a revision-conflict workflow.
 - Keep process-only liveness available on the inventory hostname so shared-service health probes can succeed without opening private inventory or database readiness routes.
 - Skip navigation transfers keyboard focus to the main content, genuine missing pages offer recovery routes, and search/error pages no longer advertise normal-page canonical/share URLs.
 - Idle inventory database disconnects no longer escape the pool and terminate the shared storefront service; diagnostics omit connection details.

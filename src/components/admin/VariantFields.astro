@@ -1,5 +1,6 @@
 ---
 import type { AdminVariant } from "../../domain/admin.ts";
+import FieldHelp from "./FieldHelp.astro";
 interface Props {
   variant?: AdminVariant;
 }
@@ -8,42 +9,79 @@ const { variant } = Astro.props;
 
 <fieldset data-admin-variant class="admin-panel">
   <legend>Variant</legend>
-  <label>
-    Stable variant key{" "}
-    <input
-      name="variantKey"
-      value={variant?.key ?? ""}
-      readonly={!!variant}
-      required
-      pattern="[a-z0-9][a-z0-9-]{0,79}"
-      maxlength="80"
-    />
-  </label>
-  <label>
-    Real SKU{" "}
-    <input
-      name="sku"
-      value={variant?.sku ?? ""}
-      readonly={!!variant}
-      required
-      maxlength="128"
-    />
-  </label>
-  <label>
-    Label{" "}
-    <input name="label" value={variant?.label ?? ""} required maxlength="160" />
-  </label>
-  <label>
-    Price (USD cents, optional for draft){" "}
-    <input
-      name="priceMinor"
-      type="number"
-      min="1"
-      step="1"
-      max="2147483647"
-      value={variant?.priceMinor ?? ""}
-    />
-  </label>
+  <div class="admin-field">
+    <FieldHelp label="Variant key">
+      A permanent ID for this particular size, scent or format, such as
+      <code>lavender-soap-4oz-single</code>. Use unique lowercase letters,
+      numbers and hyphens. It cannot change after saving; retire a variant
+      rather than reusing its ID.
+    </FieldHelp>
+    <label>
+      <span>Variant key</span>
+      <input
+        name="variantKey"
+        value={variant?.key ?? ""}
+        readonly={!!variant}
+        required
+        pattern="[a-z0-9][a-z0-9-]{0,79}"
+        maxlength="80"
+      />
+    </label>
+  </div>
+  <div class="admin-field">
+    <FieldHelp label="SKU">
+      Your unique stock code for this variant, such as <code>SOAP-LAV-4</code>.
+      It can match a code on your packaging or spreadsheet. It is not a stock
+      quantity, and this form does not invent one. Existing SKUs stay fixed.
+    </FieldHelp>
+    <label>
+      <span>SKU (stock code)</span>
+      <input
+        name="sku"
+        value={variant?.sku ?? ""}
+        readonly={!!variant}
+        required
+        maxlength="128"
+      />
+    </label>
+  </div>
+  <div class="admin-field">
+    <FieldHelp label="Variant name">
+      The customer-facing name of this option, such as{" "}
+      <code>Single 4 oz bar</code>. Describe the actual format so it can be
+      distinguished from other variants.
+    </FieldHelp>
+    <label>
+      <span>Variant name</span>
+      <input
+        name="label"
+        value={variant?.label ?? ""}
+        required
+        maxlength="160"
+      />
+    </label>
+  </div>
+  <div class="admin-field">
+    <FieldHelp label="Price">
+      Enter whole USD cents: 1500 means $15.00, and 450 means $4.50. Leave this
+      blank while drafting. A published real product needs an active variant
+      with a positive price; setting a price does not enable checkout.
+    </FieldHelp>
+    <label>
+      <span>Price (USD cents)</span>
+      <input
+        name="priceMinor"
+        type="number"
+        min="1"
+        step="1"
+        max="2147483647"
+        value={variant?.priceMinor ?? ""}
+      />
+    </label>
+  </div>
+  <p class="admin-muted">
+    Price is optional for a draft. Stock is recorded separately.
+  </p>
   <label class="admin-check">
     <input
       name="variantActive"

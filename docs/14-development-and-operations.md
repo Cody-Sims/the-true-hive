@@ -221,6 +221,43 @@ service and deploy a checked revision. Leave public site routing and existing
 credentials intact. Liveness remains available even when private administration
 is disabled; do not roll back business data to undo a website/configuration change.
 
+### Product-entry guidance and image storage
+
+The product editor starts with the product name. New-product keys and URL slugs
+are suggested from that name until the operator edits each identifier. Existing
+keys/variants/SKUs remain permanent and existing slugs are not silently renamed.
+Native `(i)` disclosures explain each field with examples, including variant
+formats and USD cents; help supports keyboard entry, Escape and outside dismissal.
+An explicitly rejected duplicate product key/slug/SKU preserves the draft and
+allows correction. Revision conflicts and uncertain outcomes retain their
+existing review/frozen-intent safeguards.
+
+**Product-photo uploads are not yet enabled.** The current image selector still
+chooses original illustration placeholders. The owner requested Google Cloud
+Storage using the personal site's pattern; the reference implementation was
+inspected in `Cody-Sims/portfolio-site` at `server/lib/storage.js`,
+`server/services/gcs-upload.service.js` and `server/routes/blog/images.js`.
+It uses authenticated server uploads, image normalization/WebP and randomized
+object names. No personal bucket, credentials or travel GPS/color-processing
+behavior is copied.
+
+Before implementing/provisioning True Hive storage, approve the billed-project
+arrangement and bucket-scoped access. A separate True Hive bucket and server-only
+credentials are required; do not upload drafts to the personal site's bucket.
+Google's current [Firebase Storage requirements](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)
+require Blaze for buckets in a Firebase project. A separately billed GCS-only
+project is another possible arrangement; neither billing change is authorized
+by the existing Spark setup or the cost inquiry.
+
+Storage can be inexpensive for a small optimized catalog, but
+[storage/operation/transfer charges](https://cloud.google.com/storage/pricing)
+and [shared billing-account free-tier limits](https://cloud.google.com/free/docs/free-cloud-features#cloud-storage)
+still apply. No bucket, billing, IAM, provider key, upload endpoint, photo-schema
+migration or new dependency was introduced in this form-guidance slice.
+The eventual upload slice must include bounded byte/pixel validation,
+metadata/GPS stripping, private draft previews, safe public-photo publication
+and retry/rollback behavior, not an unrestricted public file uploader.
+
 **TLS/authentication choice:** remote connections require certificate verification. The owner approved the current Node driver's **opportunistic channel binding** (`enableChannelBinding: true`), as documented by [node-postgres](https://node-postgres.com/features/ssl). Configure the Node-specific URL with `sslmode=verify-full&channel_binding=prefer`; the adapter removes those supported hints before passing its verified TLS options to the driver. A generic Neon URL containing `channel_binding=require` is deliberately rejected: this driver does not strictly enforce that requirement. Do not silently drop it, claim strict binding, set `rejectUnauthorized: false` or disable remote TLS.
 
 **Free-tier limits:** Neon's [current pricing](https://neon.com/pricing) lists 100 CU-hours and 1 GB storage per project, suspension after five inactive minutes, and a six-hour history window with a size limit. These are quotas, not business recovery guarantees; scheduled snapshots and longer history differ on paid plans. Avoid unnecessary polling and reassess before live orders. Render's [native Node deployment](https://render.com/docs/deploy-node-express-app), [CI-gated deploys](https://render.com/docs/deploys) and Neon's [connection pooling](https://neon.com/docs/connect/connection-pooling) provide infrastructure capabilities, not inventory correctness.

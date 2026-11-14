@@ -1,0 +1,15 @@
+---
+interface Props {
+  label: string;
+}
+const { label } = Astro.props;
+---
+
+<details class="admin-field-help">
+  <summary aria-label={`Help: ${label}`}>
+    <span aria-hidden="true">i</span>
+  </summary>
+  <div class="admin-field-help-body">
+    <slot />
+  </div>
+</details>

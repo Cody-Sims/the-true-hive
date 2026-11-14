@@ -433,6 +433,193 @@ domTest(
 );
 
 domTest(
+  "product authoring explains identifiers with keyboard-operable field help",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+    );
+    try {
+      const help = page.getByLabel("Help: Product key", { exact: true });
+      await help.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page.getByText(/permanent internal identifier/i).isVisible(),
+        true,
+      );
+      await page.keyboard.press("Enter");
+      const slugHelp = page.getByLabel("Help: Store URL name", { exact: true });
+      await slugHelp.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page
+          .getByText("/goods/lavender-soap-4oz", { exact: true })
+          .isVisible(),
+        true,
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      await page.keyboard.press("Enter");
+      await page.getByLabel("Help: Price", { exact: true }).click();
+      assert.equal(
+        await page.getByText(/1500 means \$15\.00/).isVisible(),
+        true,
+      );
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(
+        await page.getByText(/1500 means \$15\.00/).isVisible(),
+        false,
+      );
+      await page.getByLabel("Help: Price", { exact: true }).click();
+      await page.getByLabel("Variant name", { exact: true }).click();
+      assert.equal(
+        await page.getByText(/1500 means \$15\.00/).isVisible(),
+        false,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "new-product identifiers follow the name until edited without renaming existing products",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+    );
+    try {
+      const name = page.getByLabel("Product name", { exact: true });
+      const key = page.getByLabel("Product key", { exact: true });
+      const slug = page.getByLabel("Store URL name (slug)", { exact: true });
+      await name.fill("Caf\u00e9 & Honey Soap");
+      assert.equal(await key.inputValue(), "cafe-honey-soap");
+      assert.equal(await slug.inputValue(), "cafe-honey-soap");
+      await key.fill("soap-spring-batch");
+      await name.fill("Lavender Soap");
+      assert.equal(await key.inputValue(), "soap-spring-batch");
+      assert.equal(await slug.inputValue(), "lavender-soap");
+      await slug.fill("spring-soap");
+      await name.fill("Revised product name");
+      assert.equal(await key.inputValue(), "soap-spring-batch");
+      assert.equal(await slug.inputValue(), "spring-soap");
+    } finally {
+      await page.context().close();
+    }
+    const editing = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {
+        product,
+      },
+    );
+    try {
+      await editing
+        .getByLabel("Product name", { exact: true })
+        .fill("Changed name");
+      assert.equal(
+        await editing.getByLabel("Product key", { exact: true }).inputValue(),
+        product.key,
+      );
+      assert.equal(
+        await editing
+          .getByLabel("Store URL name (slug)", { exact: true })
+          .inputValue(),
+        product.slug,
+      );
+    } finally {
+      await editing.context().close();
+    }
+  },
+);
+
+domTest(
+  "confirmed duplicate product identifiers leave the draft editable instead of trapping creation",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+    );
+    const requests: Record<string, unknown>[] = [];
+    await page.route("**/api/admin/products", (route) => {
+      requests.push(route.request().postDataJSON());
+      return route.fulfill({
+        status: requests.length === 1 ? 409 : 422,
+        json: {
+          error: {
+            code:
+              requests.length === 1 ? "DUPLICATE_RECORD" : "INVALID_PRODUCT",
+            message: "Review this fixture.",
+            fields: { key: "Choose a unique key or URL name." },
+          },
+        },
+      });
+    });
+    try {
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("Lavender soap");
+      await page
+        .getByLabel("Summary", { exact: true })
+        .fill("Component-only draft, not merchandise.");
+      await page
+        .getByRole("combobox", { name: "Category", exact: true })
+        .selectOption("soap");
+      await page
+        .getByRole("combobox", {
+          name: "Placeholder illustration",
+          exact: true,
+        })
+        .selectOption("soap");
+      await page
+        .getByLabel("Variant key", { exact: true })
+        .fill("lavender-standard");
+      await page
+        .getByLabel("SKU (stock code)", { exact: true })
+        .fill("FIXTURE-LAVENDER");
+      await page
+        .getByLabel("Variant name", { exact: true })
+        .fill("Fixture format");
+      await page
+        .getByRole("button", { name: "Create unpublished product" })
+        .click();
+      await waitPhase(page, "idle");
+      assert.equal(requests.length, 1);
+      assert.equal(
+        await page.getByLabel("Product name", { exact: true }).inputValue(),
+        "Lavender soap",
+      );
+      await page
+        .getByLabel("Product key", { exact: true })
+        .fill("lavender-soap-second");
+      await page
+        .getByLabel("Store URL name (slug)", { exact: true })
+        .fill("lavender-soap-second");
+      await page
+        .getByRole("button", { name: "Create unpublished product" })
+        .click();
+      await waitPhase(page, "idle");
+      assert.equal(requests.length, 2);
+      assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
+      assert.equal(
+        (requests[1]!.product as Record<string, unknown>).slug,
+        "lavender-soap-second",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
   "product drafts serialize stable variants, preserve field values/errors, and require valid publication",
   async () => {
     const page = await fixturePage("src/components/admin/ProductForm.astro", {
@@ -455,13 +642,13 @@ domTest(
     try {
       assert.equal(
         await page
-          .getByLabel("Stable product key", { exact: true })
+          .getByLabel("Product key", { exact: true })
           .getAttribute("readonly"),
         "",
       );
       assert.equal(
         await page
-          .getByLabel("Stable variant key", { exact: true })
+          .getByLabel("Variant key", { exact: true })
           .getAttribute("readonly"),
         "",
       );
@@ -503,9 +690,7 @@ domTest(
         /<script>bad\(\)<\/script>/,
       );
       assert.equal(await page.locator("[data-admin-errors] script").count(), 0);
-      await page
-        .getByLabel("Price (USD cents, optional for draft)")
-        .fill("725");
+      await page.getByLabel("Price (USD cents)").fill("725");
       await page.getByLabel("Active variant", { exact: true }).check();
       await page.getByRole("button", { name: "Publish product" }).click();
       await waitPhase(page, "idle");
@@ -585,12 +770,12 @@ domTest(
       await page.getByRole("button", { name: "Add another variant" }).focus();
       await page.keyboard.press("Enter");
       assert.equal(
-        await page.getByLabel("Real SKU", { exact: true }).count(),
+        await page.getByLabel("SKU (stock code)", { exact: true }).count(),
         2,
       );
       assert.equal(
         await page
-          .getByLabel("Stable variant key", { exact: true })
+          .getByLabel("Variant key", { exact: true })
           .nth(1)
           .evaluate((node) => node === document.activeElement),
         true,
@@ -1244,7 +1429,7 @@ domTest(
     });
     try {
       await page
-        .getByLabel("Title", { exact: true })
+        .getByLabel("Product name", { exact: true })
         .fill("Unsaved title must not be archived as an edit");
       await page.getByRole("button", { name: "Archive product" }).click();
       await waitPhase(page, "idle");
@@ -1255,12 +1440,12 @@ domTest(
       ]);
       assert.equal(requests[0]!.action, "archive");
       assert.equal(requests[0]!.expectedRevision, 7);
-      await page.getByLabel("Title", { exact: true }).fill("");
+      await page.getByLabel("Product name", { exact: true }).fill("");
       await page.getByRole("button", { name: "Archive product" }).click();
       await waitPhase(page, "idle");
       assert.equal(requests.length, 2);
       assert.equal(
-        await page.getByLabel("Title", { exact: true }).inputValue(),
+        await page.getByLabel("Product name", { exact: true }).inputValue(),
         "",
       );
     } finally {
