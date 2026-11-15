@@ -151,7 +151,7 @@ Enabled database catalog/checkout must use public-read and private-write credent
 
 | Route/operator | Contract |
 |---|---|
-| `POST /api/checkout` | UUID `operationId`, `lines: [{ variantKey, quantity }]`; at most 20 distinct lines, positive integers up to 100 per line; server location/prices; `{ checkoutUrl }` |
+| `POST /api/checkout` | UUID `operationId`, `lines: [{ variantKey, quantity }]`; at most 20 distinct lines, positive integers up to 100 per line; server location/prices; `{ checkoutUrl }` or, for a matching terminal replay, `{ terminal: { outcome: "settled" \| "released", operationId, lines } }` |
 | `POST /api/webhooks/stripe` | Bounded raw bytes and signature; accepted test-mode checkout events only; acknowledge durable processing, otherwise retryable failure |
 | `/checkout/return`, `/checkout/cancel` | Generic honest test-flow outcomes; no browser-triggered stock mutation or private order disclosure |
 | Operator reconciliation CLI | Bounded unresolved orders; re-fetch/expire sessions safely and apply the same settlement functions; never infer release from time alone |

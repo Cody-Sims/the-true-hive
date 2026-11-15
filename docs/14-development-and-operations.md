@@ -176,7 +176,11 @@ authorize live payments, new paid resources or fabricated product facts.
   disabled. The cart stores only bounded variant identities and quantities,
   refreshes canonical prices, and never reserves stock merely by adding an item.
   The checkout server remains the price and allocation authority. Concepts and
-  unpriced variants are not merchandise offers.
+  unpriced variants are not merchandise offers. A pending test checkout retains
+  its opaque request identity and frozen variant quantities in session storage.
+  Only a matching server acknowledgment of a settled order or confirmed release
+  clears that pending intent; the cart stays unchanged and another checkout
+  requires an explicit action.
 - The inquiry form prepares a visitor-owned email draft at no email-service
   cost. It does not submit a request to the server, store personal form data,
   claim delivery or confirm a booking. Visitors must review and send the draft
