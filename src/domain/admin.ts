@@ -41,6 +41,7 @@ export interface AdminProduct {
   title: string;
   summary: string;
   details: string[];
+  ingredients?: string[];
   category: ProductCategory;
   imageKey: "soap" | "honey" | "candle";
   photo?: ProductPhoto | null;

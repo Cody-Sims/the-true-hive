@@ -1,4 +1,5 @@
 import { serviceContact } from "../content/service-contact.ts";
+import { isRecordKey } from "./inventory/rules.ts";
 
 export class ConfigurationError extends Error {}
 
@@ -8,6 +9,7 @@ export interface SiteConfig {
   indexable: boolean;
   databaseUrl: string | null;
   databaseTls: "verify-full" | "disable";
+  storefrontLocationKey?: string | null;
   contact: {
     phone: string;
     phoneHref: string;
@@ -86,6 +88,13 @@ export function readConfig(
     );
   }
   const configuredPhone = environment["CONTACT_PHONE"]?.trim();
+  const storefrontLocationKey =
+    environment["STOREFRONT_LOCATION_KEY"]?.trim() || null;
+  if (storefrontLocationKey !== null && !isRecordKey(storefrontLocationKey)) {
+    throw new ConfigurationError(
+      "STOREFRONT_LOCATION_KEY must be a valid stable record key.",
+    );
+  }
   const phone = configuredPhone || serviceContact.phone;
   const normalizedPhone = configuredPhone
     ? configuredPhone.replace(/[ ()-]/g, "")
@@ -105,6 +114,7 @@ export function readConfig(
     indexable,
     databaseUrl: environment["DATABASE_URL"]?.trim() || null,
     databaseTls,
+    storefrontLocationKey,
     contact: {
       phone,
       phoneHref: `tel:${normalizedPhone}`,

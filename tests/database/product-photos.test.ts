@@ -59,6 +59,12 @@ async function migratePhoto() {
       "utf8",
     ),
   );
+  await pool.query(
+    await readFile(
+      new URL("../../migrations/004_product_ingredients.sql", import.meta.url),
+      "utf8",
+    ),
+  );
 }
 function upload(expectedRevision = 1, operationId = randomUUID()) {
   const input = {
@@ -129,8 +135,9 @@ test("003 preserves existing products and grants, strictly bounds photo JSON and
   try {
     await migratePhoto();
     assert.deepEqual(
-      (await pool.query("SELECT revision,photo FROM products")).rows,
-      [{ revision: 1, photo: null }],
+      (await pool.query("SELECT revision,photo,ingredients FROM products"))
+        .rows,
+      [{ revision: 1, photo: null, ingredients: [] }],
     );
     const sample = upload().photo;
     for (const value of [

@@ -119,8 +119,8 @@ const endpoint = product
     </div>
     <div class="admin-field">
       <FieldHelp label="Details">
-        Longer confirmed information, such as ingredients, size, care or use.
-        Put each paragraph on its own line. Do not include private addresses or
+        Longer confirmed information, such as size, care or use. Put each
+        paragraph on its own line. Do not include private addresses or
         unverified claims.
       </FieldHelp>
       <label for={`details-${product?.key ?? "new"}`}>
@@ -133,6 +133,23 @@ const endpoint = product
         rows="4"
         placeholder={"e.g. Size: 4 oz.\nCare: Let the bar dry between uses."}
       >{product?.details.join("\n") ?? ""}</textarea>
+    </div>
+    <div class="admin-field">
+      <FieldHelp label="Ingredients">
+        Enter only confirmed ingredients in the intended order, one per line.
+        Leave blank if not yet verified. Up to 40 ingredients, each at most 200
+        characters. Plain text only; do not invent ingredients or allergen
+        claims.
+      </FieldHelp>
+      <label for={`ingredients-${product?.key ?? "new"}`}>
+        <span>Ingredients (one per line)</span>
+      </label>
+      <textarea
+        id={`ingredients-${product?.key ?? "new"}`}
+        name="ingredients"
+        maxlength="8039"
+        rows="4"
+      >{product?.ingredients?.join("\n") ?? ""}</textarea>
     </div>
     <div class="admin-grid">
       <div class="admin-field">

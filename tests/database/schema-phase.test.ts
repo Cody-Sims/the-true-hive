@@ -104,6 +104,7 @@ test("002 preserves applied 001 checksums, stable keys and append-only legacy re
     assert.deepEqual(await migrateDatabase(pool), [
       "002_admin_commerce.sql",
       "003_product_photos.sql",
+      "004_product_ingredients.sql",
     ]);
     assert.deepEqual(await migrateDatabase(pool), []);
     assert.equal(
@@ -174,6 +175,7 @@ test("new allocation and archive constraints reject invalid counts with overflow
     "001_inventory.sql",
     "002_admin_commerce.sql",
     "003_product_photos.sql",
+    "004_product_ingredients.sql",
   ]);
   await fixture();
   for (const sql of [
