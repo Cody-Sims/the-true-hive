@@ -108,8 +108,35 @@ test("stock is omitted without configuration and concepts retain concept semanti
   }
 });
 
+test("exact public availability is limited to the configured storefront location", async () => {
+  const pool = {
+    async query() {
+      return {
+        rows: [{ kind: "active", active: true, pickup: true, available: 2 }],
+      };
+    },
+  } as unknown as Pool;
+  for (const storefront of [undefined, "published-pickup"]) {
+    const config = readConfig({
+      CATALOG_SOURCE: "database",
+      ...(storefront ? { STOREFRONT_LOCATION_KEY: storefront } : {}),
+    });
+    assert.deepEqual(
+      await getAvailability(config, "test-format", "other-pickup", pool),
+      {
+        variantKey: "test-format",
+        locationKey: "other-pickup",
+        state: "available",
+      },
+    );
+  }
+});
+
 test("availability uses the same bounded stock states and never invents stock for missing levels", async () => {
-  const config = readConfig({ CATALOG_SOURCE: "database" });
+  const config = readConfig({
+    CATALOG_SOURCE: "database",
+    STOREFRONT_LOCATION_KEY: "test-location",
+  });
   for (const [row, expected] of [
     [
       { kind: "active", active: true, pickup: true, available: 3 },
@@ -157,7 +184,12 @@ test("availability uses the same bounded stock states and never invents stock fo
       };
     },
   } as unknown as Pool);
-  assert.deepEqual(calls, [[null, null], [null, null], undefined, undefined]);
+  assert.deepEqual(calls, [
+    [null, "test-location"],
+    [null, null],
+    undefined,
+    undefined,
+  ]);
 });
 
 test("intentional showcase content is explicit, has no prices, and is not mutable global inventory", async () => {

@@ -411,7 +411,10 @@ test("a failed history insert rolls back the count and recorded movements cannot
 
 test("checkout holds reduce public availability without exposing private allocations", async () => {
   const stock = await stockFixture(5, 1, 1, 3);
-  const config = readConfig({ CATALOG_SOURCE: "database" });
+  const config = readConfig({
+    CATALOG_SOURCE: "database",
+    STOREFRONT_LOCATION_KEY: stock.locationKey,
+  });
   assert.deepEqual(
     await getAvailability(config, stock.variantKey, stock.locationKey, pool),
     {

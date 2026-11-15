@@ -114,6 +114,20 @@ test("migration defaults closed, bounds the singleton and does not allocate inve
   });
 });
 
+test("store settings migrations preserve the existing photo audit actions", async () => {
+  for (const action of ["attach_product_photo", "remove_product_photo"]) {
+    await pool.query(
+      "INSERT INTO admin_operations(operation_id,actor_key,action,resource_key,request_hash,result) VALUES($1,'fixture-admin',$2,'soap',$3,'{}')",
+      [randomUUID(), action, "a".repeat(64)],
+    );
+  }
+  assert.equal(
+    (await pool.query("SELECT count(*)::int AS n FROM admin_operations"))
+      .rows[0].n,
+    2,
+  );
+});
+
 test("audited settings updates serialize exact retries and retain original receipts after later changes", async () => {
   const input = update(true);
   const receipts = await Promise.all([

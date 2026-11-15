@@ -176,7 +176,7 @@ test("return and cancel URLs cannot settle a pending test intent or replace its 
   ).toEqual(pending);
 });
 
-test("a server-confirmed released checkout unlocks the unchanged cart for an explicit new attempt", async ({
+test("a server-confirmed released checkout restores the latest saved cart before edits or a new attempt", async ({
   page,
 }) => {
   const pending = {
@@ -186,6 +186,10 @@ test("a server-confirmed released checkout unlocks the unchanged cart for an exp
   };
   await page.addInitScript((value) => {
     sessionStorage.setItem("true-hive-checkout-pending", JSON.stringify(value));
+    localStorage.setItem(
+      "true-hive-cart",
+      JSON.stringify({ version: 1, lines: value.lines }),
+    );
   }, pending);
   await page.route("**/api/catalog", (route) =>
     route.fulfill({ json: fixtureCatalog }),
@@ -231,11 +235,40 @@ test("a server-confirmed released checkout unlocks the unchanged cart for an exp
   });
   await page.goto("/cart?checkout-fixture=test");
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.50");
+  const otherTab = await page.context().newPage();
+  await otherTab.goto("/goods");
+  await otherTab.evaluate(() =>
+    localStorage.setItem(
+      "true-hive-cart",
+      JSON.stringify({
+        version: 1,
+        lines: [{ variantKey: "cart-test-pair", quantity: 1 }],
+      }),
+    ),
+  );
+  await otherTab.close();
+  await expect(page.locator("[data-cart-status]")).toContainText(
+    "saved cart changed in another tab",
+  );
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.50");
   const retry = page.getByRole("button", {
     name: "Retry the same TEST checkout",
     exact: true,
   });
   await expect(retry).toBeEnabled();
+  await page.evaluate(() => {
+    const original = Storage.prototype.getItem;
+    Object.defineProperty(window, "restoreCartStorage", {
+      value: () => {
+        Storage.prototype.getItem = original;
+      },
+    });
+    Storage.prototype.getItem = function (key) {
+      if (key === "true-hive-cart")
+        throw new DOMException("Read denied", "SecurityError");
+      return original.call(this, key);
+    };
+  });
   await retry.click();
   await expect(page.locator("[data-cart-checkout-status]")).toContainText(
     "hold was released",
@@ -245,13 +278,39 @@ test("a server-confirmed released checkout unlocks the unchanged cart for an exp
       sessionStorage.getItem("true-hive-checkout-pending"),
     ),
   ).toBeNull();
-  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.50");
+  await expect(page.locator("[data-cart-storage]")).toContainText(
+    "latest saved cart could not be read",
+  );
+  await expect(
+    page.getByRole("button", { name: "Clear cart", exact: true }),
+  ).toBeDisabled();
+  await page.evaluate(() => {
+    (window as unknown as { restoreCartStorage(): void }).restoreCartStorage();
+  });
+  await page
+    .getByRole("button", { name: "Refresh prices and availability" })
+    .click();
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.00");
   await expect(
     page.getByRole("button", { name: "Clear cart", exact: true }),
   ).toBeEnabled();
   expect(requests).toEqual([
     { operationId: pending.operationId, lines: pending.lines },
   ]);
+  const quantity = page.getByRole("spinbutton", {
+    name: "Quantity for Cart test soap Pair",
+  });
+  await quantity.fill("2");
+  await quantity.press("Enter");
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$28.00");
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("true-hive-cart")!),
+    ),
+  ).toEqual({
+    version: 1,
+    lines: [{ variantKey: "cart-test-pair", quantity: 2 }],
+  });
   await page
     .getByRole("button", { name: "Continue to TEST checkout", exact: true })
     .click();
@@ -260,7 +319,9 @@ test("a server-confirmed released checkout unlocks the unchanged cart for an exp
   );
   expect(requests).toHaveLength(2);
   expect(requests[1]!.operationId).not.toBe(pending.operationId);
-  expect(requests[1]!.lines).toEqual(pending.lines);
+  expect(requests[1]!.lines).toEqual([
+    { variantKey: "cart-test-pair", quantity: 2 },
+  ]);
 });
 
 test("blocked pending recovery keeps browse-cart editing usable without opening checkout", async ({

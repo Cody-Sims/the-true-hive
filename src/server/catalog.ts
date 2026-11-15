@@ -221,12 +221,15 @@ export async function getAvailability(
     );
     const row = result.rows[0];
     if (!row) return null;
+    const stock = publicStock(row);
+    const scopedStock =
+      stock.state === "low_stock" && config.storefrontLocationKey !== location
+        ? { state: "available" as const }
+        : stock;
     return {
       variantKey: variant,
       locationKey: location,
-      ...(row.kind === "concept"
-        ? { state: "concept" as const }
-        : publicStock(row)),
+      ...(row.kind === "concept" ? { state: "concept" as const } : scopedStock),
     };
   } catch (error) {
     return unavailable(error);

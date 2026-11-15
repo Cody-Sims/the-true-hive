@@ -177,6 +177,9 @@ authorize live payments, new paid resources or fabricated product facts.
   available, show `Only N left`; at zero, show `Sold out`; above five, omit exact
   quantities from both the page and public JSON. Missing levels are unverified,
   not assumed zero. An unconfigured storefront location omits stock information.
+  The caller-selected availability endpoint retains only coarse availability
+  outside the configured storefront location; it never exposes another
+  location's exact low-stock count.
 - Published active variants show their database prices even when checkout is
   disabled. The cart stores only bounded variant identities and quantities,
   refreshes canonical prices, and never reserves stock merely by adding an item.
@@ -185,7 +188,9 @@ authorize live payments, new paid resources or fabricated product facts.
   its opaque request identity and frozen variant quantities in session storage.
   Only a matching server acknowledgment of a settled order or confirmed release
   clears that pending intent; the cart stays unchanged and another checkout
-  requires an explicit action.
+  requires an explicit action. Recovery displays the frozen checkout selection
+  separately, then reloads the latest saved cart before allowing edits or a new
+  checkout, preserving changes made in another tab.
 - The inquiry form prepares a visitor-owned email draft at no email-service
   cost. It does not submit a request to the server, store personal form data,
   claim delivery or confirm a booking. Visitors must review and send the draft
@@ -270,6 +275,25 @@ For rollout, first verify a private database backup, apply forward migrations
 singleton remains closed and run the public/private database preflights before
 merging the checked application release. Do not overwrite real products, prices,
 opening counts or existing inventory with test fixtures.
+
+#### Migration 005 pre-release repair - 2026-11-15
+
+Release review found that 005's initial audit constraint omitted the photo
+actions introduced by 003. The owner explicitly approved correcting the
+unreleased SQL and only its matching production checksum, rather than deleting
+or rewriting business records. A fresh private backup and archive listing were
+verified first. The constraint and checksum were repaired atomically under the
+normal migration lock, with exact old-checksum and action-list guards.
+
+- Previous SHA-256: `ab7eb8f64f65f45947c14f88059ae17207776994d4857ee206d1ce3aadf2dcc9`.
+- Corrected SHA-256: `1b28027ef43c463cc322cda9ac2ed1de970739c9eb8fba5565e9a40800756755`.
+
+Both `attach_product_photo` and `remove_product_photo` are retained alongside
+the store action. Existing business/audit rows were verified unchanged, a private
+repair receipt was saved, and the normal migration runner then reported no
+pending changes or checksum drift. This specific approved repair is not
+permission to rewrite other applied migrations; normal checksum protection
+remains unchanged.
 
 ### Apex/www hosting and rollback
 

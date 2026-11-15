@@ -34,12 +34,30 @@ const checkoutStatus = page?.querySelector<HTMLElement>(
 const status = page?.querySelector<HTMLElement>("[data-cart-status]");
 const storageStatus = page?.querySelector<HTMLElement>("[data-cart-storage]");
 let recoveryNotice: HTMLElement | null = null;
+let showingPendingSelection = false;
+let latestCartUnavailable = false;
 
 const checkout = createCartCheckout({
   pendingStorage: () => window.sessionStorage,
   operationId: () => crypto.randomUUID(),
   navigate: (url) => window.location.assign(url),
   onState(phase, message) {
+    if (checkout.hasPendingIntent) {
+      showingPendingSelection = true;
+    } else if (
+      showingPendingSelection &&
+      (phase === "idle" || phase === "closed")
+    ) {
+      const current = readStoredCart(storage);
+      if (current.persistent) lines = current.lines;
+      persistent = current.persistent;
+      latestCartUnavailable = !current.persistent;
+      showingPendingSelection = false;
+      if (storageStatus)
+        storageStatus.textContent = persistent
+          ? ""
+          : "The latest saved cart could not be read. No saved selections have been overwritten; review browser storage before starting another checkout.";
+    }
     if (checkoutStatus) {
       checkoutStatus.textContent = message;
       if (phase !== "pending") checkoutStatus.focus();
@@ -75,11 +93,21 @@ const checkout = createCartCheckout({
 });
 
 function locked() {
-  return verifying || refreshing || checkout.phase !== "idle";
+  return (
+    verifying ||
+    refreshing ||
+    latestCartUnavailable ||
+    checkout.phase !== "idle"
+  );
 }
 
 function cartLocked() {
-  return verifying || refreshing || checkout.hasPendingIntent;
+  return (
+    verifying ||
+    refreshing ||
+    latestCartUnavailable ||
+    checkout.hasPendingIntent
+  );
 }
 
 function announce(message: string) {
@@ -171,7 +199,8 @@ function focusHeading() {
 function render() {
   updateCounts();
   if (!page || !list || !empty || !subtotal || !clear || !refresh) return;
-  const resolved = resolveCart(lines, catalog);
+  const displayedLines = checkout.pendingLines ?? lines;
+  const resolved = resolveCart(displayedLines, catalog);
   const busy = cartLocked();
   list.replaceChildren();
   for (const line of resolved.lines) {
@@ -260,13 +289,13 @@ function render() {
     item.append(form);
     list.append(item);
   }
-  empty.hidden = lines.length > 0;
+  empty.hidden = displayedLines.length > 0;
   subtotal.textContent =
     resolved.subtotalMinor === null
       ? "Unavailable until all prices are verified"
       : money(resolved.subtotalMinor);
   clear.disabled = busy || !lines.length;
-  refresh.disabled = busy;
+  refresh.disabled = verifying || refreshing || checkout.hasPendingIntent;
   if (submit)
     submit.disabled =
       locked() || !resolved.canCheckout || page.dataset.testEnabled !== "true";
@@ -326,6 +355,19 @@ clear?.addEventListener("click", () => {
   focusHeading();
 });
 refresh?.addEventListener("click", () => {
+  if (latestCartUnavailable) {
+    const current = readStoredCart(storage);
+    if (!current.persistent) {
+      announce(
+        "The latest saved cart is still unavailable. Nothing has been overwritten.",
+      );
+      return;
+    }
+    lines = current.lines;
+    persistent = true;
+    latestCartUnavailable = false;
+    if (storageStatus) storageStatus.textContent = "";
+  }
   void refreshCatalog();
 });
 submit?.addEventListener("click", async () => {
@@ -450,8 +492,6 @@ window.addEventListener("beforeunload", (event) => {
   }
 });
 
-const pendingLines = checkout.pendingLines;
-if (pendingLines) lines = pendingLines;
 checkout.announceRecovery();
 updateCounts();
 if (page) {
