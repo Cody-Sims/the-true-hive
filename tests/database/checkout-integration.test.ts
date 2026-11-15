@@ -190,6 +190,7 @@ test("a lost create response retries the same provider intent without duplicatin
   await assert.rejects(fixture.services.createCheckout(input));
   const retry = await fixture.services.createCheckout(input);
   const again = await fixture.services.createCheckout(input);
+  assert("checkoutUrl" in retry && "checkoutUrl" in again);
   assert.equal(retry.checkoutUrl, again.checkoutUrl);
   assert.equal(fixture.sessions.size, 1);
   assert.equal(fixture.attempts.length, 2);
@@ -288,6 +289,7 @@ test("supported full-length merchandise labels do not create poisoned checkout h
   await pool.query("UPDATE product_variants SET label=$1", ["B".repeat(160)]);
   const fixture = provider();
   const result = await fixture.services.createCheckout(intent());
+  assert("checkoutUrl" in result);
   assert.match(
     result.checkoutUrl,
     /^https:\/\/checkout\.stripe\.com\/c\/pay\//,
