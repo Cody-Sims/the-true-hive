@@ -129,6 +129,7 @@ Use the types in `src/domain/admin.ts`. JSON success envelopes name their resour
 | `GET /api/admin/products/:key` | `{ product }`, including private variant/location balances and revision |
 | `POST /api/admin/products` | UUID `operationId`, `product` fields and `variants`; atomic unpublished product creation and zero stock records |
 | `PUT /api/admin/products/:key` | UUID operation, `expectedRevision`, action `save/publish/archive`, product/variant fields; preserve stable referenced keys |
+| `GET/PUT /api/admin/store` | Authorized settings read; revision-controlled `{ operationId, expectedRevision, purchasesEnabled }` update with immutable audit; defaults closed and never overrides payment configuration |
 | `GET/POST /api/admin/locations` | List or create `{ operationId, location: { key, name, publicLabel, active, pickupEnabled } }`; new locations default inactive/non-pickup |
 | `PUT /api/admin/locations/:key` | `{ operationId, expectedRevision, location: { key, name, publicLabel, active, pickupEnabled } }` |
 | `POST /api/admin/adjustments` | UUID operation, variant/location keys, signed integer delta, reason and expected stock revision; actor is server-derived |
@@ -151,7 +152,7 @@ Enabled database catalog/checkout must use public-read and private-write credent
 
 | Route/operator | Contract |
 |---|---|
-| `POST /api/checkout` | UUID `operationId`, `lines: [{ variantKey, quantity }]`; at most 20 distinct lines, positive integers up to 100 per line; server location/prices; `{ checkoutUrl }` |
+| `POST /api/checkout` | UUID `operationId`, `lines: [{ variantKey, quantity }]`; at most 20 distinct lines, positive integers up to 100 per line; server location/prices; `{ checkoutUrl }` or, for a matching terminal replay, `{ terminal: { outcome: "settled" \| "released", operationId, lines } }` |
 | `POST /api/webhooks/stripe` | Bounded raw bytes and signature; accepted test-mode checkout events only; acknowledge durable processing, otherwise retryable failure |
 | `/checkout/return`, `/checkout/cancel` | Generic honest test-flow outcomes; no browser-triggered stock mutation or private order disclosure |
 | Operator reconciliation CLI | Bounded unresolved orders; re-fetch/expire sessions safely and apply the same settlement functions; never infer release from time alone |

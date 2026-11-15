@@ -129,7 +129,7 @@ test("unsafe query keys are rejected and unavailable database mode never falls b
   expect(await page.text()).not.toContain("Everyday soap");
 });
 
-test("keyboard entry, confirmed phone contact and no email collection remain intact", async ({
+test("keyboard entry, confirmed phone contact and local email drafts remain intact", async ({
   page,
 }) => {
   await page.goto("/");
@@ -149,8 +149,16 @@ test("keyboard entry, confirmed phone contact and no email collection remain int
   await expect(page.locator("#connect")).not.toContainText(
     /not published|will appear/i,
   );
-  expect(await page.locator("form").count()).toBe(0);
-  expect(await page.locator('a[href^="mailto:"]').count()).toBe(0);
+  await expect(page.locator("[data-inquiry-form]")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Open email draft", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Email loganstakely18@gmail.com" }),
+  ).toHaveAttribute("href", "mailto:loganstakely18@gmail.com");
+  await expect(page.locator("#inquiry")).toContainText(
+    "Nothing is sent by this website.",
+  );
 });
 
 test("the draft is non-indexable and publishes no fake product offers or rating data", async ({

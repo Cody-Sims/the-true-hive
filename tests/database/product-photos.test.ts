@@ -59,6 +59,12 @@ async function migratePhoto() {
       "utf8",
     ),
   );
+  await pool.query(
+    await readFile(
+      new URL("../../migrations/004_product_ingredients.sql", import.meta.url),
+      "utf8",
+    ),
+  );
 }
 function upload(expectedRevision = 1, operationId = randomUUID()) {
   const input = {
@@ -129,8 +135,9 @@ test("003 preserves existing products and grants, strictly bounds photo JSON and
   try {
     await migratePhoto();
     assert.deepEqual(
-      (await pool.query("SELECT revision,photo FROM products")).rows,
-      [{ revision: 1, photo: null }],
+      (await pool.query("SELECT revision,photo,ingredients FROM products"))
+        .rows,
+      [{ revision: 1, photo: null, ingredients: [] }],
     );
     const sample = upload().photo;
     for (const value of [
@@ -176,6 +183,41 @@ test("003 preserves existing products and grants, strictly bounds photo JSON and
     await pool.query(`REVOKE ALL ON SCHEMA "${schema}" FROM "${role}"`);
     await admin.query(`DROP ROLE "${role}"`);
   }
+});
+
+test("store settings upgrade preserves existing photo history and later photo changes", async () => {
+  await migratePhoto();
+  const first = upload();
+  await commitPhotoOperation(pool, first.intent, first.photo);
+  const before = await stock();
+  const auditBefore = (
+    await pool.query("SELECT * FROM admin_operations WHERE operation_id=$1", [
+      first.intent.operationId,
+    ])
+  ).rows[0];
+  await pool.query(
+    await readFile(
+      new URL("../../migrations/005_storefront_settings.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(
+    (
+      await pool.query("SELECT * FROM admin_operations WHERE operation_id=$1", [
+        first.intent.operationId,
+      ])
+    ).rows[0],
+    auditBefore,
+  );
+  const replacement = upload(2);
+  await commitPhotoOperation(pool, replacement.intent, replacement.photo);
+  const removal = makePhotoIntent("soap", actor, {
+    operationId: randomUUID(),
+    expectedRevision: 3,
+  });
+  await commitPhotoOperation(pool, removal, null);
+  assert.deepEqual(await stock(), before);
+  assert.equal((await getAdminProduct(pool, "soap"))?.revision, 4);
 });
 
 test("attach, exact retry, replace and remove are compact immutable audited revision transitions without stock writes", async () => {

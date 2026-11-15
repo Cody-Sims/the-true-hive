@@ -15,7 +15,12 @@ import {
   updateAdminProduct,
 } from "../../src/server/admin/catalog.ts";
 import { AdminError } from "../../src/server/admin/errors.ts";
-import { getCatalog } from "../../src/server/catalog.ts";
+import {
+  checkDatabase,
+  getAvailability,
+  getCatalog,
+  getProduct,
+} from "../../src/server/catalog.ts";
 import { readConfig } from "../../src/server/config.ts";
 
 const connection = process.env["TEST_DATABASE_URL"];
@@ -83,6 +88,8 @@ beforeEach(async () => {
     "001_inventory.sql",
     "002_admin_commerce.sql",
     "003_product_photos.sql",
+    "004_product_ingredients.sql",
+    "005_storefront_settings.sql",
   ]) {
     await pool.query(
       await readFile(
@@ -98,6 +105,202 @@ afterEach(async () => {
 });
 after(async () => {
   await admin.end();
+});
+
+test("ingredients round-trip ordered plain text through create, legacy save, edit, publish, and explicit clearing", async () => {
+  const ingredients = ["Fixture first", "<script>fixture text only</script>"];
+  const create = { ...draft(), product: { ...product, ingredients } };
+  const created = await createAdminProduct(pool, create, actor);
+  assert.deepEqual(created.product.ingredients, ingredients);
+  assert.deepEqual(
+    (await createAdminProduct(pool, create, actor)).product.ingredients,
+    ingredients,
+  );
+  const saved = await updateAdminProduct(
+    pool,
+    product.key,
+    {
+      ...draft(),
+      expectedRevision: 1,
+      action: "save",
+    },
+    actor,
+  );
+  assert.deepEqual(saved.product.ingredients, ingredients);
+  const edited = [...ingredients].reverse();
+  const publish = {
+    operationId: randomUUID(),
+    expectedRevision: 2,
+    action: "publish",
+    product: { ...product, kind: "active", ingredients: edited },
+    variants: variants.map((variant) => ({ ...variant, priceMinor: 100 })),
+  };
+  const published = await updateAdminProduct(pool, product.key, publish, actor);
+  assert.deepEqual(published.product.ingredients, edited);
+  assert.deepEqual(
+    (await getProduct(config, product.slug, pool))?.ingredients,
+    edited,
+  );
+  assert.deepEqual(
+    (await getCatalog(config, pool)).products[0]?.ingredients,
+    edited,
+  );
+  const audit = (
+    await pool.query(
+      "SELECT before_data,after_data FROM admin_operations WHERE operation_id=$1",
+      [publish.operationId],
+    )
+  ).rows[0];
+  assert.deepEqual(audit.before_data.ingredients, ingredients);
+  assert.deepEqual(audit.after_data.ingredients, edited);
+  const cleared = await updateAdminProduct(
+    pool,
+    product.key,
+    {
+      ...publish,
+      operationId: randomUUID(),
+      expectedRevision: 3,
+      action: "save",
+      product: { ...publish.product, ingredients: [] },
+    },
+    actor,
+  );
+  assert.deepEqual(cleared.product.ingredients, []);
+  assert.deepEqual((await getAdminProduct(pool, product.key))?.ingredients, []);
+});
+
+test("ingredient schema rejects unbounded/non-text entries and old products default to an empty list", async () => {
+  const created = await createAdminProduct(pool, draft(), actor);
+  assert.deepEqual(created.product.ingredients, []);
+  for (const ingredients of [
+    null,
+    {},
+    "not a list",
+    [1],
+    [""],
+    [" "],
+    ["\t"],
+    ["x".repeat(201)],
+    Array(41).fill("x"),
+    ["first\nsecond"],
+  ]) {
+    await assert.rejects(
+      pool.query(
+        "UPDATE products SET ingredients=$2::jsonb WHERE product_key=$1",
+        [product.key, JSON.stringify(ingredients)],
+      ),
+      (error: unknown) =>
+        Boolean(
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          ["23514", "23502"].includes(String(error.code)),
+        ),
+    );
+  }
+  await pool.query(
+    "UPDATE products SET ingredients=$2::jsonb WHERE product_key=$1",
+    [product.key, JSON.stringify(Array(40).fill("🐝".repeat(200)))],
+  );
+  assert.equal(
+    (await getAdminProduct(pool, product.key))?.ingredients?.length,
+    40,
+  );
+});
+
+test("configured public stock subtracts every allocation, bounds counts, and keeps missing levels unverified", async () => {
+  await createAdminLocation(
+    pool,
+    {
+      operationId: randomUUID(),
+      location: {
+        key: "test-room",
+        name: "Test-only pickup",
+        active: true,
+        pickupEnabled: true,
+      },
+    },
+    actor,
+  );
+  await createAdminLocation(
+    pool,
+    {
+      operationId: randomUUID(),
+      location: {
+        key: "test-other",
+        name: "Different test-only pickup",
+        active: true,
+        pickupEnabled: true,
+      },
+    },
+    actor,
+  );
+  await createAdminProduct(pool, draft(), actor);
+  await updateAdminProduct(
+    pool,
+    product.key,
+    {
+      operationId: randomUUID(),
+      expectedRevision: 1,
+      action: "publish",
+      product: { ...product, kind: "active" },
+      variants: variants.map((variant) => ({ ...variant, priceMinor: 100 })),
+    },
+    actor,
+  );
+  const publicConfig = { ...config, storefrontLocationKey: "test-room" };
+  await checkDatabase(publicConfig, pool);
+  await pool.query(
+    "UPDATE inventory_levels SET on_hand=999 WHERE location_key='test-other'",
+  );
+  const stock = async () =>
+    (await getCatalog(publicConfig, pool)).products[0]!.variants[0]!.stock;
+  for (const [onHand, expected] of [
+    [6, { state: "out_of_stock" }],
+    [7, { state: "low_stock", remaining: 1 }],
+    [11, { state: "low_stock", remaining: 5 }],
+    [12, { state: "available" }],
+  ]) {
+    await pool.query(
+      "UPDATE inventory_levels SET on_hand=$1,held=1,committed=2,unavailable=3 WHERE variant_key='test-bar' AND location_key='test-room'",
+      [onHand],
+    );
+    assert.deepEqual(await stock(), expected);
+    assert.deepEqual(
+      await getAvailability(publicConfig, "test-bar", "test-room", pool),
+      {
+        variantKey: "test-bar",
+        locationKey: "test-room",
+        ...(expected as object),
+      },
+    );
+  }
+  const output = await getCatalog(publicConfig, pool);
+  assert.equal(JSON.stringify(output).includes("999"), false);
+  assert.equal(JSON.stringify(output).includes("onHand"), false);
+  assert.equal(
+    "stock" in (await getCatalog(config, pool)).products[0]!.variants[0]!,
+    false,
+  );
+  await pool.query(
+    "DELETE FROM inventory_levels WHERE variant_key='test-bar' AND location_key='test-room'",
+  );
+  assert.deepEqual(await stock(), { state: "unverified" });
+  await pool.query(
+    "UPDATE inventory_locations SET active=false WHERE location_key='test-room'",
+  );
+  assert.deepEqual(await stock(), { state: "not_offered" });
+  await pool.query(
+    "UPDATE inventory_locations SET active=true,pickup_enabled=false WHERE location_key='test-room'",
+  );
+  assert.deepEqual(await stock(), { state: "not_offered" });
+  await pool.query("UPDATE products SET kind='concept' WHERE product_key=$1", [
+    product.key,
+  ]);
+  assert.equal(
+    "stock" in (await getCatalog(publicConfig, pool)).products[0]!.variants[0]!,
+    false,
+  );
 });
 
 test("draft creation is atomic, private, zero-balanced across genuine locations and retry-safe", async () => {

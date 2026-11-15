@@ -4,6 +4,12 @@
 
 ### Added
 
+- Audited inventory-admin purchase switch, closed by default, that preserves catalog/cart access and existing order processing without bypassing test-only payment configuration.
+- Owner-confirmed Madisonville pickup address with arrangement-only visiting guidance and explicit notice that tax calculation is not enabled.
+- Ordered ingredient editing and escaped product ingredients, with an additive migration that preserves existing products and legacy edits.
+- Inventory-priced persistent shopping cart with bounded variant quantities, current-price review and an explicitly gated Stripe test-checkout handoff.
+- Location-scoped customer stock notices showing exact counts only at 1-5 available and sold-out at zero, without exposing normal inventory counts.
+- Free contact/service inquiry drafts with safe email-link encoding, accessible validation and a no-JavaScript email fallback; visitors send messages themselves.
 - Live storefront-card previews and example field placeholders while creating or editing products, including private saved photos, without saving sample data or publishing draft changes.
 - Private, bounded product-photo upload/replace/remove workflow with metadata-stripped WebP, audited retry-safe references and publication-gated first-party image delivery; configuration and rollout gates remain explicit.
 - Owner-approved website refresh with URL-based collection search/filter/reset, practical accessibility guidance and original brand-sharing artwork.
@@ -25,6 +31,7 @@
 
 ### Fixed
 
+- Preserve existing photo-audit actions when upgrading store settings, restrict public low-stock counts to the configured pickup location, and restore the latest saved cart after checkout recovery without overwriting another tab's changes.
 - Keep product drafts editable after an explicitly rejected duplicate key/slug/SKU instead of trapping creation in a revision-conflict workflow.
 - Keep process-only liveness available on the inventory hostname so shared-service health probes can succeed without opening private inventory or database readiness routes.
 - Skip navigation transfers keyboard focus to the main content, genuine missing pages offer recovery routes, and search/error pages no longer advertise normal-page canonical/share URLs.

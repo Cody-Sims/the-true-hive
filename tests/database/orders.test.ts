@@ -37,7 +37,7 @@ const admin = new Pool({ connectionString: connection, max: 1 });
 let pool: Pool;
 let schema: string;
 
-beforeEach(async () => {
+beforeEach(async (context) => {
   schema = `orders_${randomUUID().replaceAll("-", "")}`;
   await admin.query(`CREATE SCHEMA "${schema}"`);
   pool = new Pool({
@@ -45,7 +45,11 @@ beforeEach(async () => {
     options: `-c search_path=${schema}`,
     max: 8,
   });
-  for (const name of ["001_inventory.sql", "002_admin_commerce.sql"]) {
+  for (const name of [
+    "001_inventory.sql",
+    "002_admin_commerce.sql",
+    "005_storefront_settings.sql",
+  ]) {
     await pool.query(
       await readFile(
         new URL(`../../migrations/${name}`, import.meta.url),
@@ -53,6 +57,8 @@ beforeEach(async () => {
       ),
     );
   }
+  if (!context.name.startsWith("a fresh closed store"))
+    await pool.query("UPDATE storefront_settings SET purchases_enabled=true");
   await pool.query(`
     INSERT INTO products (product_key,slug,title,summary,category,image_key,kind,published)
       VALUES ('soap','soap','Test soap','Test-only description','soap','soap','active',true);
@@ -71,6 +77,24 @@ afterEach(async () => {
 });
 after(async () => {
   await admin.end();
+});
+
+test("a fresh closed store rejects checkout without allocating stock or an order", async () => {
+  await assert.rejects(reserveCheckout(pool, intent(), "pickup"), /closed/i);
+  assert.equal(
+    (await pool.query("SELECT count(*)::int AS n FROM orders")).rows[0].n,
+    0,
+  );
+  assert.equal(
+    (await pool.query("SELECT sum(held)::int AS n FROM inventory_levels"))
+      .rows[0].n,
+    0,
+  );
+  assert.equal(
+    (await pool.query("SELECT count(*)::int AS n FROM inventory_movements"))
+      .rows[0].n,
+    0,
+  );
 });
 
 test("reservation holds authoritative snapshot prices without changing physical stock; retry remains immutable", async () => {
@@ -116,7 +140,7 @@ test("reservation holds authoritative snapshot prices without changing physical 
     ],
   );
   await pool.query(
-    "UPDATE product_variants SET price_minor=2500,active=false; UPDATE products SET published=false,archived=true",
+    "UPDATE storefront_settings SET purchases_enabled=false; UPDATE product_variants SET price_minor=2500,active=false; UPDATE products SET published=false,archived=true",
   );
   assert.deepEqual(
     await reserveCheckout(
@@ -592,6 +616,7 @@ test("only confirmed associated expiry releases once; payment after release quar
 
 test("paid and picked-up orders never release stock and conflicting late receipts preserve monotonic state", async () => {
   const row = await open();
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
   await applyCheckoutPayment(pool, payment(row));
   const paid = await stock();
   assert.equal(
@@ -656,6 +681,7 @@ test("unassociated or uncertain reservations retain holds; local time alone neve
 
 test("pickup consumes every commitment and physical count with line-unique audited receipts, and matching retries return recorded operation", async () => {
   const row = await open(2, true);
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
   await applyCheckoutPayment(pool, payment(row));
   const before = (await getAdminOrder(pool, row.id))!;
   const input = {
@@ -841,6 +867,7 @@ test("bounded reconciliation visits later orders without changing uncertain hold
   );
   const opened = await open();
   const later = await open();
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
   const beforeStock = await stock();
   const before = await Promise.all(
     [uncertain, opened, later].map((order) =>

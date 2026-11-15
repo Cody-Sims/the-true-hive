@@ -57,6 +57,12 @@ const path = Astro.url.pathname;
               Locations
             </a>
             <a
+              href="/inventory/store"
+              aria-current={path === "/inventory/store" ? "page" : undefined}
+            >
+              Store settings
+            </a>
+            <a
               href="/inventory/orders"
               aria-current={
                 path.startsWith("/inventory/orders") ? "page" : undefined

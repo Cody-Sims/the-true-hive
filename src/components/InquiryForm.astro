@@ -1,0 +1,195 @@
+---
+import {
+  INQUIRY_EMAIL,
+  INQUIRY_LIMITS,
+  INQUIRY_TYPES,
+} from "../client/inquiry-draft.ts";
+---
+
+<section id="inquiry" class="inquiry" aria-labelledby="inquiry-title">
+  <h3 id="inquiry-title">Start an email conversation.</h3>
+  <p id="inquiry-explanation">
+    Nothing is sent by this website. The form only prepares a draft in your own
+    email app; you must review and send it there. No inbox or email provider
+    receives a website submission. No booking or availability is confirmed.
+  </p>
+  <p id="inquiry-safety">
+    <strong>Give bees space.</strong> Do not disturb a colony or approach it for
+    a photograph. This is not an urgent-response service. Please leave out home
+    or site addresses, sensitive details and photos.
+  </p>
+  <form
+    data-inquiry-form
+    hidden
+    novalidate
+    aria-labelledby="inquiry-title"
+    aria-describedby="inquiry-explanation inquiry-safety"
+  >
+    <p class="inquiry-required">All fields are required.</p>
+    <div class="inquiry-fields">
+      <div>
+        <label for="inquiry-name">Your name</label>
+        <input
+          id="inquiry-name"
+          name="name"
+          type="text"
+          autocomplete="name"
+          required
+          maxlength={INQUIRY_LIMITS.name}
+          aria-describedby="inquiry-name-error"
+        />
+        <p id="inquiry-name-error" class="inquiry-error" data-error="name"></p>
+      </div>
+      <div>
+        <label for="inquiry-email">Reply-to email</label>
+        <input
+          id="inquiry-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+          maxlength={INQUIRY_LIMITS.email}
+          aria-describedby="inquiry-email-error"
+        />
+        <p
+          id="inquiry-email-error"
+          class="inquiry-error"
+          data-error="email"
+        ></p>
+      </div>
+    </div>
+    <label for="inquiry-type">Inquiry type</label>
+    <select
+      id="inquiry-type"
+      name="type"
+      required
+      aria-describedby="inquiry-type-error"
+    >
+      <option value="">Choose an inquiry type</option>
+      {INQUIRY_TYPES.map((type) => (
+        <option value={type.value}>{type.label}</option>
+      ))}
+    </select>
+    <p id="inquiry-type-error" class="inquiry-error" data-error="type"></p>
+    <label for="inquiry-message">Message</label>
+    <p id="inquiry-message-help">
+      Up to {INQUIRY_LIMITS.message} characters. Keep it brief: some characters
+      take more space in an email link. If the draft is too long, copy your
+      details into an email instead; we will not cut your message.
+    </p>
+    {/* Validate length without maxlength so pasted messages are never cut. */}
+    <textarea
+      id="inquiry-message"
+      name="message"
+      rows="5"
+      required
+      aria-describedby="inquiry-message-help inquiry-message-error"
+    ></textarea>
+    <p
+      id="inquiry-message-error"
+      class="inquiry-error"
+      data-error="message"
+    ></p>
+    <button type="submit">Open email draft</button>
+    <p data-inquiry-status role="status" tabindex="-1"></p>
+    <a data-inquiry-draft hidden>
+      Reopen the prepared email draft
+    </a>
+  </form>
+  <p class="inquiry-fallback">
+    Prefer to write directly, have JavaScript turned off, or no email app opens?
+    <a href={`mailto:${INQUIRY_EMAIL}`}>Email {INQUIRY_EMAIL}</a>, or copy that
+    address into your email service and include your name, reply-to email,
+    inquiry type and message. Only an email you send reaches us.
+  </p>
+</section>
+
+<style>
+  .inquiry {
+    margin-top: 2rem;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    color: var(--forest);
+    background: var(--paper);
+    overflow-wrap: anywhere;
+  }
+  h3 {
+    margin: 0 0 1rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+  p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  form {
+    margin-top: 1.5rem;
+  }
+  .inquiry-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  label {
+    display: block;
+    margin-block: 0.75rem 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  input,
+  select,
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0.7rem;
+    border: 1px solid currentColor;
+    border-radius: 0;
+    color: var(--forest);
+    background: var(--paper);
+    font: inherit;
+  }
+  textarea {
+    resize: vertical;
+  }
+  button {
+    min-height: 2.75rem;
+    padding: 0.8rem 1.2rem;
+    border: 2px solid var(--forest);
+    color: var(--paper);
+    background: var(--forest);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  :is(input, select, textarea, button, a):focus-visible {
+    outline: 3px solid var(--forest);
+    outline-offset: 3px;
+  }
+  a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .inquiry-error {
+    margin-block: 0.35rem 0.75rem;
+    color: #8c241b;
+    font-weight: 700;
+  }
+  .inquiry-error:empty {
+    display: none;
+  }
+  [aria-invalid="true"] {
+    border: 2px solid #8c241b;
+  }
+  .inquiry-fallback {
+    margin-bottom: 0;
+  }
+  @media (max-width: 36rem) {
+    .inquiry-fields {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+    button {
+      width: 100%;
+    }
+  }
+</style>

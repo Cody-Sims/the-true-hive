@@ -91,6 +91,18 @@ export function createCheckoutHandler(dependencies: CheckoutHttpDependencies) {
       );
       const services = await dependencies.getServices();
       const result = await services.createCheckout(input);
+      if ("terminal" in result) {
+        return jsonResponse({
+          terminal: {
+            outcome: result.terminal.outcome,
+            operationId: result.terminal.operationId,
+            lines: result.terminal.lines.map(({ variantKey, quantity }) => ({
+              variantKey,
+              quantity,
+            })),
+          },
+        });
+      }
       return jsonResponse({ checkoutUrl: result.checkoutUrl });
     } catch (error) {
       const response = checkoutErrorResponse(error);

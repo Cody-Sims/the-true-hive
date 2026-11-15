@@ -13,6 +13,7 @@ import {
   type CheckoutProvider,
 } from "../../src/server/commerce/stripe.ts";
 import type { StripeTestConfig } from "../../src/server/commerce/config.ts";
+import { OrderConflictError } from "../../src/server/commerce/rules.ts";
 import {
   createCheckoutAttemptLimiter,
   createCheckoutHandler,
@@ -356,13 +357,44 @@ test("stored expiry inside provider minimum is quarantined, never extended or lo
   assert.equal(h.expiries.length, 0);
 });
 
-test("terminal orders and completed/expired sessions cannot start a second payment", async () => {
+test("matching terminal replay acknowledges settled or released state without provider calls", async () => {
   for (const state of ["paid", "picked_up", "expired"] as const) {
     const h = harness();
     h.stored.state = state;
+    h.stored.checkoutSessionId = sessionId;
+    h.stored.checkoutExpiresAt = new Date(clock - 86_400_000).toISOString();
+    assert.deepEqual(await h.services.createCheckout(intent), {
+      terminal: {
+        outcome: state === "expired" ? "released" : "settled",
+        operationId: orderId,
+        lines: intent.lines,
+      },
+    });
+    assert.deepEqual(h.effects, ["reserve"]);
+    assert.equal(h.creations.length, 0);
+    assert.equal(h.payments.length, 0);
+    assert.equal(h.expiries.length, 0);
+  }
+});
+
+test("mismatched persisted terminal identities or line payloads never acknowledge another intent", async () => {
+  for (const mismatch of ["identity", "quantity", "variant"]) {
+    const h = harness();
+    h.stored.state = "paid";
+    if (mismatch === "identity")
+      h.stored.id = "10000000-0000-4000-8000-000000000001";
+    if (mismatch === "variant") h.stored.lines[0]!.variantKey = "other-variant";
+    if (mismatch === "quantity") {
+      h.stored.lines[0]!.quantity = 3;
+      h.stored.totalMinor = 2250;
+    }
     await assert.rejects(h.services.createCheckout(intent));
+    assert.deepEqual(h.effects, ["reserve"]);
     assert.equal(h.creations.length, 0);
   }
+});
+
+test("completed/expired provider sessions without terminal persisted state remain quarantined", async () => {
   for (const status of ["complete", "expired"] as const) {
     const h = harness();
     h.stored.checkoutSessionId = sessionId;
@@ -737,6 +769,81 @@ test("checkout route uses bounded JSON and returns only checkoutUrl; errors cann
   const failed = await handler(request());
   assert.equal(failed.status, 503);
   assert(!(await failed.text()).includes("privateSentinel"));
+});
+
+test("checkout route returns only the same-intent terminal acknowledgment after trusted replay", async () => {
+  for (const state of ["paid", "picked_up", "expired"] as const) {
+    const h = harness();
+    h.stored.state = state;
+    const handler = createCheckoutHandler({
+      getConfig: () => config,
+      allowAttempt: () => true,
+      readJsonBody: async (request) => request.json(),
+      getServices: async () => h.services,
+    });
+    const response = await handler(
+      new Request("https://shop.example/api/checkout", {
+        method: "POST",
+        headers: {
+          Origin: config.siteOrigin,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(intent),
+      }),
+    );
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("Cache-Control"), "no-store");
+    assert.deepEqual(await response.json(), {
+      terminal: {
+        outcome: state === "expired" ? "released" : "settled",
+        operationId: orderId,
+        lines: intent.lines,
+      },
+    });
+    assert.deepEqual(h.effects, ["reserve"]);
+    assert.equal(h.creations.length, 0);
+  }
+});
+
+test("terminal replay cannot bypass a canonical payload conflict from reservation authority", async () => {
+  const h = harness();
+  h.stored.state = "expired";
+  h.persistence.reserveCheckout = async (_pool, input) => {
+    h.effects.push("reserve");
+    assert.equal(input.operationId, intent.operationId);
+    assert.notDeepEqual(input.lines, intent.lines);
+    throw new OrderConflictError(
+      "This operation ID was used for a different checkout.",
+    );
+  };
+  const handler = createCheckoutHandler({
+    getConfig: () => config,
+    allowAttempt: () => true,
+    readJsonBody: async (request) => request.json(),
+    getServices: async () => h.services,
+  });
+  const response = await handler(
+    new Request("https://shop.example/api/checkout", {
+      method: "POST",
+      headers: {
+        Origin: config.siteOrigin,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...intent,
+        lines: [{ variantKey: "soap-bar", quantity: 3 }],
+      }),
+    }),
+  );
+  assert.equal(response.status, 409);
+  assert.deepEqual(await response.json(), {
+    error: {
+      code: "CHECKOUT_UNAVAILABLE",
+      message: "Test checkout cannot be completed.",
+    },
+  });
+  assert.deepEqual(h.effects, ["reserve"]);
+  assert.equal(h.creations.length, 0);
 });
 
 test("webhook route passes unparsed raw bytes with the stream bound and awaits durable handling", async () => {

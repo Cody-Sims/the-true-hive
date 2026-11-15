@@ -46,6 +46,9 @@ beforeEach(async () => {
     `GRANT SELECT,INSERT ON inventory_movements,admin_operations,order_lines,payment_events TO "${role}"`,
   );
   await operator.query(`GRANT SELECT ON admin_memberships TO "${role}"`);
+  await operator.query(
+    `GRANT SELECT,UPDATE ON storefront_settings TO "${role}"`,
+  );
   runtime = new Pool({ ...options, max: 1 });
   await runtime.query(`SET ROLE "${role}"`);
   await runtime.query("SET search_path=public");
@@ -59,9 +62,10 @@ afterEach(async () => {
       DROP TABLE public.admin_sessions,public.admin_memberships,public.admin_operations,
         public.payment_events,public.order_lines,public.orders,public.inventory_movements,
         public.inventory_levels,public.inventory_locations,public.product_variants,
-        public.products,public.schema_migrations CASCADE;
+        public.products,public.storefront_settings,public.schema_migrations CASCADE;
       DROP FUNCTION public.prevent_inventory_history_changes(),
-        public.prevent_admin_commerce_history_changes();
+        public.prevent_admin_commerce_history_changes(),
+        public.valid_product_ingredients(jsonb);
       DROP FUNCTION IF EXISTS public.pause_session_insert_fixture();
     `);
     migrated = false;
@@ -188,4 +192,56 @@ test("column-only membership write grants fail the actual runtime permission pre
     );
     await checkAdminDatabaseAccess(runtime);
   }
+});
+
+test("store settings preflight rejects column-only delegation grants", async () => {
+  await operator.query(
+    `GRANT UPDATE(purchases_enabled) ON storefront_settings TO "${role}" WITH GRANT OPTION`,
+  );
+  await assert.rejects(
+    checkAdminDatabaseAccess(runtime),
+    AdminConfigurationError,
+  );
+});
+
+test("store settings runtime requires SELECT and UPDATE, and rejects destructive or delegating privileges", async () => {
+  for (const privilege of ["SELECT", "UPDATE"]) {
+    await operator.query(
+      `REVOKE ${privilege} ON storefront_settings FROM "${role}"`,
+    );
+    await assert.rejects(
+      checkAdminDatabaseAccess(runtime),
+      AdminConfigurationError,
+    );
+    await operator.query(
+      `GRANT ${privilege} ON storefront_settings TO "${role}"`,
+    );
+    await checkAdminDatabaseAccess(runtime);
+  }
+  for (const privilege of [
+    "INSERT",
+    "DELETE",
+    "TRUNCATE",
+    "REFERENCES",
+    "TRIGGER",
+  ]) {
+    await operator.query(
+      `GRANT ${privilege} ON storefront_settings TO "${role}"`,
+    );
+    await assert.rejects(
+      checkAdminDatabaseAccess(runtime),
+      AdminConfigurationError,
+    );
+    await operator.query(
+      `REVOKE ${privilege} ON storefront_settings FROM "${role}"`,
+    );
+    await checkAdminDatabaseAccess(runtime);
+  }
+  await operator.query(
+    `GRANT SELECT ON storefront_settings TO "${role}" WITH GRANT OPTION`,
+  );
+  await assert.rejects(
+    checkAdminDatabaseAccess(runtime),
+    AdminConfigurationError,
+  );
 });

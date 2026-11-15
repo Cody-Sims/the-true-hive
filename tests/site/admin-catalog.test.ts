@@ -53,6 +53,51 @@ const input = { operationId, product, variants: [variant] };
 const invalid = (error: unknown) =>
   error instanceof AdminError && error.status === 400;
 
+test("valid ordered plain-text ingredients reach persistence while invalid lists fail before database work", async () => {
+  let reached = false;
+  const sentinel = {
+    connect() {
+      reached = true;
+      throw new Error("Intent validated");
+    },
+  } as unknown as Pool;
+  await assert.rejects(
+    createAdminProduct(
+      sentinel,
+      {
+        ...input,
+        product: {
+          ...product,
+          ingredients: ["First", "<b>Text, not markup</b>"],
+        },
+      },
+      actor,
+    ),
+  );
+  assert.equal(reached, true);
+  for (const ingredients of [
+    null,
+    "First",
+    [1],
+    [""],
+    [" "],
+    ["x".repeat(201)],
+    Array(41).fill("x"),
+    ["line\nbreak"],
+    ["\0"],
+    ["\ud800"],
+  ]) {
+    await assert.rejects(
+      createAdminProduct(
+        pool,
+        { ...input, product: { ...product, ingredients } },
+        actor,
+      ),
+      invalid,
+    );
+  }
+});
+
 test("untrusted product content, incomplete edits and identities fail validation before any database work", async () => {
   for (const changed of [
     { operationId: "bad" },

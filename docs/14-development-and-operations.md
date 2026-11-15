@@ -42,6 +42,7 @@ Copy `.env.example` to an ignored `.env` **only if needed**. Native start/dev co
 | `SITE_URL` | Canonical site origin; default `https://thetruehive.com`, HTTP loopback allowed locally |
 | `SITE_INDEXABLE` | `false` initially; cannot be enabled with showcase source |
 | `CATALOG_SOURCE` | Explicit `showcase` or `database`; production uses `database`, local default remains `showcase`; no automatic fallback |
+| `STOREFRONT_LOCATION_KEY` | Optional explicit pickup location for public stock states; counts appear only at 1-5 available, with no count at normal stock levels |
 | `DATABASE_URL` | Private pooled connection using a least-privilege read-only role for the current public APIs |
 | `MIGRATION_DATABASE_URL` | Private direct schema-owner connection for the migration CLI, not a frontend setting; a blank value falls back to `DATABASE_URL` |
 | `DATABASE_TLS` | `verify-full` by default; `disable` is restricted to local development targets |
@@ -151,6 +152,148 @@ stock counts, prices, permissions, payment settings or DNS records were changed.
 Continue to publish or unpublish products through the private inventory workspace.
 Keep local development and fixture-based browser tests explicitly in showcase
 mode when a database-backed catalog is not required.
+
+### Ingredients, quantities, cart and inquiry preparation
+
+The owner approved parallel implementation of ingredient editing, inventory-priced
+cart preparation, limited customer stock visibility and a free email-draft inquiry
+form. This approval does not enable checkout on the operational database or
+authorize live payments, new paid resources or fabricated product facts.
+
+- Apply `004_product_ingredients.sql` with the private migration-owner connection
+  before deploying code that reads the new column. Existing products receive an
+  empty list; enter only confirmed ingredients through the product editor, one
+  per line in the intended order. Limits are 40 ingredients and 200 Unicode
+  characters per ingredient. Omitted legacy fields preserve saved values; an
+  explicit empty list clears them.
+- Apply `005_storefront_settings.sql` before deploying store-control code. It
+  creates one closed-by-default purchase setting and extends the existing
+  immutable admin-operation action list. Give the public read role `SELECT`
+  on `storefront_settings` and the private inventory role only `SELECT, UPDATE`.
+  The migration does not guess role names or grant privileges automatically.
+- Continue changing physical quantities through the existing audited inventory
+  adjustment workflow. Public sellability subtracts held, committed and
+  unavailable units from on-hand stock at `STOREFRONT_LOCATION_KEY`. At 1-5
+  available, show `Only N left`; at zero, show `Sold out`; above five, omit exact
+  quantities from both the page and public JSON. Missing levels are unverified,
+  not assumed zero. An unconfigured storefront location omits stock information.
+  The caller-selected availability endpoint retains only coarse availability
+  outside the configured storefront location; it never exposes another
+  location's exact low-stock count.
+- Published active variants show their database prices even when checkout is
+  disabled. The cart stores only bounded variant identities and quantities,
+  refreshes canonical prices, and never reserves stock merely by adding an item.
+  The checkout server remains the price and allocation authority. Concepts and
+  unpriced variants are not merchandise offers. A pending test checkout retains
+  its opaque request identity and frozen variant quantities in session storage.
+  Only a matching server acknowledgment of a settled order or confirmed release
+  clears that pending intent; the cart stays unchanged and another checkout
+  requires an explicit action. Recovery displays the frozen checkout selection
+  separately, then reloads the latest saved cart before allowing edits or a new
+  checkout, preserving changes made in another tab.
+- The inquiry form prepares a visitor-owned email draft at no email-service
+  cost. It does not submit a request to the server, store personal form data,
+  claim delivery or confirm a booking. Visitors must review and send the draft
+  in their email app; the direct email link remains available without JavaScript.
+  Messages are bounded to 600 characters and encoded draft links to 2,000;
+  over-limit content is preserved for manual email rather than truncated.
+
+### Isolated Stripe sandbox activation checklist
+
+The owner confirmed the existing **The True Hive sandbox** account. Hosted
+Checkout remains the selected card-only USD test integration. Account discovery
+and an accepted integration plan do not provision runtime credentials, verify
+webhook delivery or enable payments.
+
+1. Prepare a separate disposable database or approved Neon branch and a separate
+   sandbox application environment. Do not copy the operational `.env`, private
+   memberships, customer records or stock ledger into a test checkout. Do not
+   repurpose the existing prototype hostname or shared production service.
+   A local application behind an approved HTTPS tunnel can avoid adding another
+   paid web service; host/provider setup remains an operator action.
+2. Apply migrations to that isolated database and provision distinct public-read
+   and private-runtime roles using the existing least-privilege runbook. Add
+   clearly test-only catalog/location/count fixtures there, never in production.
+   Point both runtime connections at that same isolated database.
+3. Configure the sandbox HTTPS `SITE_URL`, its `INVENTORY_ORIGIN`, existing
+   Firebase/MFA requirements and an authorized sandbox administrator. Set
+   `STOREFRONT_LOCATION_KEY` and `CHECKOUT_LOCATION_KEY` to the same test pickup
+   location. Keep indexing off. Do not weaken TLS, authentication or role checks
+   to make a local rehearsal pass.
+4. Privately supply that Stripe sandbox's restricted or standard test API key and
+   its endpoint signing secret. Reuse an existing appropriate key where possible;
+   never commit or print credentials. Configure `/api/webhooks/stripe` on the
+   sandbox storefront origin with the pinned API version and supported events.
+   Stripe's [hosted Checkout guide](https://docs.stripe.com/payments/accept-a-payment?payment-ui=checkout&ui=stripe-hosted)
+   and [webhook guide](https://docs.stripe.com/webhooks) describe the provider setup.
+5. Set `CHECKOUT_MODE=stripe-test` only in the isolated environment. Start through
+   the normal preflight wrapper, then explicitly allow new checkouts in the
+   sandbox inventory store settings. Deliberately inspect readiness: database
+   catalog connected and test checkout enabled. Verify visible TEST MODE/no-real-
+   charge labels before selecting test merchandise.
+6. Rehearse a multi-line cart, changed prices, last-unit competition, failed
+   payment, confirmed expiry, lost responses, duplicate callbacks, pickup and
+   reconciliation. Refresh/return URLs are not proof of payment; provider
+   verification and persisted order state remain authoritative. Review backup,
+   access-recovery and reconciliation ownership before any later sales release.
+
+Rollback presentation code without restoring an old stock database. Retain the
+additive ingredients column and saved values. Disabling test checkout stops new
+attempts but does not release existing holds; reconcile those separately.
+
+### Store purchase switch and confirmed pickup
+
+The owner approved publishing the pickup address at **7031 New Highway 68,
+Madisonville, TN 37354**, with pickup by arrangement rather than invented shop
+hours. Maintain a genuine pickup location in inventory, select it with
+`STOREFRONT_LOCATION_KEY`, and enter actual opening quantities through audited
+adjustments. A new location creates disclosed zero balances, not an assumed
+physical count.
+
+Authorized administrators use **Inventory -> Store settings**
+(`/inventory/store`) and **Allow new checkouts**, then save. The setting is
+persisted with a revision and immutable operator receipt; uncertain retries reuse
+the same operation, and conflicting revisions require explicit review.
+
+Closing leaves the catalog, prices and cart visible and editable. Checkout
+admission locks the singleton setting inside the reservation transaction: new
+orders cannot allocate stock after closing wins the lock. Requests admitted
+before closing may finish. Existing matching retries, signed webhooks, settlement,
+pickup and reconciliation continue; closing is not a cancellation or stock-release
+operation. The public readiness `checkoutEnabled` flag describes admission of
+new checkout, not whether existing orders can still be processed.
+
+The purchase setting cannot override disabled runtime checkout or the test-only
+provider boundary. **Taxes are not currently calculated:** `automatic_tax` is
+disabled and provider/order comparisons require zero tax. Publishing a pickup
+address does not establish tax registration, product classification or a tax
+rate. Keep production `CHECKOUT_MODE=disabled`; live sales require a separately
+reviewed payment/tax implementation and business readiness.
+
+For rollout, first verify a private database backup, apply forward migrations
+004 and 005, and grant the exact runtime-role permissions above. Confirm the
+singleton remains closed and run the public/private database preflights before
+merging the checked application release. Do not overwrite real products, prices,
+opening counts or existing inventory with test fixtures.
+
+#### Migration 005 pre-release repair - 2026-11-15
+
+Release review found that 005's initial audit constraint omitted the photo
+actions introduced by 003. The owner explicitly approved correcting the
+unreleased SQL and only its matching production checksum, rather than deleting
+or rewriting business records. A fresh private backup and archive listing were
+verified first. The constraint and checksum were repaired atomically under the
+normal migration lock, with exact old-checksum and action-list guards.
+
+- Previous SHA-256: `ab7eb8f64f65f45947c14f88059ae17207776994d4857ee206d1ce3aadf2dcc9`.
+- Corrected SHA-256: `1b28027ef43c463cc322cda9ac2ed1de970739c9eb8fba5565e9a40800756755`.
+
+Both `attach_product_photo` and `remove_product_photo` are retained alongside
+the store action. Existing business/audit rows were verified unchanged, a private
+repair receipt was saved, and the normal migration runner then reported no
+pending changes or checksum drift. This specific approved repair is not
+permission to rewrite other applied migrations; normal checksum protection
+remains unchanged.
 
 ### Apex/www hosting and rollback
 
@@ -320,6 +463,7 @@ Provision roles deliberately with the direct owner connection after the forward 
 | Product/variant/location/count writes | Denied | Required insert/update only | Manage |
 | Movement/admin-operation/payment-event history | Denied | Read/insert; no update/delete/truncate | Append-only guards still apply |
 | Orders/order snapshots | Denied | Required read/insert/order update; no snapshot rewriting | Recovery/reconciliation |
+| Store purchase setting | Read only | Read/update existing singleton; no insert/delete/truncate/delegation | Forward migration and explicit role grants |
 | Admin membership | Denied | Read only; no grant/revoke | Private grant/revoke |
 | Local admin sessions | Denied | Read/insert/revoke | Recovery |
 | Schema creation, role management, migrations | Denied | Denied | Deliberate operator action |

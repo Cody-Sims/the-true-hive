@@ -2,6 +2,25 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readConfig } from "../../src/server/config.ts";
 
+test("public stock location is explicit and must be a stable record key", () => {
+  assert.equal(readConfig({}).storefrontLocationKey, null);
+  assert.equal(
+    readConfig({ STOREFRONT_LOCATION_KEY: " " }).storefrontLocationKey,
+    null,
+  );
+  assert.equal(
+    readConfig({ STOREFRONT_LOCATION_KEY: " pickup-room " })
+      .storefrontLocationKey,
+    "pickup-room",
+  );
+  for (const key of ["Pickup", "room/key", "x".repeat(81)]) {
+    assert.throws(
+      () => readConfig({ STOREFRONT_LOCATION_KEY: key }),
+      /STOREFRONT_LOCATION_KEY/,
+    );
+  }
+});
+
 test("the site keeps shopping gated while using the owner-approved business contact", () => {
   const config = readConfig({});
   assert.equal(config.catalogSource, "showcase");

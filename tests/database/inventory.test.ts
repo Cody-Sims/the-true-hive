@@ -411,7 +411,10 @@ test("a failed history insert rolls back the count and recorded movements cannot
 
 test("checkout holds reduce public availability without exposing private allocations", async () => {
   const stock = await stockFixture(5, 1, 1, 3);
-  const config = readConfig({ CATALOG_SOURCE: "database" });
+  const config = readConfig({
+    CATALOG_SOURCE: "database",
+    STOREFRONT_LOCATION_KEY: stock.locationKey,
+  });
   assert.deepEqual(
     await getAvailability(config, stock.variantKey, stock.locationKey, pool),
     {
@@ -429,7 +432,8 @@ test("checkout holds reduce public availability without exposing private allocat
     {
       variantKey: stock.variantKey,
       locationKey: stock.locationKey,
-      state: "available",
+      state: "low_stock",
+      remaining: 1,
     },
   );
 });
@@ -488,6 +492,8 @@ test("repeat migrations verify checksums and reject rewritten history without ch
     for (const migration of [
       "002_admin_commerce.sql",
       "003_product_photos.sql",
+      "004_product_ingredients.sql",
+      "005_storefront_settings.sql",
     ])
       await writeFile(
         join(directory, migration),

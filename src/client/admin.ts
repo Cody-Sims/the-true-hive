@@ -4,6 +4,7 @@ import type {
   AdminOrder,
   AdminProduct,
 } from "../domain/admin.ts";
+import type { StoreSettings } from "../domain/storefront.ts";
 
 type Payload = Record<string, unknown>;
 type Envelope = {
@@ -11,6 +12,7 @@ type Envelope = {
   location?: AdminLocation;
   locations?: AdminLocation[];
   order?: AdminOrder;
+  settings?: StoreSettings;
   adjustment?: {
     operationId: string;
     beforeOnHand: number;
@@ -66,6 +68,14 @@ function serialize(form: HTMLFormElement, action: string): Payload {
           .split(/\r?\n/)
           .map((line) => line.trim())
           .filter(Boolean),
+        ...(data.has("ingredients")
+          ? {
+              ingredients: text(data, "ingredients")
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter(Boolean),
+            }
+          : {}),
         category: text(data, "category"),
         imageKey: text(data, "imageKey"),
         kind: text(data, "kind"),
@@ -113,6 +123,11 @@ function serialize(form: HTMLFormElement, action: string): Payload {
           active: data.has("active"),
           pickupEnabled: data.has("pickupEnabled"),
         },
+      };
+    case "store":
+      return {
+        ...revision,
+        purchasesEnabled: data.has("purchasesEnabled"),
       };
     case "adjustment": {
       const amount = integer(text(data, "amount"), "Amount");
@@ -382,47 +397,64 @@ function setup(form: HTMLFormElement) {
             orderRevision.textContent = String(body.order.revision);
         }
         break;
+      case "store":
+        if (typeof body.settings?.purchasesEnabled !== "boolean")
+          throw new Error("The current store setting could not be verified.");
+        revision = body.settings.revision;
+        break;
     }
     if (!Number.isInteger(revision) || revision! < 1)
       throw new Error("A current revision could not be verified.");
+    if (form.dataset.adminForm === "store" && body.settings) {
+      for (const node of form.querySelectorAll("[data-store-status]"))
+        node.textContent = body.settings.purchasesEnabled
+          ? "New checkouts allowed"
+          : "New checkouts paused";
+      for (const node of form.querySelectorAll("[data-store-revision]"))
+        node.textContent = String(revision);
+    }
     const location =
       body.location ??
       body.locations?.find(
         (location) => location.key === input(form, "key")?.value,
       );
-    const record = product
-      ? {
-          key: product.key,
-          revision: product.revision,
-          title: product.title,
-          slug: product.slug,
-          summary: product.summary,
-          details: product.details,
-          category: product.category,
-          imageKey: product.imageKey,
-          kind: product.kind,
-          status: product.status,
-          variants: product.variants.map((variant) => ({
-            key: variant.key,
-            sku: variant.sku,
-            label: variant.label,
-            active: variant.active,
-            priceMinor: variant.priceMinor,
-            currency: variant.currency,
-            levels: variant.levels,
-          })),
-        }
-      : (location ??
-        (body.order
+    const record =
+      form.dataset.adminForm === "store"
+        ? body.settings
+        : product
           ? {
-              id: body.order.id,
-              state: body.order.state,
-              revision: body.order.revision,
-              locationKey: body.order.locationKey,
-              lines: body.order.lines,
-              totalMinor: body.order.totalMinor,
+              key: product.key,
+              revision: product.revision,
+              title: product.title,
+              slug: product.slug,
+              summary: product.summary,
+              details: product.details,
+              ingredients: product.ingredients ?? [],
+              category: product.category,
+              imageKey: product.imageKey,
+              kind: product.kind,
+              status: product.status,
+              variants: product.variants.map((variant) => ({
+                key: variant.key,
+                sku: variant.sku,
+                label: variant.label,
+                active: variant.active,
+                priceMinor: variant.priceMinor,
+                currency: variant.currency,
+                levels: variant.levels,
+              })),
             }
-          : body.level));
+          : (location ??
+            (body.order
+              ? {
+                  id: body.order.id,
+                  state: body.order.state,
+                  revision: body.order.revision,
+                  locationKey: body.order.locationKey,
+                  lines: body.order.lines,
+                  totalMinor: body.order.totalMinor,
+                }
+              : body.level));
     currentText.textContent = JSON.stringify(record, null, 2);
     current.hidden = false;
     return revision!;
@@ -459,7 +491,9 @@ function setup(form: HTMLFormElement) {
   function showReceipt(body: Envelope) {
     receipt.hidden = false;
     const operationId = String(intent!.payload.operationId);
-    if (body.adjustment) {
+    if (form.dataset.adminForm === "store" && body.settings) {
+      receiptText.textContent = `Operation ${operationId} confirmed: ${body.settings.purchasesEnabled ? "New checkouts allowed" : "New checkouts paused"}, revision ${body.settings.revision}. Payment and tax configuration remain separate.`;
+    } else if (body.adjustment) {
       const result = body.adjustment;
       receiptText.textContent = `Operation ${result.operationId}: recorded on hand ${result.beforeOnHand} → ${result.onHand}${result.replayed ? " (same operation replayed)" : ""}. Current quantities are shown separately and may differ from this original receipt.`;
     } else if (body.product) {
@@ -469,11 +503,13 @@ function setup(form: HTMLFormElement) {
     } else if (body.order) {
       receiptText.textContent = `Operation ${operationId} confirmed: order ${body.order.id}, ${body.order.state}, revision ${body.order.revision}.`;
     }
-    const resource = body.product
-      ? `products/${encodeURIComponent(body.product.key)}`
-      : body.location
-        ? `locations/${encodeURIComponent(body.location.key)}`
-        : null;
+    const resource = body.settings
+      ? "store"
+      : body.product
+        ? `products/${encodeURIComponent(body.product.key)}`
+        : body.location
+          ? `locations/${encodeURIComponent(body.location.key)}`
+          : null;
     if (resource) {
       const link = document.createElement("a");
       link.href = `/inventory/${resource}`;
@@ -487,7 +523,9 @@ function setup(form: HTMLFormElement) {
     if (!intent || phase === "pending") return;
     state(
       "pending",
-      "Waiting for a verified server response. No quantity change has been assumed.",
+      form.dataset.adminForm === "store"
+        ? "Waiting for a verified store-setting receipt. No change has been assumed."
+        : "Waiting for a verified server response. No quantity change has been assumed.",
     );
     let response: Response;
     let body: Envelope;
@@ -560,7 +598,9 @@ function setup(form: HTMLFormElement) {
     } catch {
       state(
         "uncertain",
-        "The response did not verify the operation. Retry the same unchanged intent; no quantity success is assumed.",
+        form.dataset.adminForm === "store"
+          ? "The response did not verify the store setting. Retry the same unchanged intent; no setting change is assumed."
+          : "The response did not verify the operation. Retry the same unchanged intent; no quantity success is assumed.",
       );
       return;
     }
@@ -579,7 +619,9 @@ function setup(form: HTMLFormElement) {
         form.dataset.adminForm !== "adjustment";
       state(
         terminal ? "confirmed" : "idle",
-        "Server receipt confirmed; current quantities/revision verified. A further change is a new operation.",
+        form.dataset.adminForm === "store"
+          ? "Server receipt confirmed; current store setting/revision verified. A further change is a new operation."
+          : "Server receipt confirmed; current quantities/revision verified. A further change is a new operation.",
       );
     } catch {
       state(

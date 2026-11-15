@@ -181,6 +181,7 @@ const product: AdminProduct = {
   title: "Component-only record",
   summary: "Presentation fixture, not a real product or stock seed.",
   details: [],
+  ingredients: ["Fixture first", "<b>Fixture second</b>"],
   category: "soap",
   imageKey: "soap",
   kind: "active",
@@ -198,6 +199,63 @@ const product: AdminProduct = {
     },
   ],
 };
+
+test("the cart publishes the confirmed pickup address without promising walk-in hours", async () => {
+  const html = await render(
+    "src/pages/cart.astro",
+    {},
+    { request: new Request("https://thetruehive.com/cart") },
+  );
+  assert.match(html, /7031 New Highway 68/);
+  assert.match(html, /Madisonville, TN 37354/);
+  assert.match(html, /Arrange a pickup time/);
+  assert.doesNotMatch(html, /Open daily|Walk-ins welcome/i);
+});
+
+test("verified inventory navigation includes store purchase controls", async () => {
+  const html = await render(
+    "src/layouts/AdminLayout.astro",
+    { title: "Store settings" },
+    {
+      request: new Request("https://inventory.thetruehive.com/inventory/store"),
+      locals: {
+        admin: { uid: "component-only-uid", actorId: "component-only-actor" },
+        csrfToken: "component-only-token",
+      },
+    },
+  );
+  assert.match(html, /href="\/inventory\/store"/);
+  assert.match(html, /Store settings/);
+});
+
+test("ingredient editing is explicit, empty by default, ordered and escaped", async () => {
+  const saved = await render("src/components/admin/ProductForm.astro", {
+    product,
+  });
+  assert.match(saved, /name="ingredients"/);
+  assert.match(saved, /Fixture first\n&lt;b&gt;Fixture second&lt;\/b&gt;/);
+  assert.doesNotMatch(saved, /<b>Fixture second<\/b>/);
+  const draft = await render("src/components/admin/ProductForm.astro", {});
+  assert.match(draft, /name="ingredients"[^>]*><\/textarea>/);
+  const html = await render("src/components/ProductIngredients.astro", {
+    ingredients: product.ingredients,
+  });
+  assert.match(html, /<li>Fixture first<\/li>/);
+  assert.match(html, /&lt;b&gt;Fixture second&lt;\/b&gt;/);
+  assert.doesNotMatch(html, /<b>/);
+  assert.equal(
+    (await render("src/components/ProductIngredients.astro", {})).trim(),
+    "",
+  );
+  assert.equal(
+    (
+      await render("src/components/ProductIngredients.astro", {
+        ingredients: [],
+      })
+    ).trim(),
+    "",
+  );
+});
 
 async function fixturePage(
   component: string,
@@ -254,7 +312,7 @@ async function waitPhase(
     .waitFor({ state: "attached", timeout: 3000 });
 }
 
-test("real priced products advertise test checkout only when explicitly enabled", async () => {
+test("active product cards show canonical prices and cart options without enabling checkout", async () => {
   const product = {
     key: "test-product",
     slug: "test-product",
@@ -278,21 +336,22 @@ test("real priced products advertise test checkout only when explicitly enabled"
       product,
       testCheckoutEnabled: true,
     }),
-    /href="\/goods\/test-product#test-checkout">\s*Test checkout\s*<\/a>/,
+    /href="\/goods\/test-product#add-to-cart"[^>]*>\s*Choose for your test cart\s*<\/a>/,
   );
-  assert.doesNotMatch(
-    await render("src/components/ProductCard.astro", {
-      product,
-      testCheckoutEnabled: false,
-    }),
-    /Test checkout/,
-  );
+  const browseOnly = await render("src/components/ProductCard.astro", {
+    product,
+    testCheckoutEnabled: false,
+  });
+  assert.match(browseOnly, /\$4\.50/);
+  assert.match(browseOnly, /#add-to-cart/);
+  assert.match(browseOnly, /Choose options/);
+  assert.doesNotMatch(browseOnly, /Test checkout/);
   assert.doesNotMatch(
     await render("src/components/ProductCard.astro", {
       product: { ...product, kind: "concept" },
       testCheckoutEnabled: true,
     }),
-    /Test checkout/,
+    /#add-to-cart|\$4\.50/,
   );
   assert.doesNotMatch(
     await render("src/components/ProductCard.astro", {
@@ -302,11 +361,27 @@ test("real priced products advertise test checkout only when explicitly enabled"
       },
       testCheckoutEnabled: true,
     }),
-    /Test checkout/,
+    /#add-to-cart/,
   );
 });
 
-test("public contact channels use the confirmed phone and omit unconfigured placeholders", async () => {
+test("legacy test checkout keeps verified low-stock variants selectable", async () => {
+  const html = await render("src/components/TestCheckout.astro", {
+    product: {
+      ...product,
+      variants: [{ ...product.variants[0], priceMinor: 725 }],
+    },
+    enabled: true,
+    availability: { [product.variants[0]!.key]: "low_stock" },
+  });
+  assert.match(html, /Low stock/);
+  assert.match(
+    html,
+    new RegExp(`<option\\b[^>]*value="${product.variants[0]!.key}"`),
+  );
+});
+
+test("public contact channels use the confirmed phone and free email drafts without social placeholders", async () => {
   const html = await render("src/components/ContactSection.astro", {
     contact: readConfig({}).contact,
   });
@@ -315,7 +390,10 @@ test("public contact channels use the confirmed phone and omit unconfigured plac
     html,
     /not published|will appear|future beekeeping|email.*not open/i,
   );
-  assert.doesNotMatch(html, /facebook\.com|instagram\.com|mailto:|<form\b/i);
+  assert.doesNotMatch(html, /facebook\.com|instagram\.com/i);
+  assert.match(html, /data-inquiry-form/);
+  assert.match(html, /href="mailto:loganstakely18@gmail\.com"/);
+  assert.match(html, /Nothing is sent by this website/);
   const configured = await render("src/components/ContactSection.astro", {
     contact: readConfig({
       FACEBOOK_URL: "https://www.facebook.com/verified-business",
@@ -419,6 +497,7 @@ test("services copy is ready to share without planning-stage notices or booking 
   ])
     assert.ok(copy.includes(detail), detail);
   assert.match(copy, /Do not disturb a colony or approach it for a photograph/);
+  assert.match(main, /href="\/#inquiry"/);
   assert.doesNotMatch(main, /<(?:form|input|textarea)\b|href="mailto:/i);
   assert.match(html, /<title>Beekeeping services for home and farm/);
 });
@@ -2494,11 +2573,18 @@ domTest(
       await page
         .getByLabel("Summary", { exact: true })
         .fill("Keep my corrected draft summary.");
+      await page
+        .getByLabel("Ingredients (one per line)")
+        .fill(" First \n\n <b>Second</b> ");
       await page.getByRole("button", { name: "Save changes" }).click();
       await waitPhase(page, "idle");
       assert.equal(requests.length, 1);
       assert.equal(requests[0]!.action, "save");
       assert.equal(requests[0]!.expectedRevision, 7);
+      assert.deepEqual(
+        (requests[0]!.product as { ingredients: string[] }).ingredients,
+        ["First", "<b>Second</b>"],
+      );
       assert.deepEqual(requests[0]!.variants, [
         {
           key: level.variantKey,
@@ -2529,6 +2615,188 @@ domTest(
         (requests[1]!.variants as { priceMinor: number }[])[0]!.priceMinor,
         725,
       );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "ingredient editing preserves a full valid Unicode list without cutting pasted text",
+  async () => {
+    const page = await fixturePage("src/components/admin/ProductForm.astro", {
+      product,
+    });
+    const ingredients = Array.from({ length: 40 }, () => "🐝".repeat(200));
+    let payload: Record<string, unknown> | undefined;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      payload = route.request().postDataJSON();
+      return route.fulfill({
+        status: 422,
+        json: { error: { message: "Test-only rejection" } },
+      });
+    });
+    try {
+      const field = page.getByLabel("Ingredients (one per line)");
+      await field.fill(ingredients.join("\n"));
+      assert.equal(await field.inputValue(), ingredients.join("\n"));
+      await page.getByRole("button", { name: "Save changes" }).click();
+      await waitPhase(page, "idle");
+      assert(payload);
+      assert.deepEqual(
+        (payload.product as { ingredients: string[] }).ingredients,
+        ingredients,
+      );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "legacy product forms omit ingredients instead of submitting an unintended clear",
+  async () => {
+    const page = await fixturePage("src/components/admin/ProductForm.astro", {
+      product,
+    });
+    let payload: Record<string, unknown> | undefined;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      payload = route.request().postDataJSON();
+      return route.fulfill({
+        status: 422,
+        json: { error: { message: "Test-only rejection" } },
+      });
+    });
+    try {
+      await page
+        .locator('[name="ingredients"]')
+        .evaluate((field) => field.remove());
+      await page.getByRole("button", { name: "Save changes" }).click();
+      await waitPhase(page, "idle");
+      assert(payload);
+      assert.equal("ingredients" in (payload.product as object), false);
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "store controls freeze uncertain changes, retry the same intent and show verified current settings",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/StoreSettingsForm.astro",
+      { settings: { purchasesEnabled: false, revision: 7 } },
+    );
+    const requests: Record<string, unknown>[] = [];
+    let settings = { purchasesEnabled: false, revision: 7 };
+    await page.route("**/api/admin/store", (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({ json: { settings } });
+      requests.push(route.request().postDataJSON());
+      if (requests.length === 1) {
+        settings = { purchasesEnabled: true, revision: 8 };
+        return route.abort("connectionreset");
+      }
+      if (requests.length > 2)
+        settings = { purchasesEnabled: false, revision: 9 };
+      return route.fulfill({
+        json: { settings, replayed: requests.length === 2 },
+      });
+    });
+    try {
+      await page.getByLabel("Allow new checkouts").check();
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await page.waitForFunction(() => {
+        const form = document.querySelector<HTMLElement>("[data-admin-form]");
+        return (
+          form?.dataset.phase === "uncertain" ||
+          form
+            ?.querySelector("[data-admin-status]")
+            ?.textContent?.includes("not configured")
+        );
+      });
+      assert.equal(requests.length, 1);
+      await waitPhase(page, "uncertain");
+      assert.equal(
+        await page.getByLabel("Allow new checkouts").isDisabled(),
+        true,
+      );
+      assert.equal(requests[0]!.purchasesEnabled, true);
+      assert.equal(requests[0]!.expectedRevision, 7);
+      assert.deepEqual(Object.keys(requests[0]!).sort(), [
+        "expectedRevision",
+        "operationId",
+        "purchasesEnabled",
+      ]);
+      await page
+        .getByRole("button", { name: "Retry the same operation" })
+        .click();
+      await waitPhase(page, "idle");
+      assert.deepEqual(requests[1], requests[0]);
+      assert.match(
+        await page.locator("[data-admin-receipt-text]").innerText(),
+        /New checkouts allowed/,
+      );
+      assert.equal(
+        await page.locator("[data-store-status]").innerText(),
+        "New checkouts allowed",
+      );
+      await page.getByLabel("Allow new checkouts").uncheck();
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await waitPhase(page, "idle");
+      assert.equal(requests[2]!.purchasesEnabled, false);
+      assert.equal(requests[2]!.expectedRevision, 8);
+      assert.notEqual(requests[2]!.operationId, requests[0]!.operationId);
+      assert.equal(
+        await page.locator("[data-store-status]").innerText(),
+        "New checkouts paused",
+      );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "stale store settings require an explicit review before a new operation",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/StoreSettingsForm.astro",
+      { settings: { purchasesEnabled: true, revision: 7 } },
+    );
+    const requests: Record<string, unknown>[] = [];
+    let settings = { purchasesEnabled: true, revision: 8 };
+    await page.route("**/api/admin/store", (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({ json: { settings } });
+      requests.push(route.request().postDataJSON());
+      if (requests.length === 1)
+        return route.fulfill({
+          status: 409,
+          json: {
+            error: { code: "CONFLICT", message: "Review current settings." },
+          },
+        });
+      settings = { purchasesEnabled: false, revision: 9 };
+      return route.fulfill({ json: { settings, replayed: false } });
+    });
+    try {
+      await page.getByLabel("Allow new checkouts").uncheck();
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await waitPhase(page, "conflict");
+      await page
+        .getByRole("button", {
+          name: "I reviewed the current record; allow a new intent",
+        })
+        .click();
+      await waitPhase(page, "idle");
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await waitPhase(page, "idle");
+      assert.equal(requests.length, 2);
+      assert.equal(requests[1]!.expectedRevision, 8);
+      assert.equal(requests[1]!.purchasesEnabled, false);
+      assert.notEqual(requests[1]!.operationId, requests[0]!.operationId);
     } finally {
       await page.close();
     }

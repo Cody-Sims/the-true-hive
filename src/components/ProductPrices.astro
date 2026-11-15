@@ -1,0 +1,47 @@
+---
+import type { Product } from "../domain/catalog.ts";
+import { money, pricedVariants } from "../domain/cart.ts";
+import StockNotice from "./StockNotice.astro";
+interface Props {
+  product: Product;
+}
+const { product } = Astro.props;
+const priced = pricedVariants(product);
+---
+
+{product.kind === "active" && (
+  <div class="product-prices" aria-label="Current variant prices">
+    {product.variants.length ? (
+      <ul>
+        {product.variants.map((variant) => (
+          <li>
+            <span>
+              {variant.label} ·{" "}
+              {priced.includes(variant)
+                ? money(variant.priceMinor!)
+                : "Price not available"}
+            </span>
+            <StockNotice variant={variant} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p>Formats and prices are not available yet.</p>
+    )}
+  </div>
+)}
+
+<style>
+  .product-prices {
+    margin-block: 0.75rem;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+  .product-prices ul {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+</style>

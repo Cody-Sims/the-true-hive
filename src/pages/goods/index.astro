@@ -3,7 +3,8 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
 import ProductCard from "../../components/ProductCard.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
-import { getCheckoutPresentation } from "../../server/commerce/stripe.ts";
+import { getCheckoutPresentation } from "../../server/commerce/config.ts";
+import { getStorefrontStatus } from "../../server/storefront.ts";
 import type { Catalog, ProductCategory } from "../../domain/catalog.ts";
 
 const collections: { value: ProductCategory | "all"; label: string }[] = [
@@ -36,8 +37,11 @@ const search = query.trim().toLowerCase();
 const filtersActive = category !== "all" || search.length > 0;
 
 const config = readConfig();
-const testCheckoutEnabled =
-  config.catalogSource === "database" && getCheckoutPresentation().enabled;
+const storefront = await getStorefrontStatus(
+  config,
+  getCheckoutPresentation().enabled,
+);
+const testCheckoutEnabled = storefront.checkoutEnabled;
 let catalog: Catalog | undefined;
 let unavailable = false;
 try {
@@ -66,7 +70,8 @@ const products = filtersInvalid
 
 <SiteLayout
   title="The good-goods collection"
-  description="Explore The True Hive's soap collection and future honey and candle concepts. Online ordering, retail honey availability, and pickup details are not open yet."
+  description="Explore The True Hive's collection, published variant prices and pickup information in Madisonville, Tennessee. Online purchasing is not open yet."
+  storefrontStatus={storefront}
 >
   <section class="page-intro collection-intro wrap">
     <div>
@@ -88,7 +93,13 @@ const products = filtersInvalid
       <p class="eyebrow">A closer look, at your pace</p>
       <p>
         Browse the ideas, read the details, and see what is a concept and what
-        has been confirmed. No purchase is available here.
+        has been confirmed. Published active products show their current prices;
+        concepts are not for sale.{" "}
+        {storefront.state === "closed"
+          ? "Purchases are paused; you can still browse prices and save selections in your cart."
+          : testCheckoutEnabled
+            ? "TEST MODE only — no real charge. Review saved selections in your cart."
+            : "Save selections in your cart; online ordering is not open yet."}
       </p>
     </aside>
   </section>

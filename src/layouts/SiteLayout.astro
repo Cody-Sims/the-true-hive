@@ -4,30 +4,50 @@ import BrandMark from "../components/BrandMark.astro";
 import favicon from "../assets/favicon.svg?url";
 import shareImage from "../assets/social-card.png?url";
 import { readConfig } from "../server/config.ts";
+import { getCheckoutPresentation } from "../server/commerce/config.ts";
+import { getStorefrontStatus } from "../server/storefront.ts";
+import type { StorefrontStatus } from "../domain/storefront.ts";
 
 interface Props {
   title: string;
   description: string;
   path?: string;
   notFound?: boolean;
+  storefrontStatus?: StorefrontStatus;
 }
 const {
   title,
   description,
   path = Astro.url.pathname,
   notFound = false,
+  storefrontStatus,
 } = Astro.props;
 const config = readConfig();
+const cartPage = path === "/cart" || path === "/cart/";
 const shoppingPage =
   path === "/" ||
   path === "/goods" ||
   path.startsWith("/goods/") ||
+  cartPage ||
   path.startsWith("/checkout/");
+const storefront =
+  storefrontStatus ??
+  (shoppingPage
+    ? await getStorefrontStatus(config, getCheckoutPresentation().enabled)
+    : { checkoutEnabled: false, state: "unconfigured" });
+const shoppingNotice =
+  storefront.state === "closed"
+    ? "Online ordering is paused."
+    : storefront.state === "unavailable"
+      ? "Online ordering is temporarily unavailable."
+      : storefront.checkoutEnabled
+        ? "TEST MODE — no real charge. Online ordering isn't open yet."
+        : "Online ordering isn't open yet.";
 const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
 const isSearchResults =
   (Astro.url.pathname === "/goods" || Astro.url.pathname === "/goods/") &&
   Astro.url.searchParams.has("q");
-const omitCanonical = isErrorDocument || isSearchResults;
+const omitCanonical = isErrorDocument || isSearchResults || cartPage;
 const canonicalUrl = new URL(config.siteOrigin);
 canonicalUrl.pathname = new URL(path, config.siteOrigin).pathname;
 const canonical = canonicalUrl.href;
@@ -91,7 +111,7 @@ const schema = JSON.stringify({
       <aside class="opening-note" aria-label="Shopping information">
         <div class="wrap">
           <span>Beekeeping in East Tennessee.</span>
-          <span>Online ordering isn't open yet.</span>
+          <span>{shoppingNotice}</span>
         </div>
       </aside>
     )}
@@ -129,6 +149,9 @@ const schema = JSON.stringify({
           >
             About us
           </a>
+          <a href="/cart" aria-current={cartPage ? "page" : undefined}>
+            Cart<span data-cart-count></span>
+          </a>
           <a class="nav-connect" href="/#connect">
             Connect <span aria-hidden="true">&nearr;</span>
           </a>
@@ -161,8 +184,12 @@ const schema = JSON.stringify({
       </div>
       <div class="wrap footer-colophon">
         <span>Local care. A lasting connection.</span>
-        {shoppingPage && <span>Online ordering is not open yet.</span>}
+        {shoppingPage && <span>{shoppingNotice}</span>}
       </div>
     </footer>
+    <script>
+      import "../client/cart.ts";
+      import "../client/inquiry.ts";
+    </script>
   </body>
 </html>

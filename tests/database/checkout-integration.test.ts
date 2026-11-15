@@ -36,6 +36,7 @@ beforeEach(async () => {
   pool = new Pool({ ...options, options: `-c search_path=${schema}` });
   await migrateDatabase(pool);
   await pool.query(`
+    UPDATE storefront_settings SET purchases_enabled=true;
     INSERT INTO products(product_key,slug,title,summary,category,image_key,kind,published)
       VALUES ('test-soap','test-soap','Soap','Test-only merchandise','soap','soap','active',true);
     INSERT INTO product_variants(variant_key,product_key,sku,label,price_minor)
@@ -188,8 +189,10 @@ test("a lost create response retries the same provider intent without duplicatin
   const input = intent();
   const fixture = provider(true);
   await assert.rejects(fixture.services.createCheckout(input));
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
   const retry = await fixture.services.createCheckout(input);
   const again = await fixture.services.createCheckout(input);
+  assert("checkoutUrl" in retry && "checkoutUrl" in again);
   assert.equal(retry.checkoutUrl, again.checkoutUrl);
   assert.equal(fixture.sessions.size, 1);
   assert.equal(fixture.attempts.length, 2);
@@ -211,6 +214,7 @@ test("a signed expired session recovers a missing association after the original
   await assert.rejects(fixture.services.createCheckout(input));
   const session = fixture.sessions.get(input.operationId);
   assert(session);
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
   session.status = "expired";
   context.mock.timers.enable({ apis: ["Date"], now: Date.now() + 2 * 3600000 });
   const payload = JSON.stringify({
@@ -231,10 +235,66 @@ test("a signed expired session recovers a missing association after the original
     signature,
   );
   assert.equal(result.result, "expired");
+  assert.deepEqual(await fixture.services.createCheckout(input), {
+    terminal: {
+      outcome: "released",
+      operationId: input.operationId,
+      lines: input.lines,
+    },
+  });
+  assert.equal(fixture.attempts.length, 1);
   assert.deepEqual(
     (await pool.query("SELECT on_hand,held,committed FROM inventory_levels"))
       .rows,
     [{ on_hand: 10, held: 0, committed: 0 }],
+  );
+});
+
+test("a signed paid order acknowledges a matching replay without reserving or charging again", async () => {
+  const input = intent();
+  const fixture = provider();
+  await fixture.services.createCheckout(input);
+  const session = fixture.sessions.get(input.operationId);
+  assert(session);
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
+  session.status = "complete";
+  session.payment_status = "paid";
+  session.payment_intent = "pi_offlineFixture";
+  const payload = JSON.stringify({
+    id: "evt_testPaidReplay",
+    object: "event",
+    livemode: false,
+    api_version: STRIPE_API_VERSION,
+    type: "checkout.session.completed",
+    data: { object: session },
+  });
+  const signature = sdk.webhooks.generateTestHeaderString({
+    payload,
+    secret: config.webhookSecret,
+    timestamp: Math.floor(Date.now() / 1000),
+  });
+  assert.equal(
+    (await fixture.services.handleWebhook(Buffer.from(payload), signature))
+      .result,
+    "paid",
+  );
+  assert.deepEqual(await fixture.services.createCheckout(input), {
+    terminal: {
+      outcome: "settled",
+      operationId: input.operationId,
+      lines: input.lines,
+    },
+  });
+  assert.equal(fixture.attempts.length, 1);
+  assert.equal(fixture.sessions.size, 1);
+  assert.deepEqual(
+    (await pool.query("SELECT on_hand,held,committed FROM inventory_levels"))
+      .rows,
+    [{ on_hand: 10, held: 0, committed: 1 }],
+  );
+  assert.equal(
+    (await pool.query("SELECT count(*)::int AS n FROM orders")).rows[0].n,
+    1,
   );
 });
 
@@ -266,6 +326,43 @@ test("real stock conflicts reach the public checkout as conflicts, not uncertain
   );
 });
 
+test("a closed store returns STORE_CLOSED with no provider call, stock mutation or order, and can reopen", async () => {
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
+  const fixture = provider();
+  const handler = createCheckoutHandler({
+    getConfig: () => config,
+    readJsonBody,
+    getServices: async () => fixture.services,
+    allowAttempt: () => true,
+  });
+  const input = intent();
+  const response = await handler(
+    new Request(`${config.siteOrigin}/api/checkout`, {
+      method: "POST",
+      headers: {
+        Origin: config.siteOrigin,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    }),
+  );
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).error.code, "STORE_CLOSED");
+  assert.equal(fixture.attempts.length, 0);
+  assert.equal(
+    (await pool.query("SELECT count(*)::int AS n FROM orders")).rows[0].n,
+    0,
+  );
+  assert.deepEqual(
+    (await pool.query("SELECT held,committed,revision FROM inventory_levels"))
+      .rows,
+    [{ held: 0, committed: 0, revision: 1 }],
+  );
+  await pool.query("UPDATE storefront_settings SET purchases_enabled=true");
+  assert("checkoutUrl" in (await fixture.services.createCheckout(input)));
+  assert.equal(fixture.attempts.length, 1);
+});
+
 test("unsupported test-payment totals are rejected before stock holds or provider calls", async () => {
   for (const price of [49, 100000000]) {
     await pool.query("UPDATE product_variants SET price_minor=$1", [price]);
@@ -288,6 +385,7 @@ test("supported full-length merchandise labels do not create poisoned checkout h
   await pool.query("UPDATE product_variants SET label=$1", ["B".repeat(160)]);
   const fixture = provider();
   const result = await fixture.services.createCheckout(intent());
+  assert("checkoutUrl" in result);
   assert.match(
     result.checkoutUrl,
     /^https:\/\/checkout\.stripe\.com\/c\/pay\//,

@@ -3,6 +3,7 @@ import SiteLayout from "../layouts/SiteLayout.astro";
 import ProductCard from "../components/ProductCard.astro";
 import ContactSection from "../components/ContactSection.astro";
 import ServiceCards from "../components/ServiceCards.astro";
+import PickupLocation from "../components/PickupLocation.astro";
 import { Image } from "astro:assets";
 import hivePhoto from "../assets/honeybees-on-comb.webp";
 import { getCatalog, CatalogUnavailableError } from "../server/catalog.ts";
@@ -43,7 +44,8 @@ try {
         </a>
       </div>
       <p class="fine-print home-hero-note">
-        A collection in the making. Online ordering is not open yet.
+        A collection in the making. Browse current published prices and save
+        selections in your cart. Online ordering is not open yet.
       </p>
     </div>
     <figure class="home-scene">
@@ -166,7 +168,7 @@ try {
   </section>
   <section id="pickup" class="wrap home-pickup" aria-labelledby="pickup-title">
     <div class="home-pickup-intro">
-      <p class="eyebrow">Local pickup / The plan</p>
+      <p class="eyebrow">Local pickup / Madisonville</p>
       <div class="home-section-heading">
         <h2 id="pickup-title">
           Close to home.
@@ -174,12 +176,13 @@ try {
           Clear before you go.
         </h2>
         <p>
-          Pickup is the planned first step, not an invitation to a walk-in shop.
-          The location, timing, and arrangements will be confirmed before
-          purchasing opens.
+          Pickup is in Madisonville by arrangement, not at a walk-in shop.
+          Confirm your pickup time before traveling; shipping and public shop
+          hours are not offered.
         </p>
       </div>
     </div>
+    <PickupLocation />
     <ol class="home-pickup-steps">
       <li>
         <span class="home-step-number" aria-hidden="true">
