@@ -166,6 +166,11 @@ authorize live payments, new paid resources or fabricated product facts.
   per line in the intended order. Limits are 40 ingredients and 200 Unicode
   characters per ingredient. Omitted legacy fields preserve saved values; an
   explicit empty list clears them.
+- Apply `005_storefront_settings.sql` before deploying store-control code. It
+  creates one closed-by-default purchase setting and extends the existing
+  immutable admin-operation action list. Give the public read role `SELECT`
+  on `storefront_settings` and the private inventory role only `SELECT, UPDATE`.
+  The migration does not guess role names or grant privileges automatically.
 - Continue changing physical quantities through the existing audited inventory
   adjustment workflow. Public sellability subtracts held, committed and
   unavailable units from on-hand stock at `STOREFRONT_LOCATION_KEY`. At 1-5
@@ -217,7 +222,8 @@ webhook delivery or enable payments.
    Stripe's [hosted Checkout guide](https://docs.stripe.com/payments/accept-a-payment?payment-ui=checkout&ui=stripe-hosted)
    and [webhook guide](https://docs.stripe.com/webhooks) describe the provider setup.
 5. Set `CHECKOUT_MODE=stripe-test` only in the isolated environment. Start through
-   the normal preflight wrapper and deliberately inspect readiness: database
+   the normal preflight wrapper, then explicitly allow new checkouts in the
+   sandbox inventory store settings. Deliberately inspect readiness: database
    catalog connected and test checkout enabled. Verify visible TEST MODE/no-real-
    charge labels before selecting test merchandise.
 6. Rehearse a multi-line cart, changed prices, last-unit competition, failed
@@ -229,6 +235,41 @@ webhook delivery or enable payments.
 Rollback presentation code without restoring an old stock database. Retain the
 additive ingredients column and saved values. Disabling test checkout stops new
 attempts but does not release existing holds; reconcile those separately.
+
+### Store purchase switch and confirmed pickup
+
+The owner approved publishing the pickup address at **7031 New Highway 68,
+Madisonville, TN 37354**, with pickup by arrangement rather than invented shop
+hours. Maintain a genuine pickup location in inventory, select it with
+`STOREFRONT_LOCATION_KEY`, and enter actual opening quantities through audited
+adjustments. A new location creates disclosed zero balances, not an assumed
+physical count.
+
+Authorized administrators use **Inventory -> Store settings**
+(`/inventory/store`) and **Allow new checkouts**, then save. The setting is
+persisted with a revision and immutable operator receipt; uncertain retries reuse
+the same operation, and conflicting revisions require explicit review.
+
+Closing leaves the catalog, prices and cart visible and editable. Checkout
+admission locks the singleton setting inside the reservation transaction: new
+orders cannot allocate stock after closing wins the lock. Requests admitted
+before closing may finish. Existing matching retries, signed webhooks, settlement,
+pickup and reconciliation continue; closing is not a cancellation or stock-release
+operation. The public readiness `checkoutEnabled` flag describes admission of
+new checkout, not whether existing orders can still be processed.
+
+The purchase setting cannot override disabled runtime checkout or the test-only
+provider boundary. **Taxes are not currently calculated:** `automatic_tax` is
+disabled and provider/order comparisons require zero tax. Publishing a pickup
+address does not establish tax registration, product classification or a tax
+rate. Keep production `CHECKOUT_MODE=disabled`; live sales require a separately
+reviewed payment/tax implementation and business readiness.
+
+For rollout, first verify a private database backup, apply forward migrations
+004 and 005, and grant the exact runtime-role permissions above. Confirm the
+singleton remains closed and run the public/private database preflights before
+merging the checked application release. Do not overwrite real products, prices,
+opening counts or existing inventory with test fixtures.
 
 ### Apex/www hosting and rollback
 
@@ -398,6 +439,7 @@ Provision roles deliberately with the direct owner connection after the forward 
 | Product/variant/location/count writes | Denied | Required insert/update only | Manage |
 | Movement/admin-operation/payment-event history | Denied | Read/insert; no update/delete/truncate | Append-only guards still apply |
 | Orders/order snapshots | Denied | Required read/insert/order update; no snapshot rewriting | Recovery/reconciliation |
+| Store purchase setting | Read only | Read/update existing singleton; no insert/delete/truncate/delegation | Forward migration and explicit role grants |
 | Admin membership | Denied | Read only; no grant/revoke | Private grant/revoke |
 | Local admin sessions | Denied | Read/insert/revoke | Recovery |
 | Schema creation, role management, migrations | Denied | Denied | Deliberate operator action |

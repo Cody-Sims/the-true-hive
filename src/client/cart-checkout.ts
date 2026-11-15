@@ -9,7 +9,7 @@ import {
 } from "./cart-pending.ts";
 
 export type CheckoutPhase =
-  "idle" | "pending" | "uncertain" | "redirecting" | "blocked";
+  "idle" | "pending" | "uncertain" | "redirecting" | "blocked" | "closed";
 export interface CheckoutClientOptions {
   pendingStorage(): PendingStorage;
   request(body: string): Promise<Pick<Response, "ok" | "status" | "json">>;
@@ -103,9 +103,16 @@ export function createCartCheckout(options: CheckoutClientOptions) {
         }
         body = null;
         intent = null;
+        const closed =
+          response.status === 403 &&
+          record(result) &&
+          record(result["error"]) &&
+          result["error"]["code"] === "STORE_CLOSED";
         state(
-          "idle",
-          "Test checkout was rejected. Refresh current prices and availability, then review your cart before trying again.",
+          closed ? "closed" : "idle",
+          closed
+            ? "New checkouts are paused. Your cart has been kept; you can continue browsing and editing your selections."
+            : "Test checkout was rejected. Refresh current prices and availability, then review your cart before trying again.",
         );
         return;
       }

@@ -2,17 +2,21 @@
 import SiteLayout from "../layouts/SiteLayout.astro";
 import PickupLocation from "../components/PickupLocation.astro";
 import { getCheckoutPresentation } from "../server/commerce/config.ts";
-const checkout = getCheckoutPresentation();
+import { readConfig } from "../server/config.ts";
+import { getStorefrontStatus } from "../server/storefront.ts";
+const paymentReady = getCheckoutPresentation().enabled;
+const storefront = await getStorefrontStatus(readConfig(), paymentReady);
 ---
 
 <SiteLayout
   title="Your cart"
   description="Review saved selections and current published prices. A cart does not reserve stock or place an order."
+  storefrontStatus={storefront}
 >
   <section
     class="wrap cart-page"
     data-cart-page
-    data-test-enabled={String(checkout.enabled)}
+    data-test-enabled={String(storefront.checkoutEnabled)}
   >
     <p class="eyebrow">The True Hive collection</p>
     <h1 data-cart-heading tabindex="-1">
@@ -54,13 +58,19 @@ const checkout = getCheckoutPresentation();
       </div>
     </div>
     <PickupLocation />
-    {checkout.enabled ? (
+    {paymentReady ? (
       <section class="cart-checkout" aria-labelledby="cart-checkout-title">
         <h2 id="cart-checkout-title">TEST MODE — no real charge.</h2>
         <p>
           Stripe test checkout only. This is not a real purchase. Your cart is
           not cleared on redirect or an unverified payment result.
         </p>
+        {!storefront.checkoutEnabled && (
+          <p>
+            New checkouts are paused. Only an existing checkout can be resumed;
+            your saved cart remains available.
+          </p>
+        )}
         <button
           class="button button-primary"
           type="button"
@@ -76,7 +86,13 @@ const checkout = getCheckoutPresentation();
       </section>
     ) : (
       <aside class="notice">
-        <h2>Online ordering isn't open yet.</h2>
+        <h2>
+          {storefront.state === "closed"
+            ? "Online ordering is paused."
+            : storefront.state === "unavailable"
+              ? "Online ordering is temporarily unavailable."
+              : "Online ordering isn't open yet."}
+        </h2>
         <p>
           You can browse published prices and save selections, but no purchase
           is available. There is no stock hold or order until a checkout is

@@ -1,8 +1,9 @@
 ---
 import FormFeedback from "./FormFeedback.astro";
+import type { StoreSettings } from "../../domain/storefront.ts";
 
 interface Props {
-  settings: { purchasesEnabled: boolean; revision: number };
+  settings: StoreSettings;
   paymentReady?: boolean;
 }
 const { settings, paymentReady = false } = Astro.props;

@@ -21,7 +21,11 @@ The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
 Contact inquiries open an email draft that visitors must send themselves; no
 email provider or submission backend is required. Apply migration 004 before
-deploying ingredient-aware code. Stripe testing remains separately gated by the
+deploying ingredient-aware code, and migration 005 before store controls.
+Authorized inventory administrators can allow or pause new checkouts under
+**Store settings**, while the catalog and cart remain visible. The switch
+cannot override runtime payment restrictions; taxes are not yet calculated.
+Stripe testing remains separately gated by the
 [isolated sandbox checklist](docs/14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist);
 never run simulated purchases against operational stock.
 

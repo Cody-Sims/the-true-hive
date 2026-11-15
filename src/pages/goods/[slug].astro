@@ -7,6 +7,7 @@ import ProductIngredients from "../../components/ProductIngredients.astro";
 import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import { getCheckoutPresentation } from "../../server/commerce/config.ts";
+import { getStorefrontStatus } from "../../server/storefront.ts";
 import { isRecordKey } from "../../server/inventory/rules.ts";
 
 const categories = {
@@ -20,6 +21,7 @@ const checkout =
   config.catalogSource === "database"
     ? getCheckoutPresentation()
     : { enabled: false, locationKey: null };
+const storefront = await getStorefrontStatus(config, checkout.enabled);
 let product = null;
 let unavailable = false;
 if (isRecordKey(Astro.params["slug"])) {
@@ -32,7 +34,7 @@ if (isRecordKey(Astro.params["slug"])) {
 }
 if (!product) Astro.response.status = unavailable ? 503 : 404;
 const testCheckoutEnabled =
-  checkout.enabled &&
+  storefront.checkoutEnabled &&
   !!checkout.locationKey &&
   product?.kind === "active" &&
   product.variants.some(
@@ -50,6 +52,7 @@ const testCheckoutEnabled =
     "Return to The True Hive collection to explore published product information."
   }
   notFound={!product}
+  storefrontStatus={storefront}
 >
   <div class="wrap product-detail">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -135,7 +138,11 @@ const testCheckoutEnabled =
             </div>
           ) : (
             <div class="notice">
-              <h2>Good things take a little care.</h2>
+              <h2>
+                {storefront.state === "closed"
+                  ? "Purchases are paused."
+                  : "Good things take a little care."}
+              </h2>
               <p>
                 Online ordering isn't open yet. You can browse published prices
                 and save active product selections in a cart, but this is not a

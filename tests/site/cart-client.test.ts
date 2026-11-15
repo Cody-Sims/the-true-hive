@@ -433,6 +433,41 @@ test("unverified writes, failed rejection cleanup and failed redirect persistenc
   }
 });
 
+test("a definitely closed store keeps the cart but stops fresh checkout attempts", async () => {
+  const storage = session();
+  const cart = JSON.stringify({
+    version: 1,
+    lines: [{ variantKey: "soap-bar", quantity: 2 }],
+  });
+  storage.setItem("true-hive-cart", cart);
+  let ids = 0;
+  let requests = 0;
+  const messages: string[] = [];
+  const checkout = createCartCheckout({
+    pendingStorage: () => storage,
+    operationId: () => operation(++ids),
+    onState: (_phase, message) => messages.push(message),
+    navigate() {
+      assert.fail("A closed store must not redirect to payment.");
+    },
+    async request() {
+      requests++;
+      return new Response(JSON.stringify({ error: { code: "STORE_CLOSED" } }), {
+        status: 403,
+      });
+    },
+  });
+  await checkout.start([{ variantKey: "soap-bar", quantity: 2 }]);
+  assert.equal(checkout.phase, "closed");
+  assert.equal(checkout.hasPendingIntent, false);
+  assert.equal(storage.getItem("true-hive-checkout-pending"), null);
+  assert.equal(storage.getItem("true-hive-cart"), cart);
+  assert.match(messages.at(-1)!, /paused/);
+  await checkout.start([{ variantKey: "soap-bar", quantity: 3 }]);
+  assert.equal(ids, 1);
+  assert.equal(requests, 1);
+});
+
 test("a successful server response followed by blocked redirect persistence cannot later release the intent on rejection", async () => {
   const storage = session();
   let writes = 0;

@@ -44,7 +44,11 @@ const checkout = createCartCheckout({
       checkoutStatus.textContent = message;
       if (phase !== "pending") checkoutStatus.focus();
     }
-    if (!checkoutStatus && phase !== "idle") showRecoveryNotice(message);
+    if (!checkoutStatus && phase !== "idle")
+      showRecoveryNotice(
+        message,
+        phase === "closed" ? "New checkouts are paused" : undefined,
+      );
     if (phase === "idle") {
       recoveryNotice?.remove();
       recoveryNotice = null;
@@ -82,15 +86,15 @@ function announce(message: string) {
   if (status) status.textContent = message;
 }
 
-function showRecoveryNotice(message: string) {
+function showRecoveryNotice(
+  message: string,
+  heading = "TEST checkout — outcome not confirmed",
+) {
   if (!recoveryNotice) {
     recoveryNotice = document.createElement("aside");
     recoveryNotice.className = "notice wrap";
     recoveryNotice.setAttribute("role", "status");
-    recoveryNotice.append(
-      text("h2", "TEST checkout — outcome not confirmed"),
-      text("p", ""),
-    );
+    recoveryNotice.append(text("h2", heading), text("p", ""));
     const link = document.createElement("a");
     link.href = "/cart";
     link.className = "text-link";

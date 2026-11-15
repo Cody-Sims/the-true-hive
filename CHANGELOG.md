@@ -4,6 +4,8 @@
 
 ### Added
 
+- Audited inventory-admin purchase switch, closed by default, that preserves catalog/cart access and existing order processing without bypassing test-only payment configuration.
+- Owner-confirmed Madisonville pickup address with arrangement-only visiting guidance and explicit notice that tax calculation is not enabled.
 - Ordered ingredient editing and escaped product ingredients, with an additive migration that preserves existing products and legacy edits.
 - Inventory-priced persistent shopping cart with bounded variant quantities, current-price review and an explicitly gated Stripe test-checkout handoff.
 - Location-scoped customer stock notices showing exact counts only at 1-5 available and sold-out at zero, without exposing normal inventory counts.
