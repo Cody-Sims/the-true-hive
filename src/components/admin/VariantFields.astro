@@ -83,6 +83,20 @@ const { variant } = Astro.props;
       />
     </label>
   </div>
+  {!variant && (
+    <div class="admin-field">
+      <button type="button" data-suggest-sku>
+        Suggest blank variant key and SKU
+      </button>
+      <p class="admin-muted">
+        First confirm the product key and actual variant name above. Suggestions
+        never overwrite manual or saved identifiers. Review them before saving;
+        only this form is checked for collisions until the server validates
+        them. These are internal codes, not retail UPC, EAN or GS1 identifiers.
+      </p>
+      <p data-sku-status role="status" class="admin-muted"></p>
+    </div>
+  )}
   <p class="admin-muted">
     Price is optional for a draft. Stock is recorded separately.
   </p>
