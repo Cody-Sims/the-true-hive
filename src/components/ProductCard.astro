@@ -5,9 +5,19 @@ import ProductArt from "./ProductArt.astro";
 interface Props {
   product: Product;
   testCheckoutEnabled?: boolean;
+  preview?: boolean;
+  photoSrc?: string | null;
 }
-const { product, testCheckoutEnabled = false } = Astro.props;
+const {
+  product,
+  testCheckoutEnabled = false,
+  preview = false,
+  photoSrc = null,
+} = Astro.props;
+const ArtLink = preview ? "div" : "a";
+const TitleLink = preview ? "span" : "a";
 const canTestCheckout =
+  !preview &&
   testCheckoutEnabled &&
   product.kind === "active" &&
   product.variants.some(
@@ -28,23 +38,35 @@ const categories = {
 ---
 
 <article class="shelf-product">
-  <a
+  <ArtLink
     class:list={["shelf-art", `${product.imageKey}-art`]}
-    href={`/goods/${product.slug}`}
-    aria-label={`Explore ${product.title}`}
+    href={preview ? undefined : `/goods/${product.slug}`}
+    aria-label={preview ? undefined : `Explore ${product.title}`}
   >
     <span class="shelf-ticket">{labels[product.category]}</span>
-    <ProductArt image={product.imageKey} photo={product.photo ?? null} />
+    <ProductArt
+      image={product.imageKey}
+      photo={product.photo ?? null}
+      photoSrc={photoSrc}
+    />
     <span class="art-caption">
       {product.photo ? "Product photo" : "Original illustration"}
     </span>
-  </a>
+  </ArtLink>
   <div class="shelf-copy">
     <p class="eyebrow">{categories[product.category]}</p>
     <h3>
-      <a href={`/goods/${product.slug}`}>
-        {product.title} <span aria-hidden="true">&nearr;</span>
-      </a>
+      <TitleLink
+        href={preview ? undefined : `/goods/${product.slug}`}
+        data-preview-title={preview ? "" : undefined}
+      >
+        {preview ? (
+          <span data-preview-title-text>{product.title}</span>
+        ) : (
+          product.title
+        )}
+        <span aria-hidden="true">&nearr;</span>
+      </TitleLink>
     </h3>
     <p class="shelf-description">{product.summary}</p>
     <div class="shelf-meta">
@@ -134,13 +156,15 @@ const categories = {
     letter-spacing: -0.035em;
     line-height: 1.15;
   }
-  .shelf-copy h3 a {
+  .shelf-copy h3 a,
+  .shelf-copy h3 [data-preview-title] {
     display: flex;
     gap: 0.75rem;
     align-items: baseline;
     justify-content: space-between;
   }
-  .shelf-copy h3 a span {
+  .shelf-copy h3 a span,
+  .shelf-copy h3 [data-preview-title] > span[aria-hidden] {
     flex-shrink: 0;
     color: var(--tomato);
     font-family: Arial, Helvetica, sans-serif;

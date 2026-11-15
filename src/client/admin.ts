@@ -199,6 +199,66 @@ function showLevel(level: AdminInventoryLevel) {
   }
 }
 
+function setupProductPreview(form: HTMLFormElement) {
+  const preview = form.querySelector<HTMLElement>("[data-product-preview]");
+  if (!preview) return;
+  const image = preview.querySelector<HTMLImageElement>(
+    ".product-illustration",
+  )!;
+  const labels = {
+    soap: ["Soap", "The daily ritual"],
+    honey: ["Honey", "For the table"],
+    candles: ["Candles", "A slower moment"],
+    gifts: ["Gifts", "For someone good"],
+  };
+  const value = (name: string) => input(form, name)?.value.trim() ?? "";
+  const setText = (selector: string, text: string) => {
+    preview.querySelector<HTMLElement>(selector)!.textContent = text;
+  };
+  const update = () => {
+    setText("[data-preview-title-text]", value("title") || "Your product name");
+    setText(
+      ".shelf-description",
+      value("summary") || "Your short summary will appear here.",
+    );
+    setText("[data-preview-url]", `/goods/${value("slug") || "your-product"}`);
+    const category = value("category");
+    const label = Object.hasOwn(labels, category)
+      ? labels[category as keyof typeof labels]!
+      : ["Choose a category", "The True Hive collection"];
+    setText(".eyebrow", label[0]!);
+    setText(".shelf-ticket", label[1]!);
+    const concept = value("kind") === "concept";
+    setText(".pill", concept ? "Concept product" : "Product information");
+    const art = value("imageKey");
+    const template = [
+      ...preview.querySelectorAll<HTMLTemplateElement>("[data-preview-art]"),
+    ].find((entry) => entry.dataset.previewArt === art);
+    const illustration = template?.content.querySelector("img");
+    const photo = !concept ? preview.dataset.previewPhotoSrc : undefined;
+    const src = photo || illustration?.getAttribute("src");
+    preview.toggleAttribute("data-preview-image-empty", !src);
+    if (src && image.getAttribute("src") !== src) image.src = src;
+    image.alt = photo ? (preview.dataset.previewPhotoAlt ?? "") : "";
+    image.width = photo ? Number(preview.dataset.previewPhotoWidth) : 420;
+    image.height = photo ? Number(preview.dataset.previewPhotoHeight) : 360;
+    setText(
+      ".art-caption",
+      photo
+        ? "Product photo"
+        : src
+          ? "Original illustration"
+          : "Choose an illustration",
+    );
+    const artPanel = preview.querySelector<HTMLElement>(".shelf-art")!;
+    artPanel.classList.remove("soap-art", "honey-art", "candle-art");
+    if (template) artPanel.classList.add(`${art}-art`);
+  };
+  form.addEventListener("input", update);
+  form.addEventListener("change", update);
+  update();
+}
+
 function setup(form: HTMLFormElement) {
   let phase: Phase = "idle";
   let intent: { payload: Payload; body: string } | null = null;
@@ -252,6 +312,7 @@ function setup(form: HTMLFormElement) {
       }
     });
   }
+  setupProductPreview(form);
 
   function state(next: Phase, message: string) {
     phase = next;

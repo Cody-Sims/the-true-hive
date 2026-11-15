@@ -3,6 +3,7 @@ import type { AdminProduct } from "../../domain/admin.ts";
 import VariantFields from "./VariantFields.astro";
 import FormFeedback from "./FormFeedback.astro";
 import FieldHelp from "./FieldHelp.astro";
+import ProductPreview from "./ProductPreview.astro";
 interface Props {
   product?: AdminProduct;
   photosEnabled?: boolean;
@@ -18,7 +19,7 @@ const endpoint = product
   data-endpoint={endpoint}
   data-method={product ? "PUT" : "POST"}
   data-refresh={product ? endpoint : undefined}
-  class="admin-form"
+  class="admin-form admin-product-form"
 >
   <input
     type="hidden"
@@ -31,12 +32,18 @@ const endpoint = product
         ? `Edit ${product.status} product · revision ${product.revision}`
         : "Create an unpublished product"}
     </legend>
+    <p>
+      <a href={`#product-preview-${product?.key ?? "new"}`}>
+        Jump to storefront preview
+      </a>
+    </p>
     {!product && (
       <p class="admin-muted">
         Start with the product name. We suggest the two identifiers below;
         review them and change them if needed. Select an (i) for help; select it
         again or press Escape to close. Nothing is published or added to stock
-        when you create a draft.
+        when you create a draft. Examples inside empty fields are hints, not
+        saved values.
       </p>
     )}
     <label>
@@ -67,6 +74,7 @@ const endpoint = product
             readonly={!!product}
             pattern="[a-z0-9][a-z0-9-]{0,79}"
             maxlength="80"
+            placeholder="e.g. lavender-soap-4oz"
           />
         </label>
       </div>
@@ -86,6 +94,7 @@ const endpoint = product
             value={product?.slug ?? ""}
             pattern="[a-z0-9][a-z0-9-]{0,79}"
             maxlength="80"
+            placeholder="e.g. lavender-soap-4oz"
           />
         </label>
       </div>
@@ -105,6 +114,7 @@ const endpoint = product
         minlength="1"
         maxlength="1000"
         rows="3"
+        placeholder="e.g. A lavender-scented, 4 oz soap bar for everyday use."
       >{product?.summary ?? ""}</textarea>
     </div>
     <div class="admin-field">
@@ -121,6 +131,7 @@ const endpoint = product
         name="details"
         maxlength="24011"
         rows="4"
+        placeholder={"e.g. Size: 4 oz.\nCare: Let the bar dry between uses."}
       >{product?.details.join("\n") ?? ""}</textarea>
     </div>
     <div class="admin-grid">
@@ -213,6 +224,7 @@ const endpoint = product
       Add another variant
     </button>
   </fieldset>
+  <ProductPreview {...(product ? { product } : {})} />
   {photosEnabled && (
     <aside class="admin-notice" aria-label="Product photo">
       <h2>Primary product photo</h2>

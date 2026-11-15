@@ -228,9 +228,18 @@ are suggested from that name until the operator edits each identifier. Existing
 keys/variants/SKUs remain permanent and existing slugs are not silently renamed.
 Native `(i)` disclosures explain each field with examples, including variant
 formats and USD cents; help supports keyboard entry, Escape and outside dismissal.
+Empty product and variant fields include example placeholders, never prefilled
+merchandise values. Adding another variant preserves those hints.
 An explicitly rejected duplicate product key/slug/SKU preserves the draft and
 allows correction. Revision conflicts and uncertain outcomes retain their
 existing review/frozen-intent safeguards.
+
+Creation and editing include a live, read-only collection-card preview using the
+storefront card component. It follows unsaved text, category, illustration,
+record type and URL values; saved photos use the private admin image endpoint.
+Concept records retain illustration-only previews. Previewing never saves,
+publishes, changes stock or enables checkout. The preview is collapsible, sits
+beside desktop fields and is reachable by a jump link on narrow screens.
 
 The owner subsequently approved metered photos and reuse of the existing
 website storage **project**, with a new private True Hive bucket and dedicated
