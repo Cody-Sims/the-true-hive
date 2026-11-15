@@ -3,6 +3,7 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
 import ProductArt from "../../components/ProductArt.astro";
 import AddToCart from "../../components/AddToCart.astro";
 import ProductPrices from "../../components/ProductPrices.astro";
+import ProductIngredients from "../../components/ProductIngredients.astro";
 import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import { getCheckoutPresentation } from "../../server/commerce/config.ts";
@@ -119,6 +120,7 @@ const testCheckoutEnabled =
               </ul>
             </section>
           )}
+          <ProductIngredients ingredients={product.ingredients ?? []} />
           <AddToCart product={product} />
           {testCheckoutEnabled ? (
             <div class="notice">

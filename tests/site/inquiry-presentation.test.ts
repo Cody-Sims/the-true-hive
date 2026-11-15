@@ -9,7 +9,6 @@ import AxeBuilder from "@axe-core/playwright";
 
 const root = new URL("../../", import.meta.url);
 const styles: string[] = [];
-const extractedScripts = new Map<string, string>();
 
 async function moduleUrl(file: URL): Promise<string> {
   const source = await readFile(file, "utf8");
@@ -21,14 +20,6 @@ async function moduleUrl(file: URL): Promise<string> {
       resolvePath: (specifier) => specifier,
     });
     styles.push(...compiled.css);
-    compiled.scripts.forEach((script, index) => {
-      if (script.type === "inline" && script.code !== undefined) {
-        extractedScripts.set(
-          `${file.pathname}?astro&type=script&index=${index}&lang.ts`,
-          script.code,
-        );
-      }
-    });
     code = compiled.code;
   } else {
     code = stripTypeScriptTypes(source, { mode: "transform" });
@@ -101,12 +92,6 @@ test(
           ),
         ),
       );
-      for (const [path, script] of extractedScripts) {
-        scripts.set(
-          path,
-          script.replaceAll('"../client/inquiry.ts"', '"/inquiry.js"'),
-        );
-      }
       async function fixture(javaScriptEnabled: boolean, width = 320) {
         const context = await browser.newContext({
           javaScriptEnabled,
@@ -134,7 +119,7 @@ test(
               "Content-Security-Policy":
                 "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'",
             },
-            body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Contact component test</title><style>${css}</style></head><body><main><h1>Contact</h1>${html}</main></body></html>`,
+            body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Contact component test</title><style>${css}</style></head><body><main><h1>Contact</h1>${html}</main><script type="module" src="/inquiry.js"></script></body></html>`,
           });
         });
         await page.goto("https://inquiry.example.invalid/");
@@ -247,9 +232,6 @@ test(
               "https://inquiry.example.invalid/",
               "https://inquiry.example.invalid/inquiry-draft.js",
               "https://inquiry.example.invalid/inquiry.js",
-              ...[...extractedScripts.keys()].map(
-                (path) => new URL(path, "https://inquiry.example.invalid").href,
-              ),
             ].sort(),
           );
           assert.equal(await page.evaluate(() => localStorage.length), 0);

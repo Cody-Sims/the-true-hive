@@ -284,7 +284,7 @@ async function waitPhase(
     .waitFor({ state: "attached", timeout: 3000 });
 }
 
-test("real priced products advertise test checkout only when explicitly enabled", async () => {
+test("active product cards show canonical prices and cart options without enabling checkout", async () => {
   const product = {
     key: "test-product",
     slug: "test-product",
@@ -308,21 +308,22 @@ test("real priced products advertise test checkout only when explicitly enabled"
       product,
       testCheckoutEnabled: true,
     }),
-    /href="\/goods\/test-product#test-checkout">\s*Test checkout\s*<\/a>/,
+    /href="\/goods\/test-product#add-to-cart"[^>]*>\s*Choose for your test cart\s*<\/a>/,
   );
-  assert.doesNotMatch(
-    await render("src/components/ProductCard.astro", {
-      product,
-      testCheckoutEnabled: false,
-    }),
-    /Test checkout/,
-  );
+  const browseOnly = await render("src/components/ProductCard.astro", {
+    product,
+    testCheckoutEnabled: false,
+  });
+  assert.match(browseOnly, /\$4\.50/);
+  assert.match(browseOnly, /#add-to-cart/);
+  assert.match(browseOnly, /Choose options/);
+  assert.doesNotMatch(browseOnly, /Test checkout/);
   assert.doesNotMatch(
     await render("src/components/ProductCard.astro", {
       product: { ...product, kind: "concept" },
       testCheckoutEnabled: true,
     }),
-    /Test checkout/,
+    /#add-to-cart|\$4\.50/,
   );
   assert.doesNotMatch(
     await render("src/components/ProductCard.astro", {
@@ -332,7 +333,7 @@ test("real priced products advertise test checkout only when explicitly enabled"
       },
       testCheckoutEnabled: true,
     }),
-    /Test checkout/,
+    /#add-to-cart/,
   );
 });
 
