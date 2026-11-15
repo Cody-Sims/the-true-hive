@@ -5,6 +5,11 @@ import type { CheckoutExpiry } from "../../domain/commerce.ts";
 export class OrderInputError extends Error {}
 export class OrderConflictError extends Error {}
 export class OrderNotFoundError extends Error {}
+export class StoreClosedError extends Error {
+  constructor() {
+    super("Store purchases are currently closed.");
+  }
+}
 
 export const MAX_INTEGER = 2147483647;
 export const MIN_TEST_TOTAL_MINOR = 50;

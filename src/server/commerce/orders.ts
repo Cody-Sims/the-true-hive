@@ -17,6 +17,7 @@ import {
   MAX_TEST_TOTAL_MINOR,
   OrderConflictError,
   OrderNotFoundError,
+  StoreClosedError,
   requestHash,
   validateCheckout,
   uuid,
@@ -233,6 +234,12 @@ export async function reserveCheckout(
         );
       return reservation(client, old);
     }
+
+    const settings = await client.query(
+      "SELECT purchases_enabled FROM storefront_settings WHERE id=1 FOR SHARE",
+    );
+    if (settings.rows[0]?.purchases_enabled !== true)
+      throw new StoreClosedError();
 
     const keys = intent.lines.map((line) => line.variantKey);
     // Eligibility rows are locked before stock, so a concurrent archive or price edit

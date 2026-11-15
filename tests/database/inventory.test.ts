@@ -490,6 +490,7 @@ test("repeat migrations verify checksums and reject rewritten history without ch
       "002_admin_commerce.sql",
       "003_product_photos.sql",
       "004_product_ingredients.sql",
+      "005_storefront_settings.sql",
     ])
       await writeFile(
         join(directory, migration),

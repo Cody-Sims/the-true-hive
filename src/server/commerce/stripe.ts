@@ -20,6 +20,7 @@ import {
   OrderInputError,
   OrderConflictError,
   OrderNotFoundError,
+  StoreClosedError,
   MIN_TEST_TOTAL_MINOR,
   MAX_TEST_TOTAL_MINOR,
 } from "./rules.ts";
@@ -50,6 +51,16 @@ function unavailable() {
 }
 
 export function checkoutErrorResponse(error: unknown): Response {
+  if (error instanceof StoreClosedError)
+    return jsonResponse(
+      {
+        error: {
+          code: "STORE_CLOSED",
+          message: "Store purchases are currently closed.",
+        },
+      },
+      403,
+    );
   if (error instanceof CheckoutBoundaryError) {
     return jsonResponse(
       { error: { code: error.code, message: error.message } },

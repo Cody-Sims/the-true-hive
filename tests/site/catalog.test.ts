@@ -148,15 +148,16 @@ test("availability uses the same bounded stock states and never invents stock fo
   }
   const calls: unknown[][] = [];
   await checkDatabase(config, {
-    async query(_sql: string, values: unknown[]) {
+    async query(sql: string, values: unknown[]) {
       calls.push(values);
-      return { rows: [] };
+      return {
+        rows: sql.trimStart().startsWith("SELECT")
+          ? [{ purchasesEnabled: false, revision: 1 }]
+          : [],
+      };
     },
   } as unknown as Pool);
-  assert.deepEqual(calls, [
-    [null, null],
-    [null, null],
-  ]);
+  assert.deepEqual(calls, [[null, null], [null, null], undefined, undefined]);
 });
 
 test("intentional showcase content is explicit, has no prices, and is not mutable global inventory", async () => {
