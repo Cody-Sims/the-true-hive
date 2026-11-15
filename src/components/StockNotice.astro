@@ -1,0 +1,30 @@
+---
+import type { ProductVariant } from "../domain/catalog.ts";
+import { projectedStock, stockLabel } from "../domain/cart.ts";
+interface Props {
+  variant: ProductVariant;
+}
+const { variant } = Astro.props;
+const stock = projectedStock(variant);
+---
+
+{stock && (
+  <span
+    class:list={[
+      "stock-notice",
+      { "stock-attention": stock.state !== "available" },
+    ]}
+  >
+    {stockLabel(variant)}
+  </span>
+)}
+
+<style>
+  .stock-notice {
+    display: block;
+    font-size: 0.8rem;
+  }
+  .stock-attention {
+    font-weight: 700;
+  }
+</style>

@@ -37,6 +37,10 @@ export function readCheckoutConfig(
       site.databaseTls,
     );
     const locationKey = environment["CHECKOUT_LOCATION_KEY"];
+    const storefrontLocationKey =
+      (site as typeof site & { storefrontLocationKey?: string | null })
+        .storefrontLocationKey ??
+      (environment["STOREFRONT_LOCATION_KEY"]?.trim() || null);
     const secretKey = environment["STRIPE_SECRET_KEY"];
     const webhookSecret = environment["STRIPE_WEBHOOK_SECRET"];
     if (
@@ -45,6 +49,9 @@ export function readCheckoutConfig(
       environment["ADMIN_DATABASE_URL"] ===
         environment["MIGRATION_DATABASE_URL"] ||
       !isRecordKey(locationKey) ||
+      (storefrontLocationKey !== null &&
+        (!isRecordKey(storefrontLocationKey) ||
+          storefrontLocationKey !== locationKey)) ||
       typeof secretKey !== "string" ||
       !/^(?:sk|rk)_test_[a-zA-Z0-9]{8,240}$/.test(secretKey) ||
       typeof webhookSecret !== "string" ||

@@ -4,6 +4,7 @@ import BrandMark from "../components/BrandMark.astro";
 import favicon from "../assets/favicon.svg?url";
 import shareImage from "../assets/social-card.png?url";
 import { readConfig } from "../server/config.ts";
+import { getCheckoutPresentation } from "../server/commerce/config.ts";
 
 interface Props {
   title: string;
@@ -18,16 +19,19 @@ const {
   notFound = false,
 } = Astro.props;
 const config = readConfig();
+const testCheckoutEnabled = getCheckoutPresentation().enabled;
+const cartPage = path === "/cart" || path === "/cart/";
 const shoppingPage =
   path === "/" ||
   path === "/goods" ||
   path.startsWith("/goods/") ||
+  cartPage ||
   path.startsWith("/checkout/");
 const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
 const isSearchResults =
   (Astro.url.pathname === "/goods" || Astro.url.pathname === "/goods/") &&
   Astro.url.searchParams.has("q");
-const omitCanonical = isErrorDocument || isSearchResults;
+const omitCanonical = isErrorDocument || isSearchResults || cartPage;
 const canonicalUrl = new URL(config.siteOrigin);
 canonicalUrl.pathname = new URL(path, config.siteOrigin).pathname;
 const canonical = canonicalUrl.href;
@@ -91,7 +95,11 @@ const schema = JSON.stringify({
       <aside class="opening-note" aria-label="Shopping information">
         <div class="wrap">
           <span>Beekeeping in East Tennessee.</span>
-          <span>Online ordering isn't open yet.</span>
+          <span>
+            {testCheckoutEnabled
+              ? "TEST MODE — no real charge. Online ordering isn't open yet."
+              : "Online ordering isn't open yet."}
+          </span>
         </div>
       </aside>
     )}
@@ -129,6 +137,9 @@ const schema = JSON.stringify({
           >
             About us
           </a>
+          <a href="/cart" aria-current={cartPage ? "page" : undefined}>
+            Cart<span data-cart-count></span>
+          </a>
           <a class="nav-connect" href="/#connect">
             Connect <span aria-hidden="true">&nearr;</span>
           </a>
@@ -164,5 +175,8 @@ const schema = JSON.stringify({
         {shoppingPage && <span>Online ordering is not open yet.</span>}
       </div>
     </footer>
+    <script>
+      import "../client/cart.ts";
+    </script>
   </body>
 </html>
