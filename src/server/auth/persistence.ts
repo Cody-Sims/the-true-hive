@@ -97,12 +97,22 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     orders: ["SELECT", "INSERT", "UPDATE"],
     order_lines: ["SELECT", "INSERT"],
     payment_events: ["SELECT", "INSERT"],
+    storefront_settings: ["SELECT", "UPDATE"],
   };
   const forbidden: Record<string, string[]> = {
     admin_memberships: ["INSERT", "UPDATE", "DELETE", "TRUNCATE"],
     inventory_movements: ["UPDATE", "DELETE", "TRUNCATE"],
     admin_operations: ["UPDATE", "DELETE", "TRUNCATE"],
     payment_events: ["UPDATE", "DELETE", "TRUNCATE"],
+    storefront_settings: [
+      "INSERT",
+      "DELETE",
+      "TRUNCATE",
+      "REFERENCES",
+      "TRIGGER",
+      "SELECT WITH GRANT OPTION",
+      "UPDATE WITH GRANT OPTION",
+    ],
   };
   const checks = [
     ...Object.entries(required).flatMap(([table, privileges]) =>
@@ -117,7 +127,10 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
       has_table_privilege(current_user,
         to_regclass('public.' || (entry->>'table')), entry->>'privilege') = (entry->>'expected')::boolean
       AND CASE WHEN (entry->>'expected')::boolean = false
-        AND entry->>'privilege' IN ('INSERT','UPDATE')
+        AND entry->>'privilege' IN (
+          'INSERT','UPDATE','REFERENCES',
+          'SELECT WITH GRANT OPTION','UPDATE WITH GRANT OPTION'
+        )
         THEN NOT has_any_column_privilege(current_user,
           to_regclass('public.' || (entry->>'table')), entry->>'privilege')
         ELSE true END, false)) AS safe

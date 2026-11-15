@@ -10,6 +10,7 @@ import type { SiteConfig } from "./config.ts";
 import { showcaseProducts } from "../content/showcase.ts";
 import { DatabaseConfigurationError } from "./db/connection.mjs";
 import { getPool } from "./db/pool.ts";
+import { readStoreSettings, storeSettingsQuery } from "./storefront.ts";
 import { projectProductPhoto } from "./media/photo.ts";
 
 export class CatalogUnavailableError extends Error {
@@ -244,6 +245,8 @@ export async function checkDatabase(
       config.storefrontLocationKey ?? null,
     ]);
     await connection.query(`EXPLAIN ${availabilityQuery}`, [null, null]);
+    await connection.query(`EXPLAIN ${storeSettingsQuery}`);
+    await readStoreSettings(connection);
   } catch (error) {
     unavailable(error);
   }
