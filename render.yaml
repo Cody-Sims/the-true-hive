@@ -19,6 +19,6 @@ services:
       - key: SITE_INDEXABLE
         value: "false"
       - key: CATALOG_SOURCE
-        value: showcase
+        value: database
       - key: ASTRO_TELEMETRY_DISABLED
         value: "1"
