@@ -141,8 +141,9 @@ test("keyboard entry, confirmed phone contact and local email drafts remain inta
   await expect(page).toHaveURL(/#main$/);
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: /Connect/ })
+    .getByRole("link", { name: "Contact us" })
     .click();
+  await expect(page).toHaveURL(/\/contact$/);
   await expect(
     page.locator("#connect").getByRole("link", { name: /Call.*368-2262/ }),
   ).toHaveAttribute("href", "tel:+14233682262");
@@ -196,6 +197,7 @@ test("core customer pages meet the automated accessibility gate", async ({
     "/goods",
     "/goods/everyday-soap",
     "/services",
+    "/contact",
     "/about",
     "/privacy",
     "/accessibility",

@@ -275,6 +275,35 @@ test("inventory home supports the full bounded SKU search", () => {
   );
 });
 
+test("inventory workspace keeps product and location entry points available during a read outage", async () => {
+  const previous = process.env["ADMIN_DATABASE_URL"];
+  process.env["ADMIN_DATABASE_URL"] = "";
+  try {
+    const html = await render(
+      "src/pages/inventory/products/index.astro",
+      {},
+      {
+        request: new Request(
+          "https://inventory.example.invalid/inventory/products?search=SOAP",
+        ),
+        locals: {
+          admin: { uid: "component-only-uid", actorId: "component-only-actor" },
+          csrfToken: "component-only-token",
+        },
+      },
+    );
+    assert.match(html, /href="\/inventory\/products\/new"/);
+    assert.match(html, /href="\/inventory\/locations#new-location"/);
+    assert.match(html, /href="\/inventory\/locations"/);
+    assert.match(html, /value="SOAP"/);
+    assert.match(html, /temporarily unavailable/i);
+    assert.doesNotMatch(html, /data-stock-controls/);
+  } finally {
+    if (previous === undefined) delete process.env["ADMIN_DATABASE_URL"];
+    else process.env["ADMIN_DATABASE_URL"] = previous;
+  }
+});
+
 test("inline count controls offer an explicit add preset without submitting it", async () => {
   const html = await render("src/components/admin/CountForm.astro", {
     variant: product.variants[0],
@@ -621,7 +650,7 @@ test("services copy is ready to share without planning-stage notices or booking 
   ])
     assert.ok(copy.includes(detail), detail);
   assert.match(copy, /Do not disturb a colony or approach it for a photograph/);
-  assert.match(main, /href="\/#inquiry"/);
+  assert.match(main, /href="\/contact#inquiry"/);
   assert.doesNotMatch(main, /<(?:form|input|textarea)\b|href="mailto:/i);
   assert.match(html, /<title>Beekeeping services for home and farm/);
 });
@@ -2188,6 +2217,115 @@ domTest(
       await waitPhase(page, "idle", "[data-photo-form]");
       assert.equal(new Set(operationIds).size, 1);
       assert.equal(operationIds.length, receipts.length);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "compact inventory keeps location counts visible and discloses secondary details by keyboard",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/InventoryProductList.astro",
+      { products: [product], locations: stockLocations },
+      ["admin.ts", "stock-controls.ts"],
+    );
+    let mutations = 0;
+    page.on("request", (request) => {
+      if (request.method() !== "GET") mutations++;
+    });
+    try {
+      const panel = page.locator("[data-stock-panel]");
+      assert.equal(
+        await panel.locator('[data-quantity="onHand"]').isVisible(),
+        true,
+      );
+      assert.equal(
+        await panel.locator('[data-quantity="sellable"]').isVisible(),
+        true,
+      );
+      assert.equal(
+        await panel.locator('[data-quantity="onHand"]').textContent(),
+        "20",
+      );
+      assert.equal(
+        await panel.locator('[data-quantity="sellable"]').textContent(),
+        "14",
+      );
+      assert.equal(
+        await panel
+          .getByRole("heading", { name: /Fixture storeroom/ })
+          .isVisible(),
+        true,
+      );
+      for (const key of ["held", "committed", "unavailable", "revision"])
+        assert.equal(
+          await panel.locator(`[data-quantity="${key}"]`).isVisible(),
+          false,
+        );
+      assert.equal(
+        await page.getByText("COMPONENT-ONLY", { exact: true }).isVisible(),
+        false,
+      );
+      const summary = panel.getByText("Add / Reduce stock", { exact: true });
+      await summary.focus();
+      await page.keyboard.press("Space");
+      for (const key of ["held", "committed", "unavailable", "revision"])
+        assert.equal(
+          await panel.locator(`[data-quantity="${key}"]`).isVisible(),
+          true,
+        );
+      await panel
+        .getByRole("button", { name: "+100 received", exact: true })
+        .click();
+      assert.equal(
+        await panel.getByLabel("Positive whole units").inputValue(),
+        "100",
+      );
+      assert.equal(
+        await panel
+          .getByLabel("Reason", { exact: true })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+      assert.equal(mutations, 0);
+      await summary.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await panel.locator('[data-quantity="held"]').isVisible(),
+        false,
+      );
+      assert.equal(
+        await panel.locator('[data-quantity="onHand"]').isVisible(),
+        true,
+      );
+      assert.equal(
+        await panel.locator('[data-quantity="onHand"]').textContent(),
+        "20",
+      );
+      const identifiers = page.getByText("Product details", {
+        exact: true,
+      });
+      await identifiers.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page.getByText("COMPONENT-ONLY", { exact: true }).isVisible(),
+        true,
+      );
+      for (const width of [1440, 320]) {
+        await page.setViewportSize({ width, height: 1000 });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+      }
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
     } finally {
       await page.context().close();
     }

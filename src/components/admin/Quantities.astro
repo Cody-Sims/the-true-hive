@@ -2,8 +2,9 @@
 import type { AdminInventoryLevel } from "../../domain/admin.ts";
 interface Props {
   level: AdminInventoryLevel;
+  compact?: boolean;
 }
-const { level } = Astro.props;
+const { level, compact = false } = Astro.props;
 ---
 
 <dl
@@ -16,15 +17,15 @@ const { level } = Astro.props;
     <dt>On hand</dt>
     <dd data-quantity="onHand">{level.onHand}</dd>
   </div>
-  <div>
+  <div data-secondary-quantity={compact || undefined}>
     <dt>Held</dt>
     <dd data-quantity="held">{level.held}</dd>
   </div>
-  <div>
+  <div data-secondary-quantity={compact || undefined}>
     <dt>Committed</dt>
     <dd data-quantity="committed">{level.committed}</dd>
   </div>
-  <div>
+  <div data-secondary-quantity={compact || undefined}>
     <dt>Unavailable</dt>
     <dd data-quantity="unavailable">{level.unavailable}</dd>
   </div>
@@ -32,7 +33,7 @@ const { level } = Astro.props;
     <dt>Available / Sellable</dt>
     <dd data-quantity="sellable">{level.sellable}</dd>
   </div>
-  <div>
+  <div data-secondary-quantity={compact || undefined}>
     <dt>Revision</dt>
     <dd data-quantity="revision">{level.revision}</dd>
   </div>

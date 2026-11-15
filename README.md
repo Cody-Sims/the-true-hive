@@ -20,7 +20,9 @@ Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and
 The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
 Contact inquiries open an email draft that visitors must send themselves; no
-email provider or submission backend is required. Apply migration 004 before
+email provider or submission backend is required. Contact channels and the form
+live together at `/contact`; pickup information is a compact notice on the
+collection and cart, not a separate homepage section. Apply migration 004 before
 deploying ingredient-aware code, and migration 005 before store controls.
 Authorized inventory administrators can allow or pause new checkouts under
 **Store settings**, while the catalog and cart remain visible. The switch
@@ -29,7 +31,10 @@ Stripe testing remains separately gated by the
 [isolated sandbox checklist](docs/14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist);
 never run simulated purchases against operational stock.
 
-The private inventory home now includes location-specific balances and inline
+The private inventory home uses compact product/location rows with On hand and
+Available counts visible; expand stock controls for allocations and revisions,
+or Product details for SKUs. New-product and add/manage-location shortcuts
+remain visible beside the search tools. It includes inline
 Add/Reduce controls; presets such as `+100 received` prepare a reviewable change,
 never a stock mutation by themselves. Product editors can move explicit
 ingredient blocks out of Details and copy generated ingredient text. Internal

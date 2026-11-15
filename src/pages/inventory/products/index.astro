@@ -18,16 +18,27 @@ try {
 ---
 
 <AdminLayout title="Products">
-  <div class="admin-actions">
-    <a href="/inventory/products/new">Create unpublished product</a>
+  <div class="inventory-toolbar">
+    <nav class="admin-actions" aria-label="Inventory actions">
+      <a class="inventory-create" href="/inventory/products/new">
+        New product
+      </a>
+      <a href="/inventory/locations#new-location">Add location</a>
+      <a href="/inventory/locations">Manage locations</a>
+    </nav>
+    <form method="get" class="admin-form" role="search">
+      <label>
+        Search products or SKU (scanner){" "}
+        <input
+          name="search"
+          value={query.search}
+          maxlength="160"
+          type="search"
+        />
+      </label>
+      <button type="submit">Search</button>
+    </form>
   </div>
-  <form method="get" class="admin-form" role="search">
-    <label>
-      Search products or SKU (scanner){" "}
-      <input name="search" value={query.search} maxlength="160" type="search" />
-    </label>
-    <button type="submit">Search</button>
-  </form>
   {!result ? (
     <ReadState unavailable />
   ) : result.products.length === 0 ? (
@@ -51,3 +62,33 @@ try {
     />
   )}
 </AdminLayout>
+
+<style>
+  .inventory-toolbar {
+    display: grid;
+    gap: 1rem;
+    margin-block: 1rem;
+  }
+  .inventory-toolbar nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.75rem;
+  }
+  .inventory-create {
+    color: var(--paper);
+    background: var(--forest);
+    font-weight: 700;
+  }
+  .inventory-toolbar form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: end;
+    max-width: none;
+    margin: 0;
+  }
+  .inventory-toolbar label {
+    flex: 1 1 16rem;
+  }
+</style>

@@ -1,9 +1,7 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
 import ProductCard from "../components/ProductCard.astro";
-import ContactSection from "../components/ContactSection.astro";
 import ServiceCards from "../components/ServiceCards.astro";
-import PickupLocation from "../components/PickupLocation.astro";
 import { Image } from "astro:assets";
 import hivePhoto from "../assets/honeybees-on-comb.webp";
 import { getCatalog, CatalogUnavailableError } from "../server/catalog.ts";
@@ -166,56 +164,6 @@ try {
       </div>
     </div>
   </section>
-  <section id="pickup" class="wrap home-pickup" aria-labelledby="pickup-title">
-    <div class="home-pickup-intro">
-      <p class="eyebrow">Local pickup / Madisonville</p>
-      <div class="home-section-heading">
-        <h2 id="pickup-title">
-          Close to home.
-          <br />
-          Clear before you go.
-        </h2>
-        <p>
-          Pickup is in Madisonville by arrangement, not at a walk-in shop.
-          Confirm your pickup time before traveling; shipping and public shop
-          hours are not offered.
-        </p>
-      </div>
-    </div>
-    <PickupLocation />
-    <ol class="home-pickup-steps">
-      <li>
-        <span class="home-step-number" aria-hidden="true">
-          01
-        </span>
-        <h3>Find your direction</h3>
-        <p>
-          Browse the collection and read the details. Looking around does not
-          place an order or reserve goods.
-        </p>
-      </li>
-      <li>
-        <span class="home-step-number" aria-hidden="true">
-          02
-        </span>
-        <h3>Know what to expect</h3>
-        <p>
-          Real availability, prices, payment, and pickup instructions must be
-          confirmed before a purchase.
-        </p>
-      </li>
-      <li>
-        <span class="home-step-number" aria-hidden="true">
-          03
-        </span>
-        <h3>Arrange the handoff</h3>
-        <p>
-          Once ordering opens, follow the confirmed pickup arrangements.
-          Shipping and public shop hours are not offered yet.
-        </p>
-      </li>
-    </ol>
-  </section>
   <section class="home-services" aria-labelledby="services-title">
     <div class="wrap">
       <div class="home-section-heading">
@@ -235,7 +183,6 @@ try {
       <ServiceCards />
     </div>
   </section>
-  <ContactSection contact={config.contact} />
 </SiteLayout>
 
 <style>
@@ -436,44 +383,6 @@ try {
   .home-story-copy a:focus-visible {
     outline-color: var(--ochre);
   }
-  .home-pickup {
-    padding-block: 5.5rem;
-  }
-  .home-pickup-intro > .eyebrow {
-    color: var(--tomato);
-  }
-  .home-pickup-steps {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 2rem;
-    padding: 0;
-    margin: 2.5rem 0 0;
-    list-style: none;
-  }
-  .home-pickup-steps li {
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--forest);
-  }
-  .home-step-number {
-    display: inline-flex;
-    width: 2.5rem;
-    height: 2.5rem;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--forest);
-    border-radius: 50%;
-    background: var(--ochre);
-    font-size: 0.7rem;
-  }
-  .home-pickup-steps h3 {
-    margin-block: 1.25rem 0.8rem;
-    font-size: 1.6rem;
-  }
-  .home-pickup-steps p {
-    max-width: 24rem;
-    font-size: 0.85rem;
-    line-height: 1.85;
-  }
   .home-services {
     padding-block: 4.5rem;
     border-block: 1px solid var(--line);
@@ -505,12 +414,10 @@ try {
     .home-hero {
       padding-block: 2.75rem 3rem;
     }
-    .home-goods,
-    .home-pickup {
+    .home-goods {
       padding-block: 3rem;
     }
     .home-collection-paths,
-    .home-pickup-steps,
     .home-story-layout {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -542,12 +449,6 @@ try {
     }
     .home-story-heading h2 {
       font-size: clamp(2.5rem, 9vw, 3.5rem);
-    }
-    .home-pickup-steps {
-      gap: 1.5rem;
-    }
-    .home-pickup-steps h3 {
-      margin-top: 1rem;
     }
     .home-services {
       padding-block: 3rem;

@@ -1,0 +1,14 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+import ContactSection from "../components/ContactSection.astro";
+import { readConfig } from "../server/config.ts";
+const { contact } = readConfig();
+---
+
+<SiteLayout
+  title="Contact us"
+  description="Contact The True Hive about the collection, colony rescue or farm pollination. Call us or prepare an email draft to review and send in your own email app."
+  path="/contact"
+>
+  <ContactSection contact={contact} headingLevel="h1" />
+</SiteLayout>

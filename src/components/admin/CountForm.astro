@@ -15,17 +15,24 @@ interface Props {
 }
 const { variant, level, location, productKey, inline = false } = Astro.props;
 const Editor = inline ? "details" : "div";
+const Heading = inline ? "h4" : "h3";
 ---
 
 <section
   class:list={["admin-panel", { "stock-count": inline }]}
   data-stock-panel={inline || undefined}
 >
-  <h3>
-    {variant.label} · {location?.name ?? level.locationKey}
-  </h3>
-  <p class="admin-muted">Current server balance, not a browser estimate.</p>
-  <Quantities level={level} />
+  <div class="stock-overview">
+    <Heading class="stock-location">
+      {inline
+        ? (location?.name ?? level.locationKey)
+        : `${variant.label} · ${location?.name ?? level.locationKey}`}
+    </Heading>
+    {!inline && (
+      <p class="admin-muted">Current server balance, not a browser estimate.</p>
+    )}
+    <Quantities level={level} compact={inline} />
+  </div>
   <Editor>
     {inline && <summary>Add / Reduce stock</summary>}
     <form
@@ -110,13 +117,54 @@ const Editor = inline ? "details" : "div";
 
 <style>
   .stock-count {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
     min-width: 0;
+    padding: 0.6rem 0.75rem;
+    border-color: var(--line);
     overflow-wrap: anywhere;
+  }
+  .stock-count .stock-overview {
+    display: grid;
+    flex: 1 1 27rem;
+    grid-template-columns: minmax(7rem, 1fr) minmax(12rem, 1.4fr);
+    gap: 0.5rem 1rem;
+    align-items: center;
+    min-width: 0;
+  }
+  .stock-count .stock-location {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .stock-count:not(:has([open])) :global([data-secondary-quantity]) {
+    display: none;
+  }
+  .stock-count:not(:has([open])) {
+    padding: 0.25rem 0;
+    border: 0;
+  }
+  .stock-count:not(:has([open]))
+    :global(.admin-quantities > div:not([data-secondary-quantity])) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.5rem;
+    align-items: baseline;
+    padding: 0;
+    border: 0;
+  }
+  .stock-count :global(details[open]) {
+    flex-basis: 100%;
   }
   .stock-count :global(summary) {
     cursor: pointer;
     font-weight: 700;
+    min-height: 2.75rem;
     padding-block: 0.5rem;
+    font-size: 0.85rem;
   }
   .stock-count :global(.admin-form) {
     margin-block: 0.75rem;
@@ -124,6 +172,14 @@ const Editor = inline ? "details" : "div";
   .stock-count :global(.admin-quantities) {
     grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
     gap: 0.4rem;
+    margin: 0;
+  }
+  .stock-count:not(:has([open])) :global(.admin-quantities) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stock-count :global(.admin-quantities dd) {
+    font-size: 1.1rem;
+    margin-top: 0;
   }
   .stock-count :global(.admin-grid) {
     grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
@@ -131,5 +187,10 @@ const Editor = inline ? "details" : "div";
   .stock-count :global(.admin-actions p) {
     flex-basis: 100%;
     margin-block: 0.25rem;
+  }
+  @media (max-width: 42rem) {
+    .stock-count .stock-overview {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 </style>
