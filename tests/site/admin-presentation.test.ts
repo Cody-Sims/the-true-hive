@@ -2593,6 +2593,38 @@ domTest(
 );
 
 domTest(
+  "ingredient editing preserves a full valid Unicode list without cutting pasted text",
+  async () => {
+    const page = await fixturePage("src/components/admin/ProductForm.astro", {
+      product,
+    });
+    const ingredients = Array.from({ length: 40 }, () => "🐝".repeat(200));
+    let payload: Record<string, unknown> | undefined;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      payload = route.request().postDataJSON();
+      return route.fulfill({
+        status: 422,
+        json: { error: { message: "Test-only rejection" } },
+      });
+    });
+    try {
+      const field = page.getByLabel("Ingredients (one per line)");
+      await field.fill(ingredients.join("\n"));
+      assert.equal(await field.inputValue(), ingredients.join("\n"));
+      await page.getByRole("button", { name: "Save changes" }).click();
+      await waitPhase(page, "idle");
+      assert(payload);
+      assert.deepEqual(
+        (payload.product as { ingredients: string[] }).ingredients,
+        ingredients,
+      );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
   "legacy product forms omit ingredients instead of submitting an unintended clear",
   async () => {
     const page = await fixturePage("src/components/admin/ProductForm.astro", {
