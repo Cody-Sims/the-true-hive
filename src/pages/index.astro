@@ -3,7 +3,8 @@ import SiteLayout from "../layouts/SiteLayout.astro";
 import ProductCard from "../components/ProductCard.astro";
 import ContactSection from "../components/ContactSection.astro";
 import ServiceCards from "../components/ServiceCards.astro";
-import scene from "../../prototypes/assets/market-scene.svg?url";
+import { Image } from "astro:assets";
+import hivePhoto from "../assets/honeybees-on-comb.webp";
 import { getCatalog, CatalogUnavailableError } from "../server/catalog.ts";
 import { readConfig } from "../server/config.ts";
 
@@ -47,21 +48,21 @@ try {
     </div>
     <figure class="home-scene">
       <div class="home-scene-heading" aria-hidden="true">
-        <span>A little look ahead</span>
+        <span>A little life in the hive</span>
         <span>&#10033;</span>
       </div>
       <div class="home-scene-art">
-        <img
-          src={scene}
-          alt="Original illustration of a striped market stand with honey, soap, and candle concepts."
-          width="880"
-          height="640"
+        <Image
+          src={hivePhoto}
+          alt="Honeybees tending golden honeycomb."
+          widths={[480, 800, 1200, 1600]}
+          sizes="(max-width: 60rem) 90vw, 44vw"
+          loading="eager"
           fetchpriority="high"
         />
       </div>
       <figcaption>
-        The collection, imagined. Original illustration; not an actual stall or
-        photograph.
+        A closer look at the bees and the comb they call home.
       </figcaption>
     </figure>
   </section>
@@ -296,14 +297,16 @@ try {
     line-height: 1;
   }
   .home-scene-art {
-    margin-top: 1rem;
-    padding: clamp(0.5rem, 1.5vw, 1.5rem) 0 1rem;
-    border: 1px solid var(--line);
-    border-radius: 48% 48% 0 0;
-    background: #eee7d6;
+    margin-block: 1.5rem;
+    filter: drop-shadow(0 0.75rem 1rem rgb(28 59 44 / 12%));
   }
   .home-scene-art img {
+    display: block;
     width: 100%;
+    height: auto;
+    aspect-ratio: 1.1547;
+    object-fit: cover;
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
   }
   .home-scene figcaption {
     max-width: 25rem;
