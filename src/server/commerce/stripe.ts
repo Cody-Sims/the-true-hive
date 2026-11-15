@@ -116,6 +116,16 @@ export interface CheckoutIntent {
   lines: { variantKey: string; quantity: number }[];
 }
 
+export type CheckoutResult =
+  | { checkoutUrl: string }
+  | {
+      terminal: {
+        outcome: "settled" | "released";
+        operationId: string;
+        lines: CheckoutIntent["lines"];
+      };
+    };
+
 export interface CheckoutPersistence {
   reserveCheckout(
     pool: Pool,
@@ -461,7 +471,7 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
   }
 
   return {
-    async createCheckout(input: unknown): Promise<{ checkoutUrl: string }> {
+    async createCheckout(input: unknown): Promise<CheckoutResult> {
       const intent = validateCheckoutIntent(input);
       const order = await persistence.reserveCheckout(
         pool,
@@ -474,6 +484,31 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
       ) {
         await quarantine(order, "checkout_reservation_mismatch");
         throw unavailable();
+      }
+      if (
+        order.id.toLowerCase() !== intent.operationId ||
+        order.lines.length !== intent.lines.length ||
+        !order.lines.every((line) =>
+          intent.lines.some(
+            (requested) =>
+              requested.variantKey === line.variantKey &&
+              requested.quantity === line.quantity,
+          ),
+        )
+      ) {
+        throw unavailable();
+      }
+      if (["paid", "picked_up", "expired"].includes(order.state)) {
+        return {
+          terminal: {
+            outcome: order.state === "expired" ? "released" : "settled",
+            operationId: order.id,
+            lines: order.lines.map(({ variantKey, quantity }) => ({
+              variantKey,
+              quantity,
+            })),
+          },
+        };
       }
       if (
         !["creating", "open", "reconciliation_required"].includes(order.state)

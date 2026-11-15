@@ -86,7 +86,7 @@ export function writePendingIntent(
   }
 }
 
-export function clearRejectedIntent(
+export function clearPendingIntent(
   storage: () => PendingStorage,
   intent: PendingIntent,
 ): boolean {
