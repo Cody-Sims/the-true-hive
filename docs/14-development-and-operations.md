@@ -232,31 +232,15 @@ An explicitly rejected duplicate product key/slug/SKU preserves the draft and
 allows correction. Revision conflicts and uncertain outcomes retain their
 existing review/frozen-intent safeguards.
 
-**Product-photo uploads are not yet enabled.** The current image selector still
-chooses original illustration placeholders. The owner requested Google Cloud
-Storage using the personal site's pattern; the reference implementation was
-inspected in `Cody-Sims/portfolio-site` at `server/lib/storage.js`,
-`server/services/gcs-upload.service.js` and `server/routes/blog/images.js`.
-It uses authenticated server uploads, image normalization/WebP and randomized
-object names. No personal bucket, credentials or travel GPS/color-processing
-behavior is copied.
-
-Before implementing/provisioning True Hive storage, approve the billed-project
-arrangement and bucket-scoped access. A separate True Hive bucket and server-only
-credentials are required; do not upload drafts to the personal site's bucket.
-Google's current [Firebase Storage requirements](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)
-require Blaze for buckets in a Firebase project. A separately billed GCS-only
-project is another possible arrangement; neither billing change is authorized
-by the existing Spark setup or the cost inquiry.
-
-Storage can be inexpensive for a small optimized catalog, but
-[storage/operation/transfer charges](https://cloud.google.com/storage/pricing)
-and [shared billing-account free-tier limits](https://cloud.google.com/free/docs/free-cloud-features#cloud-storage)
-still apply. No bucket, billing, IAM, provider key, upload endpoint, photo-schema
-migration or new dependency was introduced in this form-guidance slice.
-The eventual upload slice must include bounded byte/pixel validation,
-metadata/GPS stripping, private draft previews, safe public-photo publication
-and retry/rollback behavior, not an unrestricted public file uploader.
+The owner subsequently approved metered photos and reuse of the existing
+website storage **project**, with a new private True Hive bucket and dedicated
+bucket-scoped account. Firebase Auth stays in its separate project/current plan.
+The personal site's bucket/key and travel GPS/color-processing behavior are not
+copied. See `19-product-photos.md` alongside this file for the product-photo
+architecture/runbook: limits, server-only settings, migration 003, draft privacy,
+retries and operator checks. This new operator document is source-owned, not
+silently added to the existing curated preview's document registry. Original
+illustration choices remain the fallback.
 
 **TLS/authentication choice:** remote connections require certificate verification. The owner approved the current Node driver's **opportunistic channel binding** (`enableChannelBinding: true`), as documented by [node-postgres](https://node-postgres.com/features/ssl). Configure the Node-specific URL with `sslmode=verify-full&channel_binding=prefer`; the adapter removes those supported hints before passing its verified TLS options to the driver. A generic Neon URL containing `channel_binding=require` is deliberately rejected: this driver does not strictly enforce that requirement. Do not silently drop it, claim strict binding, set `rejectUnauthorized: false` or disable remote TLS.
 
@@ -344,7 +328,7 @@ Each bounded batch locks the least-recently-updated pending orders, skips orders
 
 Configure the test webhook on the **storefront/staging origin** at `/api/webhooks/stripe`, not the admin-only inventory host. The pinned SDK/event version is `2026-10-28.endive`, with the `allowed_payment_method_types` card filter. Match that endpoint version and rehearse signatures/expiry/paid/pickup before activation. Unsupported test totals are rejected before holds. Test details belong only in the isolated sandbox.
 
-Native startup validates checkout configuration, private role/schema access and Firebase TOTP readiness before listening. Astro trusts forwarded hosts only for the exact configured storefront/inventory origins; the middleware still verifies effective host/session/CSRF independently. The adapter accepts the largest bounded webhook body, while admin/checkout readers retain their smaller stream limits.
+Native startup validates checkout configuration, private role/schema access and Firebase TOTP readiness before listening. Astro trusts forwarded hosts only for the exact configured storefront/inventory origins; the middleware still verifies effective host/session/CSRF independently. The adapter accepts an 8 MiB photo plus 64 KiB of multipart overhead, while JSON and webhook readers retain their smaller stream limits.
 
 CI's disposable integration role has `CREATEROLE` solely to create/drop isolated permission-test roles. Production runtime roles must never inherit that privilege. The Playwright lane runs the isolated admin DOM cases with zero skips after Chromium is installed; Node-only contract checks do not substitute for that browser gate.
 

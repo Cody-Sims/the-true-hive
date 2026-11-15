@@ -9,6 +9,7 @@ import type { SiteConfig } from "./config.ts";
 import { showcaseProducts } from "../content/showcase.ts";
 import { DatabaseConfigurationError } from "./db/connection.mjs";
 import { getPool } from "./db/pool.ts";
+import { projectProductPhoto } from "./media/photo.ts";
 
 export class CatalogUnavailableError extends Error {
   code: string;
@@ -29,17 +30,18 @@ interface ProductRow extends QueryResultRow {
   imageKey: Product["imageKey"];
   kind: Product["kind"];
   variants: ProductVariant[];
+  photo?: unknown;
 }
 
 const productQuery = `
   SELECT p.product_key AS key, p.slug, p.title, p.summary, p.details,
-    p.category, p.image_key AS "imageKey", p.kind,
+    p.category, p.image_key AS "imageKey", p.kind, p.photo,
     COALESCE(jsonb_agg(jsonb_build_object(
       'key', v.variant_key, 'label', v.label, 'priceMinor', v.price_minor, 'currency', v.currency
     ) ORDER BY v.display_order, v.variant_key) FILTER (WHERE v.variant_key IS NOT NULL), '[]'::jsonb) AS variants
   FROM products p
   LEFT JOIN product_variants v ON v.product_key = p.product_key AND v.active
-  WHERE p.published AND p.kind IN ('concept', 'active') AND ($1::text IS NULL OR p.slug = $1)
+  WHERE p.published AND NOT p.archived AND p.kind IN ('concept', 'active') AND ($1::text IS NULL OR p.slug = $1)
   GROUP BY p.product_key
   ORDER BY p.display_order, p.product_key
   LIMIT 101
@@ -56,6 +58,7 @@ const availabilityQuery = `
 `;
 
 function mapProduct(row: ProductRow): Product {
+  const photo = row.kind === "active" ? projectProductPhoto(row.photo) : null;
   if (
     !Array.isArray(row.details) ||
     !row.details.every((detail) => typeof detail === "string") ||
@@ -77,6 +80,7 @@ function mapProduct(row: ProductRow): Product {
     details: row.details,
     category: row.category,
     imageKey: row.imageKey,
+    ...(photo ? { photo } : {}),
     kind: row.kind,
     variants: row.variants.map((variant) => ({
       key: variant.key,

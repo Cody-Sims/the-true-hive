@@ -5,8 +5,9 @@ import FormFeedback from "./FormFeedback.astro";
 import FieldHelp from "./FieldHelp.astro";
 interface Props {
   product?: AdminProduct;
+  photosEnabled?: boolean;
 }
-const { product } = Astro.props;
+const { product, photosEnabled = false } = Astro.props;
 const endpoint = product
   ? `/api/admin/products/${encodeURIComponent(product.key)}`
   : "/api/admin/products";
@@ -147,9 +148,10 @@ const endpoint = product
       </div>
       <div class="admin-field">
         <FieldHelp label="Placeholder illustration">
-          Original placeholder artwork, not a product photograph. Choose the
-          closest illustration for now. Product-photo upload storage still needs
-          its separate setup and billing authorization.
+          Original placeholder artwork, not a product photograph.
+          {photosEnabled
+            ? "This is the fallback when no product photo is attached. Manage the primary photo separately after saving."
+            : "Choose the closest illustration for now. Product-photo upload storage still needs its separate setup and billing authorization."}
         </FieldHelp>
         <label>
           <span>Placeholder illustration</span>
@@ -211,6 +213,28 @@ const endpoint = product
       Add another variant
     </button>
   </fieldset>
+  {photosEnabled && (
+    <aside class="admin-notice" aria-label="Product photo">
+      <h2>Primary product photo</h2>
+      {product ? (
+        <p>
+          Save any product edits first.{" "}
+          <a
+            href={`/inventory/products/${encodeURIComponent(product.key)}/photo`}
+          >
+            {product.photo
+              ? "Review or replace product photo"
+              : "Upload a product photo"}
+          </a>{" "}
+          opens a separate editor; it does not save these fields.
+        </p>
+      ) : (
+        <p>
+          Save the draft first. Then open its separate product photo editor.
+        </p>
+      )}
+    </aside>
+  )}
   <p class="admin-notice">
     Save keeps publication unchanged. Publish requires valid content and an
     active real product with an active positive-price USD variant. Archive

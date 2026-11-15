@@ -10,8 +10,12 @@ import type {
 import { adjustStock, type AdjustmentResult } from "../inventory/adjust.ts";
 import { isRecordKey, validateAdjustment } from "../inventory/rules.ts";
 import { AdminError, adminError } from "./errors.ts";
+import { projectProductPhoto } from "../media/photo.ts";
 
-type ProductFields = Omit<AdminProduct, "status" | "revision" | "variants">;
+type ProductFields = Omit<
+  AdminProduct,
+  "status" | "revision" | "variants" | "photo"
+>;
 type VariantFields = Omit<AdminVariant, "levels">;
 type ProductReceipt = Omit<AdminProduct, "variants"> & {
   variants: VariantFields[];
@@ -296,7 +300,7 @@ const locationQuery = `
 `;
 const productQuery = `
   SELECT p.product_key AS key, p.slug, p.title, p.summary, p.details,
-    p.category, p.image_key AS "imageKey", p.kind, p.revision,
+    p.category, p.image_key AS "imageKey", p.kind, p.revision, p.photo,
     CASE WHEN p.archived THEN 'archived' WHEN p.published THEN 'published' ELSE 'draft' END AS status,
     COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
@@ -331,7 +335,13 @@ async function readProduct(
       "ADMIN_UNAVAILABLE",
       "The catalog record requires maintenance.",
     );
-  return product;
+  return product ? projectPhoto(product) : null;
+}
+
+function projectPhoto(product: AdminProduct): AdminProduct {
+  const { photo: stored, ...rest } = product;
+  const photo = projectProductPhoto(stored);
+  return { ...rest, ...(photo ? { photo } : {}) };
 }
 
 export async function getAdminProduct(
@@ -373,7 +383,7 @@ export async function listAdminProducts(
       );
       const locations = await client.query<LocationRow>(locationQuery);
       return {
-        products: products.rows,
+        products: products.rows.map(projectPhoto),
         total: count.rows[0]!.total,
         locations: locations.rows,
       };

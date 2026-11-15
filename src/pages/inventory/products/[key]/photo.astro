@@ -1,0 +1,50 @@
+---
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import ProductPhotoEditor from "../../../../components/admin/ProductPhotoEditor.astro";
+import ReadState from "../../../../components/admin/ReadState.astro";
+import { getAdminProduct } from "../../../../server/admin/catalog.ts";
+import { getAdminPool } from "../../../../server/admin/pool.ts";
+import { isRecordKey } from "../../../../server/inventory/rules.ts";
+import { readProductImagesConfig } from "../../../../server/media/config.ts";
+import type { AdminProduct } from "../../../../domain/admin.ts";
+
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let product: AdminProduct | null = null;
+let enabled = false;
+let unavailable = false;
+if (isRecordKey(Astro.params.key)) {
+  try {
+    enabled = readProductImagesConfig().enabled;
+    product = await getAdminProduct(getAdminPool(), Astro.params.key);
+  } catch {
+    unavailable = true;
+  }
+}
+if (!product) Astro.response.status = unavailable ? 503 : 404;
+---
+
+<AdminLayout title={product ? `Photo for ${product.title}` : "Product photo"}>
+  <a
+    href={
+      product
+        ? `/inventory/products/${encodeURIComponent(product.key)}`
+        : "/inventory/products"
+    }
+  >
+    {product ? "Back to product editor" : "Back to products"}
+  </a>
+  <p class="admin-notice">
+    Save other product edits in the product editor before opening this separate
+    photo page. Photo actions do not save those fields.
+  </p>
+  {product ? (
+    <ProductPhotoEditor product={product} enabled={enabled} />
+  ) : (
+    <ReadState unavailable={unavailable} missing={!unavailable} />
+  )}
+</AdminLayout>
+
+<script>
+  import "../../../../client/admin-photo.ts";
+</script>

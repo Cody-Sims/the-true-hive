@@ -1,4 +1,4 @@
-import type { ProductCategory } from "./catalog.ts";
+import type { ProductCategory, ProductPhoto } from "./catalog.ts";
 
 export interface AdminActor {
   uid: string;
@@ -43,6 +43,7 @@ export interface AdminProduct {
   details: string[];
   category: ProductCategory;
   imageKey: "soap" | "honey" | "candle";
+  photo?: ProductPhoto | null;
   kind: "draft" | "concept" | "active";
   status: "draft" | "published" | "archived";
   revision: number;

@@ -1,6 +1,14 @@
 export type ProductCategory = "soap" | "honey" | "candles" | "gifts";
 export type ProductImage = "soap" | "honey" | "candle";
 
+export interface ProductPhoto {
+  id: string;
+  alt: string;
+  width: number;
+  height: number;
+  bytes: number;
+}
+
 export interface ProductVariant {
   key: string;
   label: string;
@@ -16,6 +24,7 @@ export interface Product {
   details: string[];
   category: ProductCategory;
   imageKey: ProductImage;
+  photo?: ProductPhoto | null;
   kind: "concept" | "active";
   variants: ProductVariant[];
 }

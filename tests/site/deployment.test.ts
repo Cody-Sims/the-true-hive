@@ -41,6 +41,8 @@ test("inventory browser configuration does not permit server identity or payment
     "ADMIN_CSRF_SECRET",
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
+    "PRODUCT_IMAGES_SERVICE_ACCOUNT_JSON",
+    'import { Storage } from "@google-cloud/storage";',
     'import { getAuth } from "firebase-admin/auth";',
     "SELECT uid FROM admin_memberships",
   ]) {

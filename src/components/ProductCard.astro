@@ -34,8 +34,10 @@ const categories = {
     aria-label={`Explore ${product.title}`}
   >
     <span class="shelf-ticket">{labels[product.category]}</span>
-    <ProductArt image={product.imageKey} />
-    <span class="art-caption">Original illustration</span>
+    <ProductArt image={product.imageKey} photo={product.photo ?? null} />
+    <span class="art-caption">
+      {product.photo ? "Product photo" : "Original illustration"}
+    </span>
   </a>
   <div class="shelf-copy">
     <p class="eyebrow">{categories[product.category]}</p>

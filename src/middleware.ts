@@ -49,9 +49,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const authConnections = authDomain
       ? ` https://identitytoolkit.googleapis.com https://securetoken.googleapis.com ${authDomain}`
       : "";
+    const photoPreview =
+      inventory &&
+      /^\/inventory\/products\/[a-z0-9][a-z0-9-]{0,79}\/photo\/?$/.test(
+        context.url.pathname,
+      );
     response.headers.set(
       "Content-Security-Policy",
-      `default-src 'self'; script-src 'self' 'nonce-${nonce}'${authDomain ? " https://apis.google.com" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'${authConnections}; ${authDomain ? `frame-src ${authDomain}; ` : ""}object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
+      `default-src 'self'; script-src 'self' 'nonce-${nonce}'${authDomain ? " https://apis.google.com" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data:${photoPreview ? " blob:" : ""}; connect-src 'self'${authConnections}; ${authDomain ? `frame-src ${authDomain}; ` : ""}object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
     );
   }
   if (inventory && firebaseProject)

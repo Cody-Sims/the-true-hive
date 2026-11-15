@@ -97,12 +97,15 @@ if (testCheckoutEnabled && product && checkout.locationKey) {
           <div class="detail-illustration">
             <ProductArt
               image={product.imageKey}
+              photo={product.photo ?? null}
               alt={`Original concept illustration for ${product.title}.`}
               eager
             />
           </div>
           <figcaption>
-            Original illustration, not an approved product photograph.
+            {product.photo
+              ? "Product photo."
+              : "Original illustration, not an approved product photograph."}
           </figcaption>
         </figure>
         <section class="detail-copy" aria-labelledby="product-title">

@@ -46,6 +46,7 @@ These are static local assets and metadata, not a social integration or tracker.
 |---|---|---|
 | AP-01 | Completed: owner-approved redesign merged through PR #6 and verified live at `https://thetruehive.com` on 2026-11-14 | Existing CI-gated Render service; verified apex/www TLS and redirects; mail, preview and inventory records preserved; no plan upgrade or operational sales activation |
 | AP-09 | Completed: separately approved inventory-only hostname, TLS and private preparation runtime are live on 2026-11-14 | Existing Google/TOTP admin and database, anonymous/forged-session and wrong-host denial verified, public showcase unchanged, checkout disabled, no seeded records; 2 of 2 included domain slots used, no additional charge or plan upgrade |
+| AP-11 | Metered product photos approved on 2026-11-14 using the website's existing Google Cloud storage project; separate True Hive bucket and scoped principal provisioned and private GCS roundtrip verified | No personal bucket/key reuse, no change to the separate True Hive Auth project/plan, no fake product/stock seed. Photo code release and live checks follow protected CI and the photo runbook |
 
 ## Still blocked: needs the owner
 
@@ -58,10 +59,9 @@ These are static local assets and metadata, not a social integration or tracker.
 | AP-06 | Approve any Invoice/Tax fees, confirm invoice use cases and applicable tax registrations/product classifications | Selecting product interests does not approve live invoicing, paid features or tax/legal decisions | Document proposal gaps; do not send invoices, register tax or collect money |
 | AP-07 | Participate in real sign-out/access-removal, purchase/expiry/pickup and operational recovery rehearsals | Existing local MFA and empty-backup restore do not prove all real operational journeys | Automated regressions and honest evidence/limits |
 | AP-08 | Set backup/recovery ownership, acceptable data-loss window and reconciliation scheduling/monitoring | A script and free-tier history are not an operating agreement or verified schedule | Local restore/testing and operator documentation |
-| AP-10 | Approve other future paid assets/resources or analytics/marketing capture if later requested | Conditional boundary, separate from the proposed photo storage in AP-11; no analytics/marketing capture is enabled | Local fonts/assets and no-tracking discovery |
-| AP-11 | Approve a billed Google Cloud Storage arrangement for the newly requested product photos: True Hive Blaze/project billing or a separate billed media project, with an isolated bucket and scoped server access | Storage in a Spark Firebase project is not available under current Google requirements; the owner asked about costs but has not yet authorized billing changes. No personal bucket/keys may be reused implicitly | Guided product forms and research; current image selector remains illustration-only. Actual upload implementation/provider setup follows approval |
+| AP-10 | Approve other future paid assets/resources or analytics/marketing capture if later requested | Conditional boundary, separate from the approved scoped photo storage in AP-11; no analytics/marketing capture is enabled | Local fonts/assets and no-tracking discovery |
 
-AP-01 and AP-09 are complete. The remaining blocked rows
+AP-01/AP-09 are complete and AP-11 storage authorization is received. The remaining blocked rows
 gate final business content or operational features, not publication of the
 approved honest showcase.
 No new sign-in, payment or legal choice was guessed to get around them.
@@ -89,6 +89,7 @@ loops and consent manipulation are not part of this design.
 - [Detailed implementation plan](docs/17-professional-website-plan.md)
 - [Broader owner setup checklist](docs/16-owner-setup-checklist.md)
 - [Actual Stripe planner baseline and extension plan](docs/18-stripe-payments-invoicing-tax-plan.md)
+- [Product-photo architecture and rollout](docs/19-product-photos.md)
 - Verified local website preview: **http://127.0.0.1:4330/** on this machine.
 - Eight final desktop/mobile screenshots and `metrics.json` are in the session
   artifact directory **`website-review-2026-11-13/`**; they are not published.
