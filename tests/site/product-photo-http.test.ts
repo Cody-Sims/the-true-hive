@@ -109,7 +109,13 @@ test("multipart is bounded for content-length and chunked bodies and rejects dup
     (form: FormData) => form.set("expectedRevision", "01"),
   ])
     await assert.rejects(readPhotoMultipart(multipart(change)), status(400));
-  const tooLarge = multipart();
+  const encoded = multipart();
+  // Model received wire bytes, not Undici's asynchronously running FormData encoder.
+  const tooLarge = new Request(encoded.url, {
+    method: "POST",
+    headers: encoded.headers,
+    body: await encoded.arrayBuffer(),
+  });
   tooLarge.headers.set("content-length", String(9 * 1024 * 1024));
   await assert.rejects(readPhotoMultipart(tooLarge), status(413));
   let canceled = false;
