@@ -11,64 +11,125 @@ interface Props {
   level: AdminInventoryLevel;
   location?: AdminLocation | undefined;
   productKey: string;
+  inline?: boolean;
 }
-const { variant, level, location, productKey } = Astro.props;
+const { variant, level, location, productKey, inline = false } = Astro.props;
+const Editor = inline ? "details" : "div";
 ---
 
-<section class="admin-panel">
+<section
+  class:list={["admin-panel", { "stock-count": inline }]}
+  data-stock-panel={inline || undefined}
+>
   <h3>
     {variant.label} · {location?.name ?? level.locationKey}
   </h3>
   <p class="admin-muted">Current server balance, not a browser estimate.</p>
   <Quantities level={level} />
-  <form
-    data-admin-form="adjustment"
-    data-endpoint="/api/admin/adjustments"
-    data-method="POST"
-    data-refresh={`/api/admin/products/${encodeURIComponent(productKey)}`}
-    class="admin-form"
-  >
-    <input name="variantKey" type="hidden" value={variant.key} />
-    <input name="locationKey" type="hidden" value={level.locationKey} />
-    <input name="expectedRevision" type="hidden" value={level.revision} />
-    <fieldset data-intent-fields>
-      <legend>Audited count correction</legend>
-      <div class="admin-grid">
+  <Editor>
+    {inline && <summary>Add / Reduce stock</summary>}
+    <form
+      data-admin-form="adjustment"
+      data-endpoint="/api/admin/adjustments"
+      data-method="POST"
+      data-refresh={`/api/admin/products/${encodeURIComponent(productKey)}`}
+      data-stock-controls={inline || undefined}
+      class="admin-form"
+    >
+      <input name="variantKey" type="hidden" value={variant.key} />
+      <input name="locationKey" type="hidden" value={level.locationKey} />
+      <input name="expectedRevision" type="hidden" value={level.revision} />
+      <fieldset data-intent-fields>
+        <legend>
+          {inline
+            ? "Review an audited stock change"
+            : "Audited count correction"}
+        </legend>
+        {inline && (
+          <div class="admin-actions" aria-label="Prepare received units">
+            {[1, 10, 100].map((amount) => (
+              <button type="button" data-stock-add={amount}>
+                +{amount} received
+              </button>
+            ))}
+            <p>
+              Presets only fill Add units. Review the amount and enter a reason,
+              then confirm.
+            </p>
+          </div>
+        )}
+        <div class="admin-grid">
+          <label>
+            Direction{" "}
+            <select name="direction" required>
+              <option value="increase">
+                {inline ? "Add units to on hand" : "Increase on hand"}
+              </option>
+              <option value="reduce">Reduce on hand</option>
+            </select>
+          </label>
+          <label>
+            Positive whole units{" "}
+            <input
+              name="amount"
+              type="number"
+              min="1"
+              max="2147483647"
+              step="1"
+              required
+            />
+          </label>
+        </div>
         <label>
-          Direction{" "}
-          <select name="direction" required>
-            <option value="increase">Increase on hand</option>
-            <option value="reduce">Reduce on hand</option>
-          </select>
-        </label>
-        <label>
-          Positive whole units{" "}
-          <input
-            name="amount"
-            type="number"
-            min="1"
-            max="2147483647"
-            step="1"
+          Reason{" "}
+          <textarea
+            name="reason"
             required
-          />
+            minlength={inline ? "3" : "1"}
+            maxlength="500"
+            placeholder={
+              inline
+                ? "Received delivery / damaged units / physical recount — explain why"
+                : undefined
+            }
+            rows="2"
+          ></textarea>
         </label>
-      </div>
-      <label>
-        Reason{" "}
-        <textarea
-          name="reason"
-          required
-          minlength="1"
-          maxlength="500"
-          rows="2"
-        ></textarea>
-      </label>
-      <p>
-        The server rejects reductions below held + committed + unavailable. An
-        uncertain response must be retried unchanged before another intent.
-      </p>
-    </fieldset>
-    <button type="submit">Confirm count correction</button>
-    <FormFeedback />
-  </form>
+        <p>
+          The server rejects reductions below held + committed + unavailable. An
+          uncertain response must be retried unchanged before another intent.
+        </p>
+      </fieldset>
+      <button type="submit">
+        {inline ? "Confirm stock change" : "Confirm count correction"}
+      </button>
+      <FormFeedback />
+    </form>
+  </Editor>
 </section>
+
+<style>
+  .stock-count {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .stock-count :global(summary) {
+    cursor: pointer;
+    font-weight: 700;
+    padding-block: 0.5rem;
+  }
+  .stock-count :global(.admin-form) {
+    margin-block: 0.75rem;
+  }
+  .stock-count :global(.admin-quantities) {
+    grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
+    gap: 0.4rem;
+  }
+  .stock-count :global(.admin-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  }
+  .stock-count :global(.admin-actions p) {
+    flex-basis: 100%;
+    margin-block: 0.25rem;
+  }
+</style>

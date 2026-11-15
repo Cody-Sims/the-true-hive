@@ -1,0 +1,136 @@
+---
+import type { AdminProduct } from "../../domain/admin.ts";
+import { formatIngredientLabel } from "../../domain/ingredients.ts";
+interface Props {
+  product: AdminProduct;
+}
+const { product } = Astro.props;
+const ingredients = formatIngredientLabel(product.ingredients ?? []);
+---
+
+<section data-barcode-labels aria-label="Internal product labels">
+  <div class="label-controls">
+    <p>
+      These internal Code 128 barcodes encode the exact saved SKU. They are not
+      retail GTINs, UPCs, EANs or GS1 codes, and do not identify individual
+      physical units.
+    </p>
+    <p>
+      Ingredient text is owner-authored from the current stored list, not a
+      compliance certification. Verify the formula and all applicable packaging
+      requirements yourself. No size, weight or ingredient claims are inferred.
+    </p>
+    <p>
+      Save product edits before opening this page. Use your browser's Print
+      command even with JavaScript off. Check every barcode image has loaded;
+      use one full-width label per row, retain white quiet zones, and disable
+      browser headers and footers so private page details are not printed. Long
+      SKUs may need wider paper or landscape orientation: do not shrink bars to
+      fit small stickers. Test the final physical print with your own scanner
+      before using any labels; hardware compatibility is not certified.
+    </p>
+    <button type="button" data-print-labels hidden>
+      Print labels
+    </button>
+    <p data-print-label-status role="status"></p>
+    {!product.variants.length && (
+      <p>No saved variants are available to label.</p>
+    )}
+  </div>
+  {product.variants.map((variant) => {
+    const printable = /^[\x20-\x7e]{1,128}$/.test(variant.sku);
+    return (
+      <article data-barcode-label class="barcode-label">
+        <h2>{product.title}</h2>
+        <p class="label-variant">{variant.label}</p>
+        <p class="label-sku">
+          <span>SKU: </span>
+          <code>{variant.sku}</code>
+        </p>
+        {printable ? (
+          <img
+            data-sku-barcode
+            src={`/api/admin/variants/${encodeURIComponent(variant.key)}/barcode.svg`}
+            alt={`Code 128 internal barcode for SKU ${variant.sku}`}
+            loading="eager"
+          />
+        ) : (
+          <p data-barcode-unavailable>
+            Barcode unavailable: the stored SKU must be 1 to 128 printable ASCII
+            characters. No identity was changed.
+          </p>
+        )}
+        {variant.sku.length > 32 && (
+          <p class="label-warning">
+            Long SKU: check paper width and physical scanning; smaller output
+            can make these bars unreadable.
+          </p>
+        )}
+        {ingredients && <p class="label-ingredients">{ingredients}</p>}
+        <p class="label-kind">Internal SKU · Code 128</p>
+      </article>
+    );
+  })}
+</section>
+
+<style>
+  [data-barcode-labels] {
+    min-width: 0;
+  }
+  .barcode-label {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid #222;
+    color: #000;
+    background: #fff;
+    overflow-wrap: anywhere;
+    break-inside: avoid;
+  }
+  .barcode-label h2,
+  .label-variant {
+    margin: 0 0 0.5rem;
+  }
+  .label-sku code {
+    white-space: pre-wrap;
+  }
+  .barcode-label img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fff;
+  }
+  .label-kind {
+    font-size: 0.8rem;
+  }
+  .label-warning {
+    font-weight: bold;
+  }
+  @media print {
+    :global(body:has([data-barcode-labels]) .admin-header),
+    :global(body:has([data-barcode-labels]) .admin-footer),
+    :global(body:has([data-barcode-labels]) .admin-skip),
+    :global(body:has([data-barcode-labels]) main > h1),
+    :global(body:has([data-barcode-labels]) [data-label-page-controls]),
+    .label-controls,
+    .label-warning {
+      display: none !important;
+    }
+    :global(body:has([data-barcode-labels])),
+    :global(body:has([data-barcode-labels]) main) {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      color: #000;
+      background: #fff;
+    }
+    .barcode-label {
+      margin: 0 0 8mm;
+      padding: 4mm;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+</style>

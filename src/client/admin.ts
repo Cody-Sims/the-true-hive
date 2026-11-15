@@ -5,6 +5,11 @@ import type {
   AdminProduct,
 } from "../domain/admin.ts";
 import type { StoreSettings } from "../domain/storefront.ts";
+import { initSkuSuggestions } from "./sku.ts";
+import { initLabelPrinting } from "./barcode-print.ts";
+
+initSkuSuggestions();
+initLabelPrinting();
 
 type Payload = Record<string, unknown>;
 type Envelope = {
@@ -90,7 +95,7 @@ function serialize(form: HTMLFormElement, action: string): Payload {
         const price = value("priceMinor");
         return {
           key: value("variantKey"),
-          sku: value("sku"),
+          sku: row.querySelector<HTMLInputElement>('[name="sku"]')?.value ?? "",
           label: value("label"),
           priceMinor: price ? integer(price, "Variant price") : null,
           currency: "USD",

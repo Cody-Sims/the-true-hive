@@ -257,10 +257,131 @@ test("ingredient editing is explicit, empty by default, ordered and escaped", as
   );
 });
 
+test("inventory home supports the full bounded SKU search", () => {
+  const search = "S".repeat(160);
+  assert.equal(
+    pageQuery(
+      new URL(
+        `https://inventory.example.invalid/inventory/products?search=${search}EXCESS&offset=49`,
+      ),
+    ).search,
+    search,
+  );
+  assert.equal(
+    pageQuery(
+      new URL("https://inventory.example.invalid/inventory/products?offset=49"),
+    ).offset,
+    40,
+  );
+});
+
+test("inline count controls offer an explicit add preset without submitting it", async () => {
+  const html = await render("src/components/admin/CountForm.astro", {
+    variant: product.variants[0],
+    level,
+    productKey: product.key,
+    inline: true,
+  });
+  assert.match(html, /<button[^>]*type="button"[^>]*data-stock-add="100"/);
+  assert.match(html, /Add \/ Reduce stock/);
+  assert.match(html, /data-stock-controls/);
+  assert.match(html, /Available \/ Sellable/);
+});
+
+const stockLocations = [
+  {
+    key: level.locationKey,
+    name: "Fixture storeroom",
+    publicLabel: null,
+    active: true,
+    pickupEnabled: false,
+    revision: 1,
+  },
+  {
+    key: "second-location",
+    name: "Fixture pickup",
+    publicLabel: null,
+    active: true,
+    pickupEnabled: true,
+    revision: 1,
+  },
+];
+
+test("inventory home renders real location balances, prices and unverified missing records", async () => {
+  const html = await render("src/components/admin/InventoryProductList.astro", {
+    products: [
+      {
+        ...product,
+        variants: [
+          { ...product.variants[0], priceMinor: 725 },
+          {
+            ...product.variants[0],
+            key: "missing-variant",
+            sku: "<UNVERIFIED>",
+            label: "Uncounted",
+            levels: [],
+          },
+        ],
+      },
+    ],
+    locations: stockLocations,
+  });
+  assert.match(html, /COMPONENT-ONLY/);
+  assert.match(html, /\$7\.25/);
+  assert.match(html, /Fixture storeroom/);
+  assert.match(
+    html.replace(/\s+/g, " "),
+    /No verified location balance for Fixture pickup/,
+  );
+  assert.match(html, /Missing records are not proof of zero stock/);
+  assert.match(html, /&lt;UNVERIFIED&gt;/);
+  assert.doesNotMatch(html, /data-variant="missing-variant"/);
+  assert.match(html, /href="\/inventory\/products\/fixture-product\/labels"/);
+  for (const [key, count] of Object.entries({
+    onHand: 20,
+    held: 3,
+    committed: 2,
+    unavailable: 1,
+    sellable: 14,
+    revision: 5,
+  }))
+    assert.match(html, new RegExp(`data-quantity="${key}">${count}</dd>`));
+});
+
+async function loadBrowserClients(client: string | string[]) {
+  const clientModules = new Map<string, string>();
+  const clientPaths = new Map<string, string>();
+  async function loadClient(file: URL): Promise<string> {
+    const existing = clientPaths.get(file.href);
+    if (existing) return existing;
+    const path = `/__fixture_client/${clientPaths.size}.js`;
+    clientPaths.set(file.href, path);
+    let code = stripTypeScriptTypes(await readFile(file, "utf8"), {
+      mode: "transform",
+    });
+    const [imports] = parse(code);
+    for (const item of [...imports].reverse()) {
+      if (!item.specifier) continue;
+      if (!item.specifier.startsWith("."))
+        throw new Error("Component fixtures require local browser modules.");
+      const resolved = await loadClient(new URL(item.specifier, file));
+      code = code.slice(0, item.start) + resolved + code.slice(item.end);
+    }
+    clientModules.set(path, code);
+    return path;
+  }
+  const entrypoints = await Promise.all(
+    (Array.isArray(client) ? client : [client]).map((file) =>
+      loadClient(new URL(`src/client/${file}`, root)),
+    ),
+  );
+  return { clientModules, entrypoints };
+}
+
 async function fixturePage(
   component: string,
   props: Record<string, unknown>,
-  client = "admin.ts",
+  client: string | string[] = "admin.ts",
   options: {
     headers?: Record<string, string>;
     path?: string;
@@ -274,18 +395,22 @@ async function fixturePage(
   page.setDefaultTimeout(3000);
   page.setDefaultNavigationTimeout(3000);
   const html = await render(component, props);
-  const script = stripTypeScriptTypes(
-    await readFile(new URL(`src/client/${client}`, root), "utf8"),
-    { mode: "transform" },
-  );
+  const { clientModules, entrypoints } = await loadBrowserClients(client);
   const nonce =
     options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
   await page.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    const module = clientModules.get(url.pathname);
+    if (url.origin === inventoryOrigin && module !== undefined)
+      return route.fulfill({
+        contentType: "text/javascript",
+        body: module,
+      });
     if (route.request().isNavigationRequest()) {
       return route.fulfill({
         contentType: "text/html",
         ...(options.headers ? { headers: options.headers } : {}),
-        body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${nonce ? `<script nonce="${nonce}">${script.replaceAll("</script", "<\\/script")}</script>` : ""}</body></html>`,
+        body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${entrypoints.map((src) => `<script type="module" src="${src}"${nonce ? ` nonce="${nonce}"` : ""}></script>`).join("")}</body></html>`,
       });
     }
     return route.abort();
@@ -298,7 +423,6 @@ async function fixturePage(
   });
   const styles = [...componentStyles.values()].flat().join("\n");
   if (styles) await page.addStyleTag({ content: styles });
-  if (!nonce) await page.addScriptTag({ content: script });
   return page;
 }
 
@@ -2071,6 +2195,318 @@ domTest(
 );
 
 domTest(
+  "inventory home presets prepare Add without mutating and retain page context",
+  async () => {
+    const path = "/inventory/products?search=COMPONENT-ONLY&offset=40";
+    const page = await fixturePage(
+      "src/components/admin/CountForm.astro",
+      {
+        variant: product.variants[0],
+        level,
+        productKey: product.key,
+        inline: true,
+      },
+      ["admin.ts", "stock-controls.ts"],
+      { path },
+    );
+    let requests = 0;
+    await page.route("**/api/**", (route) => {
+      requests++;
+      return route.abort();
+    });
+    try {
+      await page.getByText("Add / Reduce stock", { exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await page.getByLabel("Direction").selectOption("reduce");
+      await page
+        .getByRole("button", { name: "+100 received", exact: true })
+        .focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page.getByLabel("Positive whole units").inputValue(),
+        "100",
+      );
+      assert.equal(await page.getByLabel("Direction").inputValue(), "increase");
+      assert.equal(
+        await page.getByLabel("Reason", { exact: true }).inputValue(),
+        "",
+      );
+      assert.equal(requests, 0);
+      assert.equal(
+        await page.locator('[data-quantity="onHand"]').textContent(),
+        "20",
+      );
+      assert.equal(
+        new URL(page.url()).pathname + new URL(page.url()).search,
+        path,
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+for (const invalid of ["meaningless reason", "allocated stock floor"]) {
+  domTest(`inventory home blocks ${invalid} before a mutation`, async () => {
+    const page = await fixturePage(
+      "src/components/admin/CountForm.astro",
+      {
+        variant: product.variants[0],
+        level,
+        productKey: product.key,
+        inline: true,
+      },
+      ["admin.ts", "stock-controls.ts"],
+    );
+    let mutations = 0;
+    await page.route("**/api/**", (route) => {
+      mutations++;
+      return route.abort();
+    });
+    try {
+      await page.getByText("Add / Reduce stock", { exact: true }).click();
+      await page.getByLabel("Direction").selectOption("reduce");
+      await page
+        .getByLabel("Positive whole units")
+        .fill(invalid === "allocated stock floor" ? "15" : "1");
+      await page
+        .getByLabel("Reason", { exact: true })
+        .fill(invalid === "meaningless reason" ? "   " : "Damaged in storage");
+      assert.equal(
+        await page
+          .locator("form")
+          .evaluate((form: HTMLFormElement) => form.checkValidity()),
+        false,
+      );
+      assert.match(
+        await page
+          .locator(
+            `[name="${invalid === "meaningless reason" ? "reason" : "amount"}"]`,
+          )
+          .evaluate((field: HTMLInputElement) => field.validationMessage),
+        invalid === "meaningless reason" ? /Explain why/ : /at most 14/,
+      );
+      await page.getByRole("button", { name: "Confirm stock change" }).click();
+      assert.equal(mutations, 0);
+    } finally {
+      await page.context().close();
+    }
+  });
+}
+
+domTest(
+  "inventory home submits +100 explicitly, retries one UUID and refreshes all matching balances before reducing",
+  async () => {
+    const second = {
+      ...level,
+      locationKey: "second-location",
+      onHand: 8,
+      sellable: 2,
+    };
+    const fixture = {
+      ...product,
+      variants: [
+        {
+          ...product.variants[0]!,
+          sku: "LONG-SKU-".repeat(20),
+          priceMinor: 725,
+          levels: [level, second],
+        },
+      ],
+    };
+    const page = await fixturePage(
+      "src/components/admin/InventoryProductList.astro",
+      { products: [fixture], locations: stockLocations },
+      ["admin.ts", "stock-controls.ts"],
+      { path: "/inventory/products?search=LONG-SKU&offset=20" },
+    );
+    const originalUrl = page.url();
+    const form = page.locator("[data-stock-controls]").first();
+    const payloads: { body: string; headers: Record<string, string> }[] = [];
+    let refreshed = {
+      ...level,
+      onHand: 117,
+      held: 4,
+      sellable: 110,
+      revision: 8,
+    };
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({
+        json: {
+          product: {
+            ...fixture,
+            variants: [{ ...fixture.variants[0], levels: [refreshed, second] }],
+          },
+        },
+      }),
+    );
+    await page.route("**/api/admin/adjustments", (route) => {
+      payloads.push({
+        body: route.request().postData()!,
+        headers: route.request().headers(),
+      });
+      if (payloads.length === 1) return route.abort("failed");
+      const operationId = JSON.parse(payloads.at(-1)!.body).operationId;
+      if (payloads.length === 2)
+        return route.fulfill({
+          json: {
+            adjustment: {
+              operationId,
+              beforeOnHand: 20,
+              onHand: 120,
+              replayed: true,
+            },
+            level: { ...level, onHand: 120, sellable: 114, revision: 6 },
+          },
+        });
+      refreshed = { ...refreshed, onHand: 7, sellable: 0, revision: 9 };
+      return route.fulfill({
+        json: {
+          adjustment: {
+            operationId,
+            beforeOnHand: 117,
+            onHand: 7,
+            replayed: false,
+          },
+          level: refreshed,
+        },
+      });
+    });
+    try {
+      // A second view of the same stable keys must update too, without touching another location.
+      await page
+        .locator("[data-level]")
+        .first()
+        .evaluate((node) => node.after(node.cloneNode(true)));
+      await page
+        .getByText("Add / Reduce stock", { exact: true })
+        .first()
+        .click();
+      await form
+        .getByRole("button", { name: "+100 received", exact: true })
+        .click();
+      assert.equal(payloads.length, 0);
+      await form
+        .getByLabel("Reason", { exact: true })
+        .fill("Received supplier delivery");
+      await form
+        .getByRole("button", { name: "Confirm stock change" })
+        .evaluate((button: HTMLButtonElement) => {
+          button.click();
+          button.click();
+        });
+      await waitPhase(page, "uncertain", "[data-stock-controls]:first-of-type");
+      assert.equal(payloads.length, 1);
+      assert.equal(
+        await form
+          .getByRole("button", { name: "+100 received", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.deepEqual(
+        await page
+          .locator(
+            '[data-location="fixture-location"] [data-quantity="onHand"]',
+          )
+          .allTextContents(),
+        ["20", "20"],
+      );
+      await form
+        .getByRole("button", { name: "Retry the same operation" })
+        .click();
+      await waitPhase(page, "idle", "[data-stock-controls]:first-of-type");
+      assert.equal(payloads.length, 2);
+      assert.equal(payloads[0]!.body, payloads[1]!.body);
+      const added = JSON.parse(payloads[0]!.body);
+      assert.deepEqual(
+        { ...added, operationId: "uuid" },
+        {
+          expectedRevision: 5,
+          variantKey: level.variantKey,
+          locationKey: level.locationKey,
+          delta: 100,
+          reason: "Received supplier delivery",
+          operationId: "uuid",
+        },
+      );
+      assert.match(added.operationId, /^[0-9a-f-]{36}$/);
+      assert.equal(
+        payloads[0]!.headers["x-csrf-token"],
+        "component-only-signed-token",
+      );
+      assert.match(
+        await form.locator("[data-admin-receipt-text]").innerText(),
+        /20 → 120.*same operation replayed/,
+      );
+      assert.deepEqual(
+        await page
+          .locator(
+            '[data-location="fixture-location"] [data-quantity="onHand"]',
+          )
+          .allTextContents(),
+        ["117", "117"],
+      );
+      assert.equal(
+        await page
+          .locator('[data-location="second-location"] [data-quantity="onHand"]')
+          .innerText(),
+        "8",
+      );
+      assert.equal(
+        await form.locator('[name="expectedRevision"]').inputValue(),
+        "8",
+      );
+      await form.getByLabel("Direction").selectOption("reduce");
+      await form.getByLabel("Positive whole units").fill("111");
+      assert.equal(
+        await form.evaluate((node: HTMLFormElement) => node.checkValidity()),
+        false,
+      );
+      await form.getByLabel("Positive whole units").fill("110");
+      await form
+        .getByLabel("Reason", { exact: true })
+        .fill("Damaged units removed after inspection");
+      await form.getByRole("button", { name: "Confirm stock change" }).focus();
+      await page.keyboard.press("Enter");
+      await waitPhase(page, "idle", "[data-stock-controls]:first-of-type");
+      const reduced = JSON.parse(payloads[2]!.body);
+      assert.equal(reduced.delta, -110);
+      assert.equal(reduced.expectedRevision, 8);
+      assert.notEqual(reduced.operationId, added.operationId);
+      assert.deepEqual(
+        await page
+          .locator(
+            '[data-location="fixture-location"] [data-quantity="onHand"]',
+          )
+          .allTextContents(),
+        ["7", "7"],
+      );
+      assert.equal(
+        await form.locator('[name="expectedRevision"]').inputValue(),
+        "9",
+      );
+      assert.equal(page.url(), originalUrl);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      const accessibility = await new AxeBuilder({ page }).analyze();
+      assert.deepEqual(accessibility.violations, []);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
   "count corrections preserve one intent through lost response, with separate original receipt and current stock",
   async () => {
     const page = await fixturePage("src/components/admin/CountForm.astro", {
@@ -2194,100 +2630,117 @@ domTest(
   },
 );
 
-domTest(
-  "a stale count requires authoritative refresh and explicit review before a new UUID and revision",
-  async () => {
-    const page = await fixturePage("src/components/admin/CountForm.astro", {
-      variant: product.variants[0],
-      level,
-      productKey: product.key,
-    });
-    const requests: Record<string, unknown>[] = [];
-    let unavailable = true;
-    await page.route("**/api/admin/products/fixture-product", (route) =>
-      unavailable
-        ? route.fulfill({
-            status: 503,
-            json: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
-          })
-        : route.fulfill({
-            json: {
-              product: {
-                ...product,
-                title: "Concurrent server edit",
-                variants: [
-                  {
-                    ...product.variants[0],
-                    levels: [
-                      { ...level, onHand: 22, sellable: 16, revision: 6 },
-                    ],
-                  },
-                ],
-              },
-            },
-          }),
-    );
-    await page.route("**/api/admin/adjustments", (route) => {
-      requests.push(route.request().postDataJSON());
-      return route.fulfill({
-        status: 409,
-        json: {
-          error: { code: "REVISION_CONFLICT", message: "Review current stock" },
+for (const inline of [false, true]) {
+  domTest(
+    `a stale count requires authoritative refresh and explicit review before a new UUID and revision${inline ? " on inventory home" : ""}`,
+    async () => {
+      const page = await fixturePage(
+        "src/components/admin/CountForm.astro",
+        {
+          variant: product.variants[0],
+          level,
+          productKey: product.key,
+          inline,
         },
+        ["admin.ts", "stock-controls.ts"],
+      );
+      const confirm = inline
+        ? "Confirm stock change"
+        : "Confirm count correction";
+      const requests: Record<string, unknown>[] = [];
+      let unavailable = true;
+      await page.route("**/api/admin/products/fixture-product", (route) =>
+        unavailable
+          ? route.fulfill({
+              status: 503,
+              json: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
+            })
+          : route.fulfill({
+              json: {
+                product: {
+                  ...product,
+                  title: "Concurrent server edit",
+                  variants: [
+                    {
+                      ...product.variants[0],
+                      levels: [
+                        { ...level, onHand: 22, sellable: 16, revision: 6 },
+                      ],
+                    },
+                  ],
+                },
+              },
+            }),
+      );
+      await page.route("**/api/admin/adjustments", (route) => {
+        requests.push(route.request().postDataJSON());
+        return route.fulfill({
+          status: 409,
+          json: {
+            error: {
+              code: "REVISION_CONFLICT",
+              message: "Review current stock",
+            },
+          },
+        });
       });
-    });
-    try {
-      await page.getByLabel("Positive whole units").fill("2");
-      await page.getByLabel("Reason", { exact: true }).fill("Fixture recount");
-      await page
-        .getByRole("button", { name: "Confirm count correction" })
-        .click();
-      await waitPhase(page, "conflict");
-      await page
-        .getByRole("button", { name: "Refresh authoritative record" })
-        .waitFor();
-      assert.equal(
-        await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
-        false,
-      );
-      assert.equal(
-        await page.getByLabel("Positive whole units").inputValue(),
-        "2",
-      );
-      unavailable = false;
-      await page
-        .getByRole("button", { name: "Refresh authoritative record" })
-        .click();
-      await page.getByRole("button", { name: /I reviewed/ }).waitFor();
-      assert.equal(
-        await page.locator('[name="expectedRevision"]').inputValue(),
-        "5",
-      );
-      assert.equal(
-        await page.locator('[data-quantity="onHand"]').textContent(),
-        "22",
-      );
-      assert.match(
-        (await page.locator("[data-admin-current-text]").textContent()) ?? "",
-        /Concurrent server edit/,
-      );
-      await page.getByRole("button", { name: /I reviewed/ }).click();
-      await waitPhase(page, "idle");
-      await page
-        .getByRole("button", { name: "Confirm count correction" })
-        .click();
-      await waitPhase(page, "conflict");
-      assert.equal(requests.length, 2);
-      assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
-      assert.equal(requests[0]!.expectedRevision, 5);
-      assert.equal(requests[1]!.expectedRevision, 6);
-      assert.equal(requests[1]!.delta, 2);
-      assert.equal(requests[1]!.reason, "Fixture recount");
-    } finally {
-      await page.close();
-    }
-  },
-);
+      try {
+        if (inline)
+          await page.getByText("Add / Reduce stock", { exact: true }).click();
+        await page.getByLabel("Positive whole units").fill("2");
+        await page
+          .getByLabel("Reason", { exact: true })
+          .fill("Fixture recount");
+        await page.getByRole("button", { name: confirm }).click();
+        await waitPhase(page, "conflict");
+        await page
+          .getByRole("button", { name: "Refresh authoritative record" })
+          .waitFor();
+        assert.equal(
+          await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
+          false,
+        );
+        assert.equal(
+          await page.getByLabel("Positive whole units").inputValue(),
+          "2",
+        );
+        unavailable = false;
+        await page
+          .getByRole("button", { name: "Refresh authoritative record" })
+          .click();
+        await page.getByRole("button", { name: /I reviewed/ }).waitFor();
+        assert.equal(
+          await page.locator('[name="expectedRevision"]').inputValue(),
+          "5",
+        );
+        assert.equal(
+          await page.locator('[data-quantity="onHand"]').textContent(),
+          "22",
+        );
+        assert.match(
+          (await page.locator("[data-admin-current-text]").textContent()) ?? "",
+          /Concurrent server edit/,
+        );
+        assert.equal(
+          await page.getByRole("button", { name: confirm }).isDisabled(),
+          true,
+        );
+        await page.getByRole("button", { name: /I reviewed/ }).click();
+        await waitPhase(page, "idle");
+        await page.getByRole("button", { name: confirm }).click();
+        await waitPhase(page, "conflict");
+        assert.equal(requests.length, 2);
+        assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
+        assert.equal(requests[0]!.expectedRevision, 5);
+        assert.equal(requests[1]!.expectedRevision, 6);
+        assert.equal(requests[1]!.delta, 2);
+        assert.equal(requests[1]!.reason, "Fixture recount");
+      } finally {
+        await page.close();
+      }
+    },
+  );
+}
 
 domTest(
   "product authoring explains identifiers with keyboard-operable field help",
@@ -2617,6 +3070,167 @@ domTest(
       );
     } finally {
       await page.close();
+    }
+  },
+);
+
+domTest(
+  "ingredient tools move only explicit entries and copy label text without saving or changing SKUs",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {
+        product: {
+          ...product,
+          ingredients: [],
+          details: [
+            "Size: fixture size",
+            "Ingredients:",
+            "-Fixture oil",
+            "- Fixture blend (A, B)",
+            "Care: Keep fixture dry.",
+          ],
+        },
+      },
+      ["admin.ts", "ingredients.ts"],
+    );
+    let mutations = 0;
+    await page.route("**/api/**", (route) => {
+      if (route.request().method() !== "GET") mutations++;
+      return route.abort();
+    });
+    try {
+      const sku = await page
+        .getByLabel("SKU (stock code)", { exact: true })
+        .inputValue();
+      await page
+        .getByRole("button", {
+          name: "Move ingredients from Details",
+          exact: true,
+        })
+        .click();
+      assert.equal(
+        await page.getByLabel("Ingredients (one per line)").inputValue(),
+        "Fixture oil\nFixture blend (A, B)",
+      );
+      assert.equal(
+        await page.getByLabel("Details (one paragraph per line)").inputValue(),
+        "Size: fixture size\nCare: Keep fixture dry.",
+      );
+      assert.equal(
+        await page.getByLabel("Generated ingredient text").inputValue(),
+        "Ingredients: Fixture oil, Fixture blend (A, B)",
+      );
+      assert.match(
+        await page.locator("[data-ingredient-status]").innerText(),
+        /not saved/i,
+      );
+      assert.equal(
+        await page.getByLabel("SKU (stock code)", { exact: true }).inputValue(),
+        sku,
+      );
+      assert.equal(mutations, 0);
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            async writeText(value: string) {
+              document.documentElement.dataset.copiedIngredients = value;
+            },
+          },
+        });
+      });
+      await page
+        .getByRole("button", { name: "Copy ingredient text", exact: true })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector("[data-ingredient-status]")
+          ?.textContent?.includes("copied"),
+      );
+      assert.equal(
+        await page.locator("html").getAttribute("data-copied-ingredients"),
+        "Ingredients: Fixture oil, Fixture blend (A, B)",
+      );
+      assert.equal(mutations, 0);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "ingredient tools preserve existing text, reject overlong labels and provide manual-copy fallback",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {
+        product: {
+          ...product,
+          ingredients: ["Owner entered oil"],
+          details: ["Ingredients:", "- Imported fixture"],
+        },
+      },
+      ["admin.ts", "ingredients.ts"],
+    );
+    try {
+      const ingredients = page.getByLabel("Ingredients (one per line)");
+      const move = page.getByRole("button", {
+        name: "Move ingredients from Details",
+        exact: true,
+      });
+      assert.equal(await move.isDisabled(), true);
+      await move.evaluate((button: HTMLButtonElement) => {
+        button.disabled = false;
+        button.click();
+      });
+      assert.equal(await ingredients.inputValue(), "Owner entered oil");
+      assert.equal(
+        await page.getByLabel("Details (one paragraph per line)").inputValue(),
+        "Ingredients:\n- Imported fixture",
+      );
+      await ingredients.fill("");
+      await move.click();
+      assert.equal(await ingredients.inputValue(), "Imported fixture");
+      const oversized = "x".repeat(201);
+      await ingredients.fill(oversized);
+      assert.equal(await ingredients.inputValue(), oversized);
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Copy ingredient text", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.match(
+        await page.locator("[data-ingredient-help]").innerText(),
+        /200/,
+      );
+      await ingredients.fill("Reviewed fixture");
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            async writeText() {
+              throw new Error("Permission denied");
+            },
+          },
+        });
+      });
+      await page
+        .getByRole("button", { name: "Copy ingredient text", exact: true })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector("[data-ingredient-status]")
+          ?.textContent?.includes("manually"),
+      );
+      assert.equal(
+        await page.getByLabel("Generated ingredient text").inputValue(),
+        "Ingredients: Reviewed fixture",
+      );
+      assert.equal(await ingredients.inputValue(), "Reviewed fixture");
+    } finally {
+      await page.context().close();
     }
   },
 );
@@ -3399,12 +4013,26 @@ domTest(
       viewport: { width: 320, height: 1000 },
     });
     const page = await context.newPage();
+    const { clientModules, entrypoints } = await loadBrowserClients("admin.ts");
     const requests: { method: string; csrf: string | undefined }[] = [];
-    await page.route("**/*", (route) =>
-      route.request().isNavigationRequest()
-        ? route.fulfill({ contentType: "text/html", body: html })
-        : route.abort(),
-    );
+    await page.route("**/*", (route) => {
+      const url = new URL(route.request().url());
+      const module = clientModules.get(url.pathname);
+      if (url.origin === inventoryOrigin && module !== undefined)
+        return route.fulfill({
+          contentType: "text/javascript",
+          body: module,
+        });
+      return route.request().isNavigationRequest()
+        ? route.fulfill({
+            contentType: "text/html",
+            body: html.replace(
+              "</body>",
+              `${entrypoints.map((src) => `<script type="module" src="${src}"></script>`).join("")}</body>`,
+            ),
+          })
+        : route.abort();
+    });
     await page.route("**/api/admin/logout", (route) => {
       requests.push({
         method: route.request().method(),
@@ -3419,12 +4047,6 @@ domTest(
       await page.goto("https://inventory.example.invalid/inventory/products");
       await page.addStyleTag({
         content: await readFile(new URL("src/styles/admin.css", root), "utf8"),
-      });
-      await page.addScriptTag({
-        content: stripTypeScriptTypes(
-          await readFile(new URL("src/client/admin.ts", root), "utf8"),
-          { mode: "transform" },
-        ),
       });
       await page.keyboard.press("Tab");
       assert.equal(

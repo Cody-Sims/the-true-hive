@@ -29,6 +29,13 @@ Stripe testing remains separately gated by the
 [isolated sandbox checklist](docs/14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist);
 never run simulated purchases against operational stock.
 
+The private inventory home now includes location-specific balances and inline
+Add/Reduce controls; presets such as `+100 received` prepare a reviewable change,
+never a stock mutation by themselves. Product editors can move explicit
+ingredient blocks out of Details and copy generated ingredient text. Internal
+labels encode existing SKUs as Code 128 barcodes, with no retail registrations,
+GTINs or provider fees. See the [inventory workbench guide](docs/14-development-and-operations.md#inventory-workbench-and-internal-labels).
+
 ## Open the studio
 
 | UI | What you can do |

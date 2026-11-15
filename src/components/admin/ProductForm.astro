@@ -3,6 +3,7 @@ import type { AdminProduct } from "../../domain/admin.ts";
 import VariantFields from "./VariantFields.astro";
 import FormFeedback from "./FormFeedback.astro";
 import FieldHelp from "./FieldHelp.astro";
+import IngredientTools from "./IngredientTools.astro";
 import ProductPreview from "./ProductPreview.astro";
 interface Props {
   product?: AdminProduct;
@@ -149,6 +150,11 @@ const endpoint = product
         name="ingredients"
         rows="4"
       >{product?.ingredients?.join("\n") ?? ""}</textarea>
+      <IngredientTools
+        ingredients={product?.ingredients ?? []}
+        details={product?.details ?? []}
+        fieldKey={product?.key ?? "new"}
+      />
     </div>
     <div class="admin-grid">
       <div class="admin-field">

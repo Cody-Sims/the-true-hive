@@ -6,7 +6,7 @@ export function pageQuery(url: URL) {
   return {
     limit: 20,
     offset,
-    search: (url.searchParams.get("search") ?? "").trim().slice(0, 120),
+    search: (url.searchParams.get("search") ?? "").trim().slice(0, 160),
   };
 }
 

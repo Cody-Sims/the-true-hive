@@ -270,13 +270,62 @@ address does not establish tax registration, product classification or a tax
 rate. Keep production `CHECKOUT_MODE=disabled`; live sales require a separately
 reviewed payment/tax implementation and business readiness.
 
-For rollout, first verify a private database backup, apply forward migrations
-004 and 005, and grant the exact runtime-role permissions above. Confirm the
-singleton remains closed and run the public/private database preflights before
-merging the checked application release. Do not overwrite real products, prices,
-opening counts or existing inventory with test fixtures.
+For store-control rollout, first verify a private database backup, apply forward
+migrations 004 and 005, and grant the exact runtime-role permissions above.
+Confirm the singleton remains closed and run the public/private database
+preflights before merging the checked application release. Do not overwrite
+real products, prices, opening counts or existing inventory with test fixtures.
 
-#### Migration 005 pre-release repair - 2026-11-15
+### Inventory workbench and internal labels
+
+The private inventory home (`/inventory/products`, also the inventory root's
+destination) shows current per-variant, per-location balances. **On hand** is the
+physical count; **Available / Sellable** subtracts held, committed and unavailable
+units. Missing records are unverified, not fabricated zeros. Search supports the
+full existing SKU length and is bounded to 160 characters.
+
+Expand **Add / Reduce stock** on a listed balance without opening the product.
+Presets such as **+100 received** only fill an Add amount and focus the reason;
+they never submit a mutation. Enter a meaningful reason, review the direction
+and amount, then **Confirm stock change**. The existing audited adjustment API,
+expected revision, frozen operation ID on uncertain retries and explicit conflict
+review are unchanged. Verified receipts and separately refreshed balances update
+on the same page, including duplicate views of the same stable keys.
+
+The product editor's **Move ingredients from Details** recognizes one explicit
+`Ingredients:` heading followed by bulleted entries. It preserves supplied names
+and ordering, size/care notes and existing identifiers. It refuses ambiguous or
+empty blocks and will not overwrite a nonempty Ingredients field. Review the
+draft and save the product; moving or copying text alone does not save. Generated
+ingredient text is a plain rendering of the supplied list, not an inferred
+formula, INCI conversion, allergen assertion or compliance certification.
+
+**Print internal labels** opens the protected product-label view. Each Code 128
+image encodes the exact stored SKU, not a price, ingredient list, physical unit
+serial number or retail GTIN. Identical units of a variant use the same internal
+code; quantities still change through the inventory workflow. The existing SKU
+search can be used with a keyboard-style scanner.
+
+New variant rows offer explicit blank-only identifier suggestions. Manual and
+saved values are never overwritten; the server remains the global uniqueness
+authority. Existing SKU whitespace and case are preserved because changing them
+would change the barcode identity. Internal barcodes accept 1-128 printable ASCII
+characters; unsupported stored identities are explained, not silently changed.
+
+Barcode rendering uses pinned server-only `bwip-js` 4.11.4 (MIT). Tests independently
+decode the actual SVG using `sharp` and development-only `@zxing/library` 0.23.0.
+No barcode provider, retail registration, external image service or new schema
+is involved. Barcode images and label pages remain behind the normal inventory
+host/member/MFA boundary and are not public product assets.
+
+Printing occurs only after an explicit browser action. Review paper size and
+scaling, retain white quiet zones, disable browser headers/footers and test the
+physical print with your scanner. Long SKUs may need wider paper. Neither image
+generation nor an automated decoding test certifies your printer, scanner or
+retail packaging. Retail GTIN fields and UPC/EAN issuance remain outside this
+internal-only scope.
+
+### Migration 005 pre-release repair - 2026-11-15
 
 Release review found that 005's initial audit constraint omitted the photo
 actions introduced by 003. The owner explicitly approved correcting the

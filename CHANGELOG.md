@@ -4,6 +4,9 @@
 
 ### Added
 
+- Private inventory-home balances and inline audited Add/Reduce controls, with received-unit presets that require explicit review and submission.
+- Faithful ingredient import from explicit Details blocks and generated ingredient text, preserving size notes and existing identities.
+- Internal Code 128 SKU labels, protected image rendering and explicit printing, plus blank-only suggestions for new variant identifiers; no retail registration or fees.
 - Audited inventory-admin purchase switch, closed by default, that preserves catalog/cart access and existing order processing without bypassing test-only payment configuration.
 - Owner-confirmed Madisonville pickup address with arrangement-only visiting guidance and explicit notice that tax calculation is not enabled.
 - Ordered ingredient editing and escaped product ingredients, with an additive migration that preserves existing products and legacy edits.
