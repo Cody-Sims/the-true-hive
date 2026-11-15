@@ -42,6 +42,171 @@ async function seed(page: Page, lines: unknown[]) {
   }, lines);
 }
 
+test("Add to cart saves the selected active priced fixture variant, merges duplicates and survives navigation", async ({
+  page,
+}) => {
+  let checkoutAttempts = 0;
+  await page.route("**/api/checkout", async (route) => {
+    checkoutAttempts++;
+    await route.abort();
+  });
+  await page.route("**/api/catalog", (route) =>
+    route.fulfill({ json: fixtureCatalog }),
+  );
+  await page.route("**/goods?cart-fixture=active", async (route) => {
+    const response = await route.fetch();
+    const html = await response.text();
+    expect(html).toContain("</main>");
+    const activeProductFixture = `
+      <section aria-label="Isolated active priced product fixture">
+        <h2>Cart test soap</h2>
+        <form data-add-to-cart>
+          <label>Variant
+            <select name="variantKey" required>
+              <option value="cart-test-bar">Bar · $7.25</option>
+              <option value="cart-test-pair">Pair · $14.00</option>
+            </select>
+          </label>
+          <label>Quantity
+            <input name="quantity" type="number" min="1" max="100" step="1" value="1" required>
+          </label>
+          <button type="submit">Add to cart</button>
+          <p data-add-status role="status"></p>
+        </form>
+      </section>`;
+    await route.fulfill({
+      response,
+      body: html.replace("</main>", `${activeProductFixture}</main>`),
+    });
+  });
+  await page.goto("/goods?cart-fixture=active");
+  const form = page.locator("[data-add-to-cart]");
+  await form.getByLabel("Variant").selectOption("cart-test-pair");
+  await form.getByLabel("Quantity").fill("2");
+  await form.getByRole("button", { name: "Add to cart", exact: true }).click();
+  await expect(form.locator("[data-add-status]")).toContainText(
+    "Added to your cart",
+  );
+  await form.getByLabel("Variant").selectOption("cart-test-bar");
+  await form.getByLabel("Quantity").fill("1");
+  await form.getByRole("button", { name: "Add to cart", exact: true }).click();
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (3)");
+  await form.getByRole("button", { name: "Add to cart", exact: true }).click();
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: /Cart/ })
+    .click();
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
+  await expect(page.locator("[data-cart-lines] > li")).toHaveCount(2);
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("true-hive-cart")!),
+    ),
+  ).toEqual({
+    version: 1,
+    lines: [
+      { variantKey: "cart-test-pair", quantity: 2 },
+      { variantKey: "cart-test-bar", quantity: 2 },
+    ],
+  });
+  await page.reload();
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
+  expect(checkoutAttempts).toBe(0);
+});
+
+test("return and cancel URLs cannot settle a pending test intent or replace its frozen selection", async ({
+  page,
+}) => {
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.route("**/api/catalog", (route) =>
+    route.fulfill({ json: fixtureCatalog }),
+  );
+  await page.goto("/");
+  const pending = {
+    version: 1,
+    operationId: "10000000-0000-4000-8000-000000000001",
+    lines: [{ variantKey: "cart-test-bar", quantity: 2 }],
+  };
+  await page.evaluate((value) => {
+    sessionStorage.setItem("true-hive-checkout-pending", JSON.stringify(value));
+    localStorage.setItem(
+      "true-hive-cart",
+      JSON.stringify({
+        version: 1,
+        lines: [{ variantKey: "cart-test-pair", quantity: 1 }],
+      }),
+    );
+  }, pending);
+  for (const path of [
+    "/checkout/return?payment=paid",
+    "/checkout/cancel?released=true",
+  ]) {
+    await page.goto(path);
+    await expect(
+      page.getByRole("heading", {
+        name: "TEST checkout — outcome not confirmed",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", {
+        name: "Review or retry the pending test checkout",
+      }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        JSON.parse(sessionStorage.getItem("true-hive-checkout-pending")!),
+      ),
+    ).toEqual(pending);
+  }
+  await page
+    .getByRole("link", { name: "Review or retry the pending test checkout" })
+    .click();
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.50");
+  await expect(
+    page.getByRole("spinbutton", { name: "Quantity for Cart test soap Bar" }),
+  ).toHaveValue("2");
+  await expect(
+    page.getByRole("button", { name: "Clear cart", exact: true }),
+  ).toBeDisabled();
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(sessionStorage.getItem("true-hive-checkout-pending")!),
+    ),
+  ).toEqual(pending);
+});
+
+test("blocked pending recovery keeps browse-cart editing usable without opening checkout", async ({
+  page,
+}) => {
+  await seed(page, [{ variantKey: "cart-test-bar", quantity: 1 }]);
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "sessionStorage", {
+      get() {
+        throw new DOMException("Session storage denied", "SecurityError");
+      },
+    });
+  });
+  await page.route("**/api/catalog", (route) =>
+    route.fulfill({ json: fixtureCatalog }),
+  );
+  await page.goto("/cart");
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$7.25");
+  await expect(
+    page.getByText(
+      /Pending session storage is invalid, changed or unavailable/,
+    ),
+  ).toBeVisible();
+  await page
+    .getByRole("spinbutton", { name: "Quantity for Cart test soap Bar" })
+    .fill("2");
+  await page
+    .getByRole("button", { name: "Update quantity", exact: true })
+    .click();
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.50");
+  await expect(page.locator("[data-cart-checkout]")).toHaveCount(0);
+});
+
 test("cart uses current prices, persists only identities, and supports keyboard quantity/remove/clear", async ({
   page,
 }) => {

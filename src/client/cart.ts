@@ -33,8 +33,10 @@ const checkoutStatus = page?.querySelector<HTMLElement>(
 );
 const status = page?.querySelector<HTMLElement>("[data-cart-status]");
 const storageStatus = page?.querySelector<HTMLElement>("[data-cart-storage]");
+let recoveryNotice: HTMLElement | null = null;
 
 const checkout = createCartCheckout({
+  pendingStorage: () => window.sessionStorage,
   operationId: () => crypto.randomUUID(),
   navigate: (url) => window.location.assign(url),
   onState(phase, message) {
@@ -42,7 +44,12 @@ const checkout = createCartCheckout({
       checkoutStatus.textContent = message;
       if (phase !== "pending") checkoutStatus.focus();
     }
-    if (retry) retry.hidden = phase !== "uncertain";
+    if (!checkoutStatus && phase !== "idle") showRecoveryNotice(message);
+    if (phase === "idle") {
+      recoveryNotice?.remove();
+      recoveryNotice = null;
+    }
+    if (retry) retry.hidden = !checkout.canRetry;
     page?.setAttribute("aria-busy", String(phase === "pending"));
     render();
   },
@@ -67,8 +74,31 @@ function locked() {
   return verifying || refreshing || checkout.phase !== "idle";
 }
 
+function cartLocked() {
+  return verifying || refreshing || checkout.hasPendingIntent;
+}
+
 function announce(message: string) {
   if (status) status.textContent = message;
+}
+
+function showRecoveryNotice(message: string) {
+  if (!recoveryNotice) {
+    recoveryNotice = document.createElement("aside");
+    recoveryNotice.className = "notice wrap";
+    recoveryNotice.setAttribute("role", "status");
+    recoveryNotice.append(
+      text("h2", "TEST checkout — outcome not confirmed"),
+      text("p", ""),
+    );
+    const link = document.createElement("a");
+    link.href = "/cart";
+    link.className = "text-link";
+    link.textContent = "Review or retry the pending test checkout";
+    recoveryNotice.append(link);
+    document.querySelector("#main")?.prepend(recoveryNotice);
+  }
+  recoveryNotice.querySelector("p")!.textContent = message;
 }
 
 function updateCounts() {
@@ -138,7 +168,7 @@ function render() {
   updateCounts();
   if (!page || !list || !empty || !subtotal || !clear || !refresh) return;
   const resolved = resolveCart(lines, catalog);
-  const busy = locked();
+  const busy = cartLocked();
   list.replaceChildren();
   for (const line of resolved.lines) {
     const item = document.createElement("li");
@@ -190,7 +220,7 @@ function render() {
     form.append(label, update);
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      if (locked() || !form.reportValidity()) return;
+      if (cartLocked() || !form.reportValidity()) return;
       try {
         lines = updateCart(lines, line.variantKey, Number(input.value));
         persist();
@@ -215,7 +245,7 @@ function render() {
     );
     remove.disabled = busy;
     remove.addEventListener("click", () => {
-      if (locked()) return;
+      if (cartLocked()) return;
       lines = updateCart(lines, line.variantKey, 0);
       persist();
       render();
@@ -235,7 +265,11 @@ function render() {
   refresh.disabled = busy;
   if (submit)
     submit.disabled =
-      busy || !resolved.canCheckout || page.dataset.testEnabled !== "true";
+      locked() || !resolved.canCheckout || page.dataset.testEnabled !== "true";
+  if (retry) {
+    retry.hidden = !checkout.canRetry;
+    retry.disabled = refreshing || verifying;
+  }
   content?.setAttribute("aria-busy", String(refreshing));
 }
 
@@ -251,16 +285,18 @@ function displaySignature() {
   );
 }
 
-async function refreshCatalog() {
-  if (locked()) return false;
+async function refreshCatalog(initialRead = false) {
+  if (cartLocked() && !initialRead) return false;
   refreshing = true;
   render();
   try {
     catalog = await loadCatalog();
     announce(
-      saved.recovered
-        ? "Invalid saved cart data was removed. Current catalog prices are loaded; review your selections. No stock has been reserved."
-        : "Current catalog prices loaded. Your cart does not reserve stock.",
+      checkout.phase !== "idle"
+        ? "Current catalog prices loaded. These do not confirm the existing order total, payment or stock release. Pending checkout recovery is still required."
+        : saved.recovered
+          ? "Invalid saved cart data was removed. Current catalog prices are loaded; review your selections. No stock has been reserved."
+          : "Current catalog prices loaded. Your cart does not reserve stock.",
     );
     return true;
   } catch {
@@ -276,7 +312,7 @@ async function refreshCatalog() {
 }
 
 clear?.addEventListener("click", () => {
-  if (locked()) return;
+  if (cartLocked()) return;
   lines = [];
   persist();
   render();
@@ -326,6 +362,12 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
     if (!form.reportValidity() || form.getAttribute("aria-busy") === "true")
       return;
     const feedback = form.querySelector<HTMLElement>("[data-add-status]");
+    if (checkout.hasPendingIntent) {
+      if (feedback)
+        feedback.textContent =
+          "TEST checkout recovery is required before changing this selection. Open your cart to recover the same intent; no item was added.";
+      return;
+    }
     const button = form.querySelector<HTMLButtonElement>(
       'button[type="submit"]',
     )!;
@@ -381,7 +423,7 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
 
 window.addEventListener("storage", (event) => {
   if (event.key !== CART_STORAGE_KEY && event.key !== null) return;
-  if (checkout.phase !== "idle" || verifying) {
+  if (checkout.hasPendingIntent || verifying) {
     announce(
       "The saved cart changed in another tab. This checkout intent remains unchanged. Do not start a second checkout.",
     );
@@ -394,19 +436,26 @@ window.addEventListener("storage", (event) => {
   );
 });
 window.addEventListener("beforeunload", (event) => {
-  if (checkout.phase === "pending" || checkout.phase === "uncertain") {
+  if (
+    checkout.phase === "pending" ||
+    checkout.phase === "uncertain" ||
+    (checkout.phase === "blocked" && checkout.hasPendingIntent)
+  ) {
     event.preventDefault();
     event.returnValue = "";
   }
 });
 
+const pendingLines = checkout.pendingLines;
+if (pendingLines) lines = pendingLines;
+checkout.announceRecovery();
 updateCounts();
 if (page) {
-  persist();
+  if (!checkout.hasPendingIntent) persist();
   if (saved.recovered)
     announce(
       "Some invalid saved cart data was removed. Please review your selections.",
     );
   render();
-  void refreshCatalog();
+  void refreshCatalog(true);
 }

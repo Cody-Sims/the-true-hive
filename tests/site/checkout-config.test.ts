@@ -40,6 +40,31 @@ test("only explicitly configured database/test checkout is presented as enabled"
   assert(!JSON.stringify(getCheckoutPresentation(configured)).includes("sk_"));
 });
 
+test("configured storefront stock and test checkout must use the same location", () => {
+  assert.doesNotThrow(() =>
+    prepareCheckoutStartup({
+      ...configured,
+      STOREFRONT_LOCATION_KEY: "pickup-main",
+    }),
+  );
+  for (const location of ["pickup-other", "../invalid"]) {
+    const environment = { ...configured, STOREFRONT_LOCATION_KEY: location };
+    assert.throws(() => readCheckoutConfig(environment));
+    assert.deepEqual(getCheckoutPresentation(environment), {
+      enabled: false,
+      locationKey: null,
+    });
+  }
+  assert.deepEqual(
+    readCheckoutConfig({
+      ...configured,
+      CHECKOUT_MODE: "disabled",
+      STOREFRONT_LOCATION_KEY: "pickup-other",
+    }),
+    { mode: "disabled" },
+  );
+});
+
 test("restricted test keys support least privilege without enabling live or disabled checkout", () => {
   const restricted = {
     ...configured,
