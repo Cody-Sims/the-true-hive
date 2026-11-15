@@ -4,6 +4,7 @@
 
 ### Added
 
+- Private, bounded product-photo upload/replace/remove workflow with metadata-stripped WebP, audited retry-safe references and publication-gated first-party image delivery; configuration and rollout gates remain explicit.
 - Owner-approved website refresh with URL-based collection search/filter/reset, practical accessibility guidance and original brand-sharing artwork.
 - Secure inventory-phase specification and operator runbook, with isolated Firebase/app-enforced MFA, Stripe card-only test checkout and separate held/paid/physical stock approved for implementation.
 - Private owner-only admin-access provisioning with transactional membership/session revocation and no runtime-credential fallback.

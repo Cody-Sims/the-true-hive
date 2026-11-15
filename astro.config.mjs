@@ -18,7 +18,10 @@ export default defineConfig({
   site: siteOrigin,
   output: "server",
   outDir: "./dist-site",
-  adapter: node({ mode: "standalone", bodySizeLimit: 262144 }),
+  adapter: node({
+    mode: "standalone",
+    bodySizeLimit: 8 * 1024 * 1024 + 65536,
+  }),
   security: { allowedDomains },
   session: false,
   server: { host: "127.0.0.1", port: 4321 },

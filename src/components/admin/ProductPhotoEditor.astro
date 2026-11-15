@@ -1,0 +1,202 @@
+---
+import type { AdminProduct } from "../../domain/admin.ts";
+import FieldHelp from "./FieldHelp.astro";
+interface Props {
+  product: AdminProduct;
+  enabled: boolean;
+}
+const { product, enabled } = Astro.props;
+const endpoint = `/api/admin/products/${encodeURIComponent(product.key)}`;
+---
+
+{enabled ? (
+  <form
+    class="admin-form admin-photo-editor"
+    data-photo-form
+    data-product-key={product.key}
+    data-endpoint={endpoint}
+    data-phase="idle"
+    aria-label={`Primary photo for ${product.title}`}
+  >
+    <p>
+      Manage one primary product photo. Uploading, replacing or removing a photo
+      does not save other product fields, publish the product, change stock or
+      enable checkout. A photo change is visible publicly only for a currently
+      published real product.
+    </p>
+    <section
+      class="admin-panel"
+      data-photo-current
+      aria-label="Current product photo"
+    >
+      <h2>Current server record</h2>
+      <p data-photo-current-text>
+        {product.title} · {product.status} · revision {product.revision}.
+      </p>
+      <figure data-photo-saved hidden={!product.photo}>
+        <img
+          src={
+            product.photo
+              ? `${endpoint}/photo?revision=${product.revision}`
+              : undefined
+          }
+          alt={product.photo?.alt ?? ""}
+          width={product.photo?.width}
+          height={product.photo?.height}
+          referrerpolicy="no-referrer"
+          data-photo-saved-image
+        />
+        <figcaption>Private server preview of the attached photo.</figcaption>
+      </figure>
+      <p data-photo-none hidden={!!product.photo}>
+        No product photo attached. Public pages use the placeholder
+        illustration.
+      </p>
+      <p class="admin-muted" data-photo-preview-error hidden>
+        The private preview is unavailable. This does not confirm that the photo
+        is missing; refresh the current product before changing it.
+      </p>
+    </section>
+    <input type="hidden" name="expectedRevision" value={product.revision} />
+    <fieldset data-photo-fields disabled>
+      <legend>Upload or replace the primary photo</legend>
+      <p id="photo-format" class="admin-muted">
+        Use a still JPG, PNG or WebP, up to 8 MiB and 25 million decoded pixels.
+        HEIC, SVG, GIF and animated images are not supported. The server
+        rotates, resizes within 2048 pixels and converts to WebP. It strips
+        embedded metadata, including GPS; review visible labels, people and
+        addresses yourself. The original file is not published.
+      </p>
+      <div class="admin-field">
+        <FieldHelp label="Photo file">
+          Choose a photo you have permission to publish. The local selection
+          preview has not been uploaded. Replacing the primary photo does not
+          create a gallery or delete earlier stored objects.
+        </FieldHelp>
+        <label>
+          <span>Photo file</span>
+          <input
+            type="file"
+            name="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-describedby="photo-format"
+            required
+          />
+        </label>
+      </div>
+      <div class="admin-field">
+        <FieldHelp label="Photo description">
+          Describe the visible product using confirmed facts, up to 300
+          characters. This required alternative text is read by screen readers.
+          Do not include private information or call a real photo an
+          illustration. To change its description, select the photo again and
+          replace it.
+        </FieldHelp>
+        <label>
+          <span>Photo description</span>
+          <input
+            name="alt"
+            required
+            maxlength="300"
+            value={product.photo?.alt ?? product.title}
+          />
+        </label>
+      </div>
+      <figure data-photo-local hidden>
+        <img alt="" data-photo-local-image />
+        <figcaption>Local selection only — not yet uploaded.</figcaption>
+      </figure>
+    </fieldset>
+    <div class="admin-actions">
+      <button type="submit" data-photo-upload disabled>
+        {product.photo ? "Replace photo" : "Upload photo"}
+      </button>
+      <button
+        type="button"
+        class="admin-danger"
+        data-photo-remove
+        hidden={!product.photo}
+        disabled
+      >
+        Remove photo
+      </button>
+    </div>
+    <section
+      class="admin-notice"
+      data-photo-removal
+      hidden
+      aria-label="Confirm photo removal"
+    >
+      <h2>Remove the attached photo?</h2>
+      <p>
+        The product will use its placeholder illustration. This detaches the
+        photo; earlier stored objects are retained. Nothing else is changed.
+      </p>
+      <label class="admin-check">
+        <input type="checkbox" data-photo-remove-confirm />I confirm removal of
+        the current primary photo
+      </label>
+      <div class="admin-actions">
+        <button
+          type="button"
+          class="admin-danger"
+          data-photo-remove-submit
+          disabled
+        >
+          Confirm remove photo
+        </button>
+        <button type="button" data-photo-remove-cancel>
+          Cancel removal
+        </button>
+      </div>
+    </section>
+    <p class="admin-feedback" role="status" tabindex="-1" data-photo-status></p>
+    <div class="admin-actions">
+      <button type="button" data-photo-retry hidden>
+        Retry the same photo operation
+      </button>
+      <button type="button" data-photo-refresh hidden>
+        Refresh current product
+      </button>
+      <button type="button" data-photo-review hidden>
+        I reviewed the current product; allow a new photo operation
+      </button>
+      <a
+        href="/inventory/login"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-photo-signin
+        hidden
+      >
+        Sign in again in a separate tab
+      </a>
+    </div>
+    <section
+      class="admin-panel"
+      data-photo-receipt
+      hidden
+      aria-label="Original confirmed photo receipt"
+    >
+      <h2>Original confirmed receipt</h2>
+      <p data-photo-receipt-text></p>
+      <p class="admin-muted">
+        This records that operation only. The current server record above may
+        have changed since this receipt.
+      </p>
+    </section>
+    <noscript>
+      <p class="admin-notice">
+        JavaScript is required for verified photo operations.
+      </p>
+    </noscript>
+  </form>
+) : (
+  <section class="admin-notice" aria-label="Product photo setup">
+    <h2>Photo uploads are not enabled</h2>
+    <p>
+      Product-photo storage needs its separate setup and billing authorization.
+      No upload or removal is available here. The placeholder illustration
+      remains available in the product editor.
+    </p>
+  </section>
+)}

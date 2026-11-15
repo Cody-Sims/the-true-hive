@@ -2,10 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { stripTypeScriptTypes } from "node:module";
+import { randomBytes } from "node:crypto";
 import { transform } from "@astrojs/compiler-rs";
 import { parse } from "es-module-lexer";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
-import type { Browser, Page } from "@playwright/test";
+import type {
+  Browser,
+  Page,
+  Request as BrowserRequest,
+} from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type {
   AdminInventoryLevel,
@@ -13,9 +18,80 @@ import type {
   AdminProduct,
 } from "../../src/domain/admin.ts";
 import { pageQuery } from "../../src/components/admin/presentation.ts";
+import { issueCsrf, verifyCsrf } from "../../src/server/auth/csrf.ts";
+import { AdminAuthError } from "../../src/server/auth/service.ts";
 
 const root = new URL("../../", import.meta.url);
 const modules = new Map<string, Promise<string>>();
+const inventoryOrigin = "https://inventory.example.invalid";
+let productionMiddleware:
+  | Promise<{
+      onRequest: (
+        context: {
+          request: Request;
+          url: URL;
+          locals: Record<string, unknown>;
+        },
+        next: () => Promise<Response>,
+      ) => Promise<Response>;
+    }>
+  | undefined;
+
+async function productionHeaders(
+  path: string,
+  origin = inventoryOrigin,
+  host?: string,
+) {
+  productionMiddleware ??= (async () => {
+    let code = stripTypeScriptTypes(
+      (await readFile(new URL("src/middleware.ts", root), "utf8")).replaceAll(
+        "import.meta.env.PROD",
+        "true",
+      ),
+      { mode: "transform" },
+    );
+    const inline = (source: string) =>
+      `data:text/javascript,${encodeURIComponent(source)}`;
+    const replacements: Record<string, string> = {
+      "astro:middleware": inline(
+        "export const defineMiddleware = handler => handler;",
+      ),
+      "./server/admin/config.ts": inline(
+        `export const readAdminConfig = () => (${JSON.stringify({
+          origin: inventoryOrigin,
+          projectId: "hive-test",
+        })});`,
+      ),
+      "./server/auth/runtime.ts": inline(
+        "export const getAdminBoundary = () => ({gate: async () => ({cookies: [], response: null})});",
+      ),
+      "./server/auth/http.ts": new URL("src/server/auth/http.ts", root).href,
+    };
+    const [imports] = parse(code);
+    for (const item of [...imports].reverse()) {
+      if (!item.specifier || !replacements[item.specifier]) continue;
+      code =
+        code.slice(0, item.start) +
+        replacements[item.specifier] +
+        code.slice(item.end);
+    }
+    return import(inline(code));
+  })();
+  const url = new URL(path, origin);
+  const middleware = await productionMiddleware;
+  const response = await middleware.onRequest(
+    {
+      request: new Request(url, { headers: host ? { host } : {} }),
+      url,
+      locals: {},
+    },
+    async () =>
+      new Response("<!doctype html>", {
+        headers: { "content-type": "text/html" },
+      }),
+  );
+  return Object.fromEntries(response.headers);
+}
 
 // Compile the actual components in memory: no site build, fixture route or port.
 async function componentModule(file: URL): Promise<string> {
@@ -120,6 +196,11 @@ async function fixturePage(
   component: string,
   props: Record<string, unknown>,
   client = "admin.ts",
+  options: {
+    headers?: Record<string, string>;
+    path?: string;
+    csrf?: string;
+  } = {},
 ) {
   const context = await browser.newContext({
     viewport: { width: 320, height: 1000 },
@@ -128,26 +209,29 @@ async function fixturePage(
   page.setDefaultTimeout(3000);
   page.setDefaultNavigationTimeout(3000);
   const html = await render(component, props);
+  const script = stripTypeScriptTypes(
+    await readFile(new URL(`src/client/${client}`, root), "utf8"),
+    { mode: "transform" },
+  );
+  const nonce =
+    options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
   await page.route("**/*", (route) => {
     if (route.request().isNavigationRequest()) {
       return route.fulfill({
         contentType: "text/html",
-        body: `<!doctype html><html lang="en"><head><title>Isolated component test</title><meta name="csrf-token" content="component-only-signed-token"></head><body><main><h1>Isolated component test</h1>${html}</main></body></html>`,
+        ...(options.headers ? { headers: options.headers } : {}),
+        body: `<!doctype html><html lang="en"><head><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${nonce ? `<script nonce="${nonce}">${script.replaceAll("</script", "<\\/script")}</script>` : ""}</body></html>`,
       });
     }
     return route.abort();
   });
   await page.goto(
-    "https://inventory.example.invalid/inventory/products/fixture-product",
+    `${inventoryOrigin}${options.path ?? "/inventory/products/fixture-product"}`,
   );
   await page.addStyleTag({
     content: await readFile(new URL("src/styles/admin.css", root), "utf8"),
   });
-  const script = stripTypeScriptTypes(
-    await readFile(new URL(`src/client/${client}`, root), "utf8"),
-    { mode: "transform" },
-  );
-  await page.addScriptTag({ content: script });
+  if (!nonce) await page.addScriptTag({ content: script });
   return page;
 }
 
@@ -212,6 +296,1411 @@ test("real priced products advertise test checkout only when explicitly enabled"
     /Test checkout/,
   );
 });
+
+test("saved products expose a separate photo editor without implying new drafts already have an upload target", async () => {
+  const saved = await render("src/components/admin/ProductForm.astro", {
+    product,
+    photosEnabled: true,
+  });
+  assert.match(saved, /href="\/inventory\/products\/fixture-product\/photo"/);
+  const draft = await render("src/components/admin/ProductForm.astro", {
+    photosEnabled: true,
+  });
+  assert.match(draft, /Save the draft first/i);
+  assert.doesNotMatch(draft, /href="\/inventory\/products\/[^"]+\/photo"/);
+  const disabled = await render("src/components/admin/ProductForm.astro", {
+    product,
+  });
+  assert.doesNotMatch(disabled, /href="\/inventory\/products\/[^"]+\/photo"/);
+  assert.match(disabled, /separate setup and billing authorization/);
+  assert.doesNotMatch(saved, /still needs/);
+});
+
+test("uploaded product photos render through first-party media URLs rather than illustration labels", async () => {
+  const photo = {
+    id: "22222222-2222-4222-8222-222222222222",
+    alt: "Wrapped component-only product",
+    width: 800,
+    height: 600,
+    bytes: 1000,
+  };
+  const html = await render("src/components/ProductCard.astro", {
+    product: { ...product, photo },
+  });
+  assert.match(
+    html,
+    /src="\/media\/products\/22222222-2222-4222-8222-222222222222"/,
+  );
+  assert.match(html, /alt="Wrapped component-only product"/);
+  assert.doesNotMatch(html, /Original illustration|storage\.googleapis\.com/);
+  assert.match(html, /width="800" height="600"/);
+  const fallback = await render("src/components/ProductArt.astro", {
+    image: "soap",
+    alt: "Original concept illustration",
+    eager: true,
+  });
+  assert.match(fallback, /soap\.svg/);
+  assert.match(fallback, /alt="Original concept illustration"/);
+  assert.match(fallback, /width="420" height="360" loading="eager"/);
+});
+
+const photo = {
+  id: "22222222-2222-4222-8222-222222222222",
+  alt: "Wrapped component-only product",
+  width: 800,
+  height: 600,
+  bytes: 1000,
+};
+const photoFile = {
+  name: "private-original-name.png",
+  mimeType: "image/png",
+  buffer: Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aPd8AAAAASUVORK5CYII=",
+    "base64",
+  ),
+};
+
+function photoMultipart(request: BrowserRequest) {
+  assert.equal(request.method(), "POST");
+  return new Request("https://fixture.invalid", {
+    method: "POST",
+    headers: { "content-type": request.headers()["content-type"]! },
+    body: new Uint8Array(request.postDataBuffer()!),
+  }).formData();
+}
+
+async function observePhotoUrls(page: Page) {
+  await page.evaluate(() => {
+    const state = window as typeof window & { releasedPhotoUrls: string[] };
+    state.releasedPhotoUrls = [];
+    const revoke = URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL = (url) => {
+      state.releasedPhotoUrls.push(url);
+      revoke(url);
+    };
+  });
+}
+
+function releasedPhotoUrls(page: Page) {
+  return page.evaluate(
+    () =>
+      (window as typeof window & { releasedPhotoUrls: string[] })
+        .releasedPhotoUrls,
+  );
+}
+
+async function photoShell(token: string, record = product) {
+  return `<!doctype html><html><head><meta name="csrf-token" content="${token}"></head><body>${await render(
+    "src/components/admin/ProductPhotoEditor.astro",
+    {
+      product: record,
+      enabled: true,
+    },
+  )}</body></html>`;
+}
+
+test("photo preview CSP permits blob images only on the exact inventory-host saved-product editor", async () => {
+  const headers = await productionHeaders(
+    "/inventory/products/fixture-product/photo",
+  );
+  assert.match(
+    headers["content-security-policy"]!,
+    /(?:^|; )img-src 'self' data: blob:;/,
+  );
+  const login = await productionHeaders("/inventory/login");
+  const normalize = (value: string) =>
+    value
+      .replace(/'nonce-[^']+'/g, "'nonce-test'")
+      .replace(" data: blob:", " data:");
+  assert.deepEqual(
+    {
+      ...headers,
+      "content-security-policy": normalize(headers["content-security-policy"]!),
+    },
+    {
+      ...login,
+      "content-security-policy": normalize(login["content-security-policy"]!),
+    },
+  );
+  const trailingSlash = await productionHeaders(
+    "/inventory/products/fixture-product/photo/",
+  );
+  assert.match(
+    trailingSlash["content-security-policy"]!,
+    /(?:^|; )img-src 'self' data: blob:;/,
+  );
+  assert.equal(
+    normalize(trailingSlash["content-security-policy"]!),
+    normalize(headers["content-security-policy"]!),
+  );
+  for (const [path, origin, host] of [
+    ["/goods/fixture-product", "https://shop.example.invalid"],
+    [
+      "/inventory/products/fixture-product/photo",
+      "https://shop.example.invalid",
+    ],
+    [
+      "/inventory/products/fixture-product/photo/",
+      "https://shop.example.invalid",
+    ],
+    ["/inventory/login", inventoryOrigin],
+    ["/inventory/login/", inventoryOrigin],
+    ["/inventory/products", inventoryOrigin],
+    ["/inventory/products/new", inventoryOrigin],
+    ["/inventory/products/fixture-product", inventoryOrigin],
+    ["/inventory/products/fixture-product/photo//", inventoryOrigin],
+    ["/inventory/products/fixture-product/photo/extra", inventoryOrigin],
+    ["/inventory/products/fixture-product/photo/extra/", inventoryOrigin],
+    ["/inventory/products/fixture_product/photo", inventoryOrigin],
+    [`/inventory/products/${"a".repeat(81)}/photo`, inventoryOrigin],
+    ["/inventory/products/fixture-product/%70hoto", inventoryOrigin],
+    ["/api/admin/products/fixture-product/photo", inventoryOrigin],
+    [
+      "/inventory/products/fixture-product/photo",
+      inventoryOrigin,
+      "shop.example.invalid",
+    ],
+  ] as const) {
+    const policy = (await productionHeaders(path, origin, host))[
+      "content-security-policy"
+    ]!;
+    assert.match(policy, /(?:^|; )img-src 'self' data:;/, `${origin}${path}`);
+    assert.doesNotMatch(policy, /blob:/, `${origin}${path}`);
+  }
+});
+
+for (const suffix of ["", "/"])
+  domTest(
+    `photo selection works under enforced production CSP without permitting unsigned scripts${suffix ? " on a trailing-slash editor URL" : ""}`,
+    async () => {
+      const path = `/inventory/products/fixture-product/photo${suffix}`;
+      const headers = await productionHeaders(path);
+      const page = await fixturePage(
+        "src/components/admin/ProductPhotoEditor.astro",
+        { product, enabled: true },
+        "admin-photo.ts",
+        { headers, path },
+      );
+      try {
+        await page.evaluate(() => {
+          const script = document.createElement("script");
+          script.textContent = "window.unsignedPhotoScriptRan = true";
+          document.body.append(script);
+        });
+        await page
+          .getByLabel("Photo file", { exact: true })
+          .setInputFiles(photoFile);
+        await page.locator("[data-photo-local] img").waitFor();
+        assert.equal(
+          await page
+            .locator("[data-photo-local] img")
+            .evaluate(
+              (image: HTMLImageElement) =>
+                image.complete && image.naturalWidth === 1,
+            ),
+          true,
+        );
+        assert.equal(
+          await page.evaluate(() => "unsignedPhotoScriptRan" in window),
+          false,
+        );
+      } finally {
+        await page.context().close();
+      }
+    },
+  );
+
+domTest(
+  "photo authentication recovery refreshes signed CSRF after session and nonce rotation without changing its intent",
+  async () => {
+    const secret = randomBytes(32).toString("base64");
+    let session = "component-only-expired-session";
+    let csrf = issueCsrf(secret, session);
+    const oldCsrf = csrf.token;
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+      { csrf: oldCsrf },
+    );
+    const recoveryOptions: Record<string, unknown>[] = [];
+    await page.exposeFunction(
+      "capturePhotoRecoveryOptions",
+      (value: Record<string, unknown>) => {
+        recoveryOptions.push(value);
+      },
+    );
+    await page.evaluate(() => {
+      const original = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        if (
+          String(input).endsWith("/inventory/products/fixture-product/photo")
+        ) {
+          void (
+            window as unknown as {
+              capturePhotoRecoveryOptions: (value: unknown) => Promise<void>;
+            }
+          ).capturePhotoRecoveryOptions({
+            method: init?.method,
+            credentials: init?.credentials,
+            mode: init?.mode,
+            cache: init?.cache,
+            redirect: init?.redirect,
+            bounded: init?.signal instanceof AbortSignal,
+            accept: new Headers(init?.headers).get("accept"),
+          });
+        }
+        return original(input, init);
+      };
+    });
+    const cookies = () => [
+      {
+        name: "__Host-hive-admin",
+        value: session,
+        url: inventoryOrigin,
+        secure: true,
+        httpOnly: true,
+        sameSite: "Strict" as const,
+      },
+      {
+        name: "__Host-hive-admin-csrf",
+        value: csrf.nonce,
+        url: inventoryOrigin,
+        secure: true,
+        httpOnly: true,
+        sameSite: "Strict" as const,
+      },
+    ];
+    await page.context().addCookies(cookies());
+    let authenticated = false;
+    let shellReads = 0;
+    const attempts: {
+      id: string;
+      alt: string;
+      revision: string;
+      bytes: string;
+      csrf: string;
+    }[] = [];
+    const renewedSession = "component-only-rotated-session";
+    const renewedCsrf = issueCsrf(secret, renewedSession);
+    const recoveryHtml = (
+      await photoShell(renewedCsrf.token, {
+        ...product,
+        revision: 99,
+        title: "Do not replace the live editor",
+      })
+    ).replace(
+      "</body>",
+      "<script>window.photoRecoveryScriptRan = true</script></body>",
+    );
+    await page.route("**/inventory/products/fixture-product/photo", (route) => {
+      shellReads++;
+      return route.fulfill({ contentType: "text/html", body: recoveryHtml });
+    });
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({ json: { product: { ...product, revision: 8, photo } } }),
+    );
+    await page.route(
+      "**/api/admin/products/fixture-product/photo",
+      async (route) => {
+        const request = route.request();
+        const form = await photoMultipart(request);
+        const headers = request.headers();
+        attempts.push({
+          id: String(form.get("operationId")),
+          alt: String(form.get("alt")),
+          revision: String(form.get("expectedRevision")),
+          bytes: Buffer.from(
+            await (form.get("file") as File).arrayBuffer(),
+          ).toString("hex"),
+          csrf: headers["x-csrf-token"]!,
+        });
+        if (!authenticated) return route.fulfill({ status: 401, json: {} });
+        const sentCookies = Object.fromEntries(
+          (headers["cookie"] ?? "").split(";").map((part) => {
+            const [name, ...value] = part.trim().split("=");
+            return [name, value.join("=")];
+          }),
+        );
+        assert.equal(sentCookies["__Host-hive-admin"], session);
+        assert.equal(sentCookies["__Host-hive-admin-csrf"], csrf.nonce);
+        try {
+          verifyCsrf(
+            new Request(request.url(), { method: "POST", headers }),
+            inventoryOrigin,
+            secret,
+            session,
+            csrf.nonce,
+          );
+        } catch (error) {
+          assert(error instanceof AdminAuthError);
+          return route.fulfill({ status: 403, json: {} });
+        }
+        return route.fulfill({
+          json: {
+            productKey: product.key,
+            revision: 8,
+            photo: { ...photo, alt: attempts[0]!.alt },
+          },
+        });
+      },
+    );
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      const selectedUrl = await page
+        .locator("[data-photo-local] img")
+        .getAttribute("src");
+      await page
+        .getByLabel("Photo description", { exact: true })
+        .fill("Only confirmed facts");
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      await waitPhase(page, "uncertain", "[data-photo-form]");
+      session = renewedSession;
+      csrf = renewedCsrf;
+      await page.context().addCookies(cookies());
+      authenticated = true;
+      assert.throws(
+        () =>
+          verifyCsrf(
+            new Request(
+              `${inventoryOrigin}/api/admin/products/fixture-product/photo`,
+              {
+                method: "POST",
+                headers: { origin: inventoryOrigin, "x-csrf-token": oldCsrf },
+              },
+            ),
+            inventoryOrigin,
+            secret,
+            session,
+            csrf.nonce,
+          ),
+        AdminAuthError,
+      );
+      assert.equal(await page.evaluate(() => document.cookie), "");
+      assert.equal(
+        await page.locator("[data-photo-local] img").getAttribute("src"),
+        selectedUrl,
+      );
+      await page
+        .getByRole("button", { name: "Retry the same photo operation" })
+        .click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(shellReads, 1);
+      assert.deepEqual(recoveryOptions, [
+        {
+          method: "GET",
+          credentials: "same-origin",
+          mode: "same-origin",
+          cache: "no-store",
+          redirect: "error",
+          bounded: true,
+          accept: "text/html",
+        },
+      ]);
+      assert.equal(attempts.length, 2);
+      assert.equal(attempts[0]!.csrf, oldCsrf);
+      assert.equal(attempts[1]!.csrf, csrf.token);
+      assert.deepEqual(
+        { ...attempts[0], csrf: "" },
+        { ...attempts[1], csrf: "" },
+      );
+      assert.equal(attempts[1]!.revision, "7");
+      assert.equal(attempts[1]!.bytes, photoFile.buffer.toString("hex"));
+      assert.equal(
+        await page.evaluate(() => "photoRecoveryScriptRan" in window),
+        false,
+      );
+      assert.equal(await page.getByRole("form").count(), 1);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo authentication recovery rejects login, redirected and malformed shells while preserving its frozen file and UUID",
+  async () => {
+    const secret = randomBytes(32).toString("base64");
+    const token = issueCsrf(secret, "component-only-session").token;
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+      { csrf: token },
+    );
+    const valid = await photoShell(token);
+    const responses = [
+      { status: 303, headers: { location: "/inventory/login" } },
+      { status: 401, contentType: "text/html", body: valid },
+      {
+        status: 200,
+        contentType: "text/html",
+        body: `<head><meta name="csrf-token" content="${token}"></head><body>Sign in</body>`,
+      },
+      {
+        status: 200,
+        contentType: "text/html",
+        body: await photoShell(token, { ...product, key: "another-product" }),
+      },
+      {
+        status: 200,
+        contentType: "text/html",
+        body: valid.replace(token, "unsigned-token"),
+      },
+      {
+        status: 200,
+        contentType: "text/html",
+        body: valid.replace(
+          "</head>",
+          `<meta name="csrf-token" content="${token}"></head>`,
+        ),
+      },
+      { status: 200, contentType: "application/json", body: valid },
+      {
+        status: 200,
+        contentType: "text/html",
+        body: valid + " ".repeat(1024 * 1024),
+      },
+    ];
+    let shellReads = 0;
+    let authenticated = false;
+    const attempts: {
+      id: string;
+      alt: string;
+      revision: string;
+      bytes: string;
+    }[] = [];
+    await page.route("**/inventory/products/fixture-product/photo", (route) => {
+      const response = responses[shellReads++];
+      return route.fulfill(
+        response ?? { status: 200, contentType: "text/html", body: valid },
+      );
+    });
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({ json: { product: { ...product, revision: 8, photo } } }),
+    );
+    await page.route(
+      "**/api/admin/products/fixture-product/photo",
+      async (route) => {
+        const form = await photoMultipart(route.request());
+        attempts.push({
+          id: String(form.get("operationId")),
+          alt: String(form.get("alt")),
+          revision: String(form.get("expectedRevision")),
+          bytes: Buffer.from(
+            await (form.get("file") as File).arrayBuffer(),
+          ).toString("hex"),
+        });
+        return authenticated
+          ? route.fulfill({
+              json: {
+                productKey: product.key,
+                revision: 8,
+                photo: { ...photo, alt: product.title },
+              },
+            })
+          : route.fulfill({ status: 403, json: {} });
+      },
+    );
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      const preview = await page
+        .locator("[data-photo-local] img")
+        .getAttribute("src");
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      await waitPhase(page, "uncertain", "[data-photo-form]");
+      for (let index = 0; index < responses.length; index++) {
+        await page
+          .getByRole("button", { name: "Retry the same photo operation" })
+          .click();
+        await waitPhase(page, "uncertain", "[data-photo-form]");
+        assert.equal(shellReads, index + 1);
+        assert.equal(attempts.length, 1);
+        assert.equal(
+          await page
+            .getByRole("link", { name: "Sign in again in a separate tab" })
+            .isVisible(),
+          true,
+        );
+        assert.equal(
+          await page.getByLabel("Photo file", { exact: true }).isDisabled(),
+          true,
+        );
+        assert.equal(
+          await page.locator("[data-photo-local] img").getAttribute("src"),
+          preview,
+        );
+        assert.equal(
+          await page.locator('meta[name="csrf-token"]').getAttribute("content"),
+          token,
+        );
+        assert.equal(
+          await page.locator('[name="expectedRevision"]').inputValue(),
+          "7",
+        );
+      }
+      authenticated = true;
+      await page
+        .getByRole("button", { name: "Retry the same photo operation" })
+        .click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(attempts.length, 2);
+      assert.deepEqual(attempts[0], attempts[1]);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+test("photo editor keeps storage disabled truthfully and previews saved photos only through its private endpoint", async () => {
+  const disabled = await render(
+    "src/components/admin/ProductPhotoEditor.astro",
+    { product, enabled: false },
+  );
+  assert.match(disabled, /Photo uploads are not enabled/);
+  assert.doesNotMatch(disabled, /type="file"|data-photo-form/);
+  const editor = await render("src/components/admin/ProductPhotoEditor.astro", {
+    product: { ...product, photo },
+    enabled: true,
+  });
+  assert.match(editor, /data-photo-form/);
+  assert.match(editor, /src="\/api\/admin\/products\/fixture-product\/photo/);
+  assert.match(editor, /value="Wrapped component-only product"/);
+  assert.match(editor, /Help: Photo description/);
+  assert.match(editor, /GPS/);
+  assert.doesNotMatch(editor, /storage\.googleapis|Original illustration/);
+});
+
+domTest(
+  "photo selection validates formats and size, previews locally, and stays accessible at narrow sizes",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+    );
+    await observePhotoUrls(page);
+    let mutations = 0;
+    await page.route("**/api/admin/**", (route) => {
+      mutations++;
+      return route.abort();
+    });
+    try {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      const file = page.getByLabel("Photo file", { exact: true });
+      const alt = page.getByLabel("Photo description", { exact: true });
+      assert.equal(await alt.inputValue(), product.title);
+      await file.setInputFiles({
+        name: "not-an-image.svg",
+        mimeType: "image/svg+xml",
+        buffer: Buffer.from("<svg xmlns='http://www.w3.org/2000/svg'/>"),
+      });
+      await page
+        .getByRole("status")
+        .filter({ hasText: /JPG, PNG or WebP/ })
+        .waitFor();
+      assert.equal(await page.locator("[data-photo-local]").isVisible(), false);
+      await file.setInputFiles({
+        name: "large.png",
+        mimeType: "image/png",
+        buffer: Buffer.alloc(8 * 1024 * 1024 + 1),
+      });
+      await page.getByRole("status").filter({ hasText: /8 MiB/ }).waitFor();
+      await file.setInputFiles({
+        ...photoFile,
+        buffer: Buffer.from("not actually an image"),
+      });
+      await page
+        .getByRole("status")
+        .filter({ hasText: /valid|decode/i })
+        .waitFor();
+      const tooManyPixels = Buffer.from(photoFile.buffer);
+      tooManyPixels.writeUInt32BE(25000001, 16);
+      await file.setInputFiles({ ...photoFile, buffer: tooManyPixels });
+      await page
+        .getByRole("status")
+        .filter({ hasText: /25 million/ })
+        .waitFor();
+      const largeWebp = Buffer.alloc(30);
+      largeWebp.write("RIFF");
+      largeWebp.writeUInt32LE(22, 4);
+      largeWebp.write("WEBPVP8X", 8);
+      largeWebp.writeUInt32LE(10, 16);
+      largeWebp.writeUIntLE(5000, 24, 3);
+      largeWebp.writeUIntLE(4999, 27, 3);
+      const largeJpeg = Buffer.from([
+        0xff, 0xd8, 0xff, 0xc0, 0, 17, 8, 0x13, 0x88, 0x13, 0x89, 3, 1, 17, 0,
+        2, 17, 0, 3, 17, 0, 0xff, 0xd9,
+      ]);
+      for (const [mimeType, buffer] of [
+        ["image/webp", largeWebp],
+        ["image/jpeg", largeJpeg],
+      ] as const) {
+        await file.setInputFiles({
+          name: "oversized-header",
+          mimeType,
+          buffer,
+        });
+        await page
+          .getByRole("status")
+          .filter({ hasText: /25 million/ })
+          .waitFor();
+      }
+      const animationChunk = Buffer.alloc(20);
+      animationChunk.writeUInt32BE(8);
+      animationChunk.write("acTL", 4);
+      await file.setInputFiles({
+        ...photoFile,
+        buffer: Buffer.concat([
+          photoFile.buffer.subarray(0, 33),
+          animationChunk,
+          photoFile.buffer.subarray(33),
+        ]),
+      });
+      await page
+        .getByRole("status")
+        .filter({ hasText: /animation/ })
+        .waitFor();
+      const selections: string[] = [];
+      for (const mimeType of ["image/jpeg", "image/webp"]) {
+        const bytes = await page.evaluate(async (mimeType) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = 2;
+          const blob = await new Promise<Blob>((resolve) =>
+            canvas.toBlob((blob) => resolve(blob!), mimeType),
+          );
+          return [...new Uint8Array(await blob.arrayBuffer())];
+        }, mimeType);
+        await file.setInputFiles({
+          name: "component-only",
+          mimeType,
+          buffer: Buffer.from(bytes),
+        });
+        await page.locator("[data-photo-local] img").waitFor();
+        selections.push(
+          (await page.locator("[data-photo-local] img").getAttribute("src"))!,
+        );
+      }
+      await file.setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      const selectedUrl = (await page
+        .locator("[data-photo-local] img")
+        .getAttribute("src"))!;
+      assert.match(
+        (await page.locator("[data-photo-local] img").getAttribute("src")) ??
+          "",
+        /^blob:/,
+      );
+      await alt.fill("A confirmed description");
+      assert.equal(
+        await page.locator("[data-photo-local] img").getAttribute("alt"),
+        "A confirmed description",
+      );
+      assert.doesNotMatch(
+        (await page.locator("main").textContent()) ?? "",
+        /private-original-name/,
+      );
+      for (const width of [320, 375, 768]) {
+        await page.setViewportSize({ width, height: 1000 });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+      }
+      await page.getByLabel("Help: Photo description", { exact: true }).focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page.getByText(/Describe the visible product/).isVisible(),
+        true,
+      );
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+      assert.equal(mutations, 0);
+      assert.equal(await page.evaluate(() => localStorage.length), 0);
+      assert.deepEqual(await releasedPhotoUrls(page), selections);
+      await page.evaluate(() =>
+        window.dispatchEvent(
+          new PageTransitionEvent("pagehide", { persisted: true }),
+        ),
+      );
+      assert.deepEqual(await releasedPhotoUrls(page), [
+        ...selections,
+        selectedUrl,
+      ]);
+      assert.equal(await page.locator("[data-photo-local]").isVisible(), false);
+      assert.equal(await file.inputValue(), "");
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo upload freezes semantic intent through a lost response, 5xx and 429, keeping receipt separate from current photo",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+    );
+    await observePhotoUrls(page);
+    const attempts: {
+      operationId: string;
+      revision: string;
+      alt: string;
+      bytes: string;
+      filename: string;
+      headers: Record<string, string>;
+      fields: string[];
+    }[] = [];
+    const options: Record<string, unknown>[] = [];
+    await page.exposeFunction(
+      "capturePhotoOptions",
+      (value: Record<string, unknown>) => {
+        options.push(value);
+      },
+    );
+    await page.evaluate(() => {
+      const original = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        void (
+          window as unknown as {
+            capturePhotoOptions: (value: unknown) => Promise<void>;
+          }
+        ).capturePhotoOptions({
+          cache: init?.cache,
+          credentials: init?.credentials,
+          redirect: init?.redirect,
+          mode: init?.mode,
+          bounded: init?.signal instanceof AbortSignal,
+        });
+        return original(input, init);
+      };
+    });
+    let receiptPhoto = photo;
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({
+        json: {
+          product: {
+            ...product,
+            title: "Later authoritative title",
+            revision: 10,
+            photo: { ...photo, alt: "Later authoritative description" },
+          },
+        },
+      }),
+    );
+    await page.route(
+      "**/api/admin/products/fixture-product/photo",
+      async (route) => {
+        const request = route.request();
+        const headers = request.headers();
+        const multipart = await photoMultipart(request);
+        const file = multipart.get("file") as File;
+        attempts.push({
+          operationId: String(multipart.get("operationId")),
+          revision: String(multipart.get("expectedRevision")),
+          alt: String(multipart.get("alt")),
+          bytes: Buffer.from(await file.arrayBuffer()).toString("hex"),
+          filename: file.name,
+          headers,
+          fields: [...multipart.keys()].sort(),
+        });
+        if (attempts.length === 1) return route.abort("failed");
+        if (attempts.length < 4)
+          return route.fulfill({
+            status: attempts.length === 2 ? 503 : 429,
+            json: {},
+          });
+        receiptPhoto = { ...photo, alt: attempts[0]!.alt };
+        return route.fulfill({
+          json: { productKey: product.key, revision: 8, photo: receiptPhoto },
+        });
+      },
+    );
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      const localUrl = await page
+        .locator("[data-photo-local] img")
+        .getAttribute("src");
+      await page
+        .getByLabel("Photo description", { exact: true })
+        .fill("Frozen confirmed facts");
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        await waitPhase(page, "uncertain", "[data-photo-form]");
+        assert.equal(
+          await page.getByLabel("Photo file", { exact: true }).isDisabled(),
+          true,
+        );
+        assert.equal(
+          await page
+            .getByLabel("Photo description", { exact: true })
+            .isDisabled(),
+          true,
+        );
+        assert.equal(
+          await page.locator("[data-photo-local] img").getAttribute("src"),
+          localUrl,
+        );
+        assert.deepEqual(await releasedPhotoUrls(page), []);
+        await page
+          .getByRole("button", { name: "Retry the same photo operation" })
+          .click();
+      }
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(attempts.length, 4);
+      for (const attempt of attempts) {
+        assert.equal(attempt.operationId, attempts[0]!.operationId);
+        assert.match(attempt.operationId, /^[0-9a-f-]{36}$/);
+        assert.equal(attempt.revision, "7");
+        assert.equal(attempt.alt, "Frozen confirmed facts");
+        assert.equal(attempt.bytes, photoFile.buffer.toString("hex"));
+        assert.equal(attempt.filename, "product-photo");
+        assert.deepEqual(attempt.fields, [
+          "alt",
+          "expectedRevision",
+          "file",
+          "operationId",
+        ]);
+        assert.equal(
+          attempt.headers["x-csrf-token"],
+          "component-only-signed-token",
+        );
+        assert.match(
+          attempt.headers["content-type"]!,
+          /^multipart\/form-data; boundary=/,
+        );
+      }
+      assert.equal(options.length, 5);
+      for (const option of options)
+        assert.deepEqual(option, {
+          cache: "no-store",
+          credentials: "same-origin",
+          redirect: "error",
+          mode: "same-origin",
+          bounded: true,
+        });
+      const receipt =
+        (await page.locator("[data-photo-receipt]").textContent()) ?? "";
+      assert.match(receipt, /revision 8/);
+      assert.match(receipt, /Frozen confirmed facts/);
+      assert.doesNotMatch(receipt, /Later authoritative/);
+      assert.match(
+        (await page.locator("[data-photo-current]").textContent()) ?? "",
+        /Later authoritative title.*revision 10/s,
+      );
+      assert.equal(
+        await page.locator("[data-photo-current] img").getAttribute("alt"),
+        "Later authoritative description",
+      );
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "10",
+      );
+      assert.equal(await page.locator("[data-photo-local]").isVisible(), false);
+      assert.deepEqual(await releasedPhotoUrls(page), [localUrl]);
+      assert.equal(
+        await page.evaluate(async (url) => {
+          try {
+            await fetch(url!);
+            return false;
+          } catch {
+            return true;
+          }
+        }, localUrl),
+        true,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo conflicts require authoritative refresh and explicit review before a new revision and UUID",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+    );
+    let available = false;
+    const attempts: { id: string; revision: string; alt: string }[] = [];
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill(
+        available
+          ? { json: { product: { ...product, revision: 11, photo } } }
+          : { status: 503, json: {} },
+      ),
+    );
+    await page.route(
+      "**/api/admin/products/fixture-product/photo",
+      async (route) => {
+        const multipart = await photoMultipart(route.request());
+        attempts.push({
+          id: String(multipart.get("operationId")),
+          revision: String(multipart.get("expectedRevision")),
+          alt: String(multipart.get("alt")),
+        });
+        return route.fulfill({
+          status: attempts.length === 1 ? 409 : 422,
+          json: { error: { code: "OPERATION_CONFLICT" } },
+        });
+      },
+    );
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      await page
+        .getByLabel("Photo description", { exact: true })
+        .fill("Preserved photo facts");
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      await waitPhase(page, "conflict", "[data-photo-form]");
+      assert.equal(
+        await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
+        false,
+      );
+      assert.equal(
+        await page
+          .getByLabel("Photo description", { exact: true })
+          .isDisabled(),
+        true,
+      );
+      available = true;
+      await page
+        .getByRole("button", { name: "Refresh current product" })
+        .click();
+      await page.getByRole("button", { name: /I reviewed/ }).waitFor();
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "7",
+      );
+      assert.equal(
+        await page
+          .getByLabel("Photo description", { exact: true })
+          .inputValue(),
+        "Preserved photo facts",
+      );
+      assert.equal(attempts.length, 1);
+      await page.getByRole("button", { name: /I reviewed/ }).click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      await page
+        .getByRole("button", { name: "Replace photo", exact: true })
+        .click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(attempts.length, 2);
+      assert.notEqual(attempts[0]!.id, attempts[1]!.id);
+      assert.equal(attempts[0]!.revision, "7");
+      assert.equal(attempts[1]!.revision, "11");
+      assert.equal(attempts[1]!.alt, attempts[0]!.alt);
+      assert.equal(
+        await page.getByLabel("Photo file", { exact: true }).isDisabled(),
+        false,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo removal needs explicit confirmation and retries the same DELETE without claiming blob deletion",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product: { ...product, photo }, enabled: true },
+      "admin-photo.ts",
+    );
+    const attempts: { method: string; body: Record<string, unknown> }[] = [];
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({ json: { product: { ...product, revision: 8 } } }),
+    );
+    await page.route("**/api/admin/products/fixture-product/photo", (route) => {
+      attempts.push({
+        method: route.request().method(),
+        body: route.request().postDataJSON(),
+      });
+      return attempts.length === 1
+        ? route.abort("failed")
+        : route.fulfill({
+            json: { productKey: product.key, revision: 8, photo: null },
+          });
+    });
+    try {
+      await page
+        .getByRole("button", { name: "Remove photo", exact: true })
+        .click();
+      assert.equal(attempts.length, 0);
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Confirm remove photo" })
+          .isDisabled(),
+        true,
+      );
+      await page.getByRole("button", { name: "Cancel removal" }).click();
+      assert.equal(attempts.length, 0);
+      await page
+        .getByRole("button", { name: "Remove photo", exact: true })
+        .click();
+      await page
+        .getByLabel("I confirm removal of the current primary photo")
+        .check();
+      await page.getByRole("button", { name: "Confirm remove photo" }).click();
+      await waitPhase(page, "uncertain", "[data-photo-form]");
+      await page
+        .getByRole("button", { name: "Retry the same photo operation" })
+        .click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(attempts.length, 2);
+      assert.deepEqual(attempts[0], attempts[1]);
+      assert.equal(attempts[0]!.method, "DELETE");
+      assert.deepEqual(Object.keys(attempts[0]!.body).sort(), [
+        "expectedRevision",
+        "operationId",
+      ]);
+      assert.equal(attempts[0]!.body.expectedRevision, 7);
+      assert.match(
+        (await page.locator("[data-photo-receipt]").textContent()) ?? "",
+        /removed/i,
+      );
+      assert.match(
+        (await page.locator("[data-photo-current]").textContent()) ?? "",
+        /No product photo/,
+      );
+      assert.doesNotMatch(
+        (await page.locator("main").textContent()) ?? "",
+        /blobs? (?:was |were )?deleted/i,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo validation prevents a removal intent while a new selection is still being checked",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product: { ...product, photo }, enabled: true },
+      "admin-photo.ts",
+    );
+    try {
+      await page
+        .getByRole("button", { name: "Remove photo", exact: true })
+        .click();
+      await page
+        .getByLabel("I confirm removal of the current primary photo")
+        .check();
+      await page.evaluate(() => {
+        File.prototype.arrayBuffer = () => new Promise(() => {});
+      });
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page
+        .getByRole("status")
+        .filter({ hasText: /Checking the local selection/ })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Confirm remove photo" })
+          .isDisabled(),
+        true,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "a confirmed photo receipt cannot reopen mutations from a stale, malformed or signed-out current product",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+    );
+    let reads = 0;
+    let mutations = 0;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      reads++;
+      if (reads === 3) return route.fulfill({ status: 401, json: {} });
+      return route.fulfill({
+        json: {
+          product:
+            reads === 1
+              ? { ...product, revision: 7, photo }
+              : reads === 2
+                ? { ...product, key: "another-product", revision: 8, photo }
+                : { ...product, revision: 8, photo },
+        },
+      });
+    });
+    await page.route("**/api/admin/products/fixture-product/photo", (route) => {
+      mutations++;
+      return route.fulfill({
+        json: {
+          productKey: product.key,
+          revision: 8,
+          photo: { ...photo, alt: product.title },
+        },
+      });
+    });
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      await page
+        .getByRole("status")
+        .filter({ hasText: /current product is unavailable/ })
+        .waitFor();
+      await waitPhase(page, "confirmed", "[data-photo-form]");
+      assert.equal(
+        await page.locator("[data-photo-receipt]").isVisible(),
+        true,
+      );
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Retry the same photo operation" })
+          .isVisible(),
+        false,
+      );
+      assert.equal(
+        await page.getByLabel("Photo file", { exact: true }).isDisabled(),
+        true,
+      );
+      await page
+        .getByRole("button", { name: "Refresh current product" })
+        .click();
+      await page
+        .getByRole("status")
+        .filter({ hasText: /current product is unavailable/ })
+        .waitFor();
+      await waitPhase(page, "confirmed", "[data-photo-form]");
+      await page
+        .getByRole("button", { name: "Refresh current product" })
+        .click();
+      await page
+        .getByRole("link", { name: "Sign in again in a separate tab" })
+        .waitFor();
+      await waitPhase(page, "confirmed", "[data-photo-form]");
+      await page
+        .getByRole("button", { name: "Refresh current product" })
+        .click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(mutations, 1);
+      assert.equal(reads, 4);
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "8",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo validation rejection allows correction but authentication failures preserve the same retry intent",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+    );
+    const attempts: { id: string; alt: string; bytes: string }[] = [];
+    const shell = await photoShell(
+      issueCsrf(randomBytes(32).toString("base64"), "component-only-session")
+        .token,
+    );
+    let shellReads = 0;
+    await page.route("**/inventory/products/fixture-product/photo", (route) => {
+      shellReads++;
+      return route.fulfill({ contentType: "text/html", body: shell });
+    });
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({ json: { product: { ...product, revision: 8, photo } } }),
+    );
+    await page.route(
+      "**/api/admin/products/fixture-product/photo",
+      async (route) => {
+        const multipart = await photoMultipart(route.request());
+        attempts.push({
+          id: String(multipart.get("operationId")),
+          alt: String(multipart.get("alt")),
+          bytes: Buffer.from(
+            await (multipart.get("file") as File).arrayBuffer(),
+          ).toString("hex"),
+        });
+        const status = [422, 401, 403, 200][attempts.length - 1]!;
+        return route.fulfill({
+          status,
+          json:
+            status === 200
+              ? {
+                  productKey: product.key,
+                  revision: 8,
+                  photo: { ...photo, alt: "Corrected facts" },
+                }
+              : {
+                  error: {
+                    message:
+                      "private-original-name.png storage.googleapis.com raw error",
+                  },
+                },
+        });
+      },
+    );
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(
+        await page.getByLabel("Photo file", { exact: true }).isDisabled(),
+        false,
+      );
+      await page
+        .getByLabel("Photo description", { exact: true })
+        .fill("Corrected facts");
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await waitPhase(page, "uncertain", "[data-photo-form]");
+        await page
+          .getByRole("link", { name: "Sign in again in a separate tab" })
+          .waitFor();
+        assert.equal(
+          await page
+            .getByLabel("Photo description", { exact: true })
+            .inputValue(),
+          "Corrected facts",
+        );
+        await page
+          .getByRole("button", { name: "Retry the same photo operation" })
+          .click();
+      }
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(attempts.length, 4);
+      assert.equal(shellReads, 2);
+      assert.notEqual(attempts[0]!.id, attempts[1]!.id);
+      assert.deepEqual(attempts[1], attempts[2]);
+      assert.deepEqual(attempts[2], attempts[3]);
+      assert.equal(attempts[3]!.bytes, photoFile.buffer.toString("hex"));
+      assert.doesNotMatch(
+        (await page.locator("main").textContent()) ?? "",
+        /storage\.googleapis|raw error|private-original-name/,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "photo responses with unverified receipt keys, revisions or photo shapes remain uncertain",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductPhotoEditor.astro",
+      { product, enabled: true },
+      "admin-photo.ts",
+    );
+    const valid = {
+      productKey: product.key,
+      revision: 8,
+      photo: { ...photo, alt: product.title },
+    };
+    const receipts = [
+      { ...valid, productKey: "another-product" },
+      { ...valid, revision: 7 },
+      {
+        ...valid,
+        photo: {
+          ...valid.photo,
+          id: "https://storage.googleapis.com/not-allowed",
+        },
+      },
+      { ...valid, photo: { ...valid.photo, width: 0 } },
+      { ...valid, photo: null },
+      valid,
+    ];
+    const operationIds: string[] = [];
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({ json: { product: { ...product, revision: 8, photo } } }),
+    );
+    await page.route(
+      "**/api/admin/products/fixture-product/photo",
+      async (route) => {
+        const multipart = await photoMultipart(route.request());
+        operationIds.push(String(multipart.get("operationId")));
+        return route.fulfill({ json: receipts[operationIds.length - 1] });
+      },
+    );
+    try {
+      await page
+        .getByLabel("Photo file", { exact: true })
+        .setInputFiles(photoFile);
+      await page.locator("[data-photo-local] img").waitFor();
+      await page
+        .getByRole("button", { name: "Upload photo", exact: true })
+        .click();
+      for (let attempt = 0; attempt < receipts.length - 1; attempt++) {
+        await waitPhase(page, "uncertain", "[data-photo-form]");
+        assert.equal(
+          await page.locator("[data-photo-receipt]").isVisible(),
+          false,
+        );
+        assert.equal(
+          await page.getByLabel("Photo file", { exact: true }).isDisabled(),
+          true,
+        );
+        await page
+          .getByRole("button", { name: "Retry the same photo operation" })
+          .click();
+      }
+      await waitPhase(page, "idle", "[data-photo-form]");
+      assert.equal(new Set(operationIds).size, 1);
+      assert.equal(operationIds.length, receipts.length);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
 
 domTest(
   "count corrections preserve one intent through lost response, with separate original receipt and current stock",

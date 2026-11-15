@@ -10,6 +10,7 @@ import {
 import { getAdminPool } from "../../../server/admin/pool.ts";
 import { isRecordKey } from "../../../server/inventory/rules.ts";
 import type { AdminProduct, AdminLocation } from "../../../domain/admin.ts";
+import { readProductImagesConfig } from "../../../server/media/config.ts";
 if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
 let product: AdminProduct | null = null;
@@ -33,7 +34,10 @@ if (!product) Astro.response.status = unavailable ? 503 : 404;
   <a href="/inventory/products">Back to products</a>
   {product ? (
     <>
-      <ProductForm product={product} />
+      <ProductForm
+        product={product}
+        photosEnabled={readProductImagesConfig().enabled}
+      />
       <section aria-label="Location balances">
         <h2>Physical stock and allocations</h2>
         <p>

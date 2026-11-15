@@ -2,23 +2,24 @@
 import soap from "../../prototypes/assets/soap.svg?url";
 import honey from "../../prototypes/assets/honey-jar.svg?url";
 import candle from "../../prototypes/assets/candle.svg?url";
-import type { ProductImage } from "../domain/catalog.ts";
+import type { ProductImage, ProductPhoto } from "../domain/catalog.ts";
 
 interface Props {
   image: ProductImage;
   alt?: string;
   eager?: boolean;
+  photo?: ProductPhoto | null;
 }
-const { image, alt = "", eager = false } = Astro.props;
+const { image, alt = "", eager = false, photo } = Astro.props;
 const illustrations = { soap, honey, candle };
 ---
 
 <img
   class="product-illustration"
-  src={illustrations[image]}
-  alt={alt}
-  width="420"
-  height="360"
+  src={photo ? `/media/products/${photo.id}` : illustrations[image]}
+  alt={photo ? photo.alt : alt}
+  width={photo?.width ?? 420}
+  height={photo?.height ?? 360}
   loading={eager ? "eager" : "lazy"}
   decoding="async"
 />

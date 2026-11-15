@@ -485,12 +485,16 @@ test("repeat migrations verify checksums and reject rewritten history without ch
       join(directory, "001_inventory.sql"),
       `${original}\nSELECT 2;\n`,
     );
-    await writeFile(
-      join(directory, "002_admin_commerce.sql"),
-      await readFile(
-        new URL("../../migrations/002_admin_commerce.sql", import.meta.url),
-      ),
-    );
+    for (const migration of [
+      "002_admin_commerce.sql",
+      "003_product_photos.sql",
+    ])
+      await writeFile(
+        join(directory, migration),
+        await readFile(
+          new URL(`../../migrations/${migration}`, import.meta.url),
+        ),
+      );
     await assert.rejects(
       migrateDatabase(pool, pathToFileURL(`${directory}/`)),
       (error: unknown) =>

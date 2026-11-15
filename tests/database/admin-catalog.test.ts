@@ -79,7 +79,11 @@ beforeEach(async () => {
     connectionString: connection,
     options: `-c search_path=${schema}`,
   });
-  for (const file of ["001_inventory.sql", "002_admin_commerce.sql"]) {
+  for (const file of [
+    "001_inventory.sql",
+    "002_admin_commerce.sql",
+    "003_product_photos.sql",
+  ]) {
     await pool.query(
       await readFile(
         new URL(`../../migrations/${file}`, import.meta.url),

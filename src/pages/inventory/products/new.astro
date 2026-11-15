@@ -1,11 +1,12 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import ProductForm from "../../../components/admin/ProductForm.astro";
+import { readProductImagesConfig } from "../../../server/media/config.ts";
 if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
 ---
 
 <AdminLayout title="Create product">
   <a href="/inventory/products">Back to products</a>
-  <ProductForm />
+  <ProductForm photosEnabled={readProductImagesConfig().enabled} />
 </AdminLayout>

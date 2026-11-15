@@ -60,7 +60,13 @@ Use the Apiary Market paper/forest/tomato/ochre palette with compact operational
 
 ## Non-goals
 
-Live charges; customer accounts; email activation; shipping; public role registration; a role editor; automatic financial-refund restocking; manufacturing/BOM/lot software; arbitrary image uploads; bulk imports; real product/stock seeding; paid provider upgrades; or unapproved public-catalog/checkout activation.
+Live charges; customer accounts; email activation; shipping; public role registration; a role editor; automatic financial-refund restocking; manufacturing/BOM/lot software; unrestricted file uploads; bulk imports; real product/stock seeding; unapproved paid provider upgrades; or unapproved public-catalog/checkout activation.
+
+The separately approved product-photo extension is bounded to one image per
+saved product, private cloud storage, metadata-stripped normalization and
+publication-gated first-party delivery. See source-owned
+`19-product-photos.md` for its API, configuration, migration and rollout
+contract; it does not activate the public catalog or checkout.
 
 ## Existing-system constraints and gaps
 

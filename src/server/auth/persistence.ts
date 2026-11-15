@@ -125,4 +125,5 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     [JSON.stringify(checks)],
   );
   if (result.rows[0]?.safe !== true) throw new AdminConfigurationError();
+  await pool.query("EXPLAIN SELECT photo FROM public.products WHERE false");
 }
