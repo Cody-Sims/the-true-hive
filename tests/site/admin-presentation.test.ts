@@ -365,24 +365,47 @@ async function fixturePage(
   page.setDefaultTimeout(3000);
   page.setDefaultNavigationTimeout(3000);
   const html = await render(component, props);
-  const script = (
-    await Promise.all(
-      (Array.isArray(client) ? client : [client]).map(async (file) =>
-        stripTypeScriptTypes(
-          await readFile(new URL(`src/client/${file}`, root), "utf8"),
-          { mode: "transform" },
-        ),
-      ),
-    )
-  ).join("\n;\n");
+  const clientModules = new Map<string, string>();
+  const clientPaths = new Map<string, string>();
+  async function loadClient(file: URL): Promise<string> {
+    const existing = clientPaths.get(file.href);
+    if (existing) return existing;
+    const path = `/__fixture_client/${clientPaths.size}.js`;
+    clientPaths.set(file.href, path);
+    let code = stripTypeScriptTypes(await readFile(file, "utf8"), {
+      mode: "transform",
+    });
+    const [imports] = parse(code);
+    for (const item of [...imports].reverse()) {
+      if (!item.specifier) continue;
+      if (!item.specifier.startsWith("."))
+        throw new Error("Component fixtures require local browser modules.");
+      const resolved = await loadClient(new URL(item.specifier, file));
+      code = code.slice(0, item.start) + resolved + code.slice(item.end);
+    }
+    clientModules.set(path, code);
+    return path;
+  }
+  const entrypoints = await Promise.all(
+    (Array.isArray(client) ? client : [client]).map((file) =>
+      loadClient(new URL(`src/client/${file}`, root)),
+    ),
+  );
   const nonce =
     options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
   await page.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    const module = clientModules.get(url.pathname);
+    if (url.origin === inventoryOrigin && module !== undefined)
+      return route.fulfill({
+        contentType: "text/javascript",
+        body: module,
+      });
     if (route.request().isNavigationRequest()) {
       return route.fulfill({
         contentType: "text/html",
         ...(options.headers ? { headers: options.headers } : {}),
-        body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${nonce ? `<script nonce="${nonce}">${script.replaceAll("</script", "<\\/script")}</script>` : ""}</body></html>`,
+        body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${entrypoints.map((src) => `<script type="module" src="${src}"${nonce ? ` nonce="${nonce}"` : ""}></script>`).join("")}</body></html>`,
       });
     }
     return route.abort();
@@ -395,7 +418,6 @@ async function fixturePage(
   });
   const styles = [...componentStyles.values()].flat().join("\n");
   if (styles) await page.addStyleTag({ content: styles });
-  if (!nonce) await page.addScriptTag({ content: script });
   return page;
 }
 
@@ -3043,6 +3065,167 @@ domTest(
       );
     } finally {
       await page.close();
+    }
+  },
+);
+
+domTest(
+  "ingredient tools move only explicit entries and copy label text without saving or changing SKUs",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {
+        product: {
+          ...product,
+          ingredients: [],
+          details: [
+            "Size: fixture size",
+            "Ingredients:",
+            "-Fixture oil",
+            "- Fixture blend (A, B)",
+            "Care: Keep fixture dry.",
+          ],
+        },
+      },
+      ["admin.ts", "ingredients.ts"],
+    );
+    let mutations = 0;
+    await page.route("**/api/**", (route) => {
+      if (route.request().method() !== "GET") mutations++;
+      return route.abort();
+    });
+    try {
+      const sku = await page
+        .getByLabel("SKU (stock code)", { exact: true })
+        .inputValue();
+      await page
+        .getByRole("button", {
+          name: "Move ingredients from Details",
+          exact: true,
+        })
+        .click();
+      assert.equal(
+        await page.getByLabel("Ingredients (one per line)").inputValue(),
+        "Fixture oil\nFixture blend (A, B)",
+      );
+      assert.equal(
+        await page.getByLabel("Details (one paragraph per line)").inputValue(),
+        "Size: fixture size\nCare: Keep fixture dry.",
+      );
+      assert.equal(
+        await page.getByLabel("Generated ingredient text").inputValue(),
+        "Ingredients: Fixture oil, Fixture blend (A, B)",
+      );
+      assert.match(
+        await page.locator("[data-ingredient-status]").innerText(),
+        /not saved/i,
+      );
+      assert.equal(
+        await page.getByLabel("SKU (stock code)", { exact: true }).inputValue(),
+        sku,
+      );
+      assert.equal(mutations, 0);
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            async writeText(value: string) {
+              document.documentElement.dataset.copiedIngredients = value;
+            },
+          },
+        });
+      });
+      await page
+        .getByRole("button", { name: "Copy ingredient text", exact: true })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector("[data-ingredient-status]")
+          ?.textContent?.includes("copied"),
+      );
+      assert.equal(
+        await page.locator("html").getAttribute("data-copied-ingredients"),
+        "Ingredients: Fixture oil, Fixture blend (A, B)",
+      );
+      assert.equal(mutations, 0);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "ingredient tools preserve existing text, reject overlong labels and provide manual-copy fallback",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {
+        product: {
+          ...product,
+          ingredients: ["Owner entered oil"],
+          details: ["Ingredients:", "- Imported fixture"],
+        },
+      },
+      ["admin.ts", "ingredients.ts"],
+    );
+    try {
+      const ingredients = page.getByLabel("Ingredients (one per line)");
+      const move = page.getByRole("button", {
+        name: "Move ingredients from Details",
+        exact: true,
+      });
+      assert.equal(await move.isDisabled(), true);
+      await move.evaluate((button: HTMLButtonElement) => {
+        button.disabled = false;
+        button.click();
+      });
+      assert.equal(await ingredients.inputValue(), "Owner entered oil");
+      assert.equal(
+        await page.getByLabel("Details (one paragraph per line)").inputValue(),
+        "Ingredients:\n- Imported fixture",
+      );
+      await ingredients.fill("");
+      await move.click();
+      assert.equal(await ingredients.inputValue(), "Imported fixture");
+      const oversized = "x".repeat(201);
+      await ingredients.fill(oversized);
+      assert.equal(await ingredients.inputValue(), oversized);
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Copy ingredient text", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.match(
+        await page.locator("[data-ingredient-help]").innerText(),
+        /200/,
+      );
+      await ingredients.fill("Reviewed fixture");
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: {
+            async writeText() {
+              throw new Error("Permission denied");
+            },
+          },
+        });
+      });
+      await page
+        .getByRole("button", { name: "Copy ingredient text", exact: true })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector("[data-ingredient-status]")
+          ?.textContent?.includes("manually"),
+      );
+      assert.equal(
+        await page.getByLabel("Generated ingredient text").inputValue(),
+        "Ingredients: Reviewed fixture",
+      );
+      assert.equal(await ingredients.inputValue(), "Reviewed fixture");
+    } finally {
+      await page.context().close();
     }
   },
 );
