@@ -1,5 +1,6 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
+import PickupLocation from "../components/PickupLocation.astro";
 import { getCheckoutPresentation } from "../server/commerce/config.ts";
 const checkout = getCheckoutPresentation();
 ---
@@ -37,7 +38,8 @@ const checkout = getCheckoutPresentation();
       </p>
       <p class="fine-print">
         A subtotal is not a payment or stock confirmation. Missing prices are
-        never estimated.
+        never estimated. Taxes are not calculated in this test-only checkout
+        integration; no real purchase is available.
       </p>
       <div class="cart-actions">
         <button type="button" class="button" data-cart-clear disabled>
@@ -51,6 +53,7 @@ const checkout = getCheckoutPresentation();
         </a>
       </div>
     </div>
+    <PickupLocation />
     {checkout.enabled ? (
       <section class="cart-checkout" aria-labelledby="cart-checkout-title">
         <h2 id="cart-checkout-title">TEST MODE — no real charge.</h2>

@@ -1,0 +1,31 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import StoreSettingsForm from "../../components/admin/StoreSettingsForm.astro";
+import ReadState from "../../components/admin/ReadState.astro";
+import PickupLocation from "../../components/PickupLocation.astro";
+import { getAdminStoreSettings } from "../../server/admin/store.ts";
+import { getAdminPool } from "../../server/admin/pool.ts";
+import { getCheckoutPresentation } from "../../server/commerce/config.ts";
+import type { StoreSettings } from "../../domain/storefront.ts";
+
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let settings: StoreSettings | null = null;
+try {
+  settings = await getAdminStoreSettings(getAdminPool());
+} catch {
+  Astro.response.status = 503;
+}
+---
+
+<AdminLayout title="Store settings">
+  {settings ? (
+    <StoreSettingsForm
+      settings={settings}
+      paymentReady={getCheckoutPresentation().enabled}
+    />
+  ) : (
+    <ReadState unavailable />
+  )}
+  <PickupLocation />
+</AdminLayout>

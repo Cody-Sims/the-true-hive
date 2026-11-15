@@ -200,6 +200,34 @@ const product: AdminProduct = {
   ],
 };
 
+test("the cart publishes the confirmed pickup address without promising walk-in hours", async () => {
+  const html = await render(
+    "src/pages/cart.astro",
+    {},
+    { request: new Request("https://thetruehive.com/cart") },
+  );
+  assert.match(html, /7031 New Highway 68/);
+  assert.match(html, /Madisonville, TN 37354/);
+  assert.match(html, /Arrange a pickup time/);
+  assert.doesNotMatch(html, /Open daily|Walk-ins welcome/i);
+});
+
+test("verified inventory navigation includes store purchase controls", async () => {
+  const html = await render(
+    "src/layouts/AdminLayout.astro",
+    { title: "Store settings" },
+    {
+      request: new Request("https://inventory.thetruehive.com/inventory/store"),
+      locals: {
+        admin: { uid: "component-only-uid", actorId: "component-only-actor" },
+        csrfToken: "component-only-token",
+      },
+    },
+  );
+  assert.match(html, /href="\/inventory\/store"/);
+  assert.match(html, /Store settings/);
+});
+
 test("ingredient editing is explicit, empty by default, ordered and escaped", async () => {
   const saved = await render("src/components/admin/ProductForm.astro", {
     product,
@@ -2647,6 +2675,128 @@ domTest(
       await waitPhase(page, "idle");
       assert(payload);
       assert.equal("ingredients" in (payload.product as object), false);
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "store controls freeze uncertain changes, retry the same intent and show verified current settings",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/StoreSettingsForm.astro",
+      { settings: { purchasesEnabled: false, revision: 7 } },
+    );
+    const requests: Record<string, unknown>[] = [];
+    let settings = { purchasesEnabled: false, revision: 7 };
+    await page.route("**/api/admin/store", (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({ json: { settings } });
+      requests.push(route.request().postDataJSON());
+      if (requests.length === 1) {
+        settings = { purchasesEnabled: true, revision: 8 };
+        return route.abort("connectionreset");
+      }
+      if (requests.length > 2)
+        settings = { purchasesEnabled: false, revision: 9 };
+      return route.fulfill({
+        json: { settings, replayed: requests.length === 2 },
+      });
+    });
+    try {
+      await page.getByLabel("Allow new checkouts").check();
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await page.waitForFunction(() => {
+        const form = document.querySelector<HTMLElement>("[data-admin-form]");
+        return (
+          form?.dataset.phase === "uncertain" ||
+          form
+            ?.querySelector("[data-admin-status]")
+            ?.textContent?.includes("not configured")
+        );
+      });
+      assert.equal(requests.length, 1);
+      await waitPhase(page, "uncertain");
+      assert.equal(
+        await page.getByLabel("Allow new checkouts").isDisabled(),
+        true,
+      );
+      assert.equal(requests[0]!.purchasesEnabled, true);
+      assert.equal(requests[0]!.expectedRevision, 7);
+      assert.deepEqual(Object.keys(requests[0]!).sort(), [
+        "expectedRevision",
+        "operationId",
+        "purchasesEnabled",
+      ]);
+      await page
+        .getByRole("button", { name: "Retry the same operation" })
+        .click();
+      await waitPhase(page, "idle");
+      assert.deepEqual(requests[1], requests[0]);
+      assert.match(
+        await page.locator("[data-admin-receipt-text]").innerText(),
+        /New checkouts allowed/,
+      );
+      assert.equal(
+        await page.locator("[data-store-status]").innerText(),
+        "New checkouts allowed",
+      );
+      await page.getByLabel("Allow new checkouts").uncheck();
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await waitPhase(page, "idle");
+      assert.equal(requests[2]!.purchasesEnabled, false);
+      assert.equal(requests[2]!.expectedRevision, 8);
+      assert.notEqual(requests[2]!.operationId, requests[0]!.operationId);
+      assert.equal(
+        await page.locator("[data-store-status]").innerText(),
+        "New checkouts paused",
+      );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "stale store settings require an explicit review before a new operation",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/StoreSettingsForm.astro",
+      { settings: { purchasesEnabled: true, revision: 7 } },
+    );
+    const requests: Record<string, unknown>[] = [];
+    let settings = { purchasesEnabled: true, revision: 8 };
+    await page.route("**/api/admin/store", (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({ json: { settings } });
+      requests.push(route.request().postDataJSON());
+      if (requests.length === 1)
+        return route.fulfill({
+          status: 409,
+          json: {
+            error: { code: "CONFLICT", message: "Review current settings." },
+          },
+        });
+      settings = { purchasesEnabled: false, revision: 9 };
+      return route.fulfill({ json: { settings, replayed: false } });
+    });
+    try {
+      await page.getByLabel("Allow new checkouts").uncheck();
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await waitPhase(page, "conflict");
+      await page
+        .getByRole("button", {
+          name: "I reviewed the current record; allow a new intent",
+        })
+        .click();
+      await waitPhase(page, "idle");
+      await page.getByRole("button", { name: "Save store setting" }).click();
+      await waitPhase(page, "idle");
+      assert.equal(requests.length, 2);
+      assert.equal(requests[1]!.expectedRevision, 8);
+      assert.equal(requests[1]!.purchasesEnabled, false);
+      assert.notEqual(requests[1]!.operationId, requests[0]!.operationId);
     } finally {
       await page.close();
     }

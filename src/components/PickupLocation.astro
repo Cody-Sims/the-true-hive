@@ -1,0 +1,37 @@
+---
+import { pickupLocation } from "../content/pickup.ts";
+---
+
+<aside class="pickup-location" aria-label="Pickup location">
+  <p class="eyebrow">Pickup in Madisonville</p>
+  <address>
+    {pickupLocation.street}
+    <br />
+    {`${pickupLocation.city}, ${pickupLocation.region} ${pickupLocation.postalCode}`}
+  </address>
+  <p>
+    Arrange a pickup time and wait for confirmation before visiting. This is not
+    a walk-in shop.
+  </p>
+</aside>
+
+<style>
+  .pickup-location {
+    padding: 1.25rem;
+    margin-block: 1.5rem;
+    border: 1px solid currentColor;
+    overflow-wrap: anywhere;
+  }
+  address {
+    margin-block: 0.75rem;
+    font-size: 1.1rem;
+    font-style: normal;
+    line-height: 1.7;
+  }
+  .pickup-location > p:last-child {
+    max-width: 40rem;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+</style>

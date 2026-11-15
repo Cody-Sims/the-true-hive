@@ -1,0 +1,55 @@
+---
+import FormFeedback from "./FormFeedback.astro";
+
+interface Props {
+  settings: { purchasesEnabled: boolean; revision: number };
+  paymentReady?: boolean;
+}
+const { settings, paymentReady = false } = Astro.props;
+---
+
+<form
+  data-admin-form="store"
+  data-endpoint="/api/admin/store"
+  data-method="PUT"
+  data-refresh="/api/admin/store"
+  class="admin-form"
+>
+  <p>
+    Current saved setting:{" "}
+    <strong data-store-status>
+      {settings.purchasesEnabled
+        ? "New checkouts allowed"
+        : "New checkouts paused"}
+    </strong>
+  </p>
+  <p class="admin-notice">
+    {paymentReady
+      ? "The configured payment flow is Stripe TEST MODE only. No real charges are accepted."
+      : "Checkout is disabled by the runtime configuration. This switch cannot enable payments by itself."}
+    Sales tax is not calculated by the current test-only integration. Live sales
+    require separate payment and tax setup.
+  </p>
+  <input name="expectedRevision" type="hidden" value={settings.revision} />
+  <fieldset data-intent-fields>
+    <legend>
+      Purchase availability · revision{" "}
+      <span data-store-revision>{settings.revision}</span>
+    </legend>
+    <label class="admin-check">
+      <input
+        name="purchasesEnabled"
+        type="checkbox"
+        checked={settings.purchasesEnabled}
+      />{" "}
+      Allow new checkouts
+    </label>
+    <p>
+      The catalog, prices and cart stay visible when purchases are paused.
+      Existing orders, stock holds and payment processing are not canceled.
+      Checkouts already admitted before closing may finish.
+    </p>
+  </fieldset>
+  <button type="submit">Save store setting</button>
+  <FormFeedback />
+</form>
