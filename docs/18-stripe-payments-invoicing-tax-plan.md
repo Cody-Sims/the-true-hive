@@ -4,6 +4,14 @@ Date: 2026-11-14
 Status: **sandbox planner baseline confirmed; extensions are proposals with owner gates**  
 Scope: thetruehive.com, single-merchant physical goods, local pickup first.
 
+The owner subsequently approved ingredient and quantity-display work, an
+inventory-priced shopping cart, and preparation against the existing named
+Stripe sandbox. The approved contact form opens a visitor-owned email draft
+without a provider or server submission. This is not authorization for live
+charges, invoicing, Tax activation or test purchases against operational stock.
+The [isolated sandbox checklist](14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist)
+records the remaining environment, credentials, webhook and rehearsal steps.
+
 ## What was actually verified
 
 The authenticated Stripe MCP account-discovery tool returned one matching

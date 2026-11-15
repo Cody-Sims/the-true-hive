@@ -10,10 +10,13 @@ const variants = product.variants.filter(
   (variant) => variant.currency === "USD" && (variant.priceMinor ?? 0) > 0,
 );
 const offered = variants.filter(
-  (variant) => availability[variant.key] === "available",
+  (variant) =>
+    availability[variant.key] === "available" ||
+    availability[variant.key] === "low_stock",
 );
 const labels = {
   available: "Available for test checkout",
+  low_stock: "Low stock — available for test checkout",
   out_of_stock: "Out of stock",
   not_offered: "Not offered for pickup",
   concept: "Concept only",

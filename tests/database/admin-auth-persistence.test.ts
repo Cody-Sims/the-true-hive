@@ -61,7 +61,8 @@ afterEach(async () => {
         public.inventory_levels,public.inventory_locations,public.product_variants,
         public.products,public.schema_migrations CASCADE;
       DROP FUNCTION public.prevent_inventory_history_changes(),
-        public.prevent_admin_commerce_history_changes();
+        public.prevent_admin_commerce_history_changes(),
+        public.valid_product_ingredients(jsonb);
       DROP FUNCTION IF EXISTS public.pause_session_insert_fixture();
     `);
     migrated = false;

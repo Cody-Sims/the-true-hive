@@ -15,11 +15,12 @@ test("non-shopping pages have working contact navigation without placeholder cha
     /not published|will appear|not open|future beekeeping/i,
   );
   await expect(
-    contact.locator(
-      'a[href*="facebook.com"],a[href*="instagram.com"],a[href^="mailto:"]',
-    ),
+    contact.locator('a[href*="facebook.com"],a[href*="instagram.com"]'),
   ).toHaveCount(0);
-  await expect(page.locator("form")).toHaveCount(0);
+  await expect(page.locator("[data-inquiry-form]")).toBeHidden();
+  await expect(
+    contact.getByRole("link", { name: "Email loganstakely18@gmail.com" }),
+  ).toHaveAttribute("href", "mailto:loganstakely18@gmail.com");
   for (const path of ["/about", "/privacy", "/accessibility"]) {
     await page.goto(path);
     await expect(page.locator("main")).not.toContainText(

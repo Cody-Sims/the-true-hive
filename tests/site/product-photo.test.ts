@@ -147,6 +147,7 @@ test("catalog DTOs include only safe photo fields and omit absent photos", async
     title: "Soap",
     summary: "Soap",
     details: [],
+    ingredients: [],
     category: "soap",
     imageKey: "soap",
     kind: "active",

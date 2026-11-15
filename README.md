@@ -17,6 +17,14 @@ Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and
 
 **Host boundary:** `preview.thetruehive.com` keeps all prototypes. The public catalog is live at **https://thetruehive.com/** with `CATALOG_SOURCE=database`, reading published products from the same Neon PostgreSQL database as `inventory.thetruehive.com`; checkout remains disabled. The existing **https://the-true-hive-app.onrender.com/** endpoint remains available. Render follows this repository's `main` branch with **After CI Checks Pass** deployment enabled. The selected infrastructure remains one $7/month Render app in a Hobby workspace and Neon Free in Oregon, not a second service or paid database.
 
+The commerce preparation adds ordered ingredient editing, location-scoped
+low-stock notices, published variant prices and a device-local shopping cart.
+Contact inquiries open an email draft that visitors must send themselves; no
+email provider or submission backend is required. Apply migration 004 before
+deploying ingredient-aware code. Stripe testing remains separately gated by the
+[isolated sandbox checklist](docs/14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist);
+never run simulated purchases against operational stock.
+
 ## Open the studio
 
 | UI | What you can do |

@@ -336,7 +336,23 @@ test("real priced products advertise test checkout only when explicitly enabled"
   );
 });
 
-test("public contact channels use the confirmed phone and omit unconfigured placeholders", async () => {
+test("legacy test checkout keeps verified low-stock variants selectable", async () => {
+  const html = await render("src/components/TestCheckout.astro", {
+    product: {
+      ...product,
+      variants: [{ ...product.variants[0], priceMinor: 725 }],
+    },
+    enabled: true,
+    availability: { [product.variants[0]!.key]: "low_stock" },
+  });
+  assert.match(html, /Low stock/);
+  assert.match(
+    html,
+    new RegExp(`<option\\b[^>]*value="${product.variants[0]!.key}"`),
+  );
+});
+
+test("public contact channels use the confirmed phone and free email drafts without social placeholders", async () => {
   const html = await render("src/components/ContactSection.astro", {
     contact: readConfig({}).contact,
   });
@@ -345,7 +361,10 @@ test("public contact channels use the confirmed phone and omit unconfigured plac
     html,
     /not published|will appear|future beekeeping|email.*not open/i,
   );
-  assert.doesNotMatch(html, /facebook\.com|instagram\.com|mailto:|<form\b/i);
+  assert.doesNotMatch(html, /facebook\.com|instagram\.com/i);
+  assert.match(html, /data-inquiry-form/);
+  assert.match(html, /href="mailto:loganstakely18@gmail\.com"/);
+  assert.match(html, /Nothing is sent by this website/);
   const configured = await render("src/components/ContactSection.astro", {
     contact: readConfig({
       FACEBOOK_URL: "https://www.facebook.com/verified-business",
@@ -449,6 +468,7 @@ test("services copy is ready to share without planning-stage notices or booking 
   ])
     assert.ok(copy.includes(detail), detail);
   assert.match(copy, /Do not disturb a colony or approach it for a photograph/);
+  assert.match(main, /href="\/#inquiry"/);
   assert.doesNotMatch(main, /<(?:form|input|textarea)\b|href="mailto:/i);
   assert.match(html, /<title>Beekeeping services for home and farm/);
 });
