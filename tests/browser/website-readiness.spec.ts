@@ -26,7 +26,7 @@ test("accessibility guidance is reachable without a new contact collection workf
   await expect(page.getByText(/not.*certification/i)).toBeVisible();
   await expect(
     page.getByRole("main").getByRole("link", { name: /contact channels/i }),
-  ).toHaveAttribute("href", "/#connect");
+  ).toHaveAttribute("href", "/contact");
   expect(await page.locator("form").count()).toBe(0);
   await page.goto("/");
   await page

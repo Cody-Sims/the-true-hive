@@ -13,6 +13,7 @@ export const GET: APIRoute = async () => {
       "/goods",
       "/about",
       "/services",
+      "/contact",
       "/privacy",
       ...catalog.products.map((product) => `/goods/${product.slug}`),
     ];

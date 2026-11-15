@@ -93,6 +93,7 @@ test("public journeys reflow on small screens and with doubled text", async ({
       "/goods/everyday-soap",
       "/services",
       "/about",
+      "/contact",
     ]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -148,7 +149,7 @@ test("the public experience respects reduced motion and keyboard discovery", asy
 test("initial public routes stay local and within resource budgets", async ({
   browser,
 }) => {
-  for (const path of ["/", "/goods", "/goods/everyday-soap"]) {
+  for (const path of ["/", "/goods", "/goods/everyday-soap", "/contact"]) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const session = await context.newCDPSession(page);

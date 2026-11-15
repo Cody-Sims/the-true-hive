@@ -197,6 +197,9 @@ authorize live payments, new paid resources or fabricated product facts.
   in their email app; the direct email link remains available without JavaScript.
   Messages are bounded to 600 characters and encoded draft links to 2,000;
   over-limit content is preserved for manual email rather than truncated.
+  Contact channels and the form live at `/contact`, linked from site navigation
+  and service/product calls to action. Pickup details stay with the collection
+  and cart; neither requires a large homepage section.
 
 ### Isolated Stripe sandbox activation checklist
 
@@ -283,6 +286,20 @@ destination) shows current per-variant, per-location balances. **On hand** is th
 physical count; **Available / Sellable** subtracts held, committed and unavailable
 units. Missing records are unverified, not fabricated zeros. Search supports the
 full existing SKU length and is bounded to 160 characters.
+
+Products use compact variant/location rows. Primary counts remain visible;
+opening **Add / Reduce stock** also reveals held, committed, unavailable and
+revision details. **Product details** reveals product keys, variant keys and SKUs.
+The toolbar exposes **New product**, **Add location** and **Manage locations**
+even when a catalog read fails. Location creation still uses the existing
+audited form and inactive/non-pickup defaults; it does not add customer-selectable
+pickup addresses or change the configured storefront location.
+
+This layout applies [NN/g progressive-disclosure guidance](https://www.nngroup.com/articles/progressive-disclosure/)
+and [Carbon's expandable-row and toolbar guidance](https://www.carbondesignsystem.com/building-blocks/core/components/data-table/guidelines):
+keep frequent tasks visible and defer secondary information. Native disclosures
+are exercised with Enter and Space, consistent with the
+[W3C disclosure interaction pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).
 
 Expand **Add / Reduce stock** on a listed balance without opening the product.
 Presets such as **+100 received** only fill an Add amount and focus the reason;

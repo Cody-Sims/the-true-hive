@@ -136,7 +136,6 @@ const schema = JSON.stringify({
           >
             The goods
           </a>
-          <a href="/#pickup">Local pickup</a>
           <a
             href="/services"
             aria-current={path === "/services" ? "page" : undefined}
@@ -152,8 +151,12 @@ const schema = JSON.stringify({
           <a href="/cart" aria-current={cartPage ? "page" : undefined}>
             Cart<span data-cart-count></span>
           </a>
-          <a class="nav-connect" href="/#connect">
-            Connect <span aria-hidden="true">&nearr;</span>
+          <a
+            class="nav-connect"
+            href="/contact"
+            aria-current={path === "/contact" ? "page" : undefined}
+          >
+            Contact us <span aria-hidden="true">&nearr;</span>
           </a>
         </nav>
       </header>
@@ -174,10 +177,10 @@ const schema = JSON.stringify({
         <nav aria-label="Footer navigation">
           <a href="/">Home</a>
           <a href="/goods">The collection</a>
-          <a href="/#pickup">Local pickup</a>
+          <a href="/goods#pickup">Local pickup</a>
           <a href="/about">About us</a>
           <a href="/services">Beekeeping</a>
-          <a href="/#connect">Contact channels</a>
+          <a href="/contact">Contact us</a>
           <a href="/privacy">Privacy</a>
           <a href="/accessibility">Accessibility</a>
         </nav>

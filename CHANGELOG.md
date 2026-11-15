@@ -24,6 +24,8 @@
 
 ### Changed
 
+- Move contact channels and email drafts to a dedicated Contact page; keep pickup details as a compact collection/cart notice instead of large homepage sections.
+- Compact private product/location stock rows while keeping primary counts visible; disclose secondary counts and identifiers on demand and surface new-product/location actions.
 - Make non-shopping pages customer-facing with the confirmed business phone, current About/privacy/accessibility information, hidden unconfigured channels and improved shared accessibility; keep shopping and deferred forms separate.
 - Connect the public store to published inventory-managed products instead of the demo collection, preserving disabled checkout and indexing.
 - Guide product creation with name-first fields, editable identifier suggestions and keyboard-accessible `(i)` help for keys, URLs, variants, stock codes and prices; preserve existing record identifiers.
