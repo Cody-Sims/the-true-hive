@@ -15,6 +15,7 @@
 
 ### Changed
 
+- Make non-shopping pages customer-facing with the confirmed business phone, current About/privacy/accessibility information, hidden unconfigured channels and improved shared accessibility; keep shopping and deferred forms separate.
 - Connect the public store to published inventory-managed products instead of the demo collection, preserving disabled checkout and indexing.
 - Guide product creation with name-first fields, editable identifier suggestions and keyboard-accessible `(i)` help for keys, URLs, variants, stock codes and prices; preserve existing record identifiers.
 - Enable the separately authorized MFA-gated inventory hostname for private catalog preparation, while public showcase mode and disabled checkout remain unchanged.

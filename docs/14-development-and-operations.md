@@ -45,8 +45,8 @@ Copy `.env.example` to an ignored `.env` **only if needed**. Native start/dev co
 | `DATABASE_URL` | Private pooled connection using a least-privilege read-only role for the current public APIs |
 | `MIGRATION_DATABASE_URL` | Private direct schema-owner connection for the migration CLI, not a frontend setting; a blank value falls back to `DATABASE_URL` |
 | `DATABASE_TLS` | `verify-full` by default; `disable` is restricted to local development targets |
-| `CONTACT_PHONE` | Actual approved public number; empty produces no fake call link |
-| `FACEBOOK_URL`, `INSTAGRAM_URL` | Approved HTTPS platform profiles; empty remains an honest placeholder |
+| `CONTACT_PHONE` | Optional public-number override; unset/blank uses the owner-approved business contact in `src/content/service-contact.ts` |
+| `FACEBOOK_URL`, `INSTAGRAM_URL` | Approved HTTPS platform profiles; unset channels are omitted from the public contact area |
 | `HOST`, `PORT` | Native server bind address/port; Render supplies its port |
 | `ASTRO_TELEMETRY_DISABLED` | Set to `1` for build/check environments |
 

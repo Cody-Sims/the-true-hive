@@ -18,6 +18,11 @@ const {
   notFound = false,
 } = Astro.props;
 const config = readConfig();
+const shoppingPage =
+  path === "/" ||
+  path === "/goods" ||
+  path.startsWith("/goods/") ||
+  path.startsWith("/checkout/");
 const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
 const isSearchResults =
   (Astro.url.pathname === "/goods" || Astro.url.pathname === "/goods/") &&
@@ -34,6 +39,7 @@ const schema = JSON.stringify({
   "@type": "Organization",
   name: "The True Hive",
   url: config.siteOrigin,
+  ...(config.contact.phone ? { telephone: config.contact.phone } : {}),
 }).replaceAll("<", "\\u003c");
 ---
 
@@ -81,15 +87,17 @@ const schema = JSON.stringify({
     <a class="skip-link" href="#main">
       Skip to content
     </a>
-    <div class="opening-note">
-      <div class="wrap">
-        <span>A local collection in the making.</span>
-        <span>Online ordering isn't open yet.</span>
-      </div>
-    </div>
+    {shoppingPage && (
+      <aside class="opening-note" aria-label="Shopping information">
+        <div class="wrap">
+          <span>Beekeeping in East Tennessee.</span>
+          <span>Online ordering isn't open yet.</span>
+        </div>
+      </aside>
+    )}
     <div class="site-header-frame">
       <header class="site-header wrap">
-        <a class="brand" href="/" aria-label="The True Hive home">
+        <a class="brand" href="/">
           <span class="market-mark">
             <BrandMark />
           </span>
@@ -119,7 +127,7 @@ const schema = JSON.stringify({
             href="/about"
             aria-current={path === "/about" ? "page" : undefined}
           >
-            Our beginning
+            About us
           </a>
           <a class="nav-connect" href="/#connect">
             Connect <span aria-hidden="true">&nearr;</span>
@@ -144,7 +152,7 @@ const schema = JSON.stringify({
           <a href="/">Home</a>
           <a href="/goods">The collection</a>
           <a href="/#pickup">Local pickup</a>
-          <a href="/about">Our beginning</a>
+          <a href="/about">About us</a>
           <a href="/services">Beekeeping</a>
           <a href="/#connect">Contact channels</a>
           <a href="/privacy">Privacy</a>
@@ -152,8 +160,8 @@ const schema = JSON.stringify({
         </nav>
       </div>
       <div class="wrap footer-colophon">
-        <span>Good things, thoughtfully taking shape.</span>
-        <span>Online ordering is not open yet.</span>
+        <span>Local care. A lasting connection.</span>
+        {shoppingPage && <span>Online ordering is not open yet.</span>}
       </div>
     </footer>
   </body>

@@ -4,9 +4,6 @@ interface Props {
   contact: SiteConfig["contact"];
 }
 const { contact } = Astro.props;
-const hasContact = Boolean(
-  contact.phoneHref || contact.facebook || contact.instagram,
-);
 ---
 
 <section id="connect" class="wrap home-connect" aria-labelledby="connect-title">
@@ -19,9 +16,8 @@ const hasContact = Boolean(
         <em>Keep in touch.</em>
       </h2>
       <p>
-        {hasContact
-          ? "Questions about the collection or future beekeeping plans? Use a published channel to start a conversation."
-          : "Questions about the collection or future beekeeping plans? Phone and social links will appear here once they are confirmed."}
+        Questions about colony rescue, farm pollination or the collection? Give
+        us a call.
       </p>
       <a class="text-link" href="/goods">
         Return to the collection <span aria-hidden="true">&rarr;</span>
@@ -29,61 +25,33 @@ const hasContact = Boolean(
     </div>
     <aside class="home-connect-channels" aria-label="Contact channels">
       <p class="eyebrow">The True Hive / Madisonville, Tennessee</p>
-      <h3>
-        {hasContact
-          ? "Let's start a conversation."
-          : "A place for our next hello."}
-      </h3>
+      <h3>Let's start a conversation.</h3>
       <ul class="home-connect-list">
-        <li>
-          {contact.phoneHref ? (
+        {contact.phoneHref && (
+          <li>
             <a href={contact.phoneHref}>
               <span>Call {contact.phone}</span>
               <span aria-hidden="true">&nearr;</span>
             </a>
-          ) : (
-            <div>
-              <span>Phone</span>
-              <small>Not published yet</small>
-            </div>
-          )}
-        </li>
-        <li>
-          {contact.facebook ? (
+          </li>
+        )}
+        {contact.facebook && (
+          <li>
             <a href={contact.facebook} rel="noopener noreferrer">
               <span>Facebook</span>
               <span aria-hidden="true">&nearr;</span>
             </a>
-          ) : (
-            <div>
-              <span>Facebook</span>
-              <small>Profile not published yet</small>
-            </div>
-          )}
-        </li>
-        <li>
-          {contact.instagram ? (
+          </li>
+        )}
+        {contact.instagram && (
+          <li>
             <a href={contact.instagram} rel="noopener noreferrer">
               <span>Instagram</span>
               <span aria-hidden="true">&nearr;</span>
             </a>
-          ) : (
-            <div>
-              <span>Instagram</span>
-              <small>Profile not published yet</small>
-            </div>
-          )}
-        </li>
+          </li>
+        )}
       </ul>
-      {!hasContact && (
-        <p class="fine-print">
-          Phone and profile details are not published yet.
-        </p>
-      )}
-      <p class="fine-print">
-        This page does not send messages or accept orders. Email and online
-        ordering are not open yet.
-      </p>
     </aside>
   </div>
 </section>
@@ -144,8 +112,7 @@ const hasContact = Boolean(
   .home-connect-list li {
     border-bottom: 1px solid var(--line);
   }
-  .home-connect-list a,
-  .home-connect-list li > div {
+  .home-connect-list a {
     display: flex;
     min-height: 3.5rem;
     flex-wrap: wrap;
@@ -157,12 +124,6 @@ const hasContact = Boolean(
   }
   .home-connect-list a {
     font-weight: 700;
-  }
-  .home-connect-list small {
-    font-size: 0.7rem;
-  }
-  .home-connect-channels .fine-print + .fine-print {
-    margin-top: 0.75rem;
   }
   @media (max-width: 52rem) {
     .home-connect-panel {

@@ -2,12 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readConfig } from "../../src/server/config.ts";
 
-test("the initial site uses deliberate showcase mode without inventing contact links", () => {
+test("the site keeps shopping gated while using the owner-approved business contact", () => {
   const config = readConfig({});
   assert.equal(config.catalogSource, "showcase");
   assert.equal(config.indexable, false);
   assert.equal(config.siteOrigin, "https://thetruehive.com");
-  assert.equal(config.contact.phone, null);
+  assert.equal(config.contact.phone, "(423) 368-2262");
+  assert.equal(config.contact.phoneHref, "tel:+14233682262");
+  assert.equal(
+    readConfig({ CONTACT_PHONE: " " }).contact.phoneHref,
+    "tel:+14233682262",
+  );
   assert.equal(config.contact.facebook, null);
   assert.equal(config.contact.instagram, null);
 });

@@ -1,10 +1,12 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
+import { readConfig } from "../server/config.ts";
+const { contact } = readConfig();
 ---
 
 <SiteLayout
   title="Accessibility"
-  description="Keyboard, no-JavaScript, text zoom, and reduced-motion guidance for The True Hive, with the accessibility target and verification limits explained."
+  description="Keyboard navigation, text zoom, reduced motion and accessibility support for The True Hive."
 >
   <section class="page-intro wrap" aria-labelledby="accessibility-title">
     <p class="eyebrow">Make yourself at home</p>
@@ -55,31 +57,28 @@ import SiteLayout from "../layouts/SiteLayout.astro";
     </p>
     <h2>Read the words alongside the artwork</h2>
     <p>
-      The site's original illustrations are not product or farm photographs.
-      Read the adjacent descriptions and concept or planning labels for what is
-      actually confirmed. An illustration is not evidence of availability or a
-      service commitment.
+      Product and service information is available as text alongside the
+      artwork. Photos include alternative descriptions, and decorative
+      illustrations are skipped by screen readers.
     </p>
-    <h2>What checks can and cannot tell us</h2>
+    <h2>Our approach</h2>
     <p>
-      Automated checks can flag some accessibility issues, but cannot prove a
-      site is usable for everyone. Local automated checks and limited keyboard
-      and layout inspection do not replace manual review with real screen
-      readers and assistive devices.
-    </p>
-    <p>
-      That real-world review remains necessary. No completed assistive-device
-      audit, independent endorsement, or certified screen-reader review is
-      claimed here.
+      We use automated checks and keyboard and layout reviews to help identify
+      issues. These checks do not cover every assistive technology or individual
+      need, so feedback is welcome.
     </p>
     <h2>If something gets in your way</h2>
     <p>
-      Check the existing contact channels for confirmed phone or profile links.
-      Those channels may still be pending. This page does not submit feedback or
-      send a message, and it does not provide a response-time commitment.
+      Please call us if you have trouble using the website. Let us know which
+      page you were using and what you were trying to do. If you're comfortable
+      sharing it, your browser or assistive technology can help us understand
+      the issue.
     </p>
     <a class="text-link" href="/#connect">
-      Check contact channels <span aria-hidden="true">&rarr;</span>
+      Contact channels <span aria-hidden="true">&rarr;</span>
+    </a>
+    <a class="text-link" href={contact.phoneHref}>
+      Call {contact.phone} <span aria-hidden="true">&rarr;</span>
     </a>
   </section>
 </SiteLayout>

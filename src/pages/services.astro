@@ -1,7 +1,8 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
 import ServiceCards from "../components/ServiceCards.astro";
-import { serviceContact } from "../content/service-contact.ts";
+import { readConfig } from "../server/config.ts";
+const { contact } = readConfig();
 ---
 
 <SiteLayout
@@ -56,8 +57,8 @@ import { serviceContact } from "../content/service-contact.ts";
           Call us about a colony rescue or farm pollination. Have your location
           and the details above ready so we can talk through your needs.
         </p>
-        <a class="button button-primary" href={serviceContact.phoneHref}>
-          Call {serviceContact.phone} <span aria-hidden="true">&rarr;</span>
+        <a class="button button-primary" href={contact.phoneHref}>
+          Call {contact.phone} <span aria-hidden="true">&rarr;</span>
         </a>
       </div>
     </div>

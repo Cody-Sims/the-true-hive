@@ -1,3 +1,5 @@
+import { serviceContact } from "../content/service-contact.ts";
+
 export class ConfigurationError extends Error {}
 
 export interface SiteConfig {
@@ -7,8 +9,8 @@ export interface SiteConfig {
   databaseUrl: string | null;
   databaseTls: "verify-full" | "disable";
   contact: {
-    phone: string | null;
-    phoneHref: string | null;
+    phone: string;
+    phoneHref: string;
     facebook: string | null;
     instagram: string | null;
   };
@@ -83,8 +85,11 @@ export function readConfig(
       "DATABASE_TLS must be verify-full or disable.",
     );
   }
-  const phone = environment["CONTACT_PHONE"]?.trim() || null;
-  const normalizedPhone = phone?.replace(/[ ()-]/g, "") ?? null;
+  const configuredPhone = environment["CONTACT_PHONE"]?.trim();
+  const phone = configuredPhone || serviceContact.phone;
+  const normalizedPhone = configuredPhone
+    ? configuredPhone.replace(/[ ()-]/g, "")
+    : serviceContact.phoneHref.slice(4);
   if (
     phone &&
     (!/^\+?[\d ()-]{7,40}$/.test(phone) ||
@@ -102,7 +107,7 @@ export function readConfig(
     databaseTls,
     contact: {
       phone,
-      phoneHref: normalizedPhone ? `tel:${normalizedPhone}` : null,
+      phoneHref: `tel:${normalizedPhone}`,
       facebook: profile(environment["FACEBOOK_URL"], "FACEBOOK_URL", [
         "facebook.com",
         "www.facebook.com",
