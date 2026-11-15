@@ -1,6 +1,7 @@
 ---
 import type { Product } from "../domain/catalog.ts";
 import ProductArt from "./ProductArt.astro";
+import ProductPrices from "./ProductPrices.astro";
 
 interface Props {
   product: Product;
@@ -16,9 +17,8 @@ const {
 } = Astro.props;
 const ArtLink = preview ? "div" : "a";
 const TitleLink = preview ? "span" : "a";
-const canTestCheckout =
+const canAddToCart =
   !preview &&
-  testCheckoutEnabled &&
   product.kind === "active" &&
   product.variants.some(
     (variant) => variant.currency === "USD" && (variant.priceMinor ?? 0) > 0,
@@ -69,13 +69,14 @@ const categories = {
       </TitleLink>
     </h3>
     <p class="shelf-description">{product.summary}</p>
+    {!preview && <ProductPrices product={product} />}
     <div class="shelf-meta">
       <span class="pill">
         {product.kind === "concept" ? "Concept product" : "Product information"}
       </span>
-      {canTestCheckout && (
-        <a class="text-link" href={`/goods/${product.slug}#test-checkout`}>
-          Test checkout
+      {canAddToCart && (
+        <a class="text-link" href={`/goods/${product.slug}#add-to-cart`}>
+          {testCheckoutEnabled ? "Choose for your test cart" : "Choose options"}
         </a>
       )}
     </div>

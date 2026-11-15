@@ -3,7 +3,7 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
 import ProductCard from "../../components/ProductCard.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
-import { getCheckoutPresentation } from "../../server/commerce/stripe.ts";
+import { getCheckoutPresentation } from "../../server/commerce/config.ts";
 import type { Catalog, ProductCategory } from "../../domain/catalog.ts";
 
 const collections: { value: ProductCategory | "all"; label: string }[] = [
@@ -88,7 +88,11 @@ const products = filtersInvalid
       <p class="eyebrow">A closer look, at your pace</p>
       <p>
         Browse the ideas, read the details, and see what is a concept and what
-        has been confirmed. No purchase is available here.
+        has been confirmed. Published active products show their current prices;
+        concepts are not for sale.{" "}
+        {testCheckoutEnabled
+          ? "TEST MODE only — no real charge. Review saved selections in your cart."
+          : "Save selections in your cart; online ordering is not open yet."}
       </p>
     </aside>
   </section>

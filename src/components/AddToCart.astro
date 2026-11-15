@@ -1,0 +1,110 @@
+---
+import type { Product } from "../domain/catalog.ts";
+import {
+  money,
+  pricedVariants,
+  projectedStock,
+  stockLabel,
+} from "../domain/cart.ts";
+interface Props {
+  product: Product;
+}
+const { product } = Astro.props;
+const variants = pricedVariants(product);
+const unavailable = (variant: (typeof variants)[number]) =>
+  ["out_of_stock", "not_offered"].includes(
+    projectedStock(variant)?.state ?? "",
+  );
+const offered = variants.filter((variant) => !unavailable(variant));
+---
+
+{product.kind === "active" && variants.length > 0 && (
+  <section
+    id="add-to-cart"
+    class="cart-controls"
+    aria-labelledby="add-cart-title"
+  >
+    <h2 id="add-cart-title">Save your selection.</h2>
+    <p>
+      Adding to your cart does not reserve stock or place an order. Prices and
+      availability can change.
+    </p>
+    {offered.length ? (
+      <form data-add-to-cart>
+        <label>
+          Variant
+          <select name="variantKey" required>
+            {variants.map((variant) => (
+              <option value={variant.key} disabled={unavailable(variant)}>
+                {variant.label} · {money(variant.priceMinor!)}
+                {projectedStock(variant) ? ` · ${stockLabel(variant)}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Quantity
+          <input
+            name="quantity"
+            type="number"
+            min="1"
+            max="100"
+            step="1"
+            value="1"
+            required
+          />
+        </label>
+        <button type="submit" class="button button-primary">
+          Add to cart
+        </button>
+        <p data-add-status role="status"></p>
+      </form>
+    ) : (
+      <p>These variants are not currently available to add.</p>
+    )}
+    <a class="text-link" href="/cart">
+      View your cart &rarr;
+    </a>
+    <noscript>
+      JavaScript is required to save a cart on this device. No order has been
+      placed.
+    </noscript>
+  </section>
+)}
+
+<style>
+  .cart-controls {
+    padding: 1rem;
+    margin-block: 1.5rem;
+    border: 1px solid var(--line);
+    overflow-wrap: anywhere;
+  }
+  .cart-controls form {
+    display: grid;
+    gap: 1rem;
+    margin-block: 1rem;
+  }
+  .cart-controls label {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .cart-controls select,
+  .cart-controls input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    font: inherit;
+    color: var(--forest);
+    background: var(--paper);
+    border: 1px solid var(--forest);
+  }
+  .cart-controls button {
+    cursor: pointer;
+    white-space: normal;
+  }
+  .cart-controls :focus-visible {
+    outline: 3px solid var(--tomato);
+    outline-offset: 3px;
+  }
+</style>
