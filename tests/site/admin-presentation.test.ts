@@ -257,10 +257,101 @@ test("ingredient editing is explicit, empty by default, ordered and escaped", as
   );
 });
 
+test("inventory home supports the full bounded SKU search", () => {
+  const search = "S".repeat(160);
+  assert.equal(
+    pageQuery(
+      new URL(
+        `https://inventory.example.invalid/inventory/products?search=${search}EXCESS&offset=49`,
+      ),
+    ).search,
+    search,
+  );
+  assert.equal(
+    pageQuery(
+      new URL("https://inventory.example.invalid/inventory/products?offset=49"),
+    ).offset,
+    40,
+  );
+});
+
+test("inline count controls offer an explicit add preset without submitting it", async () => {
+  const html = await render("src/components/admin/CountForm.astro", {
+    variant: product.variants[0],
+    level,
+    productKey: product.key,
+    inline: true,
+  });
+  assert.match(html, /<button[^>]*type="button"[^>]*data-stock-add="100"/);
+  assert.match(html, /Add \/ Reduce stock/);
+  assert.match(html, /data-stock-controls/);
+  assert.match(html, /Available \/ Sellable/);
+});
+
+const stockLocations = [
+  {
+    key: level.locationKey,
+    name: "Fixture storeroom",
+    publicLabel: null,
+    active: true,
+    pickupEnabled: false,
+    revision: 1,
+  },
+  {
+    key: "second-location",
+    name: "Fixture pickup",
+    publicLabel: null,
+    active: true,
+    pickupEnabled: true,
+    revision: 1,
+  },
+];
+
+test("inventory home renders real location balances, prices and unverified missing records", async () => {
+  const html = await render("src/components/admin/InventoryProductList.astro", {
+    products: [
+      {
+        ...product,
+        variants: [
+          { ...product.variants[0], priceMinor: 725 },
+          {
+            ...product.variants[0],
+            key: "missing-variant",
+            sku: "<UNVERIFIED>",
+            label: "Uncounted",
+            levels: [],
+          },
+        ],
+      },
+    ],
+    locations: stockLocations,
+  });
+  assert.match(html, /COMPONENT-ONLY/);
+  assert.match(html, /\$7\.25/);
+  assert.match(html, /Fixture storeroom/);
+  assert.match(
+    html.replace(/\s+/g, " "),
+    /No verified location balance for Fixture pickup/,
+  );
+  assert.match(html, /Missing records are not proof of zero stock/);
+  assert.match(html, /&lt;UNVERIFIED&gt;/);
+  assert.doesNotMatch(html, /data-variant="missing-variant"/);
+  assert.match(html, /href="\/inventory\/products\/fixture-product\/labels"/);
+  for (const [key, count] of Object.entries({
+    onHand: 20,
+    held: 3,
+    committed: 2,
+    unavailable: 1,
+    sellable: 14,
+    revision: 5,
+  }))
+    assert.match(html, new RegExp(`data-quantity="${key}">${count}</dd>`));
+});
+
 async function fixturePage(
   component: string,
   props: Record<string, unknown>,
-  client = "admin.ts",
+  client: string | string[] = "admin.ts",
   options: {
     headers?: Record<string, string>;
     path?: string;
@@ -274,10 +365,16 @@ async function fixturePage(
   page.setDefaultTimeout(3000);
   page.setDefaultNavigationTimeout(3000);
   const html = await render(component, props);
-  const script = stripTypeScriptTypes(
-    await readFile(new URL(`src/client/${client}`, root), "utf8"),
-    { mode: "transform" },
-  );
+  const script = (
+    await Promise.all(
+      (Array.isArray(client) ? client : [client]).map(async (file) =>
+        stripTypeScriptTypes(
+          await readFile(new URL(`src/client/${file}`, root), "utf8"),
+          { mode: "transform" },
+        ),
+      ),
+    )
+  ).join("\n;\n");
   const nonce =
     options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
   await page.route("**/*", (route) => {
@@ -2071,6 +2168,318 @@ domTest(
 );
 
 domTest(
+  "inventory home presets prepare Add without mutating and retain page context",
+  async () => {
+    const path = "/inventory/products?search=COMPONENT-ONLY&offset=40";
+    const page = await fixturePage(
+      "src/components/admin/CountForm.astro",
+      {
+        variant: product.variants[0],
+        level,
+        productKey: product.key,
+        inline: true,
+      },
+      ["admin.ts", "stock-controls.ts"],
+      { path },
+    );
+    let requests = 0;
+    await page.route("**/api/**", (route) => {
+      requests++;
+      return route.abort();
+    });
+    try {
+      await page.getByText("Add / Reduce stock", { exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await page.getByLabel("Direction").selectOption("reduce");
+      await page
+        .getByRole("button", { name: "+100 received", exact: true })
+        .focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page.getByLabel("Positive whole units").inputValue(),
+        "100",
+      );
+      assert.equal(await page.getByLabel("Direction").inputValue(), "increase");
+      assert.equal(
+        await page.getByLabel("Reason", { exact: true }).inputValue(),
+        "",
+      );
+      assert.equal(requests, 0);
+      assert.equal(
+        await page.locator('[data-quantity="onHand"]').textContent(),
+        "20",
+      );
+      assert.equal(
+        new URL(page.url()).pathname + new URL(page.url()).search,
+        path,
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+for (const invalid of ["meaningless reason", "allocated stock floor"]) {
+  domTest(`inventory home blocks ${invalid} before a mutation`, async () => {
+    const page = await fixturePage(
+      "src/components/admin/CountForm.astro",
+      {
+        variant: product.variants[0],
+        level,
+        productKey: product.key,
+        inline: true,
+      },
+      ["admin.ts", "stock-controls.ts"],
+    );
+    let mutations = 0;
+    await page.route("**/api/**", (route) => {
+      mutations++;
+      return route.abort();
+    });
+    try {
+      await page.getByText("Add / Reduce stock", { exact: true }).click();
+      await page.getByLabel("Direction").selectOption("reduce");
+      await page
+        .getByLabel("Positive whole units")
+        .fill(invalid === "allocated stock floor" ? "15" : "1");
+      await page
+        .getByLabel("Reason", { exact: true })
+        .fill(invalid === "meaningless reason" ? "   " : "Damaged in storage");
+      assert.equal(
+        await page
+          .locator("form")
+          .evaluate((form: HTMLFormElement) => form.checkValidity()),
+        false,
+      );
+      assert.match(
+        await page
+          .locator(
+            `[name="${invalid === "meaningless reason" ? "reason" : "amount"}"]`,
+          )
+          .evaluate((field: HTMLInputElement) => field.validationMessage),
+        invalid === "meaningless reason" ? /Explain why/ : /at most 14/,
+      );
+      await page.getByRole("button", { name: "Confirm stock change" }).click();
+      assert.equal(mutations, 0);
+    } finally {
+      await page.context().close();
+    }
+  });
+}
+
+domTest(
+  "inventory home submits +100 explicitly, retries one UUID and refreshes all matching balances before reducing",
+  async () => {
+    const second = {
+      ...level,
+      locationKey: "second-location",
+      onHand: 8,
+      sellable: 2,
+    };
+    const fixture = {
+      ...product,
+      variants: [
+        {
+          ...product.variants[0]!,
+          sku: "LONG-SKU-".repeat(20),
+          priceMinor: 725,
+          levels: [level, second],
+        },
+      ],
+    };
+    const page = await fixturePage(
+      "src/components/admin/InventoryProductList.astro",
+      { products: [fixture], locations: stockLocations },
+      ["admin.ts", "stock-controls.ts"],
+      { path: "/inventory/products?search=LONG-SKU&offset=20" },
+    );
+    const originalUrl = page.url();
+    const form = page.locator("[data-stock-controls]").first();
+    const payloads: { body: string; headers: Record<string, string> }[] = [];
+    let refreshed = {
+      ...level,
+      onHand: 117,
+      held: 4,
+      sellable: 110,
+      revision: 8,
+    };
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({
+        json: {
+          product: {
+            ...fixture,
+            variants: [{ ...fixture.variants[0], levels: [refreshed, second] }],
+          },
+        },
+      }),
+    );
+    await page.route("**/api/admin/adjustments", (route) => {
+      payloads.push({
+        body: route.request().postData()!,
+        headers: route.request().headers(),
+      });
+      if (payloads.length === 1) return route.abort("failed");
+      const operationId = JSON.parse(payloads.at(-1)!.body).operationId;
+      if (payloads.length === 2)
+        return route.fulfill({
+          json: {
+            adjustment: {
+              operationId,
+              beforeOnHand: 20,
+              onHand: 120,
+              replayed: true,
+            },
+            level: { ...level, onHand: 120, sellable: 114, revision: 6 },
+          },
+        });
+      refreshed = { ...refreshed, onHand: 7, sellable: 0, revision: 9 };
+      return route.fulfill({
+        json: {
+          adjustment: {
+            operationId,
+            beforeOnHand: 117,
+            onHand: 7,
+            replayed: false,
+          },
+          level: refreshed,
+        },
+      });
+    });
+    try {
+      // A second view of the same stable keys must update too, without touching another location.
+      await page
+        .locator("[data-level]")
+        .first()
+        .evaluate((node) => node.after(node.cloneNode(true)));
+      await page
+        .getByText("Add / Reduce stock", { exact: true })
+        .first()
+        .click();
+      await form
+        .getByRole("button", { name: "+100 received", exact: true })
+        .click();
+      assert.equal(payloads.length, 0);
+      await form
+        .getByLabel("Reason", { exact: true })
+        .fill("Received supplier delivery");
+      await form
+        .getByRole("button", { name: "Confirm stock change" })
+        .evaluate((button: HTMLButtonElement) => {
+          button.click();
+          button.click();
+        });
+      await waitPhase(page, "uncertain", "[data-stock-controls]:first-of-type");
+      assert.equal(payloads.length, 1);
+      assert.equal(
+        await form
+          .getByRole("button", { name: "+100 received", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.deepEqual(
+        await page
+          .locator(
+            '[data-location="fixture-location"] [data-quantity="onHand"]',
+          )
+          .allTextContents(),
+        ["20", "20"],
+      );
+      await form
+        .getByRole("button", { name: "Retry the same operation" })
+        .click();
+      await waitPhase(page, "idle", "[data-stock-controls]:first-of-type");
+      assert.equal(payloads.length, 2);
+      assert.equal(payloads[0]!.body, payloads[1]!.body);
+      const added = JSON.parse(payloads[0]!.body);
+      assert.deepEqual(
+        { ...added, operationId: "uuid" },
+        {
+          expectedRevision: 5,
+          variantKey: level.variantKey,
+          locationKey: level.locationKey,
+          delta: 100,
+          reason: "Received supplier delivery",
+          operationId: "uuid",
+        },
+      );
+      assert.match(added.operationId, /^[0-9a-f-]{36}$/);
+      assert.equal(
+        payloads[0]!.headers["x-csrf-token"],
+        "component-only-signed-token",
+      );
+      assert.match(
+        await form.locator("[data-admin-receipt-text]").innerText(),
+        /20 → 120.*same operation replayed/,
+      );
+      assert.deepEqual(
+        await page
+          .locator(
+            '[data-location="fixture-location"] [data-quantity="onHand"]',
+          )
+          .allTextContents(),
+        ["117", "117"],
+      );
+      assert.equal(
+        await page
+          .locator('[data-location="second-location"] [data-quantity="onHand"]')
+          .innerText(),
+        "8",
+      );
+      assert.equal(
+        await form.locator('[name="expectedRevision"]').inputValue(),
+        "8",
+      );
+      await form.getByLabel("Direction").selectOption("reduce");
+      await form.getByLabel("Positive whole units").fill("111");
+      assert.equal(
+        await form.evaluate((node: HTMLFormElement) => node.checkValidity()),
+        false,
+      );
+      await form.getByLabel("Positive whole units").fill("110");
+      await form
+        .getByLabel("Reason", { exact: true })
+        .fill("Damaged units removed after inspection");
+      await form.getByRole("button", { name: "Confirm stock change" }).focus();
+      await page.keyboard.press("Enter");
+      await waitPhase(page, "idle", "[data-stock-controls]:first-of-type");
+      const reduced = JSON.parse(payloads[2]!.body);
+      assert.equal(reduced.delta, -110);
+      assert.equal(reduced.expectedRevision, 8);
+      assert.notEqual(reduced.operationId, added.operationId);
+      assert.deepEqual(
+        await page
+          .locator(
+            '[data-location="fixture-location"] [data-quantity="onHand"]',
+          )
+          .allTextContents(),
+        ["7", "7"],
+      );
+      assert.equal(
+        await form.locator('[name="expectedRevision"]').inputValue(),
+        "9",
+      );
+      assert.equal(page.url(), originalUrl);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      const accessibility = await new AxeBuilder({ page }).analyze();
+      assert.deepEqual(accessibility.violations, []);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
   "count corrections preserve one intent through lost response, with separate original receipt and current stock",
   async () => {
     const page = await fixturePage("src/components/admin/CountForm.astro", {
@@ -2194,100 +2603,117 @@ domTest(
   },
 );
 
-domTest(
-  "a stale count requires authoritative refresh and explicit review before a new UUID and revision",
-  async () => {
-    const page = await fixturePage("src/components/admin/CountForm.astro", {
-      variant: product.variants[0],
-      level,
-      productKey: product.key,
-    });
-    const requests: Record<string, unknown>[] = [];
-    let unavailable = true;
-    await page.route("**/api/admin/products/fixture-product", (route) =>
-      unavailable
-        ? route.fulfill({
-            status: 503,
-            json: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
-          })
-        : route.fulfill({
-            json: {
-              product: {
-                ...product,
-                title: "Concurrent server edit",
-                variants: [
-                  {
-                    ...product.variants[0],
-                    levels: [
-                      { ...level, onHand: 22, sellable: 16, revision: 6 },
-                    ],
-                  },
-                ],
-              },
-            },
-          }),
-    );
-    await page.route("**/api/admin/adjustments", (route) => {
-      requests.push(route.request().postDataJSON());
-      return route.fulfill({
-        status: 409,
-        json: {
-          error: { code: "REVISION_CONFLICT", message: "Review current stock" },
+for (const inline of [false, true]) {
+  domTest(
+    `a stale count requires authoritative refresh and explicit review before a new UUID and revision${inline ? " on inventory home" : ""}`,
+    async () => {
+      const page = await fixturePage(
+        "src/components/admin/CountForm.astro",
+        {
+          variant: product.variants[0],
+          level,
+          productKey: product.key,
+          inline,
         },
+        ["admin.ts", "stock-controls.ts"],
+      );
+      const confirm = inline
+        ? "Confirm stock change"
+        : "Confirm count correction";
+      const requests: Record<string, unknown>[] = [];
+      let unavailable = true;
+      await page.route("**/api/admin/products/fixture-product", (route) =>
+        unavailable
+          ? route.fulfill({
+              status: 503,
+              json: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
+            })
+          : route.fulfill({
+              json: {
+                product: {
+                  ...product,
+                  title: "Concurrent server edit",
+                  variants: [
+                    {
+                      ...product.variants[0],
+                      levels: [
+                        { ...level, onHand: 22, sellable: 16, revision: 6 },
+                      ],
+                    },
+                  ],
+                },
+              },
+            }),
+      );
+      await page.route("**/api/admin/adjustments", (route) => {
+        requests.push(route.request().postDataJSON());
+        return route.fulfill({
+          status: 409,
+          json: {
+            error: {
+              code: "REVISION_CONFLICT",
+              message: "Review current stock",
+            },
+          },
+        });
       });
-    });
-    try {
-      await page.getByLabel("Positive whole units").fill("2");
-      await page.getByLabel("Reason", { exact: true }).fill("Fixture recount");
-      await page
-        .getByRole("button", { name: "Confirm count correction" })
-        .click();
-      await waitPhase(page, "conflict");
-      await page
-        .getByRole("button", { name: "Refresh authoritative record" })
-        .waitFor();
-      assert.equal(
-        await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
-        false,
-      );
-      assert.equal(
-        await page.getByLabel("Positive whole units").inputValue(),
-        "2",
-      );
-      unavailable = false;
-      await page
-        .getByRole("button", { name: "Refresh authoritative record" })
-        .click();
-      await page.getByRole("button", { name: /I reviewed/ }).waitFor();
-      assert.equal(
-        await page.locator('[name="expectedRevision"]').inputValue(),
-        "5",
-      );
-      assert.equal(
-        await page.locator('[data-quantity="onHand"]').textContent(),
-        "22",
-      );
-      assert.match(
-        (await page.locator("[data-admin-current-text]").textContent()) ?? "",
-        /Concurrent server edit/,
-      );
-      await page.getByRole("button", { name: /I reviewed/ }).click();
-      await waitPhase(page, "idle");
-      await page
-        .getByRole("button", { name: "Confirm count correction" })
-        .click();
-      await waitPhase(page, "conflict");
-      assert.equal(requests.length, 2);
-      assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
-      assert.equal(requests[0]!.expectedRevision, 5);
-      assert.equal(requests[1]!.expectedRevision, 6);
-      assert.equal(requests[1]!.delta, 2);
-      assert.equal(requests[1]!.reason, "Fixture recount");
-    } finally {
-      await page.close();
-    }
-  },
-);
+      try {
+        if (inline)
+          await page.getByText("Add / Reduce stock", { exact: true }).click();
+        await page.getByLabel("Positive whole units").fill("2");
+        await page
+          .getByLabel("Reason", { exact: true })
+          .fill("Fixture recount");
+        await page.getByRole("button", { name: confirm }).click();
+        await waitPhase(page, "conflict");
+        await page
+          .getByRole("button", { name: "Refresh authoritative record" })
+          .waitFor();
+        assert.equal(
+          await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
+          false,
+        );
+        assert.equal(
+          await page.getByLabel("Positive whole units").inputValue(),
+          "2",
+        );
+        unavailable = false;
+        await page
+          .getByRole("button", { name: "Refresh authoritative record" })
+          .click();
+        await page.getByRole("button", { name: /I reviewed/ }).waitFor();
+        assert.equal(
+          await page.locator('[name="expectedRevision"]').inputValue(),
+          "5",
+        );
+        assert.equal(
+          await page.locator('[data-quantity="onHand"]').textContent(),
+          "22",
+        );
+        assert.match(
+          (await page.locator("[data-admin-current-text]").textContent()) ?? "",
+          /Concurrent server edit/,
+        );
+        assert.equal(
+          await page.getByRole("button", { name: confirm }).isDisabled(),
+          true,
+        );
+        await page.getByRole("button", { name: /I reviewed/ }).click();
+        await waitPhase(page, "idle");
+        await page.getByRole("button", { name: confirm }).click();
+        await waitPhase(page, "conflict");
+        assert.equal(requests.length, 2);
+        assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
+        assert.equal(requests[0]!.expectedRevision, 5);
+        assert.equal(requests[1]!.expectedRevision, 6);
+        assert.equal(requests[1]!.delta, 2);
+        assert.equal(requests[1]!.reason, "Fixture recount");
+      } finally {
+        await page.close();
+      }
+    },
+  );
+}
 
 domTest(
   "product authoring explains identifiers with keyboard-operable field help",
