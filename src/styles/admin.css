@@ -68,6 +68,11 @@ select {
 textarea {
   resize: vertical;
 }
+input::placeholder,
+textarea::placeholder {
+  color: #52635a;
+  opacity: 1;
+}
 input[readonly] {
   background: #eee8d9;
 }
@@ -172,6 +177,50 @@ button:disabled {
 .admin-form {
   max-width: 55rem;
   margin-block: 1.5rem;
+}
+.admin-product-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.7fr);
+  gap: 0 1.5rem;
+  align-items: start;
+  max-width: none;
+}
+.admin-product-form > * {
+  grid-column: 1;
+}
+.admin-product-form > .admin-product-preview {
+  position: sticky;
+  top: 1rem;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+}
+.admin-product-preview summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.admin-product-preview summary > span {
+  margin-left: 0.5rem;
+  color: var(--tomato);
+  font-size: 0.8rem;
+}
+.admin-product-preview details > p {
+  font-size: 0.85rem;
+}
+.admin-product-preview code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1000px) {
+  .admin-product-form {
+    display: block;
+  }
+  .admin-product-form > .admin-product-preview {
+    position: static;
+    max-width: 28rem;
+    margin-block: 1rem;
+  }
 }
 .admin-form fieldset {
   min-width: 0;

@@ -1,0 +1,110 @@
+---
+import type { AdminProduct } from "../../domain/admin.ts";
+import type { Product } from "../../domain/catalog.ts";
+import ProductCard from "../ProductCard.astro";
+import ProductArt from "../ProductArt.astro";
+
+interface Props {
+  product?: AdminProduct;
+}
+const { product } = Astro.props;
+const photo = product?.photo ?? null;
+const photoSrc =
+  photo && product
+    ? `/api/admin/products/${encodeURIComponent(product.key)}/photo?revision=${product.revision}`
+    : null;
+const preview: Product = {
+  key: product?.key ?? "preview",
+  slug: product?.slug ?? "your-product",
+  title: product?.title ?? "Your product name",
+  summary: product?.summary ?? "Your short summary will appear here.",
+  details: [],
+  category: product?.category ?? "soap",
+  imageKey: product?.imageKey ?? "soap",
+  kind: product?.kind === "concept" ? "concept" : "active",
+  photo: product?.kind === "concept" ? null : photo,
+  variants: [],
+};
+---
+
+<aside
+  id={`product-preview-${product?.key ?? "new"}`}
+  class="admin-product-preview"
+  aria-label="Storefront preview"
+  tabindex="-1"
+  data-product-preview
+  data-preview-image-empty={!product?.imageKey && !photo ? "" : undefined}
+  data-preview-photo-src={photoSrc}
+  data-preview-photo-alt={photo?.alt}
+  data-preview-photo-width={photo?.width}
+  data-preview-photo-height={photo?.height}
+>
+  <details open>
+    <summary>
+      Storefront preview <span>Preview only</span>
+    </summary>
+    <p>
+      Your collection card, updated as you type. Previewing never saves or
+      publishes. Details and prices are not shown on collection cards.
+    </p>
+    <ProductCard product={preview} preview photoSrc={photoSrc} />
+    <p class="admin-muted">
+      Store URL: <code data-preview-url>/goods/{preview.slug}</code>
+    </p>
+    <noscript>Live preview updates require JavaScript.</noscript>
+  </details>
+  {(["soap", "honey", "candle"] as const).map((image) => (
+    <template data-preview-art={image}>
+      <ProductArt image={image} />
+    </template>
+  ))}
+</aside>
+
+<style>
+  .admin-product-preview :global(.shelf-product) {
+    --paper: #fbf7ee;
+    --forest: #243d35;
+    --line: #c9cbb9;
+    background: var(--paper);
+    color: var(--forest);
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  }
+  .admin-product-preview :global(.shelf-art) {
+    place-items: center;
+  }
+  .admin-product-preview :global(.shelf-art img) {
+    max-height: 17rem;
+  }
+  .admin-product-preview[data-preview-image-empty]
+    :global(.product-illustration) {
+    visibility: hidden;
+  }
+  .admin-product-preview :global(.shelf-ticket) {
+    position: absolute;
+    font-weight: 700;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+  .admin-product-preview :global(.eyebrow) {
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .admin-product-preview :global(h3) {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+  }
+  .admin-product-preview :global([data-preview-title]) {
+    min-height: 2.75rem;
+  }
+  .admin-product-preview :global(.pill) {
+    display: inline-block;
+    border: 1px solid var(--line);
+    font-weight: 700;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+</style>

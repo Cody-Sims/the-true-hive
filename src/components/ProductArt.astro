@@ -9,14 +9,17 @@ interface Props {
   alt?: string;
   eager?: boolean;
   photo?: ProductPhoto | null;
+  photoSrc?: string | null;
 }
-const { image, alt = "", eager = false, photo } = Astro.props;
+const { image, alt = "", eager = false, photo, photoSrc } = Astro.props;
 const illustrations = { soap, honey, candle };
 ---
 
 <img
   class="product-illustration"
-  src={photo ? `/media/products/${photo.id}` : illustrations[image]}
+  src={
+    photo ? (photoSrc ?? `/media/products/${photo.id}`) : illustrations[image]
+  }
   alt={photo ? photo.alt : alt}
   width={photo?.width ?? 420}
   height={photo?.height ?? 360}

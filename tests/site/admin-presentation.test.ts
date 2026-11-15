@@ -23,6 +23,7 @@ import { AdminAuthError } from "../../src/server/auth/service.ts";
 
 const root = new URL("../../", import.meta.url);
 const modules = new Map<string, Promise<string>>();
+const componentStyles = new Map<string, string[]>();
 const inventoryOrigin = "https://inventory.example.invalid";
 let productionMiddleware:
   | Promise<{
@@ -99,13 +100,18 @@ async function componentModule(file: URL): Promise<string> {
   if (!pending) {
     pending = (async () => {
       const source = await readFile(file, "utf8");
-      let code = file.pathname.endsWith(".astro")
-        ? transform(source, {
-            filename: file.pathname,
-            internalURL: "astro/compiler-runtime",
-            resolvePath: (specifier) => specifier,
-          }).code
-        : stripTypeScriptTypes(source, { mode: "transform" });
+      let code: string;
+      if (file.pathname.endsWith(".astro")) {
+        const compiled = transform(source, {
+          filename: file.pathname,
+          internalURL: "astro/compiler-runtime",
+          resolvePath: (specifier) => specifier,
+        });
+        componentStyles.set(file.href, compiled.css);
+        code = compiled.code;
+      } else {
+        code = stripTypeScriptTypes(source, { mode: "transform" });
+      }
       const [imports] = parse(code);
       for (const item of [...imports].reverse()) {
         if (!item.specifier) continue;
@@ -220,7 +226,7 @@ async function fixturePage(
       return route.fulfill({
         contentType: "text/html",
         ...(options.headers ? { headers: options.headers } : {}),
-        body: `<!doctype html><html lang="en"><head><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${nonce ? `<script nonce="${nonce}">${script.replaceAll("</script", "<\\/script")}</script>` : ""}</body></html>`,
+        body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Isolated component test</title><meta name="csrf-token" content="${options.csrf ?? "component-only-signed-token"}"></head><body><main><h1>Isolated component test</h1>${html}</main>${nonce ? `<script nonce="${nonce}">${script.replaceAll("</script", "<\\/script")}</script>` : ""}</body></html>`,
       });
     }
     return route.abort();
@@ -231,6 +237,8 @@ async function fixturePage(
   await page.addStyleTag({
     content: await readFile(new URL("src/styles/admin.css", root), "utf8"),
   });
+  const styles = [...componentStyles.values()].flat().join("\n");
+  if (styles) await page.addStyleTag({ content: styles });
   if (!nonce) await page.addScriptTag({ content: script });
   return page;
 }
@@ -315,6 +323,169 @@ test("saved products expose a separate photo editor without implying new drafts 
   assert.match(disabled, /separate setup and billing authorization/);
   assert.doesNotMatch(saved, /still needs/);
 });
+
+domTest(
+  "unsaved storefront preview follows product fields safely without saving or publishing",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+      "admin.ts",
+      {
+        path: "/inventory/products/new",
+        headers: await productionHeaders("/inventory/products/new"),
+      },
+    );
+    let mutations = 0;
+    await page.route("**/api/**", (route) => {
+      if (route.request().method() !== "GET") mutations++;
+      return route.abort();
+    });
+    try {
+      const preview = page.getByRole("complementary", {
+        name: "Storefront preview",
+      });
+      await preview.waitFor();
+      assert.match(
+        await preview.innerText(),
+        /Previewing never saves or publishes/,
+      );
+      assert.equal(await preview.locator(".shelf-product a").count(), 0);
+      await page.getByLabel("Product name", { exact: true }).fill("Honey soap");
+      assert.equal(
+        await preview.locator("[data-preview-url]").textContent(),
+        "/goods/honey-soap",
+      );
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill('Honey <img src=x onerror="window.previewRan=true">');
+      await page
+        .getByLabel("Summary", { exact: true })
+        .fill("<script>window.previewRan=true</script> & small batches.");
+      await page
+        .getByRole("combobox", { name: /^Category/ })
+        .selectOption("honey");
+      await page
+        .getByRole("combobox", { name: /^Placeholder illustration/ })
+        .selectOption("honey");
+      await page
+        .getByRole("combobox", { name: /^Record type/ })
+        .selectOption("concept");
+      await page
+        .getByLabel("Store URL name (slug)", { exact: true })
+        .fill("honey-jar");
+      assert.match(
+        await preview.locator("h3").innerText(),
+        /Honey <img src=x onerror=/,
+      );
+      assert.equal(
+        await preview.locator(".shelf-description").textContent(),
+        "<script>window.previewRan=true</script> & small batches.",
+      );
+      assert.equal(await preview.locator(".eyebrow").textContent(), "Honey");
+      assert.equal(
+        await preview.locator(".shelf-ticket").textContent(),
+        "For the table",
+      );
+      assert.match(
+        (await preview.locator(".product-illustration").getAttribute("src")) ??
+          "",
+        /honey-jar\.svg/,
+      );
+      assert.equal(
+        await preview.locator(".pill").textContent(),
+        "Concept product",
+      );
+      assert.equal(
+        await preview.locator("[data-preview-url]").textContent(),
+        "/goods/honey-jar",
+      );
+      assert.equal(await preview.locator("script, img[onerror]").count(), 0);
+      assert.equal(await page.evaluate(() => "previewRan" in window), false);
+      for (const width of [320, 768, 1280]) {
+        await page.setViewportSize({ width, height: 1000 });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+      }
+      await preview.locator("summary").focus();
+      await page.keyboard.press("Enter");
+      assert.equal(await preview.locator("details").getAttribute("open"), null);
+      await page.keyboard.press("Enter");
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+      await page.getByLabel("Product name", { exact: true }).fill("");
+      await page.getByLabel("Summary", { exact: true }).fill("");
+      await page.getByRole("combobox", { name: /^Category/ }).selectOption("");
+      await page
+        .getByRole("combobox", { name: /^Placeholder illustration/ })
+        .selectOption("");
+      assert.match(
+        await preview.locator("h3").innerText(),
+        /Your product name/,
+      );
+      assert.match(
+        await preview.locator(".shelf-description").innerText(),
+        /short summary/,
+      );
+      assert.equal(
+        await preview.locator(".product-illustration").isVisible(),
+        false,
+      );
+      assert.equal(mutations, 0);
+      assert.equal(await page.evaluate(() => localStorage.length), 0);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "saved-product storefront preview uses private photos and keeps concept illustrations honest",
+  async () => {
+    const page = await fixturePage("src/components/admin/ProductForm.astro", {
+      product: { ...product, photo },
+      photosEnabled: true,
+    });
+    try {
+      const preview = page.getByRole("complementary", {
+        name: "Storefront preview",
+      });
+      const image = preview.locator(".product-illustration");
+      await preview.waitFor();
+      assert.equal(
+        await image.getAttribute("src"),
+        `/api/admin/products/${product.key}/photo?revision=${product.revision}`,
+      );
+      assert.equal(await image.getAttribute("alt"), photo.alt);
+      await page
+        .getByRole("combobox", { name: /^Placeholder illustration/ })
+        .selectOption("honey");
+      assert.match((await image.getAttribute("src")) ?? "", /^\/api\/admin\//);
+      await page
+        .getByRole("combobox", { name: /^Record type/ })
+        .selectOption("concept");
+      assert.match((await image.getAttribute("src")) ?? "", /honey-jar\.svg/);
+      assert.match(
+        await preview.locator(".art-caption").innerText(),
+        /Original illustration/,
+      );
+      await page
+        .getByRole("combobox", { name: /^Record type/ })
+        .selectOption("active");
+      assert.match((await image.getAttribute("src")) ?? "", /^\/api\/admin\//);
+      assert.equal(await image.getAttribute("alt"), photo.alt);
+      assert.equal(await preview.locator('img[src^="/media/"]').count(), 0);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
 
 test("uploaded product photos render through first-party media URLs rather than illustration labels", async () => {
   const photo = {
@@ -1973,6 +2144,56 @@ domTest(
         await page.getByText(/1500 means \$15\.00/).isVisible(),
         false,
       );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "product examples guide blank fields without becoming saved draft values",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+    );
+    let submissions = 0;
+    await page.route("**/api/admin/products", (route) => {
+      submissions++;
+      return route.abort();
+    });
+    try {
+      for (const name of [
+        "title",
+        "key",
+        "slug",
+        "summary",
+        "details",
+        "variantKey",
+        "sku",
+        "label",
+        "priceMinor",
+      ]) {
+        const field = page.locator(`[name="${name}"]`);
+        assert.equal(await field.inputValue(), "", name);
+        assert.ok((await field.getAttribute("placeholder"))?.trim(), name);
+      }
+      await page
+        .getByRole("button", { name: "Create unpublished product" })
+        .click();
+      assert.equal(submissions, 0);
+      assert.match(
+        await page.locator("[data-product-preview] h3").innerText(),
+        /Your product name/,
+      );
+      await page.getByRole("button", { name: "Add another variant" }).click();
+      for (const name of ["variantKey", "sku", "label", "priceMinor"]) {
+        const field = page
+          .locator(`[data-admin-variant] [name="${name}"]`)
+          .last();
+        assert.equal(await field.inputValue(), "");
+        assert.ok((await field.getAttribute("placeholder"))?.trim());
+      }
     } finally {
       await page.context().close();
     }
