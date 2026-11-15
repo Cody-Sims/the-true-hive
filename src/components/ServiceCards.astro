@@ -11,34 +11,28 @@ const { detailed = false } = Astro.props;
       <p class="eyebrow">Homes &amp; properties</p>
       <span aria-hidden="true">01</span>
     </div>
-    <p class="service-path-status">Planned / Assessment first</p>
     <h3>Colony removal</h3>
     <p>
-      Every setting is different. Identification, colony location, and safe
-      access would be the starting points for deciding whether work is within
-      scope.
+      Help with honeybee colonies on homes and properties, with an approach
+      shaped by the colony's location and safe access.
     </p>
     {detailed ? (
       <>
         <details class="service-path-details">
-          <summary>What an assessment would consider</summary>
+          <summary>What to share</summary>
           <ul>
             <li>The setting and where bees have been noticed.</li>
             <li>
               Access, site conditions, and whether a structure is involved.
             </li>
             <li>
-              Whether swarm collection, removal, or another response is
-              appropriate and within confirmed capability.
+              Whether you are seeing a settled colony or a temporary swarm.
             </li>
-            <li>
-              Any structural work or repairs, which are not included or promised
-              here.
-            </li>
+            <li>Any structural work or repair needs.</li>
           </ul>
         </details>
         <a class="text-link service-path-link" href="/#connect">
-          Find our contact channels <span aria-hidden="true">&rarr;</span>
+          Contact us <span aria-hidden="true">&rarr;</span>
         </a>
       </>
     ) : (
@@ -52,29 +46,24 @@ const { detailed = false } = Astro.props;
       <p class="eyebrow">Farms &amp; growers</p>
       <span aria-hidden="true">02</span>
     </div>
-    <p class="service-path-status">Planned / Assessment first</p>
     <h3>Farm pollination</h3>
     <p>
-      A future conversation about the crop, the bloom, and the setting. Any plan
-      would depend on hive capacity, site access, and an agreed approach to
-      care.
+      Pollination support shaped around your crop, bloom window and growing
+      site.
     </p>
     {detailed ? (
       <>
         <details class="service-path-details">
-          <summary>What a conversation would cover</summary>
+          <summary>What to share</summary>
           <ul>
             <li>The crop, acreage, and anticipated bloom window.</li>
             <li>Site access, placement, and relevant crop-care practices.</li>
-            <li>Actual hive capacity and timing before any agreement.</li>
-            <li>
-              Responsibilities and a care plan. No hive supply, date, or crop
-              result is guaranteed.
-            </li>
+            <li>Your preferred timing and the support you are looking for.</li>
+            <li>Any site-specific care requirements.</li>
           </ul>
         </details>
         <a class="text-link service-path-link" href="/#connect">
-          Find our contact channels <span aria-hidden="true">&rarr;</span>
+          Contact us <span aria-hidden="true">&rarr;</span>
         </a>
       </>
     ) : (
@@ -86,8 +75,7 @@ const { detailed = false } = Astro.props;
 </div>
 <p class="fine-print service-path-safety">
   <strong>Give bees space.</strong> Do not disturb a colony or approach it for a
-  photograph. These are planned services, not emergency assistance; online
-  booking is not offered.
+  photograph.
 </p>
 
 <style>
@@ -122,20 +110,12 @@ const { detailed = false } = Astro.props;
     font-style: italic;
     line-height: 1;
   }
-  .service-path-status {
-    margin-top: 1.75rem;
-    color: var(--tomato);
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-  }
   .service-path-card h3 {
     margin-block: 0.75rem 1.15rem;
     font-size: clamp(2rem, 3vw, 2.75rem);
     line-height: 1.1;
   }
-  .service-path-card > p:not(.service-path-status) {
+  .service-path-card > p {
     max-width: 31rem;
     margin-bottom: 1.5rem;
     font-size: 0.9rem;

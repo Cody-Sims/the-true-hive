@@ -305,6 +305,29 @@ test("real priced products advertise test checkout only when explicitly enabled"
   );
 });
 
+test("services copy is ready to share without planning-stage notices or booking promises", async () => {
+  const html = await render(
+    "src/pages/services.astro",
+    {},
+    {
+      request: new Request("https://thetruehive.com/services"),
+    },
+  );
+  const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1];
+  assert.ok(main);
+  const copy = main.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+  assert.doesNotMatch(
+    copy,
+    /two directions|no instant booking|different settings|the same careful start|services are planned|planned\s*\/|not bookable|if services become available|future conversation|when it's ready/i,
+  );
+  assert.match(copy, /Colony removal/);
+  assert.match(copy, /Farm pollination/);
+  assert.match(copy, /Do not disturb a colony or approach it for a photograph/);
+  assert.match(main, /href="\/#connect"/);
+  assert.doesNotMatch(main, /<form\b|href="(?:tel|mailto):/i);
+  assert.match(html, /<title>Beekeeping services for home and farm/);
+});
+
 test("saved products expose a separate photo editor without implying new drafts already have an upload target", async () => {
   const saved = await render("src/components/admin/ProductForm.astro", {
     product,
