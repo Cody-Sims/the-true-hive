@@ -1,0 +1,41 @@
+---
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import BarcodeLabels from "../../../../components/admin/BarcodeLabels.astro";
+import ReadState from "../../../../components/admin/ReadState.astro";
+import { getAdminProduct } from "../../../../server/admin/catalog.ts";
+import { getAdminPool } from "../../../../server/admin/pool.ts";
+import { isRecordKey } from "../../../../server/inventory/rules.ts";
+import type { AdminProduct } from "../../../../domain/admin.ts";
+
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+let product: AdminProduct | null = null;
+let unavailable = false;
+if (isRecordKey(Astro.params.key)) {
+  try {
+    product = await getAdminProduct(getAdminPool(), Astro.params.key);
+  } catch {
+    unavailable = true;
+  }
+}
+if (!product) Astro.response.status = unavailable ? 503 : 404;
+---
+
+<AdminLayout title={product ? `Labels for ${product.title}` : "Product labels"}>
+  <p data-label-page-controls>
+    <a
+      href={
+        product
+          ? `/inventory/products/${encodeURIComponent(product.key)}`
+          : "/inventory/products"
+      }
+    >
+      {product ? "Back to product editor" : "Back to products"}
+    </a>
+  </p>
+  {product ? (
+    <BarcodeLabels product={product} />
+  ) : (
+    <ReadState unavailable={unavailable} missing={!unavailable} />
+  )}
+</AdminLayout>
