@@ -129,7 +129,7 @@ test("unsafe query keys are rejected and unavailable database mode never falls b
   expect(await page.text()).not.toContain("Everyday soap");
 });
 
-test("keyboard entry, clear contact placeholders and no email collection remain intact", async ({
+test("keyboard entry, confirmed phone contact and no email collection remain intact", async ({
   page,
 }) => {
   await page.goto("/");
@@ -144,8 +144,11 @@ test("keyboard entry, clear contact placeholders and no email collection remain 
     .getByRole("link", { name: /Connect/ })
     .click();
   await expect(
-    page.getByText("Phone and profile details are not published yet."),
-  ).toBeVisible();
+    page.locator("#connect").getByRole("link", { name: /Call.*368-2262/ }),
+  ).toHaveAttribute("href", "tel:+14233682262");
+  await expect(page.locator("#connect")).not.toContainText(
+    /not published|will appear/i,
+  );
   expect(await page.locator("form").count()).toBe(0);
   expect(await page.locator('a[href^="mailto:"]').count()).toBe(0);
 });

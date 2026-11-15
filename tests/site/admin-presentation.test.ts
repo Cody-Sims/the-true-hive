@@ -20,6 +20,7 @@ import type {
 import { pageQuery } from "../../src/components/admin/presentation.ts";
 import { issueCsrf, verifyCsrf } from "../../src/server/auth/csrf.ts";
 import { AdminAuthError } from "../../src/server/auth/service.ts";
+import { readConfig } from "../../src/server/config.ts";
 
 const root = new URL("../../", import.meta.url);
 const modules = new Map<string, Promise<string>>();
@@ -303,6 +304,61 @@ test("real priced products advertise test checkout only when explicitly enabled"
     }),
     /Test checkout/,
   );
+});
+
+test("public contact channels use the confirmed phone and omit unconfigured placeholders", async () => {
+  const html = await render("src/components/ContactSection.astro", {
+    contact: readConfig({}).contact,
+  });
+  assert.match(html, /href="tel:\+14233682262"/);
+  assert.doesNotMatch(
+    html,
+    /not published|will appear|future beekeeping|email.*not open/i,
+  );
+  assert.doesNotMatch(html, /facebook\.com|instagram\.com|mailto:|<form\b/i);
+  const configured = await render("src/components/ContactSection.astro", {
+    contact: readConfig({
+      FACEBOOK_URL: "https://www.facebook.com/verified-business",
+      INSTAGRAM_URL: "https://www.instagram.com/verified-business/",
+    }).contact,
+  });
+  assert.match(
+    configured,
+    /href="https:\/\/www\.facebook\.com\/verified-business"/,
+  );
+  assert.match(
+    configured,
+    /href="https:\/\/www\.instagram\.com\/verified-business\/"/,
+  );
+});
+
+test("non-shopping information pages contain current business information rather than launch placeholders", async () => {
+  for (const page of ["about", "services", "privacy", "accessibility"]) {
+    const html = await render(
+      `src/pages/${page}.astro`,
+      {},
+      {
+        request: new Request(`https://thetruehive.com/${page}`),
+      },
+    );
+    const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1];
+    assert.ok(main);
+    assert.doesNotMatch(
+      html.replace(/<[^>]*>/g, " "),
+      /Online ordering (?:isn't|is not) open yet/i,
+      page,
+    );
+    const copy = main.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+    assert.doesNotMatch(
+      copy,
+      /planned paths|future directions|when it's ready|not a finished story|may still be pending|channels may still be pending|reviewed before public launch|public showcase|current-showcase|Email setup remains deferred/i,
+      page,
+    );
+    if (page === "about") {
+      assert.match(copy, /Colony Rescue/);
+      assert.match(copy, /Farm Pollination/);
+    } else assert.match(main, /href="tel:\+14233682262"/);
+  }
 });
 
 test("services copy is ready to share without planning-stage notices or booking promises", async () => {

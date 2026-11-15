@@ -1,10 +1,12 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
+import { readConfig } from "../server/config.ts";
+const { contact } = readConfig();
 ---
 
 <SiteLayout
   title="Privacy and contact"
-  description="Privacy guidance for The True Hive's public showcase, URL-based collection search, managed hosting, and external contact links."
+  description="How The True Hive handles website browsing, collection searches and contact links."
 >
   <section class="page-intro wrap" aria-labelledby="privacy-title">
     <p class="eyebrow">Keep things clear</p>
@@ -14,18 +16,21 @@ import SiteLayout from "../layouts/SiteLayout.astro";
       <em>without surprises.</em>
     </h1>
     <p>
-      This first site provides collection and service information. It does not
-      accept orders, take payment, create customer accounts, or collect
-      inquiry-form submissions.
+      This page explains the information involved in browsing The True Hive,
+      searching the collection and following our contact links.
     </p>
   </section>
   <section class="wrap prose-section">
     <h2>Browsing this site</h2>
     <p>
-      No advertising pixel, social-feed embed, or first-party customer analytics
-      has been added to this public showcase. Managed hosting may still process
-      requests and access or security logs; the final provider-specific
-      disclosure must be reviewed before public launch.
+      This website uses no advertising pixels, embedded social feeds or
+      first-party customer analytics. Our hosting provider, Render, processes
+      page requests and may keep access or security logs to operate and protect
+      the website.
+    </p>
+    <p>
+      See <a href="https://render.com/privacy">Render's privacy policy</a>
+      for information about the hosting provider's practices.
     </p>
     <h2>Collection search</h2>
     <p>
@@ -42,30 +47,28 @@ import SiteLayout from "../layouts/SiteLayout.astro";
     </p>
     <h2>Contacting us elsewhere</h2>
     <p>
-      If you use an approved phone or social-profile link, the call or platform
-      interaction takes place outside this website and is subject to that
-      provider's behavior. Email setup remains deferred.
+      Telephone links open your device's calling tools. Calls and any
+      information you choose to share during them are handled outside this
+      website, rather than through a website submission form.
     </p>
     <p>
-      Contact channels may still be pending. This website does not submit
-      inquiries or feedback on your behalf.
+      When you follow a link to a social platform, research publisher or other
+      external website, that provider's privacy practices apply.
     </p>
-    <a class="text-link" href="/#connect">
-      Check contact channels <span aria-hidden="true">&rarr;</span>
+    <a class="text-link" href={contact.phoneHref ?? "/#connect"}>
+      Call {contact.phone ?? "The True Hive"}{" "}
+      <span aria-hidden="true">&rarr;</span>
     </a>
-    <h2>Separate, restricted workflows</h2>
+    <h2>Restricted inventory workspace</h2>
     <p>
-      Restricted administrator authentication is separate from public browsing;
-      it is not a customer account feature. Any future checkout, invoicing, or
-      other financial workflow remains separately gated. These public browsing
-      notes are not a claim that no data is processed anywhere in the system.
+      The inventory workspace is restricted to authorized administrators and
+      uses separate authentication and security cookies. Its sign-in process is
+      separate from public browsing.
     </p>
-    <h2>Before online sales</h2>
+    <h2>Shopping</h2>
     <p>
-      Checkout, customer information, retention, owner access, and privacy
-      disclosures will be reviewed before those features are enabled. No
-      retention period or finalized policy for future sales is established by
-      these current-showcase notes.
+      Online checkout is being prepared. Purchase-specific information about
+      payments and customer data will accompany checkout before it opens.
     </p>
   </section>
 </SiteLayout>

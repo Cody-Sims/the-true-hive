@@ -45,15 +45,16 @@ These are static local assets and metadata, not a social integration or tracker.
 | ID | Authorization | Boundary |
 |---|---|---|
 | AP-01 | Completed: owner-approved redesign merged through PR #6 and verified live at `https://thetruehive.com` on 2026-11-14 | Existing CI-gated Render service; verified apex/www TLS and redirects; mail, preview and inventory records preserved; no plan upgrade or operational sales activation |
+| AP-03 | Public business telephone confirmed by the owner and published with the services copy | Reuse the confirmed contact sitewide. Only configured, validated social links are shown; no guessed profiles, email setup or inquiry submission is implied |
 | AP-09 | Completed: separately approved inventory-only hostname, TLS and private preparation runtime are live on 2026-11-14 | Existing Google/TOTP admin and database, anonymous/forged-session and wrong-host denial verified, public showcase unchanged, checkout disabled, no seeded records; 2 of 2 included domain slots used, no additional charge or plan upgrade |
 | AP-11 | Metered product photos approved on 2026-11-14 using the website's existing Google Cloud storage project; separate True Hive bucket and scoped principal provisioned and private GCS roundtrip verified | No personal bucket/key reuse, no change to the separate True Hive Auth project/plan, no fake product/stock seed. Photo code release and live checks follow protected CI and the photo runbook |
+| AP-12 | Owner requested a production-facing non-shopping website and removal of unfinished-feature placeholders | Use confirmed business facts and working contact links; hide unconfigured channels. Shopping, payments, indexing settings and explicitly deferred forms remain separate |
 
 ## Still blocked: needs the owner
 
 | ID | Decision / authorization | Why it is blocked | What can continue without it |
 |---|---|---|---|
 | AP-02 | Supply real photographs and approve new substantiated product/service claims | Approved original illustrations and concepts are not real product/farm photographs; no credentials, testimonials, ingredients or availability may be invented | Retain approved illustrations, neutral copy and truthful planning states |
-| AP-03 | Supply/approve public phone and exact Facebook/Instagram URLs | No guessed profiles, fake working links, new email setup or unreceived inquiry forms | Honest pending-contact UI and existing navigation |
 | AP-04 | Confirm genuine products, SKUs, USD prices, locations, opening counts and pickup arrangements privately | Concept data must never become physical inventory or a purchase promise | Empty/draft/filtered showcase UX and secure administration code |
 | AP-05 | Finish private test credential/webhook wiring and review the Payments/Invoicing/Tax extension decisions | Actual sandbox discovery/planning now works and confirmed the existing hosted-Checkout baseline, but usable credentials and operational test delivery are not verified; no duplicate key generation | Non-transactional website experience, restricted-test-key support and a clearly scoped integration plan; checkout stays disabled |
 | AP-06 | Approve any Invoice/Tax fees, confirm invoice use cases and applicable tax registrations/product classifications | Selecting product interests does not approve live invoicing, paid features or tax/legal decisions | Document proposal gaps; do not send invoices, register tax or collect money |
@@ -61,7 +62,7 @@ These are static local assets and metadata, not a social integration or tracker.
 | AP-08 | Set backup/recovery ownership, acceptable data-loss window and reconciliation scheduling/monitoring | A script and free-tier history are not an operating agreement or verified schedule | Local restore/testing and operator documentation |
 | AP-10 | Approve other future paid assets/resources or analytics/marketing capture if later requested | Conditional boundary, separate from the approved scoped photo storage in AP-11; no analytics/marketing capture is enabled | Local fonts/assets and no-tracking discovery |
 
-AP-01/AP-09 are complete and AP-11 storage authorization is received. The remaining blocked rows
+AP-01/AP-03/AP-09 are complete and AP-11/AP-12 authorization is received. The remaining blocked rows
 gate final business content or operational features, not publication of the
 approved honest showcase.
 No new sign-in, payment or legal choice was guessed to get around them.

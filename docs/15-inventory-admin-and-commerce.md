@@ -1,6 +1,6 @@
 # Specification: secure inventory administration and connected checkout
 
-Status: **implementation merged; private inventory preparation enabled on 2026-11-14; checkout and live sales disabled**. The code remains disabled by default for an unconfigured deployment. Hosted setup does not complete the remaining operating/payment/recovery rehearsals.
+Status: **implementation merged; private inventory preparation and the inventory-backed public catalog enabled on 2026-11-14; checkout and live sales disabled**. The code remains disabled by default for an unconfigured deployment. Hosted setup does not complete the remaining operating/payment/recovery rehearsals.
 
 The original 2026-10-31 approval selected an **isolated True Hive Firebase project**, **app-enforced MFA before deployment**, and **Stripe Checkout in card-only test mode**. Physical on-hand, checkout holds and paid commitments remain separate; an authorized **Record pickup** action records physical departure. That initial authorization did not include a Firebase billing upgrade, live payment, new paid service, production-domain cutover or email setup. Later hostname approvals are recorded separately.
 
@@ -12,6 +12,12 @@ This narrower rollout does not wait for Stripe setup, approve live sales or
 claim the remaining hands-on operational/recovery rehearsals are complete.
 The hostname, TLS, runtime preflight, login client and unauthenticated access
 boundaries are now verified. Normal owner Google/TOTP sign-in remains interactive.
+
+**2026-11-14 public-catalog authorization:** the owner subsequently approved
+displaying inventory-managed products in the public store. Production now uses
+`CATALOG_SOURCE=database`, while checkout and indexing remain disabled. This
+supersedes only the earlier showcase-only restriction, not the remaining payment,
+pickup or recovery gates. See the [catalog activation record](14-development-and-operations.md#public-catalog-activation---2026-11-14).
 
 ## Objective
 

@@ -1,6 +1,6 @@
 # Development, deployment, and inventory operations
 
-Status: **owner-approved public showcase and private inventory preparation**, not an activated store. No Shopify, Docker, active checkout or email setup.
+Status: **owner-approved inventory-backed public catalog and private inventory preparation**, not an activated checkout. No Shopify, Docker, active checkout or email setup.
 
 ## Public application, private workspace and preserved review
 
@@ -41,12 +41,12 @@ Copy `.env.example` to an ignored `.env` **only if needed**. Native start/dev co
 |---|---|
 | `SITE_URL` | Canonical site origin; default `https://thetruehive.com`, HTTP loopback allowed locally |
 | `SITE_INDEXABLE` | `false` initially; cannot be enabled with showcase source |
-| `CATALOG_SOURCE` | Explicit `showcase` or `database`; no automatic fallback |
+| `CATALOG_SOURCE` | Explicit `showcase` or `database`; production uses `database`, local default remains `showcase`; no automatic fallback |
 | `DATABASE_URL` | Private pooled connection using a least-privilege read-only role for the current public APIs |
 | `MIGRATION_DATABASE_URL` | Private direct schema-owner connection for the migration CLI, not a frontend setting; a blank value falls back to `DATABASE_URL` |
 | `DATABASE_TLS` | `verify-full` by default; `disable` is restricted to local development targets |
-| `CONTACT_PHONE` | Actual approved public number; empty produces no fake call link |
-| `FACEBOOK_URL`, `INSTAGRAM_URL` | Approved HTTPS platform profiles; empty remains an honest placeholder |
+| `CONTACT_PHONE` | Optional public-number override; unset/blank uses the owner-approved business contact in `src/content/service-contact.ts` |
+| `FACEBOOK_URL`, `INSTAGRAM_URL` | Approved HTTPS platform profiles; unset channels are omitted from the public contact area |
 | `HOST`, `PORT` | Native server bind address/port; Render supplies its port |
 | `ASTRO_TELEMETRY_DISABLED` | Set to `1` for build/check environments |
 
@@ -122,18 +122,35 @@ Render considers successful/neutral/skipped checks acceptable; therefore our req
 
 The selected starting infrastructure is **one $7/month native Render web service in a Hobby workspace and Neon Free PostgreSQL**, both in Oregon (`oregon` / `aws-us-west-2`). The Blueprint declares no Render database, Docker runtime, Pro workspace or paid Neon plan. Recheck public prices before provisioning; usage, future quotas and separately approved upgrades can change operating costs.
 
-Only apply the Blueprint after this application's PR is merged and main checks pass. The draft uses showcase mode, noindex and no checkout. Use PostgreSQL 16 to match the native integration baseline; a small fixed Neon compute fits this empty-schema pilot.
+Only apply the Blueprint after this application's PR is merged and main checks pass. It now selects the approved database-backed public catalog; supply the existing private runtime connection separately. Noindex and disabled checkout remain unchanged. Use PostgreSQL 16 to match the native integration baseline.
 
 **Hosting status - 2026-11-14:** the owner-approved redesign is live at
-**https://thetruehive.com/** in deliberate showcase mode, after PR #6 merged
+**https://thetruehive.com/**, initially in deliberate showcase mode after PR #6 merged
 with all required checks passing. Render's actual service UI identified release
 `9fffa65e1ff423a9417da1d3cff7440a892d8547` as **Live**. The service remains
 connected to this repository's `main` branch with **After CI Checks Pass**.
 The existing `https://the-true-hive-app.onrender.com/` endpoint remains enabled.
-Readiness reports `inventoryConnected: false` and `checkoutEnabled: false`;
+The owner subsequently approved the database-backed catalog described below.
 `inventoryConnected` describes whether the **public catalog source** is database
-mode, not whether private administration is enabled. The public website release
-did not activate sales. The subsequent inventory-only activation is separate.
+mode, not whether private administration is enabled. Neither the public website
+release nor catalog activation enables sales.
+
+### Public catalog activation - 2026-11-14
+
+The owner approved showing inventory-managed products in the public store.
+The existing Render service now uses `CATALOG_SOURCE=database`, matching the
+Blueprint. Published, non-archived products and active variants come directly
+from the shared PostgreSQL catalog; there is no separate product copy or sync
+job. Drafts remain private, and database failures do not substitute demo goods.
+
+Read-only checks confirmed the single published product, **The True Soap**,
+appears in `/api/catalog`, the homepage, `/goods` and `/goods/the-true-soap`.
+The original three showcase products no longer appear in the live collection.
+`CHECKOUT_MODE=disabled` and `SITE_INDEXABLE=false` were preserved; no products,
+stock counts, prices, permissions, payment settings or DNS records were changed.
+Continue to publish or unpublish products through the private inventory workspace.
+Keep local development and fixture-based browser tests explicitly in showcase
+mode when a database-backed catalog is not required.
 
 ### Apex/www hosting and rollback
 
@@ -151,8 +168,8 @@ hostname to it. Both HTTPS endpoints were checked with certificate validation
 enabled. HTTP upgrades to HTTPS; the `www` redirect preserves the requested path
 and query. `SITE_URL` was already `https://thetruehive.com` and was verified from
 the served canonical metadata, so no private runtime-setting rewrite was needed.
-`SITE_INDEXABLE=false` and showcase mode remain intentional until genuine
-catalog/content and operational release gates pass.
+`SITE_INDEXABLE=false` remains intentional. The separately approved catalog-source
+change above does not approve search indexing or sales.
 
 The complete eight-record pre-cutover DNS view and nine-record post-cutover
 view were saved privately. Only the existing apex ALIAS answer was edited and
@@ -188,9 +205,9 @@ Before switching to database mode:
 The separately authorized private workspace is live at
 **https://inventory.thetruehive.com/**. The existing service uses
 `INVENTORY_ENABLED=true` and exact `INVENTORY_ORIGIN=https://inventory.thetruehive.com`.
-`CHECKOUT_MODE=disabled`, `CATALOG_SOURCE=showcase` and `SITE_INDEXABLE=false`
-remain unchanged. Real products entered privately will not replace the public
-showcase until a separate catalog-source release.
+That inventory-only rollout retained `CATALOG_SOURCE=showcase`. The subsequent
+public-catalog activation above changes it to `database`, while
+`CHECKOUT_MODE=disabled` and `SITE_INDEXABLE=false` remain unchanged.
 
 Only the `inventory` CNAME was added, targeting the existing Render hostname
 with TTL 600. Private before/after snapshots verified all nine prior DNS records

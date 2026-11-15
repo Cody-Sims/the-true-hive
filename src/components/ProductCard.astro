@@ -41,8 +41,8 @@ const categories = {
   <ArtLink
     class:list={["shelf-art", `${product.imageKey}-art`]}
     href={preview ? undefined : `/goods/${product.slug}`}
-    aria-label={preview ? undefined : `Explore ${product.title}`}
   >
+    {!preview && <span class="card-link-label">Explore {product.title}</span>}
     <span class="shelf-ticket">{labels[product.category]}</span>
     <ProductArt
       image={product.imageKey}
@@ -83,6 +83,14 @@ const categories = {
 </article>
 
 <style>
+  .card-link-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .shelf-product {
     display: flex;
     min-width: 0;

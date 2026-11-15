@@ -2,7 +2,7 @@
 
 **The Apiary Market application foundation, ten preserved design directions, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
-Updated **October 31, 2026**. Status: **owner-approved public planning and interactive review**, not a production storefront.
+Updated **November 14, 2026**. Status: **owner-approved inventory-backed public catalog and private inventory administration**, with checkout and live sales disabled.
 
 ## Build the actual site
 
@@ -15,7 +15,7 @@ npm run dev
 
 Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and does not invent prices/stock. For native build, database, CI and Render details, read [development and operations](docs/14-development-and-operations.md) and the [approved specification](docs/13-production-foundation.md).
 
-**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The application foundation is live at **https://the-true-hive-app.onrender.com/** in deliberate showcase mode; Render is connected to this repository's `main` branch with **After CI Checks Pass** deployment enabled. The actual application targets `thetruehive.com` after content readiness, with Neon PostgreSQL in the same Oregon region. The selected infrastructure is a $7/month Render app in a Hobby workspace and Neon Free, not a paid Neon or Render database. The main-domain DNS remains unchanged.
+**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The public catalog is live at **https://thetruehive.com/** with `CATALOG_SOURCE=database`, reading published products from the same Neon PostgreSQL database as `inventory.thetruehive.com`; checkout remains disabled. The existing **https://the-true-hive-app.onrender.com/** endpoint remains available. Render follows this repository's `main` branch with **After CI Checks Pass** deployment enabled. The selected infrastructure remains one $7/month Render app in a Hobby workspace and Neon Free in Oregon, not a second service or paid database.
 
 ## Open the studio
 
