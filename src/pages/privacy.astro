@@ -55,9 +55,8 @@ const { contact } = readConfig();
       When you follow a link to a social platform, research publisher or other
       external website, that provider's privacy practices apply.
     </p>
-    <a class="text-link" href={contact.phoneHref ?? "/#connect"}>
-      Call {contact.phone ?? "The True Hive"}{" "}
-      <span aria-hidden="true">&rarr;</span>
+    <a class="text-link" href={contact.phoneHref}>
+      Call {contact.phone} <span aria-hidden="true">&rarr;</span>
     </a>
     <h2>Restricted inventory workspace</h2>
     <p>

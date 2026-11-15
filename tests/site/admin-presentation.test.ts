@@ -332,6 +332,29 @@ test("public contact channels use the confirmed phone and omit unconfigured plac
   );
 });
 
+test("the configured phone override reaches every rendered service contact link", async () => {
+  const previous = process.env["CONTACT_PHONE"];
+  process.env["CONTACT_PHONE"] = "+1 (865) 555-0117";
+  try {
+    const html = await render(
+      "src/pages/services.astro",
+      {},
+      {
+        request: new Request("https://thetruehive.com/services"),
+      },
+    );
+    const links = [...html.matchAll(/href="(tel:[^"]+)"/g)].map(
+      (match) => match[1],
+    );
+    assert.ok(links.length >= 3);
+    assert.deepEqual([...new Set(links)], ["tel:+18655550117"]);
+    assert.doesNotMatch(html, /368-2262/);
+  } finally {
+    if (previous === undefined) delete process.env["CONTACT_PHONE"];
+    else process.env["CONTACT_PHONE"] = previous;
+  }
+});
+
 test("non-shopping information pages contain current business information rather than launch placeholders", async () => {
   for (const page of ["about", "services", "privacy", "accessibility"]) {
     const html = await render(

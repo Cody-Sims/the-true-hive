@@ -1,10 +1,11 @@
 ---
-import { serviceContact } from "../content/service-contact.ts";
+import { readConfig } from "../server/config.ts";
 
 interface Props {
   detailed?: boolean;
 }
 const { detailed = false } = Astro.props;
+const { contact } = readConfig();
 ---
 
 <div class="service-path-grid">
@@ -36,8 +37,8 @@ const { detailed = false } = Astro.props;
             </li>
           </ul>
         </details>
-        <a class="text-link service-path-link" href={serviceContact.phoneHref}>
-          Call {serviceContact.phone} <span aria-hidden="true">&rarr;</span>
+        <a class="text-link service-path-link" href={contact.phoneHref}>
+          Call {contact.phone} <span aria-hidden="true">&rarr;</span>
         </a>
       </>
     ) : (
@@ -86,7 +87,7 @@ const { detailed = false } = Astro.props;
             </li>
           </ul>
         </details>
-        <a class="text-link service-path-link" href={serviceContact.phoneHref}>
+        <a class="text-link service-path-link" href={contact.phoneHref}>
           Discuss pollination <span aria-hidden="true">&rarr;</span>
         </a>
       </>

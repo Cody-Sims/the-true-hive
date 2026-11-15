@@ -9,8 +9,8 @@ export interface SiteConfig {
   databaseUrl: string | null;
   databaseTls: "verify-full" | "disable";
   contact: {
-    phone: string | null;
-    phoneHref: string | null;
+    phone: string;
+    phoneHref: string;
     facebook: string | null;
     instagram: string | null;
   };
@@ -107,7 +107,7 @@ export function readConfig(
     databaseTls,
     contact: {
       phone,
-      phoneHref: normalizedPhone ? `tel:${normalizedPhone}` : null,
+      phoneHref: `tel:${normalizedPhone}`,
       facebook: profile(environment["FACEBOOK_URL"], "FACEBOOK_URL", [
         "facebook.com",
         "www.facebook.com",
