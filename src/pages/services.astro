@@ -1,11 +1,12 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
 import ServiceCards from "../components/ServiceCards.astro";
+import { serviceContact } from "../content/service-contact.ts";
 ---
 
 <SiteLayout
   title="Beekeeping services for home and farm"
-  description="Explore colony removal and farm pollination with The True Hive. Beekeeping services for homes, properties, farms and growers."
+  description="No-cost honeybee colony rescue in Monroe, Blount, and Knox counties, plus farm pollination services from The True Hive."
 >
   <section
     class="wrap services-page-intro"
@@ -19,8 +20,7 @@ import ServiceCards from "../components/ServiceCards.astro";
         <em>And the neighbors.</em>
       </h1>
       <p class="services-page-lede">
-        Colony removal for homes and properties. Pollination support for farms
-        and growers.
+        Give honeybees a new home. Bring pollination support to your farm.
       </p>
       <a class="text-link" href="#service-paths">
         Explore our services <span aria-hidden="true">&darr;</span>
@@ -53,11 +53,11 @@ import ServiceCards from "../components/ServiceCards.astro";
       </div>
       <div class="services-page-ending-copy">
         <p>
-          For colony removal, share the setting and where you've noticed bees.
-          For pollination, tell us about your crop and bloom window.
+          Call us about a colony rescue or farm pollination. Have your location
+          and the details above ready so we can talk through your needs.
         </p>
-        <a class="button button-primary" href="/#connect">
-          Contact The True Hive <span aria-hidden="true">&rarr;</span>
+        <a class="button button-primary" href={serviceContact.phoneHref}>
+          Call {serviceContact.phone} <span aria-hidden="true">&rarr;</span>
         </a>
       </div>
     </div>

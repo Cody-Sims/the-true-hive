@@ -320,11 +320,27 @@ test("services copy is ready to share without planning-stage notices or booking 
     copy,
     /two directions|no instant booking|different settings|the same careful start|services are planned|planned\s*\/|not bookable|if services become available|future conversation|when it's ready/i,
   );
-  assert.match(copy, /Colony removal/);
-  assert.match(copy, /Farm pollination/);
+  assert.match(copy, /Colony Rescue/);
+  assert.match(copy, /Farm Pollination/);
+  assert.match(copy, /Monroe, Blount, and Knox/);
+  assert.match(copy, /no cost|no-cost/i);
+  assert.match(main, /href="tel:\+14233682262"/);
+  assert.match(main, /href="https:\/\/doi\.org\/10\.1126\/science\.aac7287"/);
+  assert.ok(main.replace(/<[^>]*>/g, "").includes("2016 study in Science"));
+  assert.match(copy, /24%/);
+  assert.match(copy, /fields smaller than 2 hectares/);
+  for (const detail of [
+    "Address",
+    "Location of hive",
+    "A good time to come",
+    "Farm location",
+    "Crops grown on the land",
+    "Number of hives",
+    "Preferred inspection day",
+  ])
+    assert.ok(copy.includes(detail), detail);
   assert.match(copy, /Do not disturb a colony or approach it for a photograph/);
-  assert.match(main, /href="\/#connect"/);
-  assert.doesNotMatch(main, /<form\b|href="(?:tel|mailto):/i);
+  assert.doesNotMatch(main, /<(?:form|input|textarea)\b|href="mailto:/i);
   assert.match(html, /<title>Beekeeping services for home and farm/);
 });
 

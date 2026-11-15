@@ -1,4 +1,6 @@
 ---
+import { serviceContact } from "../content/service-contact.ts";
+
 interface Props {
   detailed?: boolean;
 }
@@ -11,33 +13,36 @@ const { detailed = false } = Astro.props;
       <p class="eyebrow">Homes &amp; properties</p>
       <span aria-hidden="true">01</span>
     </div>
-    <h3>Colony removal</h3>
+    <h3>Colony Rescue</h3>
     <p>
-      Help with honeybee colonies on homes and properties, with an approach
-      shaped by the colony's location and safe access.
+      Do your bees need a new home? We'd love to rescue your bees and help them
+      thrive. We come to you for honeybee relocation at no cost in Monroe,
+      Blount, and Knox counties.
     </p>
     {detailed ? (
       <>
-        <details class="service-path-details">
-          <summary>What to share</summary>
+        <details class="service-path-details" open>
+          <summary>For a colony rescue</summary>
           <ul>
-            <li>The setting and where bees have been noticed.</li>
             <li>
-              Access, site conditions, and whether a structure is involved.
+              <strong>Address:</strong> Where the hive is located.
             </li>
             <li>
-              Whether you are seeing a settled colony or a temporary swarm.
+              <strong>Location of hive:</strong> Where it is on the property.
             </li>
-            <li>Any structural work or repair needs.</li>
+            <li>
+              <strong>A good time to come:</strong> Your preferred time for a
+              visit.
+            </li>
           </ul>
         </details>
-        <a class="text-link service-path-link" href="/#connect">
-          Contact us <span aria-hidden="true">&rarr;</span>
+        <a class="text-link service-path-link" href={serviceContact.phoneHref}>
+          Call {serviceContact.phone} <span aria-hidden="true">&rarr;</span>
         </a>
       </>
     ) : (
       <a class="text-link service-path-link" href="/services#colony-removal">
-        Explore colony removal <span aria-hidden="true">&rarr;</span>
+        Explore colony rescue <span aria-hidden="true">&rarr;</span>
       </a>
     )}
   </article>
@@ -46,24 +51,43 @@ const { detailed = false } = Astro.props;
       <p class="eyebrow">Farms &amp; growers</p>
       <span aria-hidden="true">02</span>
     </div>
-    <h3>Farm pollination</h3>
+    <h3>Farm Pollination</h3>
     <p>
-      Pollination support shaped around your crop, bloom window and growing
-      site.
+      Would you like to increase your crop yield? We bring our bees to you,
+      helping your crops thrive as you work toward your <em>best</em> harvest
+      yet.
     </p>
     {detailed ? (
       <>
-        <details class="service-path-details">
-          <summary>What to share</summary>
+        <p>
+          A{" "}
+          <a href="https://doi.org/10.1126/science.aac7287">
+            2016 study in <cite>Science</cite>
+          </a>{" "}
+          across 33 pollinator-dependent crop systems found that more pollinator
+          visits could close yield gaps by a median of 24% in fields smaller
+          than 2 hectares (about 5 acres).
+        </p>
+        <details class="service-path-details" open>
+          <summary>For a pollination assessment</summary>
           <ul>
-            <li>The crop, acreage, and anticipated bloom window.</li>
-            <li>Site access, placement, and relevant crop-care practices.</li>
-            <li>Your preferred timing and the support you are looking for.</li>
-            <li>Any site-specific care requirements.</li>
+            <li>
+              <strong>Farm location:</strong> Where the land is located.
+            </li>
+            <li>
+              <strong>Crops grown on the land.</strong>
+            </li>
+            <li>
+              <strong>Number of hives:</strong> How many you'd like to rent.
+            </li>
+            <li>
+              <strong>Preferred inspection day:</strong> A day of the week that
+              works for an on-site visit.
+            </li>
           </ul>
         </details>
-        <a class="text-link service-path-link" href="/#connect">
-          Contact us <span aria-hidden="true">&rarr;</span>
+        <a class="text-link service-path-link" href={serviceContact.phoneHref}>
+          Discuss pollination <span aria-hidden="true">&rarr;</span>
         </a>
       </>
     ) : (
