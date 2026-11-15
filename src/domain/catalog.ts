@@ -14,7 +14,15 @@ export interface ProductVariant {
   label: string;
   priceMinor: number | null;
   currency: "USD";
+  stock?: ProductStock;
 }
+
+export type ProductStock =
+  | { state: "low_stock"; remaining: number }
+  | {
+      state: "available" | "out_of_stock" | "not_offered" | "unverified";
+      remaining?: never;
+    };
 
 export interface Product {
   key: string;
@@ -22,6 +30,7 @@ export interface Product {
   title: string;
   summary: string;
   details: string[];
+  ingredients?: string[];
   category: ProductCategory;
   imageKey: ProductImage;
   photo?: ProductPhoto | null;
@@ -34,8 +43,7 @@ export interface Catalog {
   products: Product[];
 }
 
-export interface Availability {
+export type Availability = {
   variantKey: string;
   locationKey: string;
-  state: "concept" | "available" | "out_of_stock" | "not_offered";
-}
+} & (ProductStock | { state: "concept"; remaining?: never });

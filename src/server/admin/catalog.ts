@@ -120,6 +120,7 @@ function productFields(input: unknown, creating = false): ProductFields {
       "title",
       "summary",
       "details",
+      "ingredients",
       "category",
       "imageKey",
       "kind",
@@ -130,12 +131,36 @@ function productFields(input: unknown, creating = false): ProductFields {
     value["details"] === undefined && creating ? [] : value["details"];
   if (!Array.isArray(details) || details.length > 12)
     invalid("product.details", "At most 12 text details are required.");
+  const ingredients = value["ingredients"];
+  if (
+    ingredients !== undefined &&
+    (!Array.isArray(ingredients) || ingredients.length > 40)
+  )
+    invalid(
+      "product.ingredients",
+      "At most 40 plain-text ingredients are allowed.",
+    );
+  const validatedIngredients =
+    ingredients === undefined
+      ? undefined
+      : (ingredients as unknown[]).map((ingredient) => {
+          const entry = text(ingredient, "product.ingredients", 200).trim();
+          if (/[\r\n]/.test(entry))
+            invalid(
+              "product.ingredients",
+              "Each ingredient must be a single line of plain text.",
+            );
+          return entry;
+        });
   return {
     key: key(value["key"], "product.key"),
     slug: key(value["slug"], "product.slug"),
     title: text(value["title"], "product.title", 160),
     summary: text(value["summary"], "product.summary", 1000),
     details: details.map((detail) => text(detail, "product.details", 2000)),
+    ...(validatedIngredients === undefined
+      ? {}
+      : { ingredients: validatedIngredients }),
     category: choice(
       value["category"],
       ["soap", "honey", "candles", "gifts"],
@@ -299,7 +324,7 @@ const locationQuery = `
   FROM inventory_locations ORDER BY location_key
 `;
 const productQuery = `
-  SELECT p.product_key AS key, p.slug, p.title, p.summary, p.details,
+  SELECT p.product_key AS key, p.slug, p.title, p.summary, p.details, p.ingredients,
     p.category, p.image_key AS "imageKey", p.kind, p.revision, p.photo,
     CASE WHEN p.archived THEN 'archived' WHEN p.published THEN 'published' ELSE 'draft' END AS status,
     COALESCE((
@@ -328,7 +353,11 @@ async function readProduct(
   if (
     product &&
     (!Array.isArray(product.details) ||
-      !product.details.every((detail) => typeof detail === "string"))
+      !product.details.every((detail) => typeof detail === "string") ||
+      !Array.isArray(product.ingredients) ||
+      !product.ingredients.every(
+        (ingredient) => typeof ingredient === "string",
+      ))
   )
     throw new AdminError(
       503,
@@ -599,7 +628,7 @@ export async function createAdminProduct(
         replayed: true,
       };
     await client.query(
-      "INSERT INTO products (product_key,slug,title,summary,details,category,image_key,kind) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8)",
+      "INSERT INTO products (product_key,slug,title,summary,details,category,image_key,kind,ingredients) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9::jsonb)",
       [
         product.key,
         product.slug,
@@ -609,6 +638,7 @@ export async function createAdminProduct(
         product.category,
         product.imageKey,
         product.kind,
+        JSON.stringify(product.ingredients ?? []),
       ],
     );
     await writeVariants(client, product.key, variants);
@@ -713,7 +743,7 @@ export async function updateAdminProduct(
     if (product && variants) {
       if (published) publishable(product, variants);
       await client.query(
-        "UPDATE products SET slug=$2,title=$3,summary=$4,details=$5::jsonb,category=$6,image_key=$7,kind=$8 WHERE product_key=$1",
+        "UPDATE products SET slug=$2,title=$3,summary=$4,details=$5::jsonb,category=$6,image_key=$7,kind=$8,ingredients=COALESCE($9::jsonb,ingredients) WHERE product_key=$1",
         [
           resourceKey,
           product.slug,
@@ -723,6 +753,9 @@ export async function updateAdminProduct(
           product.category,
           product.imageKey,
           product.kind,
+          product.ingredients === undefined
+            ? null
+            : JSON.stringify(product.ingredients),
         ],
       );
       await writeVariants(client, resourceKey, variants, before.variants);

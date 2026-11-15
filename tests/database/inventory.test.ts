@@ -429,7 +429,8 @@ test("checkout holds reduce public availability without exposing private allocat
     {
       variantKey: stock.variantKey,
       locationKey: stock.locationKey,
-      state: "available",
+      state: "low_stock",
+      remaining: 1,
     },
   );
 });
@@ -488,6 +489,7 @@ test("repeat migrations verify checksums and reject rewritten history without ch
     for (const migration of [
       "002_admin_commerce.sql",
       "003_product_photos.sql",
+      "004_product_ingredients.sql",
     ])
       await writeFile(
         join(directory, migration),

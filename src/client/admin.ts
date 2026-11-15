@@ -66,6 +66,14 @@ function serialize(form: HTMLFormElement, action: string): Payload {
           .split(/\r?\n/)
           .map((line) => line.trim())
           .filter(Boolean),
+        ...(data.has("ingredients")
+          ? {
+              ingredients: text(data, "ingredients")
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter(Boolean),
+            }
+          : {}),
         category: text(data, "category"),
         imageKey: text(data, "imageKey"),
         kind: text(data, "kind"),
@@ -398,6 +406,7 @@ function setup(form: HTMLFormElement) {
           slug: product.slug,
           summary: product.summary,
           details: product.details,
+          ingredients: product.ingredients ?? [],
           category: product.category,
           imageKey: product.imageKey,
           kind: product.kind,

@@ -181,6 +181,7 @@ const product: AdminProduct = {
   title: "Component-only record",
   summary: "Presentation fixture, not a real product or stock seed.",
   details: [],
+  ingredients: ["Fixture first", "<b>Fixture second</b>"],
   category: "soap",
   imageKey: "soap",
   kind: "active",
@@ -198,6 +199,35 @@ const product: AdminProduct = {
     },
   ],
 };
+
+test("ingredient editing is explicit, empty by default, ordered and escaped", async () => {
+  const saved = await render("src/components/admin/ProductForm.astro", {
+    product,
+  });
+  assert.match(saved, /name="ingredients"/);
+  assert.match(saved, /Fixture first\n&lt;b&gt;Fixture second&lt;\/b&gt;/);
+  assert.doesNotMatch(saved, /<b>Fixture second<\/b>/);
+  const draft = await render("src/components/admin/ProductForm.astro", {});
+  assert.match(draft, /name="ingredients"[^>]*><\/textarea>/);
+  const html = await render("src/components/ProductIngredients.astro", {
+    ingredients: product.ingredients,
+  });
+  assert.match(html, /<li>Fixture first<\/li>/);
+  assert.match(html, /&lt;b&gt;Fixture second&lt;\/b&gt;/);
+  assert.doesNotMatch(html, /<b>/);
+  assert.equal(
+    (await render("src/components/ProductIngredients.astro", {})).trim(),
+    "",
+  );
+  assert.equal(
+    (
+      await render("src/components/ProductIngredients.astro", {
+        ingredients: [],
+      })
+    ).trim(),
+    "",
+  );
+});
 
 async function fixturePage(
   component: string,
@@ -2494,11 +2524,18 @@ domTest(
       await page
         .getByLabel("Summary", { exact: true })
         .fill("Keep my corrected draft summary.");
+      await page
+        .getByLabel("Ingredients (one per line)")
+        .fill(" First \n\n <b>Second</b> ");
       await page.getByRole("button", { name: "Save changes" }).click();
       await waitPhase(page, "idle");
       assert.equal(requests.length, 1);
       assert.equal(requests[0]!.action, "save");
       assert.equal(requests[0]!.expectedRevision, 7);
+      assert.deepEqual(
+        (requests[0]!.product as { ingredients: string[] }).ingredients,
+        ["First", "<b>Second</b>"],
+      );
       assert.deepEqual(requests[0]!.variants, [
         {
           key: level.variantKey,
@@ -2529,6 +2566,34 @@ domTest(
         (requests[1]!.variants as { priceMinor: number }[])[0]!.priceMinor,
         725,
       );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "legacy product forms omit ingredients instead of submitting an unintended clear",
+  async () => {
+    const page = await fixturePage("src/components/admin/ProductForm.astro", {
+      product,
+    });
+    let payload: Record<string, unknown> | undefined;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      payload = route.request().postDataJSON();
+      return route.fulfill({
+        status: 422,
+        json: { error: { message: "Test-only rejection" } },
+      });
+    });
+    try {
+      await page
+        .locator('[name="ingredients"]')
+        .evaluate((field) => field.remove());
+      await page.getByRole("button", { name: "Save changes" }).click();
+      await waitPhase(page, "idle");
+      assert(payload);
+      assert.equal("ingredients" in (payload.product as object), false);
     } finally {
       await page.close();
     }
