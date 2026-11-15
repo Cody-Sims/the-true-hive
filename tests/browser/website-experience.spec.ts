@@ -1,6 +1,35 @@
 import { test, expect } from "@playwright/test";
 import { gzipSync } from "node:zlib";
 
+test("the homepage features the hive photograph in a responsive honeycomb cutout", async ({
+  page,
+}) => {
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/");
+    const photo = page.getByRole("img", {
+      name: "Honeybees tending golden honeycomb.",
+      exact: true,
+    });
+    await expect(photo).toBeVisible();
+    await expect(photo).toHaveJSProperty("complete", true);
+    expect(
+      await photo.evaluate((image: HTMLImageElement) => image.naturalWidth),
+    ).toBeGreaterThan(0);
+    expect(
+      await photo.evaluate((image) => getComputedStyle(image).clipPath),
+    ).toMatch(/^polygon\(/);
+    await expect(
+      page
+        .locator(".home-scene")
+        .getByText(/Original illustration|not an actual stall/),
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+  }
+});
+
 test("collection categories narrow the actual results without JavaScript", async ({
   browser,
 }) => {
