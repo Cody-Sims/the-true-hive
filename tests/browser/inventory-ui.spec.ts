@@ -11,6 +11,8 @@ test("isolated inventory and inquiry components pass the browser gate", () => {
       "--test",
       "tests/site/admin-presentation.test.ts",
       "tests/site/inquiry-presentation.test.ts",
+      "tests/site/sku-ui.test.ts",
+      "tests/site/barcode-labels.test.ts",
     ],
     {
       cwd: new URL("../../", import.meta.url),

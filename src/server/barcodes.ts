@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import type { Pool } from "pg";
-import bwipjs from "bwip-js";
+import bwipjs from "bwip-js/node";
 import { isRecordKey } from "./inventory/rules.ts";
 import { isInventoryRequest } from "./auth/http.ts";
 import type { AdminConfig } from "./admin/config.ts";

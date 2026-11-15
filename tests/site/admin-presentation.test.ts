@@ -348,23 +348,7 @@ test("inventory home renders real location balances, prices and unverified missi
     assert.match(html, new RegExp(`data-quantity="${key}">${count}</dd>`));
 });
 
-async function fixturePage(
-  component: string,
-  props: Record<string, unknown>,
-  client: string | string[] = "admin.ts",
-  options: {
-    headers?: Record<string, string>;
-    path?: string;
-    csrf?: string;
-  } = {},
-) {
-  const context = await browser.newContext({
-    viewport: { width: 320, height: 1000 },
-  });
-  const page = await context.newPage();
-  page.setDefaultTimeout(3000);
-  page.setDefaultNavigationTimeout(3000);
-  const html = await render(component, props);
+async function loadBrowserClients(client: string | string[]) {
   const clientModules = new Map<string, string>();
   const clientPaths = new Map<string, string>();
   async function loadClient(file: URL): Promise<string> {
@@ -391,6 +375,27 @@ async function fixturePage(
       loadClient(new URL(`src/client/${file}`, root)),
     ),
   );
+  return { clientModules, entrypoints };
+}
+
+async function fixturePage(
+  component: string,
+  props: Record<string, unknown>,
+  client: string | string[] = "admin.ts",
+  options: {
+    headers?: Record<string, string>;
+    path?: string;
+    csrf?: string;
+  } = {},
+) {
+  const context = await browser.newContext({
+    viewport: { width: 320, height: 1000 },
+  });
+  const page = await context.newPage();
+  page.setDefaultTimeout(3000);
+  page.setDefaultNavigationTimeout(3000);
+  const html = await render(component, props);
+  const { clientModules, entrypoints } = await loadBrowserClients(client);
   const nonce =
     options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
   await page.route("**/*", (route) => {
@@ -4008,12 +4013,26 @@ domTest(
       viewport: { width: 320, height: 1000 },
     });
     const page = await context.newPage();
+    const { clientModules, entrypoints } = await loadBrowserClients("admin.ts");
     const requests: { method: string; csrf: string | undefined }[] = [];
-    await page.route("**/*", (route) =>
-      route.request().isNavigationRequest()
-        ? route.fulfill({ contentType: "text/html", body: html })
-        : route.abort(),
-    );
+    await page.route("**/*", (route) => {
+      const url = new URL(route.request().url());
+      const module = clientModules.get(url.pathname);
+      if (url.origin === inventoryOrigin && module !== undefined)
+        return route.fulfill({
+          contentType: "text/javascript",
+          body: module,
+        });
+      return route.request().isNavigationRequest()
+        ? route.fulfill({
+            contentType: "text/html",
+            body: html.replace(
+              "</body>",
+              `${entrypoints.map((src) => `<script type="module" src="${src}"></script>`).join("")}</body>`,
+            ),
+          })
+        : route.abort();
+    });
     await page.route("**/api/admin/logout", (route) => {
       requests.push({
         method: route.request().method(),
@@ -4028,12 +4047,6 @@ domTest(
       await page.goto("https://inventory.example.invalid/inventory/products");
       await page.addStyleTag({
         content: await readFile(new URL("src/styles/admin.css", root), "utf8"),
-      });
-      await page.addScriptTag({
-        content: stripTypeScriptTypes(
-          await readFile(new URL("src/client/admin.ts", root), "utf8"),
-          { mode: "transform" },
-        ),
       });
       await page.keyboard.press("Tab");
       assert.equal(
