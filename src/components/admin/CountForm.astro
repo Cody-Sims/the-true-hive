@@ -6,6 +6,7 @@ import type {
 } from "../../domain/admin.ts";
 import FormFeedback from "./FormFeedback.astro";
 import Quantities from "./Quantities.astro";
+import AdminSelect from "./AdminSelect.astro";
 interface Props {
   variant: AdminVariant;
   level: AdminInventoryLevel;
@@ -91,7 +92,7 @@ const Heading = inline ? "h4" : "h3";
         <div class="admin-grid">
           <label>
             Direction{" "}
-            <select name="direction" required>
+            <AdminSelect name="direction" aria-label="Direction" required>
               <option value="increase">
                 {inline
                   ? "Add units to on hand"
@@ -102,7 +103,7 @@ const Heading = inline ? "h4" : "h3";
               <option value="reduce">
                 {compact ? "Reduce stock" : "Reduce on hand"}
               </option>
-            </select>
+            </AdminSelect>
           </label>
           <label>
             {compact ? "Units" : "Positive whole units"}{" "}

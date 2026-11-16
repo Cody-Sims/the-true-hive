@@ -31,7 +31,9 @@ if (!product) Astro.response.status = unavailable ? 503 : 404;
 ---
 
 <AdminLayout title={product ? `Edit ${product.title}` : "Product record"}>
-  <a href="/inventory/products">Back to products</a>
+  <a href="/inventory/products" slot="page-actions">
+    Back to products
+  </a>
   {product ? (
     <>
       <ProductForm

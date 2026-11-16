@@ -24,7 +24,9 @@ if (!location) Astro.response.status = unavailable ? 503 : 404;
 ---
 
 <AdminLayout title={location ? `Edit ${location.name}` : "Location record"}>
-  <a href="/inventory/locations">Back to locations</a>
+  <a href="/inventory/locations" slot="page-actions">
+    Back to locations
+  </a>
   {location ? (
     <LocationForm location={location} />
   ) : (

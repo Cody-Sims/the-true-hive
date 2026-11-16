@@ -4,6 +4,7 @@ import CountForm from "./CountForm.astro";
 import Quantities from "./Quantities.astro";
 import Pagination from "./Pagination.astro";
 import ProductArt from "../ProductArt.astro";
+import AdminSelect from "./AdminSelect.astro";
 import { money } from "./presentation.ts";
 import {
   inventoryCategories,
@@ -76,18 +77,22 @@ const photoSource = (product: AdminProduct) =>
     </label>
     <label>
       Category
-      <select name="category">
+      <AdminSelect name="category" aria-label="Category">
         <option value="all">All categories</option>
         {inventoryCategories.map(([key, name]) => (
           <option value={key} selected={query.category === key}>
             {name}
           </option>
         ))}
-      </select>
+      </AdminSelect>
     </label>
     <label>
       Inventory location
-      <select name="locationKey" disabled={!locations.length}>
+      <AdminSelect
+        name="locationKey"
+        aria-label="Inventory location"
+        disabled={!locations.length}
+      >
         {!locations.length && <option value="">No locations</option>}
         {locations.map((entry) => (
           <option value={entry.key} selected={entry.key === locationKey}>
@@ -95,7 +100,7 @@ const photoSource = (product: AdminProduct) =>
             {entry.active ? "" : " (inactive)"}
           </option>
         ))}
-      </select>
+      </AdminSelect>
     </label>
     <input type="hidden" name="stock" value={query.stock} />
     <button type="submit">Apply filters</button>

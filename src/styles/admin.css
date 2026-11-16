@@ -14,7 +14,10 @@ body {
   background: var(--paper);
   color: var(--forest);
   font:
-    1rem/1.5 Arial,
+    1rem/1.5 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
     Helvetica,
     sans-serif;
 }
@@ -62,8 +65,8 @@ select {
   min-height: 2.75rem;
   padding: 0.55rem;
   background: #fffdf7;
-  border: 1px solid var(--forest);
-  border-radius: 0;
+  border: 1px solid #b7c3a5;
+  border-radius: 0.35rem;
 }
 textarea {
   resize: vertical;
@@ -82,6 +85,7 @@ button {
   background: var(--forest);
   color: var(--paper);
   border: 2px solid var(--forest);
+  border-radius: 0.35rem;
   cursor: pointer;
 }
 button:disabled {
@@ -99,45 +103,12 @@ button:disabled {
   width: min(100% - 2rem, 70rem);
   margin-inline: auto;
 }
-.admin-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 2rem;
-  align-items: center;
-  padding-block: 1rem;
-  border-bottom: 2px solid var(--forest);
-}
-.admin-brand {
-  font-weight: 800;
-  text-decoration: none;
-}
-.admin-brand span {
-  display: block;
-  font-weight: 400;
-  font-size: 0.85rem;
-}
-.admin-identity {
-  margin: 0;
-  font-size: 0.85rem;
-  min-width: 0;
-}
-.admin-identity span {
-  display: block;
-}
-.admin-header nav,
 .admin-actions,
 .admin-pagination {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem 1rem;
   align-items: center;
-}
-.admin-header nav {
-  width: 100%;
-}
-.admin-header nav a {
-  display: inline-block;
-  padding-block: 0.5rem;
 }
 [aria-current="page"] {
   font-weight: 800;
@@ -451,31 +422,6 @@ button:disabled {
 
 .admin-inventory .admin-wrap {
   width: min(100% - 2rem, 88rem);
-}
-.admin-inventory {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-}
-.admin-inventory .admin-header {
-  gap: 0.6rem 1.5rem;
-  padding-block: 0.75rem;
-  border-bottom-width: 1px;
-}
-.admin-inventory .admin-header nav {
-  width: auto;
-  margin-left: auto;
-  gap: 0.8rem;
-  font-size: 0.85rem;
-}
-.admin-inventory .admin-identity {
-  font-size: 0.7rem;
-  max-width: 15rem;
-}
-.admin-inventory [data-admin-logout-status]:empty {
-  display: none;
-}
-.admin-inventory h1 {
-  font-size: 1.9rem;
-  margin: 1.25rem 0 0.75rem;
 }
 .inventory-workspace {
   --inventory-muted: #596a52;
@@ -1072,23 +1018,6 @@ button:disabled {
   }
 }
 @media (max-width: 760px) {
-  .admin-inventory .admin-header {
-    gap: 0.5rem;
-  }
-  .admin-inventory .admin-identity,
-  .admin-inventory .admin-brand span {
-    display: none;
-  }
-  .admin-inventory .admin-header nav {
-    width: 100%;
-    margin-left: 0;
-    gap: 0.8rem;
-    font-size: 0.75rem;
-  }
-  .admin-inventory .admin-header nav button {
-    font-size: 0.75rem;
-    padding-inline: 0.65rem;
-  }
   .inventory-page-actions {
     flex-wrap: wrap;
     margin-bottom: 0.9rem;
