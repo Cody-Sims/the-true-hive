@@ -1,0 +1,54 @@
+---
+import type { AdminActor } from "../../domain/admin.ts";
+interface Props {
+  path: string;
+  admin?: AdminActor | undefined;
+  publicShell?: boolean;
+}
+const { path, admin, publicShell = false } = Astro.props;
+const links = [
+  ["/inventory/products", "Products"],
+  ["/inventory/locations", "Locations"],
+  ["/inventory/store", "Store settings"],
+  ["/inventory/orders", "Orders"],
+  ["/inventory/history", "History"],
+] as const;
+---
+
+<header class="admin-header admin-wrap">
+  <a
+    class="admin-brand"
+    href={publicShell ? "/inventory/login" : "/inventory/products"}
+  >
+    THE TRUE HIVE <span>Inventory workspace</span>
+  </a>
+  {!publicShell && admin && (
+    <>
+      <p class="admin-identity">
+        Verified administrator <span>{admin.uid}</span>
+      </p>
+      <nav aria-label="Inventory navigation">
+        {links.map(([href, label]) => (
+          <a
+            href={href}
+            aria-current={
+              (
+                href === "/inventory/store"
+                  ? path === href
+                  : path.startsWith(href)
+              )
+                ? "page"
+                : undefined
+            }
+          >
+            {label}
+          </a>
+        ))}
+        <button type="button" data-admin-logout>
+          Sign out
+        </button>
+      </nav>
+      <p data-admin-logout-status role="status" tabindex="-1"></p>
+    </>
+  )}
+</header>

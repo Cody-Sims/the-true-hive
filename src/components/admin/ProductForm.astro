@@ -5,6 +5,7 @@ import FormFeedback from "./FormFeedback.astro";
 import FieldHelp from "./FieldHelp.astro";
 import IngredientTools from "./IngredientTools.astro";
 import ProductPreview from "./ProductPreview.astro";
+import AdminSelect from "./AdminSelect.astro";
 interface Props {
   product?: AdminProduct;
   photosEnabled?: boolean;
@@ -164,7 +165,7 @@ const endpoint = product
         </FieldHelp>
         <label>
           <span>Category</span>
-          <select name="category" required>
+          <AdminSelect name="category" required>
             <option value="" selected={!product}>
               Choose a category
             </option>
@@ -176,7 +177,7 @@ const endpoint = product
                 {category}
               </option>
             ))}
-          </select>
+          </AdminSelect>
         </label>
       </div>
       <div class="admin-field">
@@ -188,7 +189,7 @@ const endpoint = product
         </FieldHelp>
         <label>
           <span>Placeholder illustration</span>
-          <select name="imageKey" required>
+          <AdminSelect name="imageKey" required>
             <option value="" selected={!product}>
               Choose an illustration
             </option>
@@ -197,7 +198,7 @@ const endpoint = product
                 {image}
               </option>
             ))}
-          </select>
+          </AdminSelect>
         </label>
       </div>
       <div class="admin-field">
@@ -208,7 +209,7 @@ const endpoint = product
         </FieldHelp>
         <label>
           <span>Record type</span>
-          <select name="kind">
+          <AdminSelect name="kind">
             {["draft", "concept", "active"].map((kind) => (
               <option
                 value={kind}
@@ -221,7 +222,7 @@ const endpoint = product
                     : "Concept"}
               </option>
             ))}
-          </select>
+          </AdminSelect>
         </label>
       </div>
     </div>
