@@ -102,6 +102,15 @@ const categories = {
                   : undefined
               }
             >
+              <span class="format-thumb">
+                <ProductArt
+                  image={product.imageKey}
+                  photo={product.photo ?? null}
+                  referenceKey={product.key}
+                  referenceVariantKey={variant.key}
+                  sizes="3rem"
+                />
+              </span>
               <span>
                 <span class="format-name">{variant.label}</span>
                 {stock && stock.state !== "available" && (
@@ -273,7 +282,7 @@ const categories = {
   }
   .shelf-format {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: 3rem minmax(0, 1fr) auto auto;
     gap: 0.5rem 0.75rem;
     align-items: center;
     min-height: 3.5rem;
@@ -287,6 +296,11 @@ const categories = {
   }
   .format-name {
     display: block;
+  }
+  .format-thumb :global(img) {
+    width: 3rem;
+    height: 3rem;
+    object-fit: cover;
   }
   .format-arrow {
     color: var(--tomato);

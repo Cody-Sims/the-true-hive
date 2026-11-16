@@ -1,0 +1,134 @@
+---
+import type { Product } from "../domain/catalog.ts";
+import { pricedVariants, projectedStock } from "../domain/cart.ts";
+import { getSoapReference } from "../content/soap-references.ts";
+import ProductArt from "./ProductArt.astro";
+interface Props {
+  product: Product;
+  preferredVariantKey?: string | undefined;
+}
+const { product, preferredVariantKey } = Astro.props;
+const offered = pricedVariants(product).filter(
+  (variant) =>
+    !["out_of_stock", "not_offered"].includes(
+      projectedStock(variant)?.state ?? "",
+    ),
+);
+const selected =
+  offered.find((variant) => variant.key === preferredVariantKey) ??
+  offered[0] ??
+  product.variants[0];
+const reference = !product.photo
+  ? getSoapReference(product.key, selected?.key)
+  : null;
+---
+
+<figure data-product-gallery class="product-gallery">
+  <div data-gallery-art class="gallery-art">
+    <ProductArt
+      image={product.imageKey}
+      photo={product.photo ?? null}
+      referenceKey={product.key}
+      referenceVariantKey={selected?.key}
+      alt={`Illustration for ${product.title}.`}
+      eager
+    />
+  </div>
+  {reference && <figcaption>AI styling reference</figcaption>}
+  <div class="gallery-choices" aria-label="Product images">
+    {product.variants.map((variant) => (
+      <>
+        <button
+          type="button"
+          data-variant-image={variant.key}
+          aria-label={`View ${variant.label}`}
+          aria-pressed={variant.key === selected?.key}
+          disabled={!offered.some((entry) => entry.key === variant.key)}
+        >
+          <ProductArt
+            image={product.imageKey}
+            photo={product.photo ?? null}
+            referenceKey={product.key}
+            referenceVariantKey={variant.key}
+            sizes="5rem"
+          />
+          <span>{variant.label}</span>
+        </button>
+        <template data-gallery-template={variant.key}>
+          <ProductArt
+            image={product.imageKey}
+            photo={product.photo ?? null}
+            referenceKey={product.key}
+            referenceVariantKey={variant.key}
+            alt={`Illustration for ${variant.label}.`}
+            eager
+          />
+        </template>
+      </>
+    ))}
+  </div>
+</figure>
+
+<style>
+  .product-gallery {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    align-self: start;
+  }
+  .gallery-art {
+    aspect-ratio: 1;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .gallery-art :global(img) {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+  figcaption {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border: 0;
+    background: var(--paper);
+    color: var(--forest);
+    font-size: 0.65rem;
+  }
+  .gallery-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  button {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    padding: 0.3rem;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--forest);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: left;
+  }
+  button[aria-pressed="true"] {
+    border-color: var(--forest);
+    background: var(--surface);
+  }
+  button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+  button :global(img) {
+    width: 3.5rem;
+    height: 3.5rem;
+    object-fit: cover;
+  }
+</style>
