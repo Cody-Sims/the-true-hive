@@ -743,6 +743,7 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
 type StockRecord = {
   productKey: string;
   title: string;
+  category: string;
   status: string;
   variant: {
     key: string;
@@ -770,9 +771,8 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
   const formHost = inspector.querySelector<HTMLElement>(
     "[data-stock-form-host]",
   )!;
-  const originalForm = formHost
-    .querySelector<HTMLFormElement>("form")
-    ?.cloneNode(true) as HTMLFormElement | undefined;
+  const originalControls = formHost.firstElementChild?.cloneNode(true) as
+    HTMLElement | undefined;
   const status = workspace.querySelector<HTMLElement>(
     "[data-stock-workspace-status]",
   )!;
@@ -864,7 +864,9 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
     if (!dialog.open) dialog.showModal();
     const target = formHost.hidden
       ? inspector.querySelector<HTMLElement>("[data-stock-edit]")
-      : currentForm()?.querySelector<HTMLElement>('[name="amount"]');
+      : inspector.querySelector<HTMLDetailsElement>("[data-stock-editor]")?.open
+        ? currentForm()?.querySelector<HTMLElement>('[name="amount"]')
+        : inspector.querySelector<HTMLElement>("[data-stock-editor] > summary");
     target?.focus();
   }
   function select(row: HTMLElement) {
@@ -881,15 +883,30 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
     for (const candidate of rows) {
       const active = candidate === row;
       candidate.classList.toggle("is-selected", active);
-      const link = candidate.querySelector("[data-stock-select]")!;
-      if (active) link.setAttribute("aria-current", "true");
-      else link.removeAttribute("aria-current");
+      for (const control of candidate.querySelectorAll("[data-stock-select]")) {
+        if (control instanceof HTMLButtonElement)
+          control.setAttribute("aria-pressed", String(active));
+        else if (active) control.setAttribute("aria-current", "true");
+        else control.removeAttribute("aria-current");
+      }
     }
     status.textContent = "";
     const set = (selector: string, value: string) => {
       inspector.querySelector<HTMLElement>(selector)!.textContent = value;
     };
     set("[data-stock-title]", record.title);
+    set("[data-stock-category]", record.category);
+    const art = [
+      ...workspace.querySelectorAll<HTMLTemplateElement>(
+        "[data-stock-art-template]",
+      ),
+    ].find(
+      (template) => template.dataset.stockArtTemplate === record.productKey,
+    );
+    if (art)
+      inspector
+        .querySelector("[data-stock-art]")!
+        .replaceChildren(art.content.cloneNode(true));
     set(
       "[data-stock-variant]",
       `${record.variant.label} / ${record.variant.sku}`,
@@ -915,8 +932,9 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
     inspector.querySelector<HTMLElement>("[data-stock-balances]")!.hidden =
       !record.level;
     formHost.hidden = !record.level;
-    if (record.level && originalForm) {
-      const form = originalForm.cloneNode(true) as HTMLFormElement;
+    if (record.level && originalControls) {
+      const controls = originalControls.cloneNode(true) as HTMLElement;
+      const form = controls.querySelector<HTMLFormElement>("form")!;
       form.dataset.refresh = `/api/admin/products/${encodeURIComponent(record.productKey)}`;
       for (const [name, value] of Object.entries({
         variantKey: record.variant.key,
@@ -924,8 +942,10 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
         expectedRevision: record.level.revision,
       }))
         input(form, name)!.value = String(value);
-      formHost.replaceChildren(form);
+      formHost.replaceChildren(controls);
       setup(form);
+      inspector.querySelector<HTMLDetailsElement>("[data-stock-editor]")!.open =
+        false;
       const quantities = inspector.querySelector<HTMLElement>("[data-level]")!;
       quantities.dataset.variant = record.variant.key;
       quantities.dataset.location = record.locationKey;
@@ -953,15 +973,17 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
   workspace.classList.add("is-enhanced");
   workspace.addEventListener("click", (event) => {
     const target = event.target as Element;
-    const link = target.closest<HTMLAnchorElement>("[data-stock-select]");
+    const control = target.closest<HTMLElement>("[data-stock-select]");
+    const row = target.closest<HTMLElement>("[data-stock-row]");
     if (
-      link &&
+      row &&
+      (control || !target.closest("a, button, input, select, textarea")) &&
       !(event as MouseEvent).metaKey &&
       !(event as MouseEvent).ctrlKey &&
       !(event as MouseEvent).shiftKey
     ) {
       event.preventDefault();
-      select(link.closest<HTMLElement>("[data-stock-row]")!);
+      select(row);
     }
     const preset = target.closest<HTMLElement>("[data-stock-preset]");
     if (preset && !locked()) {
@@ -1012,6 +1034,24 @@ function setupInventoryWorkspace(workspace: HTMLElement) {
       );
     }
   });
+  workspace.addEventListener(
+    "toggle",
+    (event) => {
+      const editor = event.target;
+      if (
+        editor instanceof HTMLDetailsElement &&
+        editor.hasAttribute("data-stock-editor") &&
+        !editor.open &&
+        locked()
+      ) {
+        editor.open = true;
+        announce(
+          "Resolve the current stock operation before closing its receiving controls.",
+        );
+      }
+    },
+    true,
+  );
   dialog.addEventListener("close", () => {
     home.append(inspector);
     selectedRow()

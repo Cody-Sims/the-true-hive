@@ -22,7 +22,7 @@ const {
   inline = false,
   compact = false,
 } = Astro.props;
-const Editor = inline ? "details" : "div";
+const Editor = inline || compact ? "details" : "div";
 const Heading = inline ? "h4" : "h3";
 ---
 
@@ -48,8 +48,13 @@ const Heading = inline ? "h4" : "h3";
       <Quantities level={level} compact={inline} />
     </div>
   )}
-  <Editor>
+  <Editor data-stock-editor={compact || undefined}>
     {inline && <summary>Add / Reduce stock</summary>}
+    {compact && (
+      <summary class="inventory-receive-toggle">
+        Receive stock <span aria-hidden="true">+</span>
+      </summary>
+    )}
     <form
       data-admin-form="adjustment"
       data-endpoint="/api/admin/adjustments"

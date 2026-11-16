@@ -3,6 +3,7 @@ import type { AdminLocation, AdminProduct } from "../../domain/admin.ts";
 import CountForm from "./CountForm.astro";
 import Quantities from "./Quantities.astro";
 import Pagination from "./Pagination.astro";
+import ProductArt from "../ProductArt.astro";
 import { money } from "./presentation.ts";
 import {
   inventoryCategories,
@@ -37,6 +38,12 @@ const labels = Object.fromEntries(stockFilters);
 const unvaried = products.filter((product) => product.variants.length === 0);
 const filtered =
   !!query.search || query.category !== "all" || query.stock !== "all";
+const categoryName = (category: string) =>
+  inventoryCategories.find(([key]) => key === category)?.[1] ?? category;
+const photoSource = (product: AdminProduct) =>
+  product.photo
+    ? `/api/admin/products/${encodeURIComponent(product.key)}/photo?revision=${product.revision}`
+    : null;
 ---
 
 <section
@@ -180,6 +187,7 @@ const filtered =
                   const record = {
                     productKey: product.key,
                     title: product.title,
+                    category: categoryName(product.category),
                     status: product.status,
                     variant: {
                       key: variant.key,
@@ -201,12 +209,20 @@ const filtered =
                       }}
                     >
                       <td class="inventory-product-cell">
-                        <strong>{product.title}</strong>
-                        <span>
-                          {variant.label}{" "}
-                          <span aria-hidden="true">&middot;</span>{" "}
-                          <code>{variant.sku}</code>
-                        </span>
+                        <button
+                          type="button"
+                          class="inventory-product-select"
+                          data-stock-select
+                          aria-pressed={variant.key === selected?.variant.key}
+                          aria-label={`Select stock for ${product.title}, ${variant.label}`}
+                        >
+                          <strong>{product.title}</strong>
+                          <span>
+                            {variant.label}{" "}
+                            <span aria-hidden="true">&middot;</span>{" "}
+                            <code>{variant.sku}</code>
+                          </span>
+                        </button>
                         {(product.status !== "published" ||
                           !variant.active) && (
                           <small>
@@ -250,7 +266,7 @@ const filtered =
                           }
                           aria-label={`View stock for ${product.title}, ${variant.label}`}
                         >
-                          Stock <span aria-hidden="true">&rarr;</span>
+                          <span aria-hidden="true">&rarr;</span>
                         </a>
                       </td>
                     </tr>
@@ -302,7 +318,7 @@ const filtered =
         aria-labelledby="stock-panel-title"
       >
         <div class="inventory-inspector-heading">
-          <span>FOCUSED STOCK DETAILS</span>
+          <span>SELECTED VARIANT</span>
           <button
             type="button"
             class="inventory-inspector-close"
@@ -312,6 +328,17 @@ const filtered =
             Close
           </button>
         </div>
+        <div class="inventory-inspector-art" data-stock-art>
+          <ProductArt
+            image={selected.product.imageKey}
+            photo={selected.product.photo ?? null}
+            photoSrc={photoSource(selected.product)}
+            eager
+          />
+        </div>
+        <p class="inventory-inspector-category" data-stock-category>
+          {categoryName(selected.product.category)}
+        </p>
         <h2 id="stock-panel-title" data-stock-title tabindex="-1">
           {selected.product.title}
         </h2>
@@ -338,6 +365,16 @@ const filtered =
         <div data-stock-balances hidden={!selected.level}>
           {balance && <Quantities level={balance} sellableLabel="Available" />}
         </div>
+        {products.map((product) => (
+          <template data-stock-art-template={product.key}>
+            <ProductArt
+              image={product.imageKey}
+              photo={product.photo ?? null}
+              photoSrc={photoSource(product)}
+              eager
+            />
+          </template>
+        ))}
         <p class="admin-notice" data-stock-untracked hidden={!!selected.level}>
           No balance is recorded for this variant at this location. This is not
           proof of zero stock. Open the product record to investigate.
