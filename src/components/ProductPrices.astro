@@ -1,17 +1,42 @@
 ---
 import type { Product } from "../domain/catalog.ts";
-import { money, pricedVariants } from "../domain/cart.ts";
+import { money, pricedVariants, projectedStock } from "../domain/cart.ts";
 import StockNotice from "./StockNotice.astro";
 interface Props {
   product: Product;
+  compact?: boolean;
 }
-const { product } = Astro.props;
+const { product, compact = false } = Astro.props;
 const priced = pricedVariants(product);
+const prices = priced.map((variant) => variant.priceMinor!);
+const startingPrice = prices.length ? Math.min(...prices) : null;
+const warnings = product.variants.filter((variant) => {
+  const stock = projectedStock(variant);
+  return stock && stock.state !== "available";
+});
 ---
 
 {product.kind === "active" && (
   <div class="product-prices" aria-label="Current variant prices">
-    {product.variants.length ? (
+    {compact ? (
+      <>
+        <p class="starting-price">
+          {startingPrice === null
+            ? "Price unavailable"
+            : `${new Set(prices).size > 1 ? "From " : ""}${money(startingPrice)}`}
+        </p>
+        {warnings.length > 0 && (
+          <ul>
+            {warnings.map((variant) => (
+              <li>
+                <span>{variant.label}</span>
+                <StockNotice variant={variant} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    ) : product.variants.length ? (
       <ul>
         {product.variants.map((variant) => (
           <li>
@@ -26,7 +51,7 @@ const priced = pricedVariants(product);
         ))}
       </ul>
     ) : (
-      <p>Formats and prices are not available yet.</p>
+      <p>Price unavailable</p>
     )}
   </div>
 )}
@@ -43,5 +68,10 @@ const priced = pricedVariants(product);
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+  .starting-price {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
   }
 </style>

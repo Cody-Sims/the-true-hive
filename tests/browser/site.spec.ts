@@ -38,7 +38,7 @@ test("Apiary Market reflows without horizontal overflow at all required widths",
       /Good things,.*closer to home/i,
     );
     await expect(
-      page.getByRole("link", { name: /Explore the collection/ }),
+      page.getByRole("link", { name: /Shop the collection/ }),
     ).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
@@ -125,7 +125,7 @@ test("unsafe query keys are rejected and unavailable database mode never falls b
   expect((await response.json()).error.code).toBe("NOT_CONFIGURED");
   const page = await request.get("http://127.0.0.1:4326/goods");
   expect(page.status()).toBe(503);
-  expect(await page.text()).toMatch(/no fictional stock/i);
+  expect(await page.text()).toMatch(/catalog is temporarily unavailable/i);
   expect(await page.text()).not.toContain("Everyday soap");
 });
 

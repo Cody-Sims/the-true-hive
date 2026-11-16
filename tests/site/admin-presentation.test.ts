@@ -518,6 +518,104 @@ test("active product cards show canonical prices and cart options without enabli
   );
 });
 
+test("compact shopping cards show a canonical starting price and preserve stock warnings", async () => {
+  const pricedProduct = {
+    ...product,
+    variants: [
+      {
+        ...product.variants[0],
+        priceMinor: 725,
+        stock: { state: "low_stock", remaining: 3 },
+      },
+      {
+        ...product.variants[0],
+        key: "fixture-pair",
+        label: "Pair",
+        priceMinor: 1400,
+        stock: { state: "available" },
+      },
+    ],
+  };
+  const html = await render("src/components/ProductPrices.astro", {
+    product: pricedProduct,
+    compact: true,
+  });
+  assert.match(html.replace(/\s+/g, " "), /From \$7\.25/);
+  assert.match(html, /Only 3 left/);
+  assert.doesNotMatch(html, /\$14\.00/);
+  const empty = await render("src/components/ProductPrices.astro", {
+    product: {
+      ...product,
+      variants: [{ ...product.variants[0], priceMinor: null }],
+    },
+    compact: true,
+  });
+  assert.doesNotMatch(empty, /\$0\.00|From \$/);
+});
+
+test("product buying controls stay concise without hiding actual sold-out states", async () => {
+  const active = {
+    ...product,
+    variants: [{ ...product.variants[0], priceMinor: 725 }],
+  };
+  const html = await render("src/components/AddToCart.astro", {
+    product: active,
+  });
+  assert.match(html, /data-add-to-cart/);
+  assert.match(html, /Add to cart/);
+  assert.doesNotMatch(
+    html.replace(/\s+/g, " "),
+    /does not reserve stock or place an order/,
+  );
+  const soldOut = await render("src/components/AddToCart.astro", {
+    product: {
+      ...active,
+      variants: [{ ...active.variants[0], stock: { state: "out_of_stock" } }],
+    },
+  });
+  assert.match(soldOut, /Sold out/);
+  assert.doesNotMatch(soldOut, /data-add-to-cart/);
+});
+
+test("configured test checkout labels shopping pages as a test store without paused-store prose", async () => {
+  const environment = {
+    SITE_URL: "https://sandbox.example.test",
+    SITE_INDEXABLE: "false",
+    CATALOG_SOURCE: "database",
+    DATABASE_TLS: "verify-full",
+    DATABASE_URL: "postgresql://public:fixture@database.example.test/inventory",
+    ADMIN_DATABASE_URL:
+      "postgresql://writer:fixture@database.example.test/inventory",
+    MIGRATION_DATABASE_URL: "",
+    INVENTORY_ENABLED: "true",
+    CHECKOUT_MODE: "stripe-test",
+    CHECKOUT_LOCATION_KEY: "sandbox-pickup",
+    STOREFRONT_LOCATION_KEY: "sandbox-pickup",
+    STRIPE_SECRET_KEY: "sk_test_fixtureabcdefgh",
+    STRIPE_WEBHOOK_SECRET: "whsec_fixtureabcdefgh",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(environment).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, environment);
+  try {
+    const html = (
+      await render("src/layouts/SiteLayout.astro", {
+        title: "Test fixture",
+        description: "Test fixture",
+        path: "/goods",
+      })
+    ).replace(/\s+/g, " ");
+    assert.match(html, /Test store/);
+    assert.match(html, /no real payments or pickups/);
+    assert.doesNotMatch(html, /paused|isn't open yet|database\.example/);
+  } finally {
+    for (const [key, value] of Object.entries(previous))
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+  }
+});
+
 test("legacy test checkout keeps verified low-stock variants selectable", async () => {
   const html = await render("src/components/TestCheckout.astro", {
     product: {

@@ -287,9 +287,7 @@ test("a server-confirmed released checkout restores the latest saved cart before
   await page.evaluate(() => {
     (window as unknown as { restoreCartStorage(): void }).restoreCartStorage();
   });
-  await page
-    .getByRole("button", { name: "Refresh prices and availability" })
-    .click();
+  await page.getByRole("button", { name: "Refresh cart" }).click();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$14.00");
   await expect(
     page.getByRole("button", { name: "Clear cart", exact: true }),
@@ -385,9 +383,7 @@ test("cart uses current prices, persists only identities, and supports keyboard 
   await page.reload();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$35.75");
   price = 800;
-  await page
-    .getByRole("button", { name: "Refresh prices and availability" })
-    .click();
+  await page.getByRole("button", { name: "Refresh cart" }).click();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$38.00");
   expect(
     await page.evaluate(() =>
@@ -432,9 +428,7 @@ test("missing and unavailable catalog lines are retained without invented totals
   );
   await expect(page.locator("[data-cart-lines] > li")).toHaveCount(2);
   unavailable = false;
-  await page
-    .getByRole("button", { name: "Refresh prices and availability" })
-    .click();
+  await page.getByRole("button", { name: "Refresh cart" }).click();
   await expect(
     page.getByText(/This variant is no longer published/),
   ).toBeVisible();
@@ -461,11 +455,11 @@ test("cart navigation and controls fit a narrow viewport without offering real c
   ).toBeVisible();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$7.25");
   await expect(
-    page.getByRole("heading", {
-      name: "Online ordering isn't open yet.",
+    page.getByRole("button", {
+      name: "Checkout unavailable",
       exact: true,
     }),
-  ).toBeVisible();
+  ).toBeDisabled();
   await expect(page.locator("[data-cart-checkout]")).toHaveCount(0);
   expect(
     await page.evaluate(

@@ -84,8 +84,7 @@ const { contact } = readConfig();
       Your cart uses browser storage on this device for selected variant
       identifiers and quantities, not customer details or authoritative prices.
       The cart refreshes current catalog information when you review it. Browser
-      storage can be unavailable or cleared by your browser; saved selections
-      are not a stock reservation or an order.
+      storage can be unavailable or cleared by your browser.
     </p>
     <p>
       A pending test checkout may keep a request identifier and its selected
@@ -95,8 +94,11 @@ const { contact } = readConfig();
       or release a stock hold.
     </p>
     <p>
-      Online checkout is being prepared. Purchase-specific information about
-      payments and customer data will accompany checkout before it opens.
+      When test checkout is enabled, payment details are entered on Stripe's
+      hosted test page, not in a card form on this website. Use Stripe's test
+      details, not a real payment card. See
+      <a href="https://stripe.com/privacy">Stripe's privacy policy</a>
+      for its practices.
     </p>
   </section>
 </SiteLayout>

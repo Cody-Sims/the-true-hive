@@ -24,6 +24,8 @@
 
 ### Changed
 
+- Replace repeated staging/coming-soon/paused-store prose with product-focused shopping pages, compact canonical starting prices, clearer buying controls and useful cart/checkout recovery links.
+- Retain one contextual unavailable-checkout state and explicit test-store/no-real-payment/pickup labels when test mode is configured; document the owner's temporary current-deployment sandbox authorization and rollback boundaries.
 - Move contact channels and email drafts to a dedicated Contact page; keep pickup details as a compact collection/cart notice instead of large homepage sections.
 - Compact private product/location stock rows while keeping primary counts visible; disclose secondary counts and identifiers on demand and surface new-product/location actions.
 - Make non-shopping pages customer-facing with the confirmed business phone, current About/privacy/accessibility information, hidden unconfigured channels and improved shared accessibility; keep shopping and deferred forms separate.

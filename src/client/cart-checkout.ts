@@ -111,7 +111,7 @@ export function createCartCheckout(options: CheckoutClientOptions) {
         state(
           closed ? "closed" : "idle",
           closed
-            ? "New checkouts are paused. Your cart has been kept; you can continue browsing and editing your selections."
+            ? "Checkout is unavailable. Your selections have been kept; you can continue editing your cart."
             : "Test checkout was rejected. Refresh current prices and availability, then review your cart before trying again.",
         );
         return;

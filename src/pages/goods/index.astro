@@ -5,7 +5,6 @@ import PickupLocation from "../../components/PickupLocation.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import { getCheckoutPresentation } from "../../server/commerce/config.ts";
-import { getStorefrontStatus } from "../../server/storefront.ts";
 import type { Catalog, ProductCategory } from "../../domain/catalog.ts";
 
 const collections: { value: ProductCategory | "all"; label: string }[] = [
@@ -38,11 +37,7 @@ const search = query.trim().toLowerCase();
 const filtersActive = category !== "all" || search.length > 0;
 
 const config = readConfig();
-const storefront = await getStorefrontStatus(
-  config,
-  getCheckoutPresentation().enabled,
-);
-const testCheckoutEnabled = storefront.checkoutEnabled;
+const testCheckoutEnabled = getCheckoutPresentation().enabled;
 let catalog: Catalog | undefined;
 let unavailable = false;
 try {
@@ -70,46 +65,29 @@ const products = filtersInvalid
 ---
 
 <SiteLayout
-  title="The good-goods collection"
-  description="Explore The True Hive's collection, published variant prices and pickup information in Madisonville, Tennessee. Online purchasing is not open yet."
-  storefrontStatus={storefront}
+  title="Shop the collection"
+  description="Explore The True Hive's soaps, ingredients and available formats. Local pickup in Madisonville, Tennessee."
 >
   <section class="page-intro collection-intro wrap">
     <div>
-      <p class="eyebrow">The neighborhood product shelf</p>
+      <p class="eyebrow">Shop The True Hive</p>
       <h1>
-        The good-goods
+        Find your
         <br />
-        <em>collection.</em>
+        <em>everyday favorite.</em>
       </h1>
       <p class="collection-description">
-        A little daily ritual. A future pantry favorite. A slower moment at
-        home. Get to know what's taking shape.
+        Explore ingredients, compare formats and choose something for your
+        everyday routine.
       </p>
     </div>
-    <aside class="collection-aside" aria-label="A note on the collection">
-      <span class="collection-flower" aria-hidden="true">
-        ✳
-      </span>
-      <p class="eyebrow">A closer look, at your pace</p>
-      <p>
-        Browse the ideas, read the details, and see what is a concept and what
-        has been confirmed. Published active products show their current prices;
-        concepts are not for sale.{" "}
-        {storefront.state === "closed"
-          ? "Purchases are paused; you can still browse prices and save selections in your cart."
-          : testCheckoutEnabled
-            ? "TEST MODE only — no real charge. Review saved selections in your cart."
-            : "Save selections in your cart; online ordering is not open yet."}
-      </p>
-    </aside>
   </section>
 
   <div class="wrap">
     <form class="collection-filters" action="/goods" method="get" role="search">
       <div class="filter-heading">
-        <p class="eyebrow">Make yourself at home</p>
-        <h2>Find your kind of good.</h2>
+        <p class="eyebrow">Find your favorite</p>
+        <h2>Shop the collection.</h2>
       </div>
       <div class="filter-field">
         <label for="collection-category">Collection</label>
@@ -206,14 +184,16 @@ const products = filtersInvalid
       <div class="notice" role="status">
         <h2>The catalog is temporarily unavailable.</h2>
         <p>
-          Product information could not be verified. Please try again later; no
-          fictional stock has been substituted.
+          Please try again shortly, or <a href="/contact">contact us</a> for
+          help.
         </p>
       </div>
     ) : !catalog?.products.length ? (
       <div class="notice">
-        <h3>A collection in the making.</h3>
-        <p>No products have been published yet.</p>
+        <h3>No products available.</h3>
+        <p>
+          Please check back soon or <a href="/contact">get in touch</a>.
+        </p>
       </div>
     ) : filtersInvalid ? null : products.length ? (
       <div class="product-shelf">
@@ -235,15 +215,13 @@ const products = filtersInvalid
             ? ` in ${selectedCollection?.label.toLowerCase()}`
             : ""}
           . Try another word or collection, or clear the filters to see all
-          goods. This is a search result, not a statement about stock.
+          products.
         </p>
       </div>
     )}
     <div class="collection-footnote">
       <p class="fine-print collection-note">
-        {testCheckoutEnabled
-          ? "Original concept illustrations, not final product photographs. Eligible real merchandise may enter a card-only test checkout. No real purchase is available."
-          : "Original concept illustrations, not final product photographs. No cart, payment, reservation, or preorder is available."}
+        Questions about a product? <a href="/contact">Contact us</a>.
       </p>
       <a class="text-link" href="#pickup">
         Local pickup information <span aria-hidden="true">&darr;</span>
@@ -257,16 +235,12 @@ const products = filtersInvalid
 
 <style>
   .collection-intro {
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.7fr);
-    gap: clamp(2rem, 6vw, 6rem);
-    align-items: end;
-    padding-block: clamp(3rem, 6vw, 5.5rem) 3rem;
+    padding-block: clamp(2.5rem, 5vw, 4rem) 2rem;
   }
   .collection-intro h1 {
     margin-block: 1.1rem 1.5rem;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(3rem, 6vw, 6rem);
+    font-size: clamp(3rem, 5vw, 5rem);
     font-weight: 400;
     letter-spacing: -0.065em;
     line-height: 1.02;
@@ -274,22 +248,6 @@ const products = filtersInvalid
   .collection-description {
     max-width: 34rem;
     font-size: 1.05rem;
-  }
-  .collection-aside {
-    padding: 1.5rem 0 0.25rem 1.5rem;
-    border-left: 1px solid var(--line);
-  }
-  .collection-aside > p:last-child {
-    max-width: 24rem;
-    margin-top: 0.8rem;
-    font-size: 0.88rem;
-  }
-  .collection-flower {
-    display: block;
-    margin-bottom: 1rem;
-    color: var(--tomato);
-    font-size: 3.5rem;
-    line-height: 1;
   }
   .collection-filters {
     display: grid;
@@ -406,16 +364,6 @@ const products = filtersInvalid
     }
   }
   @media (max-width: 700px) {
-    .collection-intro {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 2rem;
-    }
-    .collection-aside {
-      padding: 0 0 0 1rem;
-    }
-    .collection-flower {
-      display: none;
-    }
     .collection-filters {
       grid-template-columns: minmax(0, 1fr);
     }

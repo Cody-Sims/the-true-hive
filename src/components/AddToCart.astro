@@ -16,6 +16,9 @@ const unavailable = (variant: (typeof variants)[number]) =>
     projectedStock(variant)?.state ?? "",
   );
 const offered = variants.filter((variant) => !unavailable(variant));
+const soldOut = variants.every(
+  (variant) => projectedStock(variant)?.state === "out_of_stock",
+);
 ---
 
 {product.kind === "active" && variants.length > 0 && (
@@ -24,15 +27,13 @@ const offered = variants.filter((variant) => !unavailable(variant));
     class="cart-controls"
     aria-labelledby="add-cart-title"
   >
-    <h2 id="add-cart-title">Save your selection.</h2>
-    <p>
-      Adding to your cart does not reserve stock or place an order. Prices and
-      availability can change.
-    </p>
+    <h2 id="add-cart-title">
+      {offered.length ? "Choose your format." : "Availability"}
+    </h2>
     {offered.length ? (
       <form data-add-to-cart>
         <label>
-          Variant
+          Format
           <select name="variantKey" required>
             {variants.map((variant) => (
               <option value={variant.key} disabled={unavailable(variant)}>
@@ -60,14 +61,18 @@ const offered = variants.filter((variant) => !unavailable(variant));
         <p data-add-status role="status"></p>
       </form>
     ) : (
-      <p>These variants are not currently available to add.</p>
+      <>
+        <p class="sold-out">{soldOut ? "Sold out" : "Currently unavailable"}</p>
+        <p>
+          <a href="/contact">Ask about availability</a>
+        </p>
+      </>
     )}
     <a class="text-link" href="/cart">
       View your cart &rarr;
     </a>
     <noscript>
-      JavaScript is required to save a cart on this device. No order has been
-      placed.
+      Enable JavaScript to use the cart, or contact us for help.
     </noscript>
   </section>
 )}
@@ -81,6 +86,7 @@ const offered = variants.filter((variant) => !unavailable(variant));
   }
   .cart-controls form {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(4.5rem, 6rem);
     gap: 1rem;
     margin-block: 1rem;
   }
@@ -100,8 +106,21 @@ const offered = variants.filter((variant) => !unavailable(variant));
     border: 1px solid var(--forest);
   }
   .cart-controls button {
+    grid-column: 1 / -1;
     cursor: pointer;
     white-space: normal;
+  }
+  .cart-controls [data-add-status] {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .sold-out {
+    font-weight: 700;
+  }
+  @media (max-width: 32rem) {
+    .cart-controls form {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   .cart-controls :focus-visible {
     outline: 3px solid var(--tomato);

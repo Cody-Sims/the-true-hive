@@ -208,10 +208,15 @@ Checkout remains the selected card-only USD test integration. Account discovery
 and an accepted integration plan do not provision runtime credentials, verify
 webhook delivery or enable payments.
 
+The checklist below is the default for ongoing testing. The owner separately
+approved the temporary current-site exception immediately after it; that
+exception is not a general permission to test against ordinary stock.
+
 1. Prepare a separate disposable database or approved Neon branch and a separate
    sandbox application environment. Do not copy the operational `.env`, private
    memberships, customer records or stock ledger into a test checkout. Do not
-   repurpose the existing prototype hostname or shared production service.
+   repurpose the existing prototype hostname or shared production service
+   without the separately recorded current-site authorization.
    A local application behind an approved HTTPS tunnel can avoid adding another
    paid web service; host/provider setup remains an operator action.
 2. Apply migrations to that isolated database and provision distinct public-read
@@ -244,6 +249,39 @@ Rollback presentation code without restoring an old stock database. Retain the
 additive ingredients column and saved values. Disabling test checkout stops new
 attempts but does not release existing holds; reconcile those separately.
 
+#### Owner-authorized temporary current-site rehearsal
+
+On 2026-11-15 the owner explicitly reclassified the current deployment as a
+temporary test store, stating it has no customer audience yet. The public URL
+is still accessible: **noindex is not authentication**. Keep the existing
+host/member/MFA boundaries and require a visible test-store label on shopping
+pages. Do not remove the test/no-real-payment/no-real-pickup distinction while
+cleaning up repetitive staging prose.
+
+Use the existing **The True Hive sandbox**, card-only USD Checkout and
+`CHECKOUT_MODE=stripe-test`. Live/organization keys and live provider events
+remain rejected. Configure only the existing application's test key and signed
+`checkout.session.completed` / `checkout.session.expired` webhook; planning/MCP
+OAuth alone is not an application runtime credential. Preserve the pinned
+Stripe API version and all price, association, retry and settlement checks.
+
+Create a clearly named `stripe-sandbox-pickup` location through the audited
+inventory workflow. Synthetic rehearsal units belong only there, with an
+explicit test-fixture adjustment reason. Existing product identities, prices,
+ingredients, photos and other location balances remain unchanged. Set both
+`STOREFRONT_LOCATION_KEY` and `CHECKOUT_LOCATION_KEY` to that test location;
+leave `SITE_INDEXABLE=false`. Enable store admission only after the test
+runtime, banner, stock and webhook configuration are verified.
+
+This is **location-level test-stock separation on a shared database**, not
+database isolation. Test orders and audit entries remain real durable records
+of a simulation; do not delete them or describe them as customer sales.
+Before sharing the site with customers: pause admission, expire/reconcile
+outstanding test sessions, verify every remaining test allocation, restore the
+ordinary storefront location, disable the test runtime and retire the test
+location without erasing history. Live payments and tax-aware totals still
+require separate implementation and approval.
+
 ### Store purchase switch and confirmed pickup
 
 The owner approved publishing the pickup address at **7031 New Highway 68,
@@ -270,8 +308,9 @@ The purchase setting cannot override disabled runtime checkout or the test-only
 provider boundary. **Taxes are not currently calculated:** `automatic_tax` is
 disabled and provider/order comparisons require zero tax. Publishing a pickup
 address does not establish tax registration, product classification or a tax
-rate. Keep production `CHECKOUT_MODE=disabled`; live sales require a separately
-reviewed payment/tax implementation and business readiness.
+rate. The normal runtime remains `CHECKOUT_MODE=disabled` outside the explicit
+temporary test-store rehearsal above. Live sales require a separately reviewed
+payment/tax implementation and business readiness.
 
 For store-control rollout, first verify a private database backup, apply forward
 migrations 004 and 005, and grant the exact runtime-role permissions above.
