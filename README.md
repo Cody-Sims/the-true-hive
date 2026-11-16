@@ -43,6 +43,12 @@ checkout admission remain authoritative. When checkout is disabled, its status
 appears in the cart; when test mode is configured, shopping pages clearly
 identify the test store and no-real-payment/pickup scope.
 
+The two current soap displays use original **AI styling reference** imagery
+until real product photos are uploaded. These are photography/composition
+examples, not claims about the finished soaps' exact appearance. Uploaded owner
+photos take priority. Cards show one product with visible format prices;
+choosing a format opens its preselected, native product-page controls.
+
 The private inventory home groups variants into collapsible category shelves,
 with location-specific stock status and in-stock/out-of-stock filters. Select a
 product name or row to open its focused stock inspector; on mobile it opens in

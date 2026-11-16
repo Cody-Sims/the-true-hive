@@ -4,6 +4,7 @@
 
 ### Added
 
+- Original, responsive AI soap-styling references for the two current products, clearly disclosed and automatically superseded by uploaded owner photography.
 - Private inventory-home balances and inline audited Add/Reduce controls, with received-unit presets that require explicit review and submission.
 - Faithful ingredient import from explicit Details blocks and generated ingredient text, preserving size notes and existing identities.
 - Internal Code 128 SKU labels, protected image rendering and explicit printing, plus blank-only suggestions for new variant identifiers; no retail registration or fees.
@@ -24,6 +25,7 @@
 
 ### Changed
 
+- Give the storefront an image-led product display with concise cards, visible per-format prices, direct format links and native product-page variant choices while preserving actual stock and checkout authority.
 - Simplify the global header to Store, Services and About us; keep cart/pickup navigation within the store and trim the footer to contact and policy links without repeated shopper contact prompts.
 - Consolidate repeated public page introductions and action links into reusable components, and document the component catalog and evidence-led cleanup plan.
 - Use shared inventory navigation, page-heading and select components across Products, editors, locations, orders, history and store settings, with consistent mobile navigation, account disclosure and native dropdown styling.

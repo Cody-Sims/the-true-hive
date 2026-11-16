@@ -4,7 +4,6 @@ import ProductCard from "../../components/ProductCard.astro";
 import PickupLocation from "../../components/PickupLocation.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
-import { getCheckoutPresentation } from "../../server/commerce/config.ts";
 import type { Catalog, ProductCategory } from "../../domain/catalog.ts";
 
 const collections: { value: ProductCategory | "all"; label: string }[] = [
@@ -37,7 +36,6 @@ const search = query.trim().toLowerCase();
 const filtersActive = category !== "all" || search.length > 0;
 
 const config = readConfig();
-const testCheckoutEnabled = getCheckoutPresentation().enabled;
 let catalog: Catalog | undefined;
 let unavailable = false;
 try {
@@ -70,25 +68,15 @@ const products = filtersInvalid
 >
   <section class="page-intro collection-intro wrap">
     <div>
-      <p class="eyebrow">Shop The True Hive</p>
+      <p class="eyebrow">The True Hive / Everyday goods</p>
       <h1>
-        Find your
-        <br />
-        <em>everyday favorite.</em>
+        The daily <em>collection.</em>
       </h1>
-      <p class="collection-description">
-        Explore ingredients, compare formats and choose something for your
-        everyday routine.
-      </p>
     </div>
   </section>
 
   <div class="wrap">
     <form class="collection-filters" action="/goods" method="get" role="search">
-      <div class="filter-heading">
-        <p class="eyebrow">Find your favorite</p>
-        <h2>Shop the collection.</h2>
-      </div>
       <div class="filter-field">
         <label for="collection-category">Collection</label>
         <select
@@ -108,14 +96,15 @@ const products = filtersInvalid
         </select>
       </div>
       <div class="filter-field search-field">
-        <label for="collection-query">Search the collection</label>
+        <label for="collection-query">Search</label>
         <input
           id="collection-query"
           type="search"
+          aria-label="Search the collection"
           name="q"
           value={query}
           maxlength="80"
-          placeholder="Try soap or honey"
+          placeholder="Search products"
           aria-invalid={queryInvalid ? "true" : undefined}
           aria-describedby={
             queryInvalid ? "search-help filter-error" : "search-help"
@@ -137,19 +126,14 @@ const products = filtersInvalid
   >
     <div class="collection-results-heading">
       <div>
-        <p class="eyebrow">
-          {filtersActive && !filtersInvalid ? "Your selection" : "Take a look"}
-        </p>
         <h2 id="collection-results-title">
-          {category === "all"
-            ? "On the shelf."
-            : `${selectedCollection?.label}.`}
+          {category === "all" ? "All goods" : `${selectedCollection?.label}.`}
         </h2>
       </div>
       {!unavailable && !filtersInvalid && !!catalog?.products.length && (
         <p class="result-count">
           {products.length} {products.length === 1 ? "product" : "products"}
-          {filtersActive ? " matching your selection" : " to explore"}
+          {filtersActive ? " found" : ""}
         </p>
       )}
       {(filtersActive || filtersInvalid) && (
@@ -193,10 +177,7 @@ const products = filtersInvalid
     ) : filtersInvalid ? null : products.length ? (
       <div class="product-shelf">
         {products.map((product) => (
-          <ProductCard
-            product={product}
-            testCheckoutEnabled={testCheckoutEnabled}
-          />
+          <ProductCard product={product} />
         ))}
       </div>
     ) : (
@@ -227,32 +208,23 @@ const products = filtersInvalid
 
 <style>
   .collection-intro {
-    padding-block: clamp(2.5rem, 5vw, 4rem) 2rem;
+    padding-block: clamp(2rem, 4vw, 3.5rem) 1.25rem;
   }
   .collection-intro h1 {
-    margin-block: 1.1rem 1.5rem;
+    margin-block: 0.75rem 1rem;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(3rem, 5vw, 5rem);
+    font-size: clamp(2.7rem, 5vw, 4.5rem);
     font-weight: 400;
     letter-spacing: -0.065em;
     line-height: 1.02;
   }
-  .collection-description {
-    max-width: 34rem;
-    font-size: 1.05rem;
-  }
   .collection-filters {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr) auto;
     gap: 1rem 1.5rem;
     align-items: end;
-    padding-block: 1.75rem;
+    padding-block: 1rem;
     border-block: 1px solid var(--line);
-  }
-  .filter-heading h2 {
-    margin-top: 0.5rem;
-    font-size: 1.65rem;
-    letter-spacing: -0.035em;
   }
   .filter-field {
     min-width: 0;
@@ -291,22 +263,29 @@ const products = filtersInvalid
     outline-offset: 4px;
   }
   .filter-help {
-    grid-column: 2 / -1;
-    margin: 0;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .collection-section {
-    padding-block: 3rem 5rem;
+    padding-block: 1.5rem 4rem;
   }
   .collection-results-heading {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem 1.5rem;
     align-items: end;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
   }
   .collection-results-heading h2 {
-    margin-top: 0.45rem;
-    font-size: clamp(2rem, 3vw, 2.8rem);
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0;
   }
   .result-count {
     margin: 0 0 0.15rem;
@@ -340,20 +319,13 @@ const products = filtersInvalid
     padding-top: 1.5rem;
     border-top: 1px solid var(--line);
   }
-  @media (max-width: 1000px) {
-    .collection-filters {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
-    }
-    .filter-heading {
-      grid-column: 1 / -1;
-    }
-    .filter-help {
-      grid-column: 1 / -1;
-    }
-  }
   @media (max-width: 700px) {
     .collection-filters {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .collection-filters button {
+      grid-column: 1 / -1;
     }
     .collection-filters button {
       justify-self: start;

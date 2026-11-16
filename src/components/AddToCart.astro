@@ -8,14 +8,17 @@ import {
 } from "../domain/cart.ts";
 interface Props {
   product: Product;
+  preferredVariantKey?: string | undefined;
 }
-const { product } = Astro.props;
+const { product, preferredVariantKey } = Astro.props;
 const variants = pricedVariants(product);
 const unavailable = (variant: (typeof variants)[number]) =>
   ["out_of_stock", "not_offered"].includes(
     projectedStock(variant)?.state ?? "",
   );
 const offered = variants.filter((variant) => !unavailable(variant));
+const selected =
+  offered.find((variant) => variant.key === preferredVariantKey) ?? offered[0];
 const soldOut = variants.every(
   (variant) => projectedStock(variant)?.state === "out_of_stock",
 );
@@ -32,17 +35,29 @@ const soldOut = variants.every(
     </h2>
     {offered.length ? (
       <form data-add-to-cart>
-        <label>
-          Format
-          <select name="variantKey" required>
-            {variants.map((variant) => (
-              <option value={variant.key} disabled={unavailable(variant)}>
-                {variant.label} · {money(variant.priceMinor!)}
-                {projectedStock(variant) ? ` · ${stockLabel(variant)}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+        <fieldset class="format-options">
+          <legend>Format</legend>
+          {variants.map((variant) => (
+            <label class="format-option">
+              <input
+                type="radio"
+                name="variantKey"
+                value={variant.key}
+                checked={variant.key === selected?.key}
+                disabled={unavailable(variant)}
+                required
+              />
+              <span>
+                {variant.label}
+                {projectedStock(variant) &&
+                  projectedStock(variant)?.state !== "available" && (
+                    <small>{stockLabel(variant)}</small>
+                  )}
+              </span>
+              <strong>{money(variant.priceMinor!)}</strong>
+            </label>
+          ))}
+        </fieldset>
         <label>
           Quantity
           <input
@@ -76,23 +91,28 @@ const soldOut = variants.every(
 
 <style>
   .cart-controls {
-    padding: 1rem;
+    padding: 0;
     margin-block: 1.5rem;
-    border: 1px solid var(--line);
+    border: 0;
     overflow-wrap: anywhere;
   }
   .cart-controls form {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(4.5rem, 6rem);
+    grid-template-columns: minmax(4.5rem, 6rem) minmax(0, 1fr);
     gap: 1rem;
     margin-block: 1rem;
+  }
+  .cart-controls h2 {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0;
   }
   .cart-controls label {
     display: grid;
     gap: 0.4rem;
   }
-  .cart-controls select,
-  .cart-controls input {
+  .cart-controls input[type="number"] {
     width: 100%;
     min-width: 0;
     min-height: 2.75rem;
@@ -102,8 +122,52 @@ const soldOut = variants.every(
     background: var(--paper);
     border: 1px solid var(--forest);
   }
-  .cart-controls button {
+  .format-options {
+    display: grid;
     grid-column: 1 / -1;
+    gap: 0.6rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .format-options legend {
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .format-options .format-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+    min-height: 3.5rem;
+    padding: 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 0.2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .format-option:has(input:checked) {
+    border-color: var(--forest);
+    background: var(--surface);
+  }
+  .format-option:has(input:disabled) {
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+  .format-option input {
+    width: 1rem;
+    height: 1rem;
+    min-height: 0;
+    margin: 0;
+    accent-color: var(--forest);
+  }
+  .format-option small {
+    display: block;
+    margin-top: 0.2rem;
+  }
+  .cart-controls button {
+    align-self: end;
     cursor: pointer;
     white-space: normal;
   }
@@ -117,6 +181,9 @@ const soldOut = variants.every(
   @media (max-width: 32rem) {
     .cart-controls form {
       grid-template-columns: minmax(0, 1fr);
+    }
+    .cart-controls button {
+      grid-column: 1 / -1;
     }
   }
   .cart-controls :focus-visible {

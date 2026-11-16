@@ -204,6 +204,45 @@ authorize live payments, new paid resources or fabricated product facts.
   The footer retains only Contact us, Privacy and Accessibility. Pickup details
   stay with the collection and cart; neither requires a large homepage section.
 
+### Storefront photography references and format choices
+
+The owner requested realistic generated soap images as references for later
+real photography and their use in an image-led storefront. The original ivory
+and amber compositions pair a bar with a smaller stylized wolf-shaped soap on
+stone and linen. They are **AI styling references**, not actual product photos
+or evidence of the finished color, formula, exact mold, packaging or dimensions.
+Keep the concise visible caption and descriptive image alt text.
+
+The responsive local WebP assets are `src/assets/soap-reference-{ivory,amber}.webp`
+and their `-small` variants. They are generated originals, not copied brand
+photographs. `src/content/soap-references.ts` maps only the two known product
+keys; unknown products retain their ordinary illustration fallback. A stored
+owner photo always wins. Upload actual photography through the existing private
+photo editor to replace a reference without changing product/SKU/stock records.
+
+For the owner's own shoot, use the actual bar and wolf mold together, a neutral
+stone surface, restrained linen, one soft side window and an uncluttered
+background. Match the camera position and crop across products, leave room
+around the subjects for mobile crops, and avoid ingredient props or packaging
+claims that do not belong to the actual product.
+
+The layout follows the information-first principles in
+[NN/g's Photos as Web Content](https://www.nngroup.com/articles/photos-as-web-content/)
+and the visible-choice guidance in
+[Baymard's size-selection research](https://baymard.com/research-articles/use-buttons-for-size-selection).
+These support the design direction, not a measured conversion claim for this
+site. No other brand's assets or exact layout are reproduced.
+
+One product card presents its real format labels and canonical prices rather
+than duplicating the product per variant or repeating its full description.
+Format links work without JavaScript and pass a variant key to the product
+page. Only a matching, offered format is preselected; unknown, duplicate or
+unavailable selections cannot force an invalid choice. The native radio group
+exposes prices and unavailable formats directly. Existing cart code submits only
+the selected identity and quantity; current catalog verification and the server
+remain authoritative for prices, stock and checkout. No new checkout protocol,
+database migration or inventory mutation is part of the display redesign.
+
 ### Isolated Stripe sandbox activation checklist
 
 The owner confirmed the existing **The True Hive sandbox** account. Hosted

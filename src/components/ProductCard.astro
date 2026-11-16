@@ -2,27 +2,22 @@
 import type { Product } from "../domain/catalog.ts";
 import ProductArt from "./ProductArt.astro";
 import ProductPrices from "./ProductPrices.astro";
+import StockNotice from "./StockNotice.astro";
+import { getSoapReference } from "../content/soap-references.ts";
+import { money, pricedVariants, projectedStock } from "../domain/cart.ts";
 
 interface Props {
   product: Product;
-  testCheckoutEnabled?: boolean;
   preview?: boolean;
   photoSrc?: string | null;
 }
-const {
-  product,
-  testCheckoutEnabled = false,
-  preview = false,
-  photoSrc = null,
-} = Astro.props;
+const { product, preview = false, photoSrc = null } = Astro.props;
 const ArtLink = preview ? "div" : "a";
 const TitleLink = preview ? "span" : "a";
-const canAddToCart =
-  !preview &&
-  product.kind === "active" &&
-  product.variants.some(
-    (variant) => variant.currency === "USD" && (variant.priceMinor ?? 0) > 0,
-  );
+const variants =
+  !preview && product.kind === "active" ? pricedVariants(product) : [];
+const reference =
+  !preview && !product.photo ? getSoapReference(product.key) : null;
 const labels = {
   soap: "The daily ritual",
   honey: "For the table",
@@ -37,19 +32,21 @@ const categories = {
 };
 ---
 
-<article class="shelf-product">
+<article class:list={["shelf-product", { "shelf-reference": !!reference }]}>
   <ArtLink
     class:list={["shelf-art", `${product.imageKey}-art`]}
     href={preview ? undefined : `/goods/${product.slug}`}
   >
     {!preview && <span class="card-link-label">Explore {product.title}</span>}
-    <span class="shelf-ticket">{labels[product.category]}</span>
+    {preview && <span class="shelf-ticket">{labels[product.category]}</span>}
     <ProductArt
       image={product.imageKey}
       photo={product.photo ?? null}
       photoSrc={photoSrc}
       alt={`${categories[product.category]} illustration.`}
+      referenceKey={preview ? undefined : product.key}
     />
+    {reference && <span class="reference-caption">AI styling reference</span>}
     {preview && (
       <span class="art-caption">
         {product.photo ? "Product photo" : "Original illustration"}
@@ -71,22 +68,57 @@ const categories = {
         <span aria-hidden="true">&nearr;</span>
       </TitleLink>
     </h3>
-    {!preview && <ProductPrices product={product} compact />}
-    <p class="shelf-description">{product.summary}</p>
-    <div class="shelf-meta">
-      {(preview || product.kind === "concept") && (
+    {!preview && (
+      <ProductPrices product={product} compact showStock={!variants.length} />
+    )}
+    {(preview || product.kind !== "active") && (
+      <p class="shelf-description">{product.summary}</p>
+    )}
+    {(preview || product.kind === "concept") && (
+      <div class="shelf-meta">
         <span class="pill">
           {product.kind === "concept"
             ? "Concept product"
             : "Product information"}
         </span>
-      )}
-      {canAddToCart && (
-        <a class="text-link" href={`/goods/${product.slug}#add-to-cart`}>
-          {testCheckoutEnabled ? "Choose for your test cart" : "Choose options"}
-        </a>
-      )}
-    </div>
+      </div>
+    )}
+    {variants.length > 0 && (
+      <div class="shelf-formats" aria-label={`Formats for ${product.title}`}>
+        {variants.map((variant) => {
+          const stock = projectedStock(variant);
+          const available =
+            !stock || !["out_of_stock", "not_offered"].includes(stock.state);
+          const Choice = available ? "a" : "span";
+          return (
+            <Choice
+              class:list={[
+                "shelf-format",
+                { "format-unavailable": !available },
+              ]}
+              href={
+                available
+                  ? `/goods/${encodeURIComponent(product.slug)}?variant=${encodeURIComponent(variant.key)}#add-to-cart`
+                  : undefined
+              }
+            >
+              <span>
+                <span class="format-name">{variant.label}</span>
+                {stock && stock.state !== "available" && (
+                  <StockNotice variant={variant} />
+                )}
+              </span>
+              <strong>{money(variant.priceMinor!)}</strong>
+              {available && (
+                <span class="format-arrow" aria-hidden="true">
+                  &rarr;
+                </span>
+              )}
+            </Choice>
+          );
+        })}
+      </div>
+    )}
   </div>
 </article>
 
@@ -103,18 +135,23 @@ const categories = {
     display: flex;
     min-width: 0;
     flex-direction: column;
-    border: 1px solid var(--line);
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+  }
+  .shelf-product + .shelf-product {
+    border: 0;
   }
   .shelf-art {
     position: relative;
     display: grid;
     min-height: 0;
-    aspect-ratio: 1.25;
-    grid-template-rows: auto minmax(0, 1fr);
+    aspect-ratio: 1.05;
+    grid-template-rows: minmax(0, 1fr);
     isolation: isolate;
-    padding: 1.5rem 0.75rem 1.25rem;
-    border: 1px solid transparent;
-    border-radius: 0.2rem;
+    padding: 1.5rem;
+    border: 0;
+    border-radius: 0.2rem 0.2rem 0 0;
     text-decoration: none;
   }
   .shelf-art::before {
@@ -127,12 +164,35 @@ const categories = {
     content: "";
   }
   .shelf-art:hover {
-    border-color: var(--forest);
+    outline: 1px solid var(--forest);
+    outline-offset: -1px;
   }
   .shelf-art :global(.product-illustration) {
     height: 100%;
     max-height: 100%;
     object-fit: contain;
+  }
+  .shelf-reference .shelf-art {
+    padding: 0;
+  }
+  .shelf-reference .shelf-art::before {
+    display: none;
+  }
+  .shelf-reference .shelf-art :global(.product-illustration) {
+    object-fit: cover;
+    object-position: 50% 62%;
+    max-width: none;
+  }
+  .reference-caption {
+    position: absolute;
+    bottom: 0.8rem;
+    left: 0.8rem;
+    padding: 0.25rem 0.45rem;
+    background: var(--paper);
+    color: var(--forest);
+    font-size: 0.65rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
   }
   .soap-art {
     background: #e8e9dc;
@@ -167,7 +227,7 @@ const categories = {
     min-width: 0;
     flex: 1;
     flex-direction: column;
-    padding: 1.4rem 1.4rem 1.5rem;
+    padding: 1.2rem 0 0;
   }
   .shelf-copy > .eyebrow {
     color: var(--tomato);
@@ -205,6 +265,35 @@ const categories = {
     margin-top: auto;
     padding-top: 1.25rem;
   }
+  .shelf-formats {
+    display: grid;
+    gap: 0;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .shelf-format {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    min-height: 3.5rem;
+    padding: 0.8rem 0.25rem;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    font-size: 0.85rem;
+  }
+  a.shelf-format:hover {
+    background: var(--surface);
+  }
+  .format-name {
+    display: block;
+  }
+  .format-arrow {
+    color: var(--tomato);
+  }
+  .format-unavailable {
+    color: var(--muted);
+  }
   .shelf-meta .pill {
     margin: 0;
     padding: 0.35rem 0.6rem;
@@ -215,10 +304,10 @@ const categories = {
   }
   @media (max-width: 700px) {
     .shelf-art {
-      aspect-ratio: 1.2;
+      aspect-ratio: 1.05;
     }
     .shelf-copy {
-      padding: 1.25rem 1.25rem 1.4rem;
+      padding: 1rem 0 0;
     }
   }
 </style>
