@@ -30,5 +30,12 @@
     ],
     "purpose": "Five separate design-review concepts using public product facts and original imagery. No live orders, payments, stock mutations or automatic live-design selection."
   },
+  "productPageConcepts": {
+    "public": true,
+    "approvedOn": "2026-11-16",
+    "scope": "product-page-only",
+    "approvedDesigns": ["quick-pick", "formula-map", "format-studio", "label-room", "gallery-focus"],
+    "purpose": "Five new product-page-only prototypes requested by the owner. Reuse already-approved public product facts and variant images. No home/store redesign or live design selection; no real commerce or inventory actions."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

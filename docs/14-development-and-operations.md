@@ -286,6 +286,18 @@ loopback server serving the curated built artifact, including ingredient text,
 variant images, cart totals, mobile layout, accessibility and no API/mutation
 requests. No paid preview service or live-runtime flag is needed.
 
+### Product-page-only studies
+
+The newer product-page-only review is at
+`https://preview.thetruehive.com/prototypes/product-pages/`. Its five new
+compositions are Quick Pick, Formula Map, Format Studio, Label Room and Gallery
+Focus, inside a fixed brand/navigation shell. Only product detail content
+changes between directions; there are no new home/store views. The bounded
+`productPageConcepts` approval publishes five source files and reuses the already
+approved product snapshot and variant assets. The Add to cart control reports
+a local demonstration only: no cart storage, requests, orders or payments.
+Native site files remain unchanged; both older design galleries are preserved.
+
 ### Isolated Stripe sandbox activation checklist
 
 The owner confirmed the existing **The True Hive sandbox** account. Hosted

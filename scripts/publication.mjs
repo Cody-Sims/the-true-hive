@@ -2,6 +2,7 @@ import { designs } from "../prototypes/scripts/designs.mjs";
 import { documents } from "../prototypes/scripts/documents.mjs";
 import { products } from "../prototypes/scripts/catalog.mjs";
 import { concepts, reviewAssets, reviewFiles } from "../prototypes/next/manifest.mjs";
+import { studies, productPageFiles } from "../prototypes/product-pages/manifest.mjs";
 
 export function publicationFiles() {
   const pages = ["index.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
@@ -21,6 +22,7 @@ export function publicationFiles() {
     "prototypes/assets/favicon.svg",
     ...documents.map((document) => document.path),
     ...reviewFiles.map((file) => `prototypes/next/${file}`),
+    ...productPageFiles.map((file) => `prototypes/product-pages/${file}`),
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
@@ -54,5 +56,10 @@ export function validatePublicationApproval(approval) {
     throw new Error("The new storefront concepts require explicit public review approval.");
   assertAllowlist(review.approvedConcepts, concepts.map((concept) => concept.id), "concept");
   assertAllowlist(review.approvedAssets, reviewAssets, "concept asset");
+  const productPages = approval.productPageConcepts;
+  if (!productPages || productPages.public !== true || productPages.scope !== "product-page-only"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(productPages.approvedOn))
+    throw new Error("The new product-page studies require explicit public review approval.");
+  assertAllowlist(productPages.approvedDesigns, studies.map((study) => study.id), "product-page design");
   return true;
 }
