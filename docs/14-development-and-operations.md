@@ -197,9 +197,12 @@ authorize live payments, new paid resources or fabricated product facts.
   in their email app; the direct email link remains available without JavaScript.
   Messages are bounded to 600 characters and encoded draft links to 2,000;
   over-limit content is preserved for manual email rather than truncated.
-  Contact channels and the form live at `/contact`, linked from site navigation
-  and service/product calls to action. Pickup details stay with the collection
-  and cart; neither requires a large homepage section.
+  Contact channels and the form live at `/contact`, reached from Services and
+  the footer rather than promoted throughout the shopping flow. The global
+  header contains Store, Services and About us. Store pages supply a separate
+  All products / Pickup / Cart navigation with the persisted cart count.
+  The footer retains only Contact us, Privacy and Accessibility. Pickup details
+  stay with the collection and cart; neither requires a large homepage section.
 
 ### Isolated Stripe sandbox activation checklist
 

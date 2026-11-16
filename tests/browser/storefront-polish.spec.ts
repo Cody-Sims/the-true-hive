@@ -53,7 +53,7 @@ test("a disabled checkout stays unavailable in the cart without advertising an u
   ).toBeDisabled();
   await expect(
     page
-      .getByRole("main")
+      .getByRole("navigation", { name: "Footer navigation" })
       .getByRole("link", { name: "Contact us", exact: true }),
   ).toHaveAttribute("href", "/contact");
   await expect(page.locator("[data-cart-checkout]")).toHaveCount(0);

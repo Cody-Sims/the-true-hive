@@ -94,7 +94,7 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
   await form.getByRole("button", { name: "Add to cart", exact: true }).click();
   await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
   await page
-    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("navigation", { name: "Store navigation" })
     .getByRole("link", { name: /Cart/ })
     .click();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
@@ -111,6 +111,21 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
     ],
   });
   await page.reload();
+  await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "About us", exact: true })
+    .click();
+  await expect(page.locator("[data-cart-count]")).toHaveCount(0);
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Store", exact: true })
+    .click();
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
+  await page
+    .getByRole("navigation", { name: "Store navigation" })
+    .getByRole("link", { name: /^Cart/ })
+    .click();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
   expect(checkoutAttempts).toBe(0);
 });
@@ -450,7 +465,7 @@ test("cart navigation and controls fit a narrow viewport without offering real c
   await page.goto("/cart");
   await expect(
     page
-      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("navigation", { name: "Store navigation" })
       .getByRole("link", { name: /Cart/ }),
   ).toBeVisible();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$7.25");

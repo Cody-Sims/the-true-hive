@@ -3,6 +3,61 @@ import AxeBuilder from "@axe-core/playwright";
 
 test.use({ javaScriptEnabled: false });
 
+test("global navigation stays focused while shopping links stay in the store", async ({
+  page,
+}) => {
+  for (const path of [
+    "/",
+    "/services",
+    "/about",
+    "/contact",
+    "/goods",
+    "/goods/everyday-soap",
+    "/cart",
+    "/checkout/return",
+  ]) {
+    await page.goto(path);
+    const header = page.getByRole("navigation", { name: "Main navigation" });
+    await expect(header.getByRole("link")).toHaveText([
+      "Store",
+      "Services",
+      "About us",
+    ]);
+    expect(
+      await header
+        .getByRole("link")
+        .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href"))),
+    ).toEqual(["/goods", "/services", "/about"]);
+    const footer = page.getByRole("navigation", { name: "Footer navigation" });
+    await expect(footer.getByRole("link")).toHaveText([
+      "Contact us",
+      "Privacy",
+      "Accessibility",
+    ]);
+    const store = page.getByRole("navigation", { name: "Store navigation" });
+    if (
+      path === "/goods" ||
+      path.startsWith("/goods/") ||
+      path === "/cart" ||
+      path.startsWith("/checkout/")
+    ) {
+      await expect(store.getByRole("link", { name: /^Cart/ })).toHaveAttribute(
+        "href",
+        "/cart",
+      );
+      await expect(
+        header.getByRole("link", { name: "Store", exact: true }),
+      ).toHaveAttribute("aria-current", "page");
+      await expect(
+        page.getByRole("main").locator('a[href="/contact"]'),
+      ).toHaveCount(0);
+    } else {
+      await expect(store).toHaveCount(0);
+      await expect(page.locator('a[href="/cart"]')).toHaveCount(0);
+    }
+  }
+});
+
 test("contact navigation opens its own page with a no-JavaScript email fallback", async ({
   page,
 }) => {
@@ -10,18 +65,18 @@ test("contact navigation opens its own page with a no-JavaScript email fallback"
   await expect(
     page.locator("#connect, #pickup, [data-inquiry-form]"),
   ).toHaveCount(0);
-  const mainNavigation = page.getByRole("navigation", {
-    name: "Main navigation",
+  const footerNavigation = page.getByRole("navigation", {
+    name: "Footer navigation",
   });
   await expect(
-    mainNavigation.getByRole("link", { name: "Contact us" }),
+    footerNavigation.getByRole("link", { name: "Contact us" }),
   ).toHaveAttribute("href", "/contact");
-  await mainNavigation.getByRole("link", { name: "Contact us" }).click();
+  await footerNavigation.getByRole("link", { name: "Contact us" }).click();
   await expect(page).toHaveURL(/\/contact$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(
     page
-      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("navigation", { name: "Footer navigation" })
       .getByRole("link", { name: "Contact us" }),
   ).toHaveAttribute("aria-current", "page");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
@@ -66,9 +121,13 @@ test("pickup details stay with the store and cart rather than a homepage section
       .getByRole("navigation", { name: "Main navigation" })
       .getByRole("link", { name: "Local pickup", exact: true }),
   ).toHaveCount(0);
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Store", exact: true })
+    .click();
   const pickupLink = page
-    .getByRole("navigation", { name: "Footer navigation" })
-    .getByRole("link", { name: "Local pickup", exact: true });
+    .getByRole("navigation", { name: "Store navigation" })
+    .getByRole("link", { name: "Pickup", exact: true });
   await expect(pickupLink).toHaveAttribute("href", "/goods#pickup");
   await pickupLink.click();
   await expect(page).toHaveURL(/\/goods#pickup$/);
