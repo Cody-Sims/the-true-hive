@@ -13,42 +13,257 @@ const links = [
   ["/inventory/orders", "Orders"],
   ["/inventory/history", "History"],
 ] as const;
+const active = (href: string) => path === href || path.startsWith(`${href}/`);
 ---
 
-<header class="admin-header admin-wrap">
-  <a
-    class="admin-brand"
-    href={publicShell ? "/inventory/login" : "/inventory/products"}
-  >
-    THE TRUE HIVE <span>Inventory workspace</span>
-  </a>
+<header class="admin-header">
+  <div class="admin-navbar-inner">
+    <a
+      class="admin-brand"
+      href={publicShell ? "/inventory/login" : "/inventory/products"}
+    >
+      <svg
+        viewBox="0 0 32 32"
+        width="30"
+        height="30"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="m16 3 11 6.5v13L16 29 5 22.5v-13Z"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+        <path
+          d="M12 12h8m-8 4h8m-8 4h8"
+          stroke="currentColor"
+          stroke-width="1.5"
+        />
+      </svg>
+      <span class="admin-brand-copy">
+        THE TRUE HIVE <small>Inventory workspace</small>
+      </span>
+    </a>
+    {!publicShell && admin && (
+      <>
+        <nav class="admin-navbar-links" aria-label="Inventory navigation">
+          {links.map(([href, label]) => (
+            <a href={href} aria-current={active(href) ? "page" : undefined}>
+              {label}
+            </a>
+          ))}
+        </nav>
+        <details class="admin-account" data-inventory-account>
+          <summary aria-label="Administrator menu">
+            <span class="admin-account-avatar" aria-hidden="true">
+              TH
+            </span>
+            <span class="admin-account-label">Administrator</span>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </summary>
+          <div class="admin-account-panel">
+            <p class="admin-identity">
+              Verified administrator <span>{admin.uid}</span>
+            </p>
+            <button type="button" data-admin-logout>
+              Sign out
+            </button>
+          </div>
+        </details>
+      </>
+    )}
+  </div>
   {!publicShell && admin && (
-    <>
-      <p class="admin-identity">
-        Verified administrator <span>{admin.uid}</span>
-      </p>
-      <nav aria-label="Inventory navigation">
-        {links.map(([href, label]) => (
-          <a
-            href={href}
-            aria-current={
-              (
-                href === "/inventory/store"
-                  ? path === href
-                  : path.startsWith(href)
-              )
-                ? "page"
-                : undefined
-            }
-          >
-            {label}
-          </a>
-        ))}
-        <button type="button" data-admin-logout>
-          Sign out
-        </button>
-      </nav>
-      <p data-admin-logout-status role="status" tabindex="-1"></p>
-    </>
+    <p
+      class="admin-navbar-status"
+      data-admin-logout-status
+      role="status"
+      tabindex="-1"
+    ></p>
   )}
 </header>
+
+<style>
+  .admin-header {
+    background: #fffdf7;
+    border-bottom: 1px solid #d3d9c6;
+  }
+  .admin-navbar-inner {
+    width: min(100% - 2rem, 88rem);
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 4.75rem;
+  }
+  .admin-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    text-decoration: none;
+    font-weight: 750;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+  }
+  .admin-brand > svg {
+    color: #947323;
+    flex-shrink: 0;
+  }
+  .admin-brand small {
+    display: block;
+    color: #596a52;
+    font-weight: 400;
+    font-size: 0.65rem;
+    letter-spacing: 0.01em;
+    margin-top: 0.15rem;
+  }
+  .admin-navbar-links {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+  .admin-navbar-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid transparent;
+    border-radius: 0.35rem;
+    text-decoration: none;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    color: #596a52;
+  }
+  .admin-navbar-links a:hover {
+    background: #f1f4e9;
+    color: var(--forest);
+  }
+  .admin-navbar-links a[aria-current] {
+    background: #eaf0df;
+    border-color: #d3ddc2;
+    color: var(--forest);
+    font-weight: 700;
+  }
+  .admin-account {
+    position: relative;
+  }
+  .admin-account summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.35rem;
+    list-style: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+  .admin-account summary::-webkit-details-marker {
+    display: none;
+  }
+  .admin-account summary:hover,
+  .admin-account[open] summary {
+    background: #f1f4e9;
+  }
+  .admin-account[open] summary > svg {
+    transform: rotate(180deg);
+  }
+  .admin-account-avatar {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    background: #e9eedf;
+    color: var(--forest);
+    border: 1px solid #d3ddc2;
+    border-radius: 50%;
+    font-size: 0.6rem;
+    font-weight: 700;
+  }
+  .admin-account-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.6rem);
+    z-index: 20;
+    width: 17rem;
+    max-width: calc(100vw - 2rem);
+    padding: 1rem;
+    background: #fffdf7;
+    border: 1px solid #c8d2b8;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1.5rem #233b301a;
+  }
+  .admin-identity {
+    font-size: 0.75rem;
+    margin: 0 0 0.9rem;
+  }
+  .admin-identity span {
+    display: block;
+    color: #596a52;
+    font-size: 0.7rem;
+    margin-top: 0.3rem;
+    overflow-wrap: anywhere;
+  }
+  .admin-account-panel button {
+    width: 100%;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+  }
+  .admin-navbar-status {
+    width: min(100% - 2rem, 88rem);
+    margin: 0 auto;
+    padding-block: 0.5rem;
+    font-size: 0.8rem;
+  }
+  .admin-navbar-status:empty {
+    display: none;
+  }
+  @media (max-width: 850px) {
+    .admin-navbar-inner {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.25rem 1rem;
+      padding-top: 0.5rem;
+    }
+    .admin-navbar-links {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-block: 0.3rem 0.6rem;
+      scrollbar-width: thin;
+      scroll-padding-inline: 0.5rem;
+    }
+    .admin-navbar-links a {
+      flex-shrink: 0;
+    }
+    .admin-account {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .admin-account-panel {
+      top: calc(100% + 0.4rem);
+    }
+  }
+  @media (max-width: 480px) {
+    .admin-account-label {
+      display: none;
+    }
+    .admin-navbar-links a {
+      font-size: 0.75rem;
+      padding-inline: 0.65rem;
+    }
+  }
+</style>

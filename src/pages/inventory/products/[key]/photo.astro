@@ -26,6 +26,7 @@ if (!product) Astro.response.status = unavailable ? 503 : 404;
 
 <AdminLayout title={product ? `Photo for ${product.title}` : "Product photo"}>
   <a
+    slot="page-actions"
     href={
       product
         ? `/inventory/products/${encodeURIComponent(product.key)}`

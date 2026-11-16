@@ -165,7 +165,7 @@ const endpoint = product
         </FieldHelp>
         <label>
           <span>Category</span>
-          <AdminSelect name="category" required>
+          <AdminSelect name="category" aria-label="Category" required>
             <option value="" selected={!product}>
               Choose a category
             </option>
@@ -189,7 +189,11 @@ const endpoint = product
         </FieldHelp>
         <label>
           <span>Placeholder illustration</span>
-          <AdminSelect name="imageKey" required>
+          <AdminSelect
+            name="imageKey"
+            aria-label="Placeholder illustration"
+            required
+          >
             <option value="" selected={!product}>
               Choose an illustration
             </option>
@@ -209,7 +213,7 @@ const endpoint = product
         </FieldHelp>
         <label>
           <span>Record type</span>
-          <AdminSelect name="kind">
+          <AdminSelect name="kind" aria-label="Record type">
             {["draft", "concept", "active"].map((kind) => (
               <option
                 value={kind}

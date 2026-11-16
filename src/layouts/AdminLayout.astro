@@ -32,7 +32,9 @@ const path = Astro.url.pathname;
     </a>
     <InventoryNavbar path={path} admin={admin} publicShell={publicShell} />
     <main id="main" class="admin-wrap" tabindex="-1">
-      <AdminPageHeader title={title} />
+      <AdminPageHeader title={title}>
+        <slot name="page-actions" />
+      </AdminPageHeader>
       <slot />
     </main>
     <footer class="admin-wrap admin-footer">
@@ -43,6 +45,7 @@ const path = Astro.url.pathname;
       import "../client/admin.ts";
       import "../client/ingredients.ts";
       import "../client/stock-controls.ts";
+      import "../client/inventory-nav.ts";
     </script>
   </body>
 </html>

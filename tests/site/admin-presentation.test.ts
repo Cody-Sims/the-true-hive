@@ -415,6 +415,7 @@ async function fixturePage(
     headers?: Record<string, string>;
     path?: string;
     csrf?: string;
+    locals?: Record<string, unknown>;
   } = {},
 ) {
   const context = await browser.newContext({
@@ -423,7 +424,18 @@ async function fixturePage(
   const page = await context.newPage();
   page.setDefaultTimeout(3000);
   page.setDefaultNavigationTimeout(3000);
-  const html = await render(component, props);
+  const html = await render(
+    component,
+    props,
+    options.locals
+      ? {
+          request: new Request(
+            `${inventoryOrigin}${options.path ?? "/inventory/products"}`,
+          ),
+          locals: options.locals,
+        }
+      : {},
+  );
   const { clientModules, entrypoints } = await loadBrowserClients(client);
   const nonce =
     options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
@@ -4249,7 +4261,10 @@ domTest(
       viewport: { width: 320, height: 1000 },
     });
     const page = await context.newPage();
-    const { clientModules, entrypoints } = await loadBrowserClients("admin.ts");
+    const { clientModules, entrypoints } = await loadBrowserClients([
+      "admin.ts",
+      "inventory-nav.ts",
+    ]);
     const requests: { method: string; csrf: string | undefined }[] = [];
     await page.route("**/*", (route) => {
       const url = new URL(route.request().url());
@@ -4297,6 +4312,7 @@ domTest(
         ),
         true,
       );
+      await page.getByLabel("Administrator menu").click();
       await page.getByRole("button", { name: "Sign out" }).click();
       await page.getByText(/Sign-out is unverified/).waitFor();
       assert.deepEqual(requests, [
@@ -4306,6 +4322,7 @@ domTest(
         page.url(),
         "https://inventory.example.invalid/inventory/products",
       );
+      await page.getByLabel("Administrator menu").click();
       assert.equal(
         await page.getByRole("button", { name: "Sign out" }).isDisabled(),
         false,
@@ -4726,6 +4743,203 @@ domTest(
           .locator('[data-stock-row="fixture-variant"] [data-stock-on-hand]')
           .innerText(),
         "20",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "inventory navigation keeps one layout and active section across all inventory routes",
+  async () => {
+    const paths = [
+      ["/inventory/products", "Products", true],
+      ["/inventory/products/new", "Products", false],
+      ["/inventory/products/fixture-product", "Products", false],
+      ["/inventory/products/fixture-product/photo", "Products", false],
+      ["/inventory/products/fixture-product/labels", "Products", false],
+      ["/inventory/locations", "Locations", false],
+      ["/inventory/locations/fixture-location", "Locations", false],
+      ["/inventory/orders", "Orders", false],
+      ["/inventory/orders/fixture-order", "Orders", false],
+      ["/inventory/history", "History", false],
+      ["/inventory/store/", "Store settings", false],
+    ] as const;
+    for (const width of [1440, 390]) {
+      let expected: { x: number; width: number; height: number } | undefined;
+      for (const [path, active, compact] of paths) {
+        const page = await fixturePage(
+          "src/layouts/AdminLayout.astro",
+          { title: "Inventory", compact },
+          "admin.ts",
+          {
+            path,
+            locals: {
+              admin: {
+                uid: "component-only-uid",
+                actorId: "component-only-actor",
+              },
+              csrfToken: "component-only-token",
+            },
+          },
+        );
+        try {
+          await page.setViewportSize({ width, height: 1000 });
+          const nav = page.getByRole("navigation", {
+            name: "Inventory navigation",
+          });
+          assert.deepEqual(
+            await nav
+              .getByRole("link")
+              .allTextContents()
+              .then((text) => text.map((value) => value.trim())),
+            ["Products", "Locations", "Store settings", "Orders", "History"],
+          );
+          assert.equal(
+            await nav.locator('[aria-current="page"]').innerText(),
+            active,
+            path,
+          );
+          const bounds = await page
+            .locator("header.admin-header")
+            .boundingBox();
+          assert(bounds);
+          const geometry = {
+            x: bounds.x,
+            width: bounds.width,
+            height: bounds.height,
+          };
+          if (expected)
+            assert.deepEqual(geometry, expected, `${width}px shell at ${path}`);
+          else expected = geometry;
+          assert.equal(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth,
+            ),
+            true,
+            `${width}px ${path}`,
+          );
+        } finally {
+          await page.context().close();
+        }
+      }
+    }
+  },
+);
+
+domTest(
+  "shared account dropdown is keyboard accessible and never exposes private controls on sign-in",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/InventoryNavbar.astro",
+      {
+        path: "/inventory/products",
+        admin: { uid: "component-only-uid", actorId: "component-only-actor" },
+      },
+      ["admin.ts", "inventory-nav.ts"],
+    );
+    try {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const account = page.locator("[data-inventory-account]");
+      const toggle = account.locator("summary");
+      await toggle.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await account
+          .getByRole("button", { name: "Sign out", exact: true })
+          .isVisible(),
+        true,
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(
+        await account
+          .getByRole("button", { name: "Sign out", exact: true })
+          .isVisible(),
+        false,
+      );
+      assert.equal(
+        await toggle.evaluate((node) => node === document.activeElement),
+        true,
+      );
+      await toggle.click();
+      await page
+        .getByRole("heading", { name: "Isolated component test" })
+        .click();
+      assert.equal(await account.getAttribute("open"), null);
+      await toggle.click();
+      const accessibility = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+        .analyze();
+      assert.deepEqual(
+        accessibility.violations.map(({ id }) => id),
+        [],
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      const publicHtml = await render(
+        "src/components/admin/InventoryNavbar.astro",
+        {
+          path: "/inventory/login",
+          publicShell: true,
+          admin: { uid: "must-not-render", actorId: "must-not-render" },
+        },
+      );
+      assert.doesNotMatch(
+        publicHtml,
+        /must-not-render|data-admin-logout|Inventory navigation|data-inventory-account/,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "shared dropdowns preserve native keyboard selection, form values and disabled locations",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+    );
+    try {
+      for (const width of [1440, 320]) {
+        await page.setViewportSize({ width, height: 1000 });
+        const category = page.getByLabel("Category", { exact: true });
+        await category.selectOption("honey");
+        await category.focus();
+        await page.keyboard.press("s");
+        await page.keyboard.press("Enter");
+        assert.equal(await category.inputValue(), "soap");
+        assert.equal(
+          await category.evaluate((node) =>
+            new FormData(node.closest("form")!).get("category"),
+          ),
+          "soap",
+        );
+        assert.ok((await category.boundingBox())!.height >= 44);
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+      }
+      const props = workspaceProps();
+      const emptyHtml = await render(
+        "src/components/admin/InventoryWorkspace.astro",
+        { ...props, locations: [], locationKey: null },
+      );
+      await page.setContent(`<main><h1>Inventory</h1>${emptyHtml}</main>`);
+      assert.equal(
+        await page
+          .getByLabel("Inventory location", { exact: true })
+          .isDisabled(),
+        true,
       );
     } finally {
       await page.context().close();

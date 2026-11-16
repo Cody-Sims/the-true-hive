@@ -24,7 +24,9 @@ if (!order) Astro.response.status = unavailable ? 503 : 404;
 ---
 
 <AdminLayout title="Test order detail">
-  <a href="/inventory/orders">Back to orders</a>
+  <a href="/inventory/orders" slot="page-actions">
+    Back to orders
+  </a>
   {order ? (
     <OrderView order={order} />
   ) : (

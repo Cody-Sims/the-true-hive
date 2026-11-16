@@ -22,7 +22,7 @@ if (!product) Astro.response.status = unavailable ? 503 : 404;
 ---
 
 <AdminLayout title={product ? `Labels for ${product.title}` : "Product labels"}>
-  <p data-label-page-controls>
+  <p data-label-page-controls slot="page-actions">
     <a
       href={
         product
