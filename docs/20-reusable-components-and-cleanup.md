@@ -1,8 +1,9 @@
 # Reusable components and repository cleanup
 
-Status: first implementation wave complete; follow-up waves are proposed.
+Status: both scoped implementation waves are complete and locally verified.
 Scope requested by the owner on November 15, 2026.
 Baseline: `main` at `a1f36e0050f18fc4ae0be7bb3a0831e6bc0833a0`.
+Follow-up baseline: `main` at `da79fa5d73345d21f3eb6466470c1d6215dfc4d1`.
 
 ## Objective and boundaries
 
@@ -28,7 +29,7 @@ Existing components should be reused before introducing another abstraction.
 | `PageIntro.astro` | Implemented in this wave | Eyebrow, heading and description on privacy, accessibility and checkout recovery pages | Slot-rendered heading markup, plain-text description, IDs, labels, classes and direct-child CSS relationships |
 | `ActionLink.astro` | Implemented in this wave | Styled navigation/recovery anchors on the same informational and checkout pages | Real anchors, existing destinations/classes, optional decorative arrow; recovery links remain arrow-free |
 | `admin/AdminSelect.astro` | Existing | Inventory filters, product fields and adjustment direction | Native keyboard/touch picker, names/values, required/disabled/invalid states and high-contrast fallback |
-| `NoticePanel` | Proposed, not implemented | Repeated catalog empty/unavailable/filter-error presentation on home and collection pages | Pages retain HTTP status, failure precedence and filtering; wrapper preserves heading level, status role and error IDs |
+| `NoticePanel.astro` | Implemented in the second wave | Shared catalog empty/unavailable/filter-error presentation on home and collection pages | Pages retain HTTP status, failure precedence and filtering; wrapper preserves heading level, status role, error IDs and scoped classes |
 | `ProductCard.astro` | Existing | Product identity and collection presentation on home and goods pages | Concept/publication boundaries, separate image/title links and valid purchase eligibility |
 | `ProductArt.astro` | Existing | Product photo or illustration in cards, detail and inventory preview | First-party media boundary, alt text, dimensions and eager/lazy loading choice |
 | `ProductPrices.astro` + `StockNotice.astro` | Existing | Full/compact price and projected availability presentation | Canonical price wording, unavailable states and stock text, not color alone |
@@ -37,7 +38,7 @@ Existing components should be reused before introducing another abstraction.
 | `ContactSection.astro` + `InquiryForm.astro` | Existing composition | Public contact channels and visitor-sent inquiry drafts | Validation/status hooks and no-JavaScript email fallback; no new submission backend |
 | `ProductIngredients.astro` | Existing | Ordered public ingredient display | Escaped text and omission when no approved ingredient data exists |
 | `admin/FormFeedback.astro` | Existing | Mutation status, retry, receipt and authoritative-record presentation | Frozen operation identity, separate original receipt/current record, explicit conflict review |
-| `admin/CountForm.astro` | Existing, later cleanup | Default correction and compact workspace receiving | Server receipts, revision checks, audited reasons and allocation-safe reductions |
+| `admin/CountForm.astro` | Cleaned in the second wave | Default correction and compact workspace receiving; obsolete inline mode removed | Server receipts, revision checks, audited reasons and allocation-safe reductions |
 | `admin/Pagination.astro` | Existing | Bounded product/order paging | Encoded query values, preserved inventory filters and result-count semantics |
 
 `SiteLayout` already centralizes the public header/footer; a second public
@@ -62,6 +63,29 @@ Workers do not stage/commit, install dependencies, run shared builds, start
 competing browser servers or edit the other stream's files. The integration
 owner serializes generated artifacts and final browser validation.
 
+## Second implementation wave
+
+The owner requested implementation of the concrete follow-up items and opening
+the working branch in VS Code Insiders. This wave keeps the newer image-led
+storefront intact and does not change stock, checkout or publication policies.
+
+| Task | Boundary | Completion gate |
+|---|---|---|
+| `GC-02` Legacy inline stock cleanup | Remove only the runtime-unreachable inline `CountForm` branch, its client/import and secondary quantity-display metadata; retain both live form modes and the default half of mixed tests | Re-audited references, focused live stock/retry tests, full suites and build |
+| `UI-02` Shared notice presentation | Extract current home/collection empty, unavailable and filter-error presentation without moving page-owned catalog/filter/HTTP decisions | Before/after render contracts and current storefront/browser checks |
+| `DOC-02` Close the maintenance ledger | Record completed removals, actual component consumers and retained historical artifacts | Catalog agrees with the implementation; publication allowlist unchanged |
+| `GATE-02` Verify and open the implementation | Serialize final application/browser/build checks and use an isolated native test database | Full checks pass; actual implementation workspace opens in VS Code Insiders |
+
+`GC-02` and `UI-02` have disjoint write boundaries and may run in parallel.
+The later evidence-led maintenance step remains an ongoing process, not a
+promise that every unused-looking export or generated artifact is removable.
+
+Verification for the second wave includes the full application/prototype
+suites, native PostgreSQL suite, production build/artifact, built-browser
+journeys, source formatting/types and source/Pages publication links. The
+implementation is ready for the protected release process; deployment still
+requires the release checks below.
+
 ## Dead-code evidence ledger
 
 The inventory audit searched production imports and routes, repository-wide
@@ -70,12 +94,12 @@ Runtime-unused is not the same as untested.
 
 | Candidate | Decision | Evidence and constraints |
 |---|---|---|
-| `admin/InventoryProductList.astro` | Remove in this wave | Before removal, all three references were dedicated fixtures in `tests/site/admin-presentation.test.ts`; no production import. `/inventory/products` renders `InventoryWorkspace`, and `/inventory/` redirects there. The old list is not a framework route, has no registration script and is not published by the review allowlist. |
-| Old list's `stockLocations` fixture and three dedicated tests | Remove with the list only | They render the retired component. Preserve default correction, compact receiving, live workspace, conflict and retry tests. A lower test count from these named retired cases is intentional, not evidence that replacement coverage can be removed. |
-| `CountForm`'s `inline` branch and `.stock-count` styles | Separate next wave | The retired list was its only production caller. Keep the whole branch until its client hooks, quantity metadata and dedicated/mixed tests are removed together; default and compact forms remain live. |
-| `src/client/stock-controls.ts` | Separate next wave, not an orphan-file deletion | `AdminLayout` still imports and executes it. Its target markup comes from the legacy inline branch. Remove the import/module only after proving the whole target cluster unreachable. |
-| `Quantities`' `compact` prop and `data-secondary-quantity` attributes | Remove only with inline cluster | The legacy CSS consumes these attributes. Retain `data-level`, variant/location identifiers and quantity hooks used by authoritative refresh. |
-| Ten public prototypes and Pages scripts | Retain | They are explicitly preserved review artifacts, with package commands, CI entrypoints and a publication allowlist. Similar-looking designs are intentional, not abandoned production UI. |
+| `admin/InventoryProductList.astro` | Removed in the first wave | Before removal, all three references were dedicated fixtures in `tests/site/admin-presentation.test.ts`; no production import. `/inventory/products` renders `InventoryWorkspace`, and `/inventory/` redirects there. The old list is not a framework route, has no registration script and is not published by the review allowlist. |
+| Old list's `stockLocations` fixture and three dedicated tests | Removed with the list | They rendered the retired component. Default correction, compact receiving, live workspace, conflict and retry tests remain. A lower test count from these named retired cases is intentional, not evidence that replacement coverage can be removed. |
+| `CountForm`'s `inline` branch and `.stock-count` styles | Removed in the second wave | Re-audit found only two production callers: the editor uses default mode and `InventoryWorkspace` uses compact mode. Removed only inline-specific fixtures/tests and the inline iteration of the mixed stale-count test; its default iteration and assertions remain. |
+| `src/client/stock-controls.ts` | Removed with its target cluster | Removed the module and `AdminLayout` import together after proving only the unreachable inline branch emitted its targets. The current receiving/validation/retry client, `admin.ts`, is unchanged. |
+| `Quantities`' `compact` prop and `data-secondary-quantity` attributes | Removed with inline display | These served only the retired CSS. `data-level`, variant/location identifiers and quantity hooks used by authoritative refresh remain. |
+| Preserved design prototypes and Pages scripts | Retain | The original ten directions and subsequently approved concepts are explicit review artifacts, with package commands, CI entrypoints and a publication allowlist. Similar-looking designs are intentional, not abandoned production UI. |
 | `migrations/*.sql` | Retain unchanged | The migration runner discovers filenames and verifies recorded checksums. Absence of static imports is irrelevant. Use forward migrations for schema changes. |
 | `dist/`, `dist-site/`, `.astro/`, `test-results/` | Generated/local artifacts, not dead source | Respect active servers, shared validation and the Pages builder's ownership marker. Do not delete another task's output or broadly remove workspace directories. |
 | Unused-looking exports or CSS | Investigate before removal | Check dynamic imports, attributes/events, framework conventions and public/package consumers. No deletion based solely on a warning or one empty search. |
@@ -88,18 +112,19 @@ references. Keep that distinction when checking the final removal diff.
 1. **Verify and deliver this wave.** Review the two source streams together,
    keep the public and private behavior boundaries intact, and pass the gates
    below before release.
-2. **Remove the legacy inline stock cluster separately.** Re-audit at the new
-   main SHA. Remove only the `inline` branch, its client import/module and its
-   quantity-display metadata. Preserve the default-mode half of mixed tests,
-   existing mutation serialization, allocation protection and live receiving.
-   Run full application, database and browser checks plus the production build.
-3. **Consider `NoticePanel` only after this extraction is stable.** Share markup,
-   not catalog/error decisions. Characterize unavailable, empty, invalid-filter
-   and no-match responses before replacing wrappers.
-4. **Reconcile current operational documentation incrementally.** Correct stale
-   current-state README/runbook descriptions using the implemented routes.
-   Retain accepted historical specs and design records as history instead of
-   rewriting them to look like current implementation.
+2. **Legacy inline stock cluster: implemented in the second wave.** Re-audited
+   at the follow-up baseline and removed only the `inline` branch, its client
+   import/module and quantity-display metadata. Preserved the default-mode half
+   of mixed tests, mutation serialization, allocation protection and receiving.
+   The integrated full-suite/build gates still apply.
+3. **Shared notices: implemented in the second wave.** Characterized unavailable,
+   empty, invalid-filter and no-match responses before replacing the current
+   home/collection wrappers. `NoticePanel` shares markup, not catalog/error
+   decisions, and preserves the newer image-led storefront.
+4. **Current operational documentation: reconciled in these waves.** Corrected
+   stale README/runbook descriptions and updated this catalog and removal ledger.
+   Accepted historical specs and design records remain history rather than
+   being rewritten to look like current implementation.
 5. **Repeat evidence-led cleanup on a bounded area.** Record candidate,
    references, runtime reachability, side effects, retention decision and
    verification. Add an analysis dependency only if existing tools cannot

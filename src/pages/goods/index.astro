@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
 import ProductCard from "../../components/ProductCard.astro";
+import NoticePanel from "../../components/NoticePanel.astro";
 import PickupLocation from "../../components/PickupLocation.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
@@ -143,7 +144,7 @@ const products = filtersInvalid
       )}
     </div>
     {filtersInvalid && (
-      <div id="filter-error" class="notice filter-error" role="status">
+      <NoticePanel id="filter-error" class="filter-error" role="status">
         <h3>Let's try those filters again.</h3>
         {categoryInvalid && (
           <p>
@@ -162,18 +163,18 @@ const products = filtersInvalid
           These filters have not been applied. Choose Find goods to try again,
           or use Clear filters above to start over.
         </p>
-      </div>
+      </NoticePanel>
     )}
     {unavailable ? (
-      <div class="notice" role="status">
+      <NoticePanel role="status">
         <h2>The catalog is temporarily unavailable.</h2>
         <p>Please try again shortly.</p>
-      </div>
+      </NoticePanel>
     ) : !catalog?.products.length ? (
-      <div class="notice">
+      <NoticePanel>
         <h3>No products available.</h3>
         <p>Please check back soon.</p>
-      </div>
+      </NoticePanel>
     ) : filtersInvalid ? null : products.length ? (
       <div class="product-shelf">
         {products.map((product) => (
@@ -181,7 +182,7 @@ const products = filtersInvalid
         ))}
       </div>
     ) : (
-      <div class="notice no-matches" role="status">
+      <NoticePanel class="no-matches" role="status">
         <p class="eyebrow">Room to look again</p>
         <h3>No matches, this time.</h3>
         <p>
@@ -193,7 +194,7 @@ const products = filtersInvalid
           . Try another word or collection, or clear the filters to see all
           products.
         </p>
-      </div>
+      </NoticePanel>
     )}
     <div class="collection-footnote">
       <a class="text-link" href="#pickup">

@@ -297,24 +297,11 @@ test("inventory workspace keeps product and location entry points available duri
     assert.match(html, /href="\/inventory\/locations"/);
     assert.match(html, /value="SOAP"/);
     assert.match(html, /temporarily unavailable/i);
-    assert.doesNotMatch(html, /data-stock-controls/);
+    assert.doesNotMatch(html, /data-admin-form="adjustment"/);
   } finally {
     if (previous === undefined) delete process.env["ADMIN_DATABASE_URL"];
     else process.env["ADMIN_DATABASE_URL"] = previous;
   }
-});
-
-test("inline count controls offer an explicit add preset without submitting it", async () => {
-  const html = await render("src/components/admin/CountForm.astro", {
-    variant: product.variants[0],
-    level,
-    productKey: product.key,
-    inline: true,
-  });
-  assert.match(html, /<button[^>]*type="button"[^>]*data-stock-add="100"/);
-  assert.match(html, /Add \/ Reduce stock/);
-  assert.match(html, /data-stock-controls/);
-  assert.match(html, /Available \/ Sellable/);
 });
 
 async function loadBrowserClients(client: string | string[]) {
@@ -2552,112 +2539,6 @@ domTest(
 );
 
 domTest(
-  "inventory home presets prepare Add without mutating and retain page context",
-  async () => {
-    const path = "/inventory/products?search=COMPONENT-ONLY&offset=40";
-    const page = await fixturePage(
-      "src/components/admin/CountForm.astro",
-      {
-        variant: product.variants[0],
-        level,
-        productKey: product.key,
-        inline: true,
-      },
-      ["admin.ts", "stock-controls.ts"],
-      { path },
-    );
-    let requests = 0;
-    await page.route("**/api/**", (route) => {
-      requests++;
-      return route.abort();
-    });
-    try {
-      await page.getByText("Add / Reduce stock", { exact: true }).focus();
-      await page.keyboard.press("Enter");
-      await page.getByLabel("Direction").selectOption("reduce");
-      await page
-        .getByRole("button", { name: "+100 received", exact: true })
-        .focus();
-      await page.keyboard.press("Enter");
-      assert.equal(
-        await page.getByLabel("Positive whole units").inputValue(),
-        "100",
-      );
-      assert.equal(await page.getByLabel("Direction").inputValue(), "increase");
-      assert.equal(
-        await page.getByLabel("Reason", { exact: true }).inputValue(),
-        "",
-      );
-      assert.equal(requests, 0);
-      assert.equal(
-        await page.locator('[data-quantity="onHand"]').textContent(),
-        "20",
-      );
-      assert.equal(
-        new URL(page.url()).pathname + new URL(page.url()).search,
-        path,
-      );
-      assert.equal(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-        true,
-      );
-    } finally {
-      await page.context().close();
-    }
-  },
-);
-
-for (const invalid of ["meaningless reason", "allocated stock floor"]) {
-  domTest(`inventory home blocks ${invalid} before a mutation`, async () => {
-    const page = await fixturePage(
-      "src/components/admin/CountForm.astro",
-      {
-        variant: product.variants[0],
-        level,
-        productKey: product.key,
-        inline: true,
-      },
-      ["admin.ts", "stock-controls.ts"],
-    );
-    let mutations = 0;
-    await page.route("**/api/**", (route) => {
-      mutations++;
-      return route.abort();
-    });
-    try {
-      await page.getByText("Add / Reduce stock", { exact: true }).click();
-      await page.getByLabel("Direction").selectOption("reduce");
-      await page
-        .getByLabel("Positive whole units")
-        .fill(invalid === "allocated stock floor" ? "15" : "1");
-      await page
-        .getByLabel("Reason", { exact: true })
-        .fill(invalid === "meaningless reason" ? "   " : "Damaged in storage");
-      assert.equal(
-        await page
-          .locator("form")
-          .evaluate((form: HTMLFormElement) => form.checkValidity()),
-        false,
-      );
-      assert.match(
-        await page
-          .locator(
-            `[name="${invalid === "meaningless reason" ? "reason" : "amount"}"]`,
-          )
-          .evaluate((field: HTMLInputElement) => field.validationMessage),
-        invalid === "meaningless reason" ? /Explain why/ : /at most 14/,
-      );
-      await page.getByRole("button", { name: "Confirm stock change" }).click();
-      assert.equal(mutations, 0);
-    } finally {
-      await page.context().close();
-    }
-  });
-}
-
-domTest(
   "count corrections preserve one intent through lost response, with separate original receipt and current stock",
   async () => {
     const page = await fixturePage("src/components/admin/CountForm.astro", {
@@ -2781,117 +2662,104 @@ domTest(
   },
 );
 
-for (const inline of [false, true]) {
-  domTest(
-    `a stale count requires authoritative refresh and explicit review before a new UUID and revision${inline ? " on inventory home" : ""}`,
-    async () => {
-      const page = await fixturePage(
-        "src/components/admin/CountForm.astro",
-        {
-          variant: product.variants[0],
-          level,
-          productKey: product.key,
-          inline,
-        },
-        ["admin.ts", "stock-controls.ts"],
-      );
-      const confirm = inline
-        ? "Confirm stock change"
-        : "Confirm count correction";
-      const requests: Record<string, unknown>[] = [];
-      let unavailable = true;
-      await page.route("**/api/admin/products/fixture-product", (route) =>
-        unavailable
-          ? route.fulfill({
-              status: 503,
-              json: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
-            })
-          : route.fulfill({
-              json: {
-                product: {
-                  ...product,
-                  title: "Concurrent server edit",
-                  variants: [
-                    {
-                      ...product.variants[0],
-                      levels: [
-                        { ...level, onHand: 22, sellable: 16, revision: 6 },
-                      ],
-                    },
-                  ],
-                },
+domTest(
+  "a stale count requires authoritative refresh and explicit review before a new UUID and revision",
+  async () => {
+    const page = await fixturePage("src/components/admin/CountForm.astro", {
+      variant: product.variants[0],
+      level,
+      productKey: product.key,
+    });
+    const confirm = "Confirm count correction";
+    const requests: Record<string, unknown>[] = [];
+    let unavailable = true;
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      unavailable
+        ? route.fulfill({
+            status: 503,
+            json: { error: { code: "UNAVAILABLE", message: "Unavailable" } },
+          })
+        : route.fulfill({
+            json: {
+              product: {
+                ...product,
+                title: "Concurrent server edit",
+                variants: [
+                  {
+                    ...product.variants[0],
+                    levels: [
+                      { ...level, onHand: 22, sellable: 16, revision: 6 },
+                    ],
+                  },
+                ],
               },
-            }),
-      );
-      await page.route("**/api/admin/adjustments", (route) => {
-        requests.push(route.request().postDataJSON());
-        return route.fulfill({
-          status: 409,
-          json: {
-            error: {
-              code: "REVISION_CONFLICT",
-              message: "Review current stock",
             },
+          }),
+    );
+    await page.route("**/api/admin/adjustments", (route) => {
+      requests.push(route.request().postDataJSON());
+      return route.fulfill({
+        status: 409,
+        json: {
+          error: {
+            code: "REVISION_CONFLICT",
+            message: "Review current stock",
           },
-        });
+        },
       });
-      try {
-        if (inline)
-          await page.getByText("Add / Reduce stock", { exact: true }).click();
-        await page.getByLabel("Positive whole units").fill("2");
-        await page
-          .getByLabel("Reason", { exact: true })
-          .fill("Fixture recount");
-        await page.getByRole("button", { name: confirm }).click();
-        await waitPhase(page, "conflict");
-        await page
-          .getByRole("button", { name: "Refresh authoritative record" })
-          .waitFor();
-        assert.equal(
-          await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
-          false,
-        );
-        assert.equal(
-          await page.getByLabel("Positive whole units").inputValue(),
-          "2",
-        );
-        unavailable = false;
-        await page
-          .getByRole("button", { name: "Refresh authoritative record" })
-          .click();
-        await page.getByRole("button", { name: /I reviewed/ }).waitFor();
-        assert.equal(
-          await page.locator('[name="expectedRevision"]').inputValue(),
-          "5",
-        );
-        assert.equal(
-          await page.locator('[data-quantity="onHand"]').textContent(),
-          "22",
-        );
-        assert.match(
-          (await page.locator("[data-admin-current-text]").textContent()) ?? "",
-          /Concurrent server edit/,
-        );
-        assert.equal(
-          await page.getByRole("button", { name: confirm }).isDisabled(),
-          true,
-        );
-        await page.getByRole("button", { name: /I reviewed/ }).click();
-        await waitPhase(page, "idle");
-        await page.getByRole("button", { name: confirm }).click();
-        await waitPhase(page, "conflict");
-        assert.equal(requests.length, 2);
-        assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
-        assert.equal(requests[0]!.expectedRevision, 5);
-        assert.equal(requests[1]!.expectedRevision, 6);
-        assert.equal(requests[1]!.delta, 2);
-        assert.equal(requests[1]!.reason, "Fixture recount");
-      } finally {
-        await page.close();
-      }
-    },
-  );
-}
+    });
+    try {
+      await page.getByLabel("Positive whole units").fill("2");
+      await page.getByLabel("Reason", { exact: true }).fill("Fixture recount");
+      await page.getByRole("button", { name: confirm }).click();
+      await waitPhase(page, "conflict");
+      await page
+        .getByRole("button", { name: "Refresh authoritative record" })
+        .waitFor();
+      assert.equal(
+        await page.getByRole("button", { name: /I reviewed/ }).isVisible(),
+        false,
+      );
+      assert.equal(
+        await page.getByLabel("Positive whole units").inputValue(),
+        "2",
+      );
+      unavailable = false;
+      await page
+        .getByRole("button", { name: "Refresh authoritative record" })
+        .click();
+      await page.getByRole("button", { name: /I reviewed/ }).waitFor();
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "5",
+      );
+      assert.equal(
+        await page.locator('[data-quantity="onHand"]').textContent(),
+        "22",
+      );
+      assert.match(
+        (await page.locator("[data-admin-current-text]").textContent()) ?? "",
+        /Concurrent server edit/,
+      );
+      assert.equal(
+        await page.getByRole("button", { name: confirm }).isDisabled(),
+        true,
+      );
+      await page.getByRole("button", { name: /I reviewed/ }).click();
+      await waitPhase(page, "idle");
+      await page.getByRole("button", { name: confirm }).click();
+      await waitPhase(page, "conflict");
+      assert.equal(requests.length, 2);
+      assert.notEqual(requests[0]!.operationId, requests[1]!.operationId);
+      assert.equal(requests[0]!.expectedRevision, 5);
+      assert.equal(requests[1]!.expectedRevision, 6);
+      assert.equal(requests[1]!.delta, 2);
+      assert.equal(requests[1]!.reason, "Fixture recount");
+    } finally {
+      await page.close();
+    }
+  },
+);
 
 domTest(
   "product authoring explains identifiers with keyboard-operable field help",

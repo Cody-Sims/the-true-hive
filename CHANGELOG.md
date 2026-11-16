@@ -27,6 +27,7 @@
 
 ### Changed
 
+- Share public catalog-notice presentation and retire the legacy inline stock-control branch/client while preserving current storefront states, receiving, corrections and retry protections.
 - Give the storefront an image-led product display with concise cards, visible per-format prices, direct format links and native product-page variant choices while preserving actual stock and checkout authority.
 - Simplify the global header to Store, Services and About us; keep cart/pickup navigation within the store and trim the footer to contact and policy links without repeated shopper contact prompts.
 - Consolidate repeated public page introductions and action links into reusable components, and document the component catalog and evidence-led cleanup plan.
