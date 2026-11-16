@@ -1,5 +1,7 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import ActionLink from "../../components/ActionLink.astro";
 ---
 
 <SiteLayout
@@ -7,18 +9,15 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
   description="Return to your cart to check your Stripe test checkout status."
   notFound
 >
-  <section class="wrap page-intro">
-    <p class="eyebrow">Stripe test checkout — no real payment</p>
-    <h1>Back from test checkout.</h1>
-    <p>
-      Return to your cart to check the status of your test checkout before
-      trying again.
-    </p>
-    <a class="button button-primary" href="/cart">
+  <PageIntro
+    class="wrap page-intro"
+    eyebrow="Stripe test checkout — no real payment"
+    description="Return to your cart to check the status of your test checkout before trying again."
+  >
+    <Fragment slot="heading">Back from test checkout.</Fragment>
+    <ActionLink class="button button-primary" href="/cart">
       View your cart
-    </a>
-    <a class="text-link" href="/goods">
-      Keep shopping
-    </a>
-  </section>
+    </ActionLink>
+    <ActionLink href="/goods">Keep shopping</ActionLink>
+  </PageIntro>
 </SiteLayout>

@@ -1,5 +1,7 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
+import PageIntro from "../components/PageIntro.astro";
+import ActionLink from "../components/ActionLink.astro";
 import { readConfig } from "../server/config.ts";
 const { contact } = readConfig();
 ---
@@ -8,18 +10,17 @@ const { contact } = readConfig();
   title="Privacy and contact"
   description="How The True Hive handles website browsing, collection searches and contact links."
 >
-  <section class="page-intro wrap" aria-labelledby="privacy-title">
-    <p class="eyebrow">Keep things clear</p>
-    <h1 id="privacy-title">
+  <PageIntro
+    eyebrow="Keep things clear"
+    headingId="privacy-title"
+    description="This page explains the information involved in browsing The True Hive, searching the collection and following our contact links."
+  >
+    <Fragment slot="heading">
       Privacy,
       <br />
       <em>without surprises.</em>
-    </h1>
-    <p>
-      This page explains the information involved in browsing The True Hive,
-      searching the collection and following our contact links.
-    </p>
-  </section>
+    </Fragment>
+  </PageIntro>
   <section class="wrap prose-section">
     <h2>Browsing this site</h2>
     <p>
@@ -70,9 +71,9 @@ const { contact } = readConfig();
       When you follow a link to a social platform, research publisher or other
       external website, that provider's privacy practices apply.
     </p>
-    <a class="text-link" href={contact.phoneHref}>
-      Call {contact.phone} <span aria-hidden="true">&rarr;</span>
-    </a>
+    <ActionLink href={contact.phoneHref} arrow>
+      Call {contact.phone}
+    </ActionLink>
     <h2>Restricted inventory workspace</h2>
     <p>
       The inventory workspace is restricted to authorized administrators and
