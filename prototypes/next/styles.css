@@ -78,7 +78,7 @@ main {
   margin-inline: auto;
 }
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--focus, var(--accent));
   outline-offset: 4px;
 }
 .skip {
@@ -130,6 +130,7 @@ main {
   border: 1px solid var(--line);
 }
 .review-bar {
+  --focus: #263d32;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -430,6 +431,7 @@ main {
   margin-top: 0.7rem;
 }
 .ingredient-panel {
+  --focus: #273b30;
   min-width: 0;
   padding: 1.3rem;
   background: #fbf6e8;

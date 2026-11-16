@@ -14,10 +14,16 @@ const money = (minor) =>
   );
 let state = resolveReview(new URLSearchParams(location.search));
 let cart = [];
+const cartCache = new Map();
 const cartKey = () => `true-hive-design-review-${state.concept.id}`;
 function readCart() {
+  const key = cartKey();
+  if (cartCache.has(key)) {
+    cart = cartCache.get(key);
+    return;
+  }
   try {
-    cart = JSON.parse(sessionStorage.getItem(cartKey()) ?? "[]");
+    cart = JSON.parse(sessionStorage.getItem(key) ?? "[]");
   } catch {
     cart = [];
   }
@@ -25,8 +31,10 @@ function readCart() {
     variantKey: line.variant.key,
     quantity: line.quantity,
   }));
+  cartCache.set(key, cart);
 }
 function saveCart() {
+  cartCache.set(cartKey(), cart);
   try {
     sessionStorage.setItem(cartKey(), JSON.stringify(cart));
   } catch {}
@@ -171,6 +179,15 @@ function shell(content) {
     <footer class="concept-footer"><div><p class="eyebrow">The True Hive</p><strong>A local beginning.</strong><p>AI styling references &middot; Public product snapshot</p></div><nav aria-label="Footer navigation">${link("Contact us", { view: "contact" })}${link("Privacy", { view: "privacy" })}${link("Accessibility", { view: "accessibility" })}</nav></footer>`;
 }
 function render(focus = false) {
+  const active = document.activeElement;
+  const focusAttribute = [
+    "data-add-preview",
+    "data-remove-preview",
+    "data-preview-quantity",
+  ].find((attribute) => active?.hasAttribute(attribute));
+  const focusValue = focusAttribute
+    ? active.getAttribute(focusAttribute)
+    : null;
   document.body.className = `theme-${state.concept.id}`;
   document.title = `${state.view === "product" ? state.product.title : state.concept.name} | The True Hive design review`;
   const root = document.querySelector("#review-app");
@@ -189,6 +206,11 @@ function render(focus = false) {
   if (focus) {
     document.querySelector("#main").focus();
     window.scrollTo(0, 0);
+  } else if (focusAttribute) {
+    const control =
+      root.querySelector(`[${focusAttribute}="${CSS.escape(focusValue)}"]`) ??
+      root.querySelector("[data-preview-quantity], .preview-cart .primary");
+    control?.focus();
   }
 }
 function navigate(url) {
