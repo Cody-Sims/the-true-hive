@@ -58,6 +58,14 @@ static public product snapshot and local demo carts, never live inventory or
 payments. The original ten-design studio is preserved; no new concept is
 automatically selected for the live storefront.
 
+The newer **product-page-only** studies are at
+**https://preview.thetruehive.com/prototypes/product-pages/**: Quick Pick,
+Formula Map, Format Studio, Label Room and Gallery Focus. These explore only
+the product detail area inside one fixed brand shell, not new home or store
+pages. Switch products/formats to compare the four reference images and exact
+ingredient lists. Add to cart is a local demonstration without storage,
+checkout or inventory requests; normal navigation links open the existing site.
+
 The private inventory home groups variants into collapsible category shelves,
 with location-specific stock status and in-stock/out-of-stock filters. Select a
 product name or row to open its focused stock inspector; on mobile it opens in

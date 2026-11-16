@@ -42,3 +42,12 @@ test("the five-concept review is explicitly approved and publishes only its boun
   assert.throws(() => validatePublicationApproval({ ...approval, storefrontConcepts: { ...approval.storefrontConcepts, approvedConcepts: ["atelier"] } }), /concept/i);
   assert.throws(() => validatePublicationApproval({ ...approval, storefrontConcepts: { ...approval.storefrontConcepts, approvedAssets: ["../../.env"] } }), /asset/i);
 });
+
+test("new product-page-only studies require separate approval without adding home or store prototypes", () => {
+  const files = publicationFiles().filter((file) => file.startsWith("prototypes/product-pages/"));
+  assert.deepEqual(files, ["app.mjs", "index.html", "manifest.mjs", "model.mjs", "styles.css"].map((file) => `prototypes/product-pages/${file}`));
+  assert.throws(() => validatePublicationApproval({ ...approval, productPageConcepts: undefined }), /product.page/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, productPageConcepts: { ...approval.productPageConcepts, public: false } }), /product.page/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, productPageConcepts: { ...approval.productPageConcepts, scope: "whole-site" } }), /product.page/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, productPageConcepts: { ...approval.productPageConcepts, approvedDesigns: ["quick-pick"] } }), /product.page/i);
+});

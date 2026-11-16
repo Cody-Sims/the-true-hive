@@ -4,6 +4,7 @@
 
 ### Added
 
+- Five fresh product-page-only studies with compact purchase, ingredient-map, format-comparison, paper-label and gallery-focused layouts; leave live home, store and product pages unchanged.
 - Five separately published storefront prototypes with distinct home/store/product layouts, accessible ingredient panels, individual variant imagery and local-only demo carts; preserve the original ten-design studio and the live design.
 - Four separate single-variant soap styling references and a synchronized image/format gallery; retain owner-photo priority and explicit AI-reference disclosure.
 - Original, responsive AI soap-styling references for the two current products, clearly disclosed and automatically superseded by uploaded owner photography.

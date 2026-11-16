@@ -1,0 +1,950 @@
+:root {
+  color-scheme: light;
+  --paper: #fbf7ee;
+  --ink: #243d35;
+  --line: #c9cbb9;
+  --muted: #52635a;
+  --surface: #f1edde;
+  --white: #fffdf7;
+  --accent: #a63226;
+  --gold: #edc86a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.65;
+}
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+figure,
+h1,
+h2,
+p {
+  margin: 0;
+}
+h1,
+h2,
+p,
+a,
+li {
+  overflow-wrap: anywhere;
+}
+a {
+  color: inherit;
+  text-underline-offset: 0.25em;
+}
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+  max-width: 100%;
+}
+button,
+select,
+summary {
+  cursor: pointer;
+}
+:is(a, button, select, input, summary):focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.wrap {
+  width: min(100% - 3rem, 76rem);
+  margin-inline: auto;
+}
+.skip {
+  position: absolute;
+  top: -6rem;
+  left: 1rem;
+  z-index: 20;
+  padding: 1rem;
+  color: var(--paper);
+  background: var(--ink);
+}
+.skip:focus {
+  top: 0.5rem;
+}
+.review-tools {
+  padding-block: 0.7rem;
+  background: #e8ebdf;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.73rem;
+}
+.review-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 1.2rem;
+}
+.review-row > span {
+  margin-right: auto;
+}
+.review-row label {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.review-row select {
+  min-height: 2.7rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #9fae9a;
+  background: var(--white);
+  font-size: 0.75rem;
+}
+.design-note {
+  margin-top: 0.45rem;
+  color: #435448;
+  font-size: 0.72rem;
+}
+.header-frame {
+  border-bottom: 1px solid var(--line);
+}
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem 2rem;
+  padding-block: 1.25rem;
+}
+.brand {
+  display: inline-flex;
+  gap: 0.8rem;
+  align-items: center;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+.brand small,
+.site-footer small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+.site-header nav,
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+.site-header nav a,
+.site-footer nav a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+.site-header nav a[aria-current] {
+  text-decoration-thickness: 2px;
+}
+.store-nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  min-height: 3.8rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8rem;
+}
+.store-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.store-nav a:last-child {
+  margin-left: auto;
+}
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-block: 1.2rem 1.8rem;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+.breadcrumbs a {
+  min-height: 1.5rem;
+}
+#study-content {
+  min-width: 0;
+}
+[data-study] {
+  padding-bottom: 3rem;
+}
+.product-heading .eyebrow {
+  margin-bottom: 0.8rem;
+}
+.eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+h1,
+h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+h1 {
+  font-size: clamp(2.2rem, 3.7vw, 3.7rem);
+  max-width: 45rem;
+}
+h2 {
+  font-size: 1.6rem;
+}
+.summary {
+  max-width: 38rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.product-photo {
+  position: relative;
+  min-width: 0;
+  background: var(--surface);
+  overflow: hidden;
+}
+.product-photo > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-photo figcaption {
+  position: absolute;
+  left: 0.7rem;
+  bottom: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--ink);
+  background: #fffdf7f5;
+  font-size: 0.62rem;
+}
+.buy-panel {
+  min-width: 0;
+}
+.price {
+  margin-block: 1.15rem;
+  font-size: 1.8rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+.format-heading {
+  margin-top: 1.2rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+.formats {
+  display: grid;
+  gap: 0.65rem;
+  margin-block: 0.8rem 1.3rem;
+}
+.formats a {
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  text-decoration: none;
+  font-size: 0.78rem;
+  background: var(--white);
+}
+.formats a[aria-current] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+  background: #eeefdf;
+}
+.formats img {
+  width: 3.4rem;
+  height: 3.4rem;
+  object-fit: cover;
+}
+.formats strong {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+}
+.formats i {
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 650;
+}
+.purchase {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.3rem 0.75rem;
+  align-items: end;
+}
+.purchase label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+}
+.purchase input {
+  min-width: 0;
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--white);
+  font-size: 0.95rem;
+}
+.add-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.2rem;
+  padding: 0.8rem 1.1rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+.demo-note {
+  grid-column: 1/-1;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+.pickup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1.2rem;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+.pickup span {
+  font-size: 1.2rem;
+}
+.ingredients {
+  margin-top: 1.6rem;
+  min-width: 0;
+}
+.ingredients h2 {
+  margin-bottom: 0.9rem;
+}
+.ingredient-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.75;
+}
+.ingredient-list li {
+  padding: 0.15rem 0 0.15rem 0.2rem;
+}
+.ingredient-fold {
+  border-block: 1px solid var(--line);
+  padding-block: 0.5rem;
+}
+.ingredient-fold summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.75rem;
+  list-style: none;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+.ingredient-fold summary::-webkit-details-marker {
+  display: none;
+}
+.ingredient-fold[open] summary {
+  margin-bottom: 0.7rem;
+}
+.ingredient-fold[open] summary span {
+  transform: rotate(45deg);
+}
+.ingredient-fold .ingredient-list {
+  padding-bottom: 0.7rem;
+  columns: 2;
+  column-gap: 2rem;
+}
+.ingredient-fold li {
+  break-inside: avoid;
+}
+.selected-format {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 1.3rem;
+}
+.reference-note {
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+#preview-status {
+  margin-block: 0 2rem;
+  padding: 1rem;
+  border: 1px solid #aebba4;
+  background: #e8eddc;
+  font-size: 0.85rem;
+}
+#preview-status:empty {
+  display: none;
+}
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem 2rem;
+  padding-block: 2rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+}
+.site-footer nav {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.quick-layout {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+.quick-layout .product-photo {
+  aspect-ratio: 1;
+  border-radius: 0.25rem;
+}
+.quick-layout h1 {
+  font-size: clamp(2.2rem, 3.3vw, 3.2rem);
+}
+.quick-layout .summary {
+  font-size: 0.86rem;
+}
+.quick-layout .price {
+  margin-block: 1rem;
+}
+.quick-layout .ingredients {
+  margin-top: 1.2rem;
+}
+
+[data-study="formula-map"] > .product-heading {
+  margin-bottom: 2rem;
+}
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
+}
+.formula-stage {
+  min-width: 0;
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--line);
+  background: #f4f0e2;
+}
+.formula-stage > header {
+  margin-bottom: 1.8rem;
+  text-align: center;
+}
+.formula-stage h2 {
+  margin-top: 0.5rem;
+  font-size: 2rem;
+}
+.formula-diagram {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+.formula-diagram .product-photo {
+  aspect-ratio: 0.75;
+  border-radius: 48% 48% 0.4rem 0.4rem;
+}
+.formula-diagram .ingredient-list {
+  font-size: 0.67rem;
+  padding-left: 0.95rem;
+}
+.formula-diagram li {
+  margin-block: 0.65rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #bac1aa;
+}
+.formula-diagram li::marker {
+  color: var(--accent);
+  font-weight: 650;
+}
+.map-note {
+  text-align: center;
+  font-size: 0.62rem;
+  color: var(--muted);
+  margin-top: 1.3rem;
+}
+.map-layout .buy-panel {
+  padding-top: 0.2rem;
+}
+.map-layout .buy-panel > .price {
+  margin-top: 0;
+}
+
+[data-study="format-studio"] > .product-heading {
+  max-width: 58rem;
+  margin-bottom: 2rem;
+}
+.studio-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+.format-stage > .eyebrow {
+  margin-bottom: 0.8rem;
+}
+.format-cards {
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0;
+}
+.format-cards a {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+.format-cards img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 0.85;
+  object-fit: cover;
+}
+.format-cards a > span {
+  padding: 0.8rem 0.5rem 0.5rem;
+  font-size: 0.85rem;
+}
+.format-cards strong {
+  margin-top: 0.4rem;
+  font-size: 1rem;
+}
+.format-cards i {
+  width: fit-content;
+  margin: 0 0.5rem 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid #aeb8a1;
+  font-size: 0.65rem;
+}
+.format-stage > .ingredients {
+  padding: 1.3rem 1.5rem;
+  border: 1px solid var(--line);
+  background: #f1edde;
+}
+.format-stage > .ingredients .ingredient-list {
+  columns: 3;
+  column-gap: 2rem;
+}
+.format-stage .ingredient-list li {
+  break-inside: avoid;
+}
+.studio-layout > .buy-panel {
+  position: sticky;
+  top: 2rem;
+  padding: 1.5rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+.studio-layout .buy-panel .price {
+  margin-top: 0;
+}
+
+.label-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.paper-label {
+  min-width: 0;
+  padding: 2rem;
+  border: 1px solid #afb69d;
+  outline: 1px dashed #afb69d;
+  outline-offset: -0.65rem;
+  background: #f4edd8;
+}
+.paper-label h1 {
+  font-size: clamp(2.1rem, 3.2vw, 3rem);
+}
+.paper-label .summary {
+  font-size: 0.8rem;
+}
+.label-rule {
+  height: 1px;
+  margin-block: 1.5rem;
+  background: var(--ink);
+}
+.paper-label .ingredients {
+  margin-top: 0;
+}
+.paper-label .ingredient-list {
+  list-style: none;
+  padding: 0;
+  columns: 2;
+  column-gap: 1.2rem;
+  font-size: 0.77rem;
+}
+.paper-label .ingredient-list li {
+  break-inside: avoid;
+  padding-left: 0;
+}
+.label-end {
+  margin-top: 2rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+.label-stage {
+  min-width: 0;
+}
+.label-stage > .product-photo {
+  aspect-ratio: 1.4;
+}
+.label-stage > .buy-panel {
+  padding: 1rem 1.5rem 1.5rem;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: var(--white);
+}
+.label-stage .buy-panel > .price {
+  float: right;
+  margin: 0.2rem 0 0.3rem 1rem;
+  font-size: 1.5rem;
+}
+.label-stage .format-heading {
+  padding-top: 0.45rem;
+  margin-top: 0;
+}
+.label-stage .formats {
+  grid-template-columns: 1fr 1fr;
+  clear: both;
+  padding-top: 0.65rem;
+}
+.label-stage .formats a {
+  grid-template-columns: 2.5rem 1fr;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+}
+.label-stage .formats img {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.label-stage .formats i {
+  grid-column: 2;
+}
+
+[data-study="gallery-focus"] > .product-heading {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 3rem;
+  align-items: end;
+  margin-bottom: 1.8rem;
+}
+[data-study="gallery-focus"] .product-heading .eyebrow {
+  grid-column: 1/-1;
+  margin: 0;
+}
+[data-study="gallery-focus"] .product-heading .summary {
+  margin: 0;
+  max-width: 32rem;
+  justify-self: end;
+}
+.gallery-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 13rem;
+  min-height: 32rem;
+  background: var(--surface);
+}
+.gallery-stage .product-photo {
+  aspect-ratio: 1.7;
+}
+.gallery-stage .product-photo > img {
+  object-fit: contain;
+}
+.gallery-formats {
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  border-left: 0;
+  background: #f3efe3;
+}
+.gallery-formats h2 {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+.gallery-formats .formats a {
+  grid-template-columns: 1fr;
+  padding: 0.45rem;
+}
+.gallery-formats .formats img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.6;
+}
+.gallery-formats .formats a > span {
+  padding: 0.25rem;
+  font-size: 0.7rem;
+}
+.gallery-formats .formats i {
+  display: none;
+}
+.gallery-dock {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 2rem;
+  align-items: center;
+  padding: 1.3rem 1.8rem;
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+.gallery-dock .price {
+  margin: 0;
+  font-size: 1.55rem;
+}
+.gallery-dock .selected-format {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+}
+.gallery-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .quick-layout {
+    gap: 2rem;
+  }
+  .map-layout {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .formula-diagram {
+    grid-template-columns: 1fr 1fr;
+  }
+  .formula-diagram .product-photo {
+    grid-column: 1/-1;
+    grid-row: 1;
+    aspect-ratio: 1.5;
+    border-radius: 0.4rem;
+  }
+  .formula-diagram .ingredient-list {
+    font-size: 0.75rem;
+  }
+  .studio-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .format-stage > .ingredients .ingredient-list {
+    columns: 2;
+  }
+  .label-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  }
+  .paper-label {
+    padding: 1.5rem;
+  }
+  .label-stage .formats {
+    grid-template-columns: 1fr;
+  }
+  .gallery-stage {
+    min-height: 0;
+  }
+}
+@media (max-width: 700px) {
+  .wrap {
+    width: calc(100% - 2rem);
+  }
+  .review-row {
+    gap: 0.5rem 0.8rem;
+  }
+  .review-row > span {
+    width: 100%;
+  }
+  .review-row label {
+    flex: 1 1 10rem;
+    justify-content: space-between;
+  }
+  .review-row select {
+    width: min(12rem, 62vw);
+  }
+  .design-note {
+    font-size: 0.67rem;
+  }
+  .site-header {
+    padding-block: 0.9rem;
+  }
+  .site-header nav {
+    gap: 1.4rem;
+  }
+  .brand {
+    font-size: 0.83rem;
+  }
+  .brand img {
+    width: 40px;
+    height: 40px;
+  }
+  .breadcrumbs {
+    padding-block: 1rem 1.3rem;
+  }
+  h1 {
+    font-size: 2.5rem;
+  }
+  .quick-layout,
+  .map-layout,
+  .studio-layout,
+  .label-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .quick-layout .product-photo {
+    aspect-ratio: 1.2;
+  }
+  .quick-layout h1 {
+    font-size: 2.5rem;
+  }
+  .summary {
+    font-size: 0.85rem;
+  }
+  .formats i {
+    font-size: 0.58rem;
+  }
+  .formula-stage {
+    padding: 1.2rem;
+  }
+  .formula-diagram .product-photo {
+    aspect-ratio: 1.25;
+  }
+  .formula-diagram .ingredient-list {
+    font-size: 0.7rem;
+  }
+  .formula-diagram li {
+    margin-block: 0.4rem;
+  }
+  .map-layout .buy-panel {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+  }
+  .format-cards {
+    gap: 0.7rem;
+  }
+  .format-cards a > span {
+    padding: 0.5rem 0.15rem;
+    font-size: 0.72rem;
+  }
+  .format-cards i {
+    margin-left: 0.15rem;
+  }
+  .format-cards img {
+    aspect-ratio: 0.9;
+  }
+  .format-stage > .ingredients {
+    padding: 1rem;
+  }
+  .format-stage > .ingredients .ingredient-list {
+    columns: 2;
+    font-size: 0.73rem;
+  }
+  .studio-layout > .buy-panel {
+    position: static;
+    padding: 1.2rem;
+  }
+  .label-layout {
+    gap: 1rem;
+  }
+  .paper-label {
+    padding: 1.5rem;
+  }
+  .paper-label h1 {
+    font-size: 2.5rem;
+  }
+  .paper-label .ingredient-list {
+    font-size: 0.75rem;
+  }
+  .label-stage > .product-photo {
+    aspect-ratio: 1.1;
+  }
+  .label-stage > .buy-panel {
+    padding: 1rem;
+  }
+  .label-stage .formats {
+    grid-template-columns: 1fr;
+  }
+  .label-stage .formats a {
+    grid-template-columns: 2.8rem 1fr auto;
+  }
+  .label-stage .formats i {
+    grid-column: auto;
+  }
+  [data-study="gallery-focus"] > .product-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+  [data-study="gallery-focus"] .product-heading .summary {
+    justify-self: start;
+  }
+  .gallery-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gallery-stage .product-photo {
+    aspect-ratio: 1.1;
+  }
+  .gallery-formats {
+    border-left: 1px solid var(--line);
+    border-top: 0;
+    padding: 1rem;
+  }
+  .gallery-formats .formats {
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 0;
+  }
+  .gallery-formats .formats img {
+    aspect-ratio: 1.9;
+  }
+  .gallery-dock {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .gallery-details {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .gallery-details > .pickup {
+    margin-top: 1rem;
+  }
+  .site-footer {
+    align-items: start;
+  }
+  .site-footer nav {
+    gap: 1rem;
+  }
+}
