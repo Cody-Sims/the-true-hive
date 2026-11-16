@@ -1,13 +1,12 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
-import ProductArt from "../../components/ProductArt.astro";
+import ProductGallery from "../../components/ProductGallery.astro";
 import AddToCart from "../../components/AddToCart.astro";
 import ProductPrices from "../../components/ProductPrices.astro";
 import ProductIngredients from "../../components/ProductIngredients.astro";
 import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import { isRecordKey } from "../../server/inventory/rules.ts";
-import { getSoapReference } from "../../content/soap-references.ts";
 
 const categories = {
   soap: "Soap",
@@ -27,8 +26,10 @@ if (isRecordKey(Astro.params["slug"])) {
   }
 }
 if (!product) Astro.response.status = unavailable ? 503 : 404;
-const reference =
-  product && !product.photo ? getSoapReference(product.key) : null;
+const preferredVariantKey =
+  Astro.url.searchParams.getAll("variant").length === 1
+    ? (Astro.url.searchParams.get("variant") ?? undefined)
+    : undefined;
 ---
 
 <SiteLayout
@@ -56,30 +57,10 @@ const reference =
     </nav>
     {product ? (
       <div class="detail-layout">
-        <figure
-          class:list={[
-            "detail-art",
-            `${product.imageKey}-art`,
-            { "detail-reference": !!reference },
-          ]}
-        >
-          <div class="detail-art-heading">
-            <span class="eyebrow">{categories[product.category]}</span>
-            <span class="art-flower" aria-hidden="true">
-              ✳
-            </span>
-          </div>
-          <div class="detail-illustration">
-            <ProductArt
-              image={product.imageKey}
-              photo={product.photo ?? null}
-              alt={`${categories[product.category]} illustration for ${product.title}.`}
-              eager
-              referenceKey={product.key}
-            />
-          </div>
-          {reference && <figcaption>AI styling reference</figcaption>}
-        </figure>
+        <ProductGallery
+          product={product}
+          preferredVariantKey={preferredVariantKey}
+        />
         <section class="detail-copy" aria-labelledby="product-title">
           <div class="detail-overline">
             <p class="eyebrow">The True Hive collection</p>
@@ -101,11 +82,7 @@ const reference =
           <ProductPrices product={product} compact showStock={false} />
           <AddToCart
             product={product}
-            preferredVariantKey={
-              Astro.url.searchParams.getAll("variant").length === 1
-                ? (Astro.url.searchParams.get("variant") ?? undefined)
-                : undefined
-            }
+            preferredVariantKey={preferredVariantKey}
           />
           <p>
             <a class="text-link" href="/goods#pickup">
@@ -170,80 +147,6 @@ const reference =
   .detail-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: clamp(2rem, 6vw, 6rem);
-  }
-  .detail-art {
-    min-width: 0;
-    padding: clamp(1rem, 2.5vw, 2rem);
-    border: 0;
-    border-radius: 0.2rem;
-  }
-  .soap-art {
-    background: #e8e9dc;
-  }
-  .honey-art {
-    background: #f3e4b7;
-  }
-  .candle-art {
-    background: #efdfd2;
-  }
-  .detail-art-heading {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .detail-reference {
-    position: relative;
-    padding: 0;
-    align-self: start;
-    overflow: hidden;
-  }
-  .detail-reference .detail-art-heading {
-    display: none;
-  }
-  .detail-reference .detail-illustration {
-    aspect-ratio: 4 / 5;
-    padding: 0;
-  }
-  .detail-reference .detail-illustration::before {
-    display: none;
-  }
-  .detail-reference :global(.product-illustration) {
-    width: 100%;
-    height: 100%;
-    max-height: none;
-    max-width: none;
-    object-fit: cover;
-    object-position: 50% 62%;
-  }
-  .detail-reference figcaption {
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    margin: 0;
-    padding: 0.25rem 0.5rem;
-    border: 0;
-    background: var(--paper);
-    font-size: 0.65rem;
-    color: var(--forest);
-  }
-  .art-flower {
-    font-size: 2rem;
-    line-height: 1;
-  }
-  .detail-illustration {
-    position: relative;
-    isolation: isolate;
-    padding-block: clamp(0.5rem, 2vw, 2rem);
-  }
-  .detail-illustration::before {
-    position: absolute;
-    z-index: -1;
-    inset: 12% 6%;
-    border: 1px solid var(--forest);
-    border-radius: 50%;
-    opacity: 0.16;
-    content: "";
   }
   .detail-copy {
     min-width: 0;

@@ -207,17 +207,19 @@ authorize live payments, new paid resources or fabricated product facts.
 ### Storefront photography references and format choices
 
 The owner requested realistic generated soap images as references for later
-real photography and their use in an image-led storefront. The original ivory
-and amber compositions pair a bar with a smaller stylized wolf-shaped soap on
-stone and linen. They are **AI styling references**, not actual product photos
+real photography and their use in an image-led storefront. Four individual
+images now distinguish the ivory/amber bars and their Wolf formats. The earlier
+paired compositions remain photography references, not variant images.
+All generated images are **AI styling references**, not actual product photos
 or evidence of the finished color, formula, exact mold, packaging or dimensions.
 Keep the concise visible caption and descriptive image alt text.
 
-The responsive local WebP assets are `src/assets/soap-reference-{ivory,amber}.webp`
+The live responsive WebP assets are `src/assets/soap-{delight,true}-{bar,wolf}.webp`
 and their `-small` variants. They are generated originals, not copied brand
 photographs. `src/content/soap-references.ts` maps only the two known product
 keys; unknown products retain their ordinary illustration fallback. A stored
-owner photo always wins. Upload actual photography through the existing private
+owner photo always wins. Product-level uploaded photography is not a new
+variant-photo upload feature. Upload actual photography through the existing private
 photo editor to replace a reference without changing product/SKU/stock records.
 
 For the owner's own shoot, use the actual bar and wolf mold together, a neutral
@@ -242,6 +244,12 @@ exposes prices and unavailable formats directly. Existing cart code submits only
 the selected identity and quantity; current catalog verification and the server
 remain authoritative for prices, stock and checkout. No new checkout protocol,
 database migration or inventory mutation is part of the display redesign.
+
+The product gallery and radio group share the same validated initial variant.
+Thumbnail clicks select that format; native radio changes select its image.
+Only existing server-rendered image templates are cloned, with no arbitrary
+image URLs, stock edits or checkout requests. Images remain viewable from direct
+variant links without JavaScript; interactive synchronization requires JavaScript.
 
 ### Isolated Stripe sandbox activation checklist
 

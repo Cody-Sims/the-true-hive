@@ -4,6 +4,7 @@
 
 ### Added
 
+- Four separate single-variant soap styling references and a synchronized image/format gallery; retain owner-photo priority and explicit AI-reference disclosure.
 - Original, responsive AI soap-styling references for the two current products, clearly disclosed and automatically superseded by uploaded owner photography.
 - Private inventory-home balances and inline audited Add/Reduce controls, with received-unit presets that require explicit review and submission.
 - Faithful ingredient import from explicit Details blocks and generated ingredient text, preserving size notes and existing identities.

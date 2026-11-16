@@ -12,6 +12,8 @@ interface Props {
   photo?: ProductPhoto | null;
   photoSrc?: string | null;
   referenceKey?: string | undefined;
+  referenceVariantKey?: string | undefined;
+  sizes?: string | undefined;
 }
 const {
   image,
@@ -20,9 +22,13 @@ const {
   photo,
   photoSrc,
   referenceKey,
+  referenceVariantKey,
+  sizes,
 } = Astro.props;
 const illustrations = { soap, honey, candle };
-const reference = !photo ? getSoapReference(referenceKey) : null;
+const reference = !photo
+  ? getSoapReference(referenceKey, referenceVariantKey)
+  : null;
 ---
 
 <img
@@ -35,10 +41,10 @@ const reference = !photo ? getSoapReference(referenceKey) : null;
   srcset={
     reference ? `${reference.small} 480w, ${reference.src} 960w` : undefined
   }
-  sizes={reference ? "(max-width: 700px) 90vw, 45vw" : undefined}
+  sizes={reference ? (sizes ?? "(max-width: 700px) 90vw, 45vw") : undefined}
   alt={photo ? photo.alt : (reference?.alt ?? alt)}
   width={photo?.width ?? (reference ? 960 : 420)}
-  height={photo?.height ?? (reference ? 1440 : 360)}
+  height={photo?.height ?? (reference ? 960 : 360)}
   loading={eager ? "eager" : "lazy"}
   decoding="async"
 />

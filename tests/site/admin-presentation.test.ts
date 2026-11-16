@@ -500,6 +500,115 @@ test("unknown or unavailable preferred formats fall back to an offered variant w
   }
 });
 
+test("each known soap variant renders its own individual reference without crossing product identities", async () => {
+  const sources = new Set<string>();
+  for (const [key, variantKey, filename] of [
+    [
+      "coconut-milk-delight",
+      "coconut-milk-delight-4oz-single",
+      "soap-delight-bar",
+    ],
+    [
+      "coconut-milk-delight",
+      "coconut-milk-delight-4oz-wolf",
+      "soap-delight-wolf",
+    ],
+    ["the-true-soap", "the-true-soap-4oz-single", "soap-true-bar"],
+    ["the-true-soap", "the-true-soap-4oz-wolf", "soap-true-wolf"],
+  ] as const) {
+    const html = await render("src/components/ProductArt.astro", {
+      image: "soap",
+      referenceKey: key,
+      referenceVariantKey: variantKey,
+    });
+    assert.ok(html.includes(filename), filename);
+    assert.match(html, /AI styling reference/);
+    const src = html.match(/\bsrc="([^"]+)"/)?.[1];
+    assert.ok(src);
+    sources.add(src);
+  }
+  assert.equal(sources.size, 4);
+  const wrongProduct = await render("src/components/ProductArt.astro", {
+    image: "soap",
+    referenceKey: "coconut-milk-delight",
+    referenceVariantKey: "the-true-soap-4oz-wolf",
+  });
+  assert.match(wrongProduct, /soap-delight-bar/);
+  assert.doesNotMatch(wrongProduct, /soap-true-wolf/);
+});
+
+domTest(
+  "variant gallery buttons and format radios stay synchronized without mutations",
+  async () => {
+    const record = {
+      ...product,
+      key: "coconut-milk-delight",
+      kind: "active",
+      variants: [
+        {
+          ...product.variants[0],
+          key: "coconut-milk-delight-4oz-single",
+          label: "Single 4oz bar",
+          priceMinor: 1000,
+          stock: { state: "available" },
+        },
+        {
+          ...product.variants[0],
+          key: "coconut-milk-delight-4oz-wolf",
+          label: "Single 1oz Wolf Mold",
+          priceMinor: 1250,
+          stock: { state: "available" },
+        },
+      ],
+    };
+    const page = await fixturePage(
+      "src/components/ProductGallery.astro",
+      { product: record },
+      "product-gallery.ts",
+    );
+    try {
+      const form = await render("src/components/AddToCart.astro", {
+        product: record,
+      });
+      await page
+        .locator("main")
+        .evaluate(
+          (node, html) => node.insertAdjacentHTML("beforeend", html),
+          form,
+        );
+      let mutations = 0;
+      page.on("request", (request) => {
+        if (request.method() !== "GET") mutations++;
+      });
+      const hero = page.locator("[data-gallery-art] img");
+      assert.match((await hero.getAttribute("src"))!, /soap-delight-bar/);
+      await page
+        .getByRole("button", { name: "View Single 1oz Wolf Mold", exact: true })
+        .click();
+      assert.match((await hero.getAttribute("src"))!, /soap-delight-wolf/);
+      assert.equal(
+        await page
+          .getByRole("radio", { name: /Single 1oz Wolf Mold/ })
+          .isChecked(),
+        true,
+      );
+      const bar = page.getByRole("radio", { name: /Single 4oz bar/ });
+      await bar.focus();
+      await page.keyboard.press("Space");
+      assert.match((await hero.getAttribute("src"))!, /soap-delight-bar/);
+      assert.equal(
+        await page
+          .getByRole("button", { name: "View Single 4oz bar", exact: true })
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+      assert.equal(mutations, 0);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
 test("soap reference cards disclose generated imagery, show format prices and preserve real uploaded photos", async () => {
   const record = {
     ...product,
@@ -527,7 +636,7 @@ test("soap reference cards disclose generated imagery, show format prices and pr
     await render("src/components/ProductCard.astro", { product: record })
   ).replace(/\s+/g, " ");
   assert.match(html, /AI styling reference/);
-  assert.match(html, /soap-reference-ivory/);
+  assert.match(html, /soap-delight-bar/);
   assert.match(html, /variant=fixture-variant#add-to-cart/);
   assert.match(html, /variant=fixture-wolf#add-to-cart/);
   assert.match(html, /Single 4oz bar/);
@@ -548,12 +657,12 @@ test("soap reference cards disclose generated imagery, show format prices and pr
     },
   });
   assert.match(real, /\/media\/products\/real-photo/);
-  assert.doesNotMatch(real, /AI styling reference|soap-reference-ivory/);
+  assert.doesNotMatch(real, /AI styling reference|soap-delight-bar/);
   const missing = await render("src/components/ProductArt.astro", {
     image: "soap",
     referenceKey: "unknown-product",
   });
-  assert.doesNotMatch(missing, /soap-reference/);
+  assert.doesNotMatch(missing, /soap-delight|soap-true/);
   const soldOut = await render("src/components/ProductCard.astro", {
     product: {
       ...record,
