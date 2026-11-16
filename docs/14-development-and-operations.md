@@ -324,15 +324,17 @@ real products, prices, opening counts or existing inventory with test fixtures.
 ### Inventory workbench and internal labels
 
 The private inventory home (`/inventory/products`, also the inventory root's
-destination) shows current per-variant, per-location balances. **On hand** is the
-physical count; **Available / Sellable** subtracts held, committed and unavailable
+destination) shows current variant balances at the selected location. **On hand**
+is the physical count; **Available** subtracts held, committed and unavailable
 units. Missing records are unverified, not fabricated zeros. Search supports the
 full existing SKU length and is bounded to 160 characters.
 
-Products use compact variant/location rows. Primary counts remain visible;
-opening **Add / Reduce stock** also reveals held, committed, unavailable and
-revision details. **Product details** reveals product keys, variant keys and SKUs.
-The toolbar exposes **New product**, **Add location** and **Manage locations**
+Products are grouped into collapsible category shelves. Primary counts, SKUs and
+stock status remain visible; selecting a product name or row opens its focused
+stock inspector, with a modal presentation on mobile. Location, category and
+stock filters apply before pagination, including an explicit out-of-stock view.
+Shared navigation and page-heading controls keep inventory pages consistent.
+The heading exposes **New product**, **Add location** and **Manage locations**
 even when a catalog read fails. Location creation still uses the existing
 audited form and inactive/non-pickup defaults; it does not add customer-selectable
 pickup addresses or change the configured storefront location.
@@ -343,11 +345,11 @@ keep frequent tasks visible and defer secondary information. Native disclosures
 are exercised with Enter and Space, consistent with the
 [W3C disclosure interaction pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/).
 
-Expand **Add / Reduce stock** on a listed balance without opening the product.
-Presets such as **+100 received** only fill an Add amount and focus the reason;
-they never submit a mutation. Enter a meaningful reason, review the direction
-and amount, then **Confirm stock change**. The existing audited adjustment API,
-expected revision, frozen operation ID on uncertain retries and explicit conflict
+Select an item, then expand **Receive stock** in the inspector without opening
+the product editor. Presets such as **+12** only prepare a receiving amount;
+they never submit a mutation. Enter a meaningful reason, review the direction,
+amount and balance preview, then **Confirm stock update**. The existing audited
+adjustment API, expected revision, frozen operation ID on uncertain retries and explicit conflict
 review are unchanged. Verified receipts and separately refreshed balances update
 on the same page, including duplicate views of the same stable keys.
 

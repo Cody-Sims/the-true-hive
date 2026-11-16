@@ -6,7 +6,7 @@ Updated **November 15, 2026**. Status: **inventory-backed storefront and private
 
 ## Build the actual site
 
-Apiary Market (concept 04) is selected. The application uses **Astro + TypeScript, native Node and our own PostgreSQL inventory**, with **no Shopify or Docker**. The first slice has collection/detail pages, read APIs, health checks and private transactional inventory foundations, not live checkout or an exposed admin.
+Apiary Market (concept 04) is selected. The application uses **Astro + TypeScript, native Node and our own PostgreSQL inventory**, with **no Shopify or Docker**. It includes collection/detail pages, read APIs, health checks, MFA-gated inventory administration and explicitly gated Stripe test checkout. Real payments are not enabled.
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
@@ -43,15 +43,24 @@ checkout admission remain authoritative. When checkout is disabled, its status
 appears in the cart; when test mode is configured, shopping pages clearly
 identify the test store and no-real-payment/pickup scope.
 
-The private inventory home uses compact product/location rows with On hand and
-Available counts visible; expand stock controls for allocations and revisions,
-or Product details for SKUs. New-product and add/manage-location shortcuts
-remain visible beside the search tools. It includes inline
-Add/Reduce controls; presets such as `+100 received` prepare a reviewable change,
-never a stock mutation by themselves. Product editors can move explicit
+The private inventory home groups variants into collapsible category shelves,
+with location-specific stock status and in-stock/out-of-stock filters. Select a
+product name or row to open its focused stock inspector; on mobile it opens in
+a dialog. Receive stock discloses an audited Add/Reduce form, and quantity
+presets only prepare a reviewable change, never a stock mutation by themselves.
+Shared navigation, page-heading and select components keep inventory pages
+consistent. New-product and location-management shortcuts remain available.
+Product editors can move explicit
 ingredient blocks out of Details and copy generated ingredient text. Internal
 labels encode existing SKUs as Code 128 barcodes, with no retail registrations,
 GTINs or provider fees. See the [inventory workbench guide](docs/14-development-and-operations.md#inventory-workbench-and-internal-labels).
+
+## Repository maintenance
+
+The repository's `docs/20-reusable-components-and-cleanup.md` guide records
+existing UI boundaries, current extractions, proven-dead code and
+separately gated follow-up work. It is repository maintenance guidance, not an
+addition to the public review's publication allowlist.
 
 ## Open the studio
 
@@ -85,15 +94,15 @@ For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sh
 
 After editing planning or prototype sources, run `npm run build:pages` and refresh, or restart `npm run preview`, to regenerate the curated local review.
 
-**Contact direction:** phone and verified social profiles for now. `contact@thetruehive.com` is documented for future use only; no forwarding/mailbox is being activated, and actual phone/profile values still need owner confirmation.
+**Contact behavior:** the Contact page shows the current approved/configured channels. The inquiry form prepares an email draft for the visitor to send; repository maintenance does not configure mail delivery, forwarding or a mailbox.
 
 ## Confirmed direction
 
 **Product-led local sales; local pickup first, shipping later.** Build on the existing small-scale soap business and beekeeping, rather than assuming every prototype product is ready. Retail honey is not available merely because a honey jar appears in a mockup: the owner reports that the next harvest already has a purchaser. See the [business plan](docs/09-local-business-launch-plan.md) for the owner-approved current context and allocation constraints.
 
-The future store is **our own primary-domain experience**, with PostgreSQL-authoritative stock/order rules and approved Stripe card-only test integration in the next phase. Earlier Shopify recommendations are superseded. Render manages infrastructure, not merchandising/inventory ownership; secure admin/provider activation and live sales remain explicit gates.
+The store is **our own primary-domain experience**, with PostgreSQL-authoritative stock/order rules and explicitly gated Stripe card-only test checkout. Earlier Shopify recommendations are superseded. Render manages infrastructure, not merchandising/inventory ownership; live sales remain a separate explicit gate.
 
-**Inventory phase, local implementation:** [secure inventory administration and connected checkout](docs/15-inventory-admin-and-commerce.md) targets `inventory.thetruehive.com`, using an isolated Firebase identity project, mandatory app-enforced MFA and PostgreSQL admin membership. Product/location management, audited count changes, Stripe card-only test checkout and Record pickup are implemented behind disabled-by-default flags, sharing the same PostgreSQL authority. Provider setup, recovery, domain activation and live sales remain gated; no paid upgrades or live charges are approved.
+**Inventory administration:** [secure inventory administration and connected checkout](docs/15-inventory-admin-and-commerce.md) documents the deployed `inventory.thetruehive.com` workspace, using an isolated Firebase identity project, mandatory app-enforced MFA and PostgreSQL admin membership. Product/location management, audited count changes, Stripe card-only test checkout and Record pickup share the same PostgreSQL authority. Payment admission remains explicitly gated; no live charges or provider upgrades are authorized by repository cleanup.
 
 **Apiary Market is selected.** All ten directions remain available for comparison/history. Selection is an owner decision, not a proven conversion-rate ranking.
 

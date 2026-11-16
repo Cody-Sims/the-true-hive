@@ -25,6 +25,7 @@
 ### Changed
 
 - Simplify the global header to Store, Services and About us; keep cart/pickup navigation within the store and trim the footer to contact and policy links without repeated shopper contact prompts.
+- Consolidate repeated public page introductions and action links into reusable components, and document the component catalog and evidence-led cleanup plan.
 - Use shared inventory navigation, page-heading and select components across Products, editors, locations, orders, history and store settings, with consistent mobile navigation, account disclosure and native dropdown styling.
 - Group Products into compact category shelves with visible stock status, location-specific availability filters and a focused desktop/mobile stock-update inspector; preserve product creation, labels, location controls and audited adjustments.
 - Replace repeated staging/coming-soon/paused-store prose with product-focused shopping pages, compact canonical starting prices, clearer buying controls and useful cart/checkout recovery links.
@@ -41,6 +42,7 @@
 
 ### Fixed
 
+- Retire the superseded inventory-list component and only its dedicated fixtures/tests; preserve current shelves, stock updates and published design history.
 - Accept Stripe's current `/g/pay/` hosted Checkout URL for the exact verified test session, retaining the existing `/c/pay/` route and strict host, identity and query checks.
 - Make product names and stock rows select their focused inventory panel, with keyboard selection, a clear active-row indicator and the prototype's image-led details and Receive action.
 - Preserve existing photo-audit actions when upgrading store settings, restrict public low-stock counts to the configured pickup location, and restore the latest saved cart after checkout recovery without overwriting another tab's changes.
