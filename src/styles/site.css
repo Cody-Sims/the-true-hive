@@ -156,14 +156,35 @@ a {
 .site-nav a[aria-current] {
   text-decoration: underline;
 }
-.site-nav .nav-connect {
-  gap: 1rem;
-  padding-inline: 1rem;
-  border: 1px solid var(--line);
-  border-radius: 0.2rem;
+.store-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+  padding-block: 0.75rem;
+  border-bottom: 1px solid var(--line);
 }
-.site-nav .nav-connect:hover {
-  border-color: var(--forest);
+.store-nav a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+.store-nav a[aria-current] {
+  text-decoration-thickness: 2px;
+}
+.store-nav .store-cart {
+  gap: 0.35rem;
+  margin-left: auto;
+  padding-inline: 1rem;
+  border: 1px solid var(--forest);
+  border-radius: 0.2rem;
+  text-decoration: none;
+}
+.store-nav .store-cart:hover {
+  background: var(--surface);
 }
 .eyebrow {
   font-size: 0.7rem;
@@ -602,9 +623,9 @@ figcaption {
   font-size: 0.85rem;
 }
 .site-footer nav {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
 }
 .site-footer a {
   display: inline-flex;
@@ -772,9 +793,6 @@ figcaption {
   .site-nav {
     width: 100%;
     gap: 0.15rem 1rem;
-  }
-  .site-nav .nav-connect {
-    padding-inline: 0.75rem;
   }
   .market-hero,
   .product-shelf,

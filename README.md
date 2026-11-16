@@ -22,7 +22,10 @@ low-stock notices, published variant prices and a device-local shopping cart.
 Contact inquiries open an email draft that visitors must send themselves; no
 email provider or submission backend is required. Contact channels and the form
 live together at `/contact`; pickup information is a compact notice on the
-collection and cart, not a separate homepage section. Apply migration 004 before
+collection and cart, not a separate homepage section. The global header is
+**Store / Services / About us**. Cart and pickup navigation appear only in the
+store; contact is available through Services and the footer, alongside Privacy
+and Accessibility. Apply migration 004 before
 deploying ingredient-aware code, and migration 005 before store controls.
 Authorized inventory administrators can allow or pause new checkouts under
 **Store settings**, while the catalog and cart remain visible. The switch

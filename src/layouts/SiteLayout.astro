@@ -20,12 +20,12 @@ const {
 } = Astro.props;
 const config = readConfig();
 const cartPage = path === "/cart" || path === "/cart/";
-const shoppingPage =
-  path === "/" ||
+const storePage =
   path === "/goods" ||
   path.startsWith("/goods/") ||
   cartPage ||
   path.startsWith("/checkout/");
+const shoppingPage = path === "/" || storePage;
 const testCheckout = getCheckoutPresentation().enabled;
 const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
 const isSearchResults =
@@ -110,21 +110,14 @@ const schema = JSON.stringify({
           </span>
         </a>
         <nav class="site-nav" aria-label="Main navigation">
-          <a
-            href="/goods"
-            aria-current={
-              path === "/goods" || path.startsWith("/goods/")
-                ? "page"
-                : undefined
-            }
-          >
-            The goods
+          <a href="/goods" aria-current={storePage ? "page" : undefined}>
+            Store
           </a>
           <a
             href="/services"
             aria-current={path === "/services" ? "page" : undefined}
           >
-            Beekeeping
+            Services
           </a>
           <a
             href="/about"
@@ -132,20 +125,30 @@ const schema = JSON.stringify({
           >
             About us
           </a>
-          <a href="/cart" aria-current={cartPage ? "page" : undefined}>
-            Cart<span data-cart-count></span>
-          </a>
-          <a
-            class="nav-connect"
-            href="/contact"
-            aria-current={path === "/contact" ? "page" : undefined}
-          >
-            Contact us <span aria-hidden="true">&nearr;</span>
-          </a>
         </nav>
       </header>
     </div>
     <main id="main" tabindex="-1">
+      {storePage && (
+        <nav class="store-nav wrap" aria-label="Store navigation">
+          <a
+            href="/goods"
+            aria-current={
+              path === "/goods" || path === "/goods/" ? "page" : undefined
+            }
+          >
+            All products
+          </a>
+          <a href="/goods#pickup">Pickup</a>
+          <a
+            class="store-cart"
+            href="/cart"
+            aria-current={cartPage ? "page" : undefined}
+          >
+            Cart<span data-cart-count></span>
+          </a>
+        </nav>
+      )}
       <slot />
     </main>
     <footer class="site-footer">
@@ -159,14 +162,24 @@ const schema = JSON.stringify({
           <p class="fine-print">Madisonville, Tennessee</p>
         </div>
         <nav aria-label="Footer navigation">
-          <a href="/">Home</a>
-          <a href="/goods">The collection</a>
-          <a href="/goods#pickup">Local pickup</a>
-          <a href="/about">About us</a>
-          <a href="/services">Beekeeping</a>
-          <a href="/contact">Contact us</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/accessibility">Accessibility</a>
+          <a
+            href="/contact"
+            aria-current={path === "/contact" ? "page" : undefined}
+          >
+            Contact us
+          </a>
+          <a
+            href="/privacy"
+            aria-current={path === "/privacy" ? "page" : undefined}
+          >
+            Privacy
+          </a>
+          <a
+            href="/accessibility"
+            aria-current={path === "/accessibility" ? "page" : undefined}
+          >
+            Accessibility
+          </a>
         </nav>
       </div>
       <div class="wrap footer-colophon">

@@ -63,7 +63,7 @@ test("the collection, product, breadcrumbs and genuine missing-product response 
   ).toBeVisible();
   await page
     .getByRole("navigation", { name: "Breadcrumb" })
-    .getByRole("link", { name: "The goods" })
+    .getByRole("link", { name: "Store" })
     .click();
   await expect(page).toHaveURL(/\/goods$/);
   const missing = await page.goto("/goods/not-published");
@@ -141,9 +141,10 @@ test("keyboard entry, confirmed phone contact and local email drafts remain inta
   await expect(page).toHaveURL(/#main$/);
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Contact us" })
+    .getByRole("link", { name: "Services", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/contact$/);
+  await page.getByRole("link", { name: "Prepare a service inquiry" }).click();
+  await expect(page).toHaveURL(/\/contact#inquiry$/);
   await expect(
     page.locator("#connect").getByRole("link", { name: /Call.*368-2262/ }),
   ).toHaveAttribute("href", "tel:+14233682262");
