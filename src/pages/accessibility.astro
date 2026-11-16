@@ -1,5 +1,7 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
+import PageIntro from "../components/PageIntro.astro";
+import ActionLink from "../components/ActionLink.astro";
 import { readConfig } from "../server/config.ts";
 const { contact } = readConfig();
 ---
@@ -8,19 +10,17 @@ const { contact } = readConfig();
   title="Accessibility"
   description="Keyboard navigation, text zoom, reduced motion and accessibility support for The True Hive."
 >
-  <section class="page-intro wrap" aria-labelledby="accessibility-title">
-    <p class="eyebrow">Make yourself at home</p>
-    <h1 id="accessibility-title">
+  <PageIntro
+    eyebrow="Make yourself at home"
+    headingId="accessibility-title"
+    description="WCAG 2.2 AA is the target for this website. This guidance is not a certification or a promise of universal accessibility across every browser, device, and assistive technology."
+  >
+    <Fragment slot="heading">
       Accessibility,
       <br />
       <em>at your pace.</em>
-    </h1>
-    <p>
-      WCAG 2.2 AA is the target for this website. This guidance is not a
-      certification or a promise of universal accessibility across every
-      browser, device, and assistive technology.
-    </p>
-  </section>
+    </Fragment>
+  </PageIntro>
   <section class="wrap prose-section">
     <h2>Getting around with a keyboard</h2>
     <p>
@@ -41,9 +41,9 @@ const { contact } = readConfig();
       and select “Find goods” to load the results. Use “Clear filters” when it
       appears, or return to the collection to start again.
     </p>
-    <a class="text-link" href="/goods">
-      Browse the collection <span aria-hidden="true">&rarr;</span>
-    </a>
+    <ActionLink href="/goods" arrow>
+      Browse the collection
+    </ActionLink>
     <h2>Text size and reduced motion</h2>
     <p>
       Use your browser's text-size or zoom controls to make the content more
@@ -74,11 +74,11 @@ const { contact } = readConfig();
       sharing it, your browser or assistive technology can help us understand
       the issue.
     </p>
-    <a class="text-link" href="/contact">
-      Contact channels <span aria-hidden="true">&rarr;</span>
-    </a>
-    <a class="text-link" href={contact.phoneHref}>
-      Call {contact.phone} <span aria-hidden="true">&rarr;</span>
-    </a>
+    <ActionLink href="/contact" arrow>
+      Contact channels
+    </ActionLink>
+    <ActionLink href={contact.phoneHref} arrow>
+      Call {contact.phone}
+    </ActionLink>
   </section>
 </SiteLayout>
