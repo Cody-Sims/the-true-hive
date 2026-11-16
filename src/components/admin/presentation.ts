@@ -19,8 +19,16 @@ export function money(minor: number | null) {
       }).format(minor / 100);
 }
 
-export function pageHref(path: string, offset: number, search = "") {
+export function pageHref(
+  path: string,
+  offset: number,
+  search = "",
+  filters: Record<string, string> = {},
+) {
   const query = new URLSearchParams({ offset: String(offset) });
   if (search) query.set("search", search);
+  for (const [key, value] of Object.entries(filters)) {
+    if (value && key !== "offset" && key !== "search") query.set(key, value);
+  }
   return `${path}?${query}`;
 }

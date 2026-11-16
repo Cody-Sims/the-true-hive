@@ -1,94 +1,59 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import ReadState from "../../../components/admin/ReadState.astro";
-import Pagination from "../../../components/admin/Pagination.astro";
-import InventoryProductList from "../../../components/admin/InventoryProductList.astro";
-import { pageQuery } from "../../../components/admin/presentation.ts";
+import InventoryWorkspace from "../../../components/admin/InventoryWorkspace.astro";
+import { inventoryQuery } from "../../../components/admin/inventory.ts";
+import { AdminError } from "../../../server/admin/errors.ts";
 import { listAdminProducts } from "../../../server/admin/catalog.ts";
 import { getAdminPool } from "../../../server/admin/pool.ts";
 if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
-const query = pageQuery(Astro.url);
+const query = inventoryQuery(Astro.url);
 let result: Awaited<ReturnType<typeof listAdminProducts>> | null = null;
+let invalidFilter = false;
 try {
   result = await listAdminProducts(getAdminPool(), query);
-} catch {
-  Astro.response.status = 503;
+} catch (error) {
+  invalidFilter = error instanceof AdminError && error.status === 400;
+  Astro.response.status = invalidFilter ? 400 : 503;
 }
 ---
 
-<AdminLayout title="Products">
-  <div class="inventory-toolbar">
-    <nav class="admin-actions" aria-label="Inventory actions">
-      <a class="inventory-create" href="/inventory/products/new">
-        New product
-      </a>
-      <a href="/inventory/locations#new-location">Add location</a>
-      <a href="/inventory/locations">Manage locations</a>
-    </nav>
+<AdminLayout title="Products" compact>
+  <nav
+    class="admin-actions inventory-entry-actions"
+    aria-label="Inventory actions"
+  >
+    <a href="/inventory/products/new">New product</a>
+    <a href="/inventory/locations#new-location">Add location</a>
+    <a href="/inventory/locations">Manage locations</a>
+  </nav>
+  {!result && (
     <form method="get" class="admin-form" role="search">
       <label>
-        Search products or SKU (scanner){" "}
+        Search products or SKU (scanner)
         <input
+          type="search"
           name="search"
           value={query.search}
           maxlength="160"
-          type="search"
         />
       </label>
       <button type="submit">Search</button>
     </form>
-  </div>
-  {!result ? (
-    <ReadState unavailable />
-  ) : result.products.length === 0 ? (
-    <ReadState
-      empty={
-        query.search ? "No products match this search." : "No products yet."
-      }
-    />
-  ) : (
-    <InventoryProductList
-      products={result.products}
-      locations={result.locations}
-    />
   )}
-  {result && (
-    <Pagination
-      path="/inventory/products"
-      offset={query.offset}
-      total={result.total}
-      search={query.search}
+  {invalidFilter ? (
+    <p class="admin-notice">
+      Choose a listed inventory location.{" "}
+      <a href="/inventory/products">Reset inventory filters</a>
+    </p>
+  ) : !result ? (
+    <ReadState unavailable />
+  ) : (
+    <InventoryWorkspace
+      {...result}
+      query={query}
+      selectedKey={Astro.url.searchParams.get("variant") ?? ""}
     />
   )}
 </AdminLayout>
-
-<style>
-  .inventory-toolbar {
-    display: grid;
-    gap: 1rem;
-    margin-block: 1rem;
-  }
-  .inventory-toolbar nav a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-    padding: 0.4rem 0.75rem;
-  }
-  .inventory-create {
-    color: var(--paper);
-    background: var(--forest);
-    font-weight: 700;
-  }
-  .inventory-toolbar form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 0.75rem;
-    align-items: end;
-    max-width: none;
-    margin: 0;
-  }
-  .inventory-toolbar label {
-    flex: 1 1 16rem;
-  }
-</style>

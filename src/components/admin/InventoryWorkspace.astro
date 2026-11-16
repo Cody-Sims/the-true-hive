@@ -1,0 +1,390 @@
+---
+import type { AdminLocation, AdminProduct } from "../../domain/admin.ts";
+import CountForm from "./CountForm.astro";
+import Quantities from "./Quantities.astro";
+import Pagination from "./Pagination.astro";
+import { money } from "./presentation.ts";
+import {
+  inventoryCategories,
+  inventoryHref,
+  inventoryRows,
+  stockFilters,
+  stockState,
+  type InventoryQuery,
+} from "./inventory.ts";
+interface Props {
+  products: AdminProduct[];
+  locations: AdminLocation[];
+  locationKey: string | null;
+  total: number;
+  query: InventoryQuery;
+  selectedKey?: string;
+}
+const {
+  products,
+  locations,
+  locationKey,
+  total,
+  selectedKey = "",
+} = Astro.props;
+const query = { ...Astro.props.query, locationKey: locationKey ?? "" };
+const location = locations.find((entry) => entry.key === locationKey);
+const rows = inventoryRows(products, query);
+const selected = rows.find((row) => row.variant.key === selectedKey) ?? rows[0];
+const tracked = rows.find((row) => row.level);
+const balance = selected?.level ?? tracked?.level;
+const labels = Object.fromEntries(stockFilters);
+const unvaried = products.filter((product) => product.variants.length === 0);
+const filtered =
+  !!query.search || query.category !== "all" || query.stock !== "all";
+---
+
+<section
+  class="inventory-workspace"
+  data-inventory-workspace
+  aria-label="Product stock workspace"
+>
+  <div class="inventory-page-actions">
+    <p>
+      Stock at <strong>{location?.name ?? "no configured location"}</strong>.
+      Available excludes held, committed and unavailable units.
+    </p>
+  </div>
+  <form
+    method="get"
+    action="/inventory/products"
+    role="search"
+    class="inventory-filter-form"
+    data-stock-filters
+  >
+    <label class="inventory-search">
+      Search products or SKU
+      <input
+        type="search"
+        name="search"
+        value={query.search}
+        maxlength="160"
+        placeholder="Product name or stock code"
+      />
+    </label>
+    <label>
+      Category
+      <select name="category">
+        <option value="all">All categories</option>
+        {inventoryCategories.map(([key, name]) => (
+          <option value={key} selected={query.category === key}>
+            {name}
+          </option>
+        ))}
+      </select>
+    </label>
+    <label>
+      Inventory location
+      <select name="locationKey" disabled={!locations.length}>
+        {!locations.length && <option value="">No locations</option>}
+        {locations.map((entry) => (
+          <option value={entry.key} selected={entry.key === locationKey}>
+            {entry.name}
+            {entry.active ? "" : " (inactive)"}
+          </option>
+        ))}
+      </select>
+    </label>
+    <input type="hidden" name="stock" value={query.stock} />
+    <button type="submit">Apply filters</button>
+  </form>
+  <nav class="inventory-stock-filters" aria-label="Stock filters">
+    {stockFilters.map(([key, name]) => (
+      <a
+        href={inventoryHref(query, { stock: key, offset: 0 })}
+        aria-current={query.stock === key ? "page" : undefined}
+      >
+        {name}
+      </a>
+    ))}
+    {filtered && (
+      <a
+        class="inventory-clear"
+        href={inventoryHref(query, {
+          search: "",
+          category: "all",
+          stock: "all",
+          offset: 0,
+        })}
+      >
+        Clear filters
+      </a>
+    )}
+  </nav>
+  <p
+    data-stock-workspace-status
+    role="status"
+    tabindex="-1"
+    class="inventory-workspace-status"
+  ></p>
+  <p data-stock-snapshot-note class="inventory-snapshot-note" hidden>
+    Stock changed. Apply filters to refresh matching results and page totals.
+  </p>
+  {!locations.length && (
+    <p class="admin-notice">
+      Add an <a href="/inventory/locations">inventory location</a> before
+      recording stock. Missing balances are not proof of zero stock.
+    </p>
+  )}
+  <div class="inventory-grid">
+    <div class="inventory-shelves">
+      {!rows.length && (
+        <div class="inventory-empty">
+          <h2>
+            {filtered
+              ? "No inventory matches these filters"
+              : "No inventory variants on this page"}
+          </h2>
+          <p>
+            {total
+              ? "Try another page or change your filters."
+              : "Create a product or change your filters to get started."}
+          </p>
+        </div>
+      )}
+      {inventoryCategories.map(([category, name]) => {
+        const group = rows.filter((row) => row.product.category === category);
+        if (!group.length) return null;
+        return (
+          <details class="inventory-shelf" open aria-label={`${name} shelf`}>
+            <summary>
+              <span>{name}</span>
+              <small>
+                {group.length} {group.length === 1 ? "variant" : "variants"} on
+                this page
+              </small>
+            </summary>
+            <table class="inventory-stock-table" role="table">
+              <caption class="inventory-sr-only">
+                {name} inventory at {location?.name ?? "no location"}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Product / variant</th>
+                  <th scope="col">On hand</th>
+                  <th scope="col">Available</th>
+                  <th scope="col">Stock status</th>
+                  <th scope="col">
+                    <span class="inventory-sr-only">Details</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.map(({ product, variant, level }) => {
+                  const status = stockState(level);
+                  const record = {
+                    productKey: product.key,
+                    title: product.title,
+                    status: product.status,
+                    variant: {
+                      key: variant.key,
+                      sku: variant.sku,
+                      label: variant.label,
+                      active: variant.active,
+                      priceMinor: variant.priceMinor,
+                    },
+                    level,
+                    locationKey: locationKey ?? "",
+                    locationName: location?.name ?? "No location",
+                  };
+                  return (
+                    <tr
+                      data-stock-row={variant.key}
+                      data-stock-record={JSON.stringify(record)}
+                      class:list={{
+                        "is-selected": variant.key === selected?.variant.key,
+                      }}
+                    >
+                      <td class="inventory-product-cell">
+                        <strong>{product.title}</strong>
+                        <span>
+                          {variant.label}{" "}
+                          <span aria-hidden="true">&middot;</span>{" "}
+                          <code>{variant.sku}</code>
+                        </span>
+                        {(product.status !== "published" ||
+                          !variant.active) && (
+                          <small>
+                            {[
+                              product.status !== "published"
+                                ? product.status
+                                : null,
+                              !variant.active ? "inactive variant" : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" / ")}
+                          </small>
+                        )}
+                      </td>
+                      <td class="inventory-on-hand" data-label="On hand">
+                        <strong data-stock-on-hand>
+                          {level?.onHand ?? "--"}
+                        </strong>
+                      </td>
+                      <td class="inventory-available" data-label="Available">
+                        <strong data-stock-available>
+                          {level?.sellable ?? "--"}
+                        </strong>
+                      </td>
+                      <td class="inventory-stock-state">
+                        <span
+                          class="inventory-stock-badge"
+                          data-stock-state={status}
+                        >
+                          {labels[status]}
+                        </span>
+                      </td>
+                      <td class="inventory-row-action">
+                        <a
+                          href={`${inventoryHref(query, { variant: variant.key })}#stock-inspector`}
+                          data-stock-select
+                          aria-current={
+                            variant.key === selected?.variant.key
+                              ? "true"
+                              : undefined
+                          }
+                          aria-label={`View stock for ${product.title}, ${variant.label}`}
+                        >
+                          Stock <span aria-hidden="true">&rarr;</span>
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </details>
+        );
+      })}
+      {!!unvaried.length && (
+        <section class="inventory-empty">
+          <h2>Products without variants</h2>
+          <ul>
+            {unvaried.map((product) => (
+              <li>
+                <a
+                  href={`/inventory/products/${encodeURIComponent(product.key)}`}
+                >
+                  {product.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p>Add a variant in the product record before updating its stock.</p>
+        </section>
+      )}
+      <Pagination
+        path="/inventory/products"
+        offset={query.offset}
+        total={total}
+        search={query.search}
+        filters={{
+          category: query.category,
+          stock: query.stock,
+          locationKey: query.locationKey,
+        }}
+      />
+      <p class="inventory-page-note">
+        Pagination counts products. Shelves show this page's matching variants,
+        including draft and inactive records.
+      </p>
+    </div>
+    {selected && (
+      <aside
+        id="stock-inspector"
+        class="inventory-inspector"
+        data-stock-inspector
+        aria-labelledby="stock-panel-title"
+      >
+        <div class="inventory-inspector-heading">
+          <span>FOCUSED STOCK DETAILS</span>
+          <button
+            type="button"
+            class="inventory-inspector-close"
+            data-stock-close
+            aria-label="Close stock details"
+          >
+            Close
+          </button>
+        </div>
+        <h2 id="stock-panel-title" data-stock-title tabindex="-1">
+          {selected.product.title}
+        </h2>
+        <p class="inventory-inspector-variant" data-stock-variant>
+          {selected.variant.label} / {selected.variant.sku}
+        </p>
+        <p class="inventory-inspector-location">
+          <span data-stock-location-name>
+            {location?.name ?? "No location"}
+          </span>
+          <span
+            class="inventory-stock-badge"
+            data-inspector-stock-state
+            data-stock-state={stockState(selected.level)}
+          >
+            {labels[stockState(selected.level)]}
+          </span>
+        </p>
+        <p class="inventory-record-meta" data-stock-record-meta>
+          {selected.product.status}
+          {selected.variant.active ? "" : " / inactive variant"} /{" "}
+          {money(selected.variant.priceMinor)}
+        </p>
+        <div data-stock-balances hidden={!selected.level}>
+          {balance && <Quantities level={balance} sellableLabel="Available" />}
+        </div>
+        <p class="admin-notice" data-stock-untracked hidden={!!selected.level}>
+          No balance is recorded for this variant at this location. This is not
+          proof of zero stock. Open the product record to investigate.
+        </p>
+        <div data-stock-form-host hidden={!selected.level}>
+          {tracked?.level && (
+            <CountForm
+              variant={selected.level ? selected.variant : tracked.variant}
+              level={selected.level ?? tracked.level}
+              location={location}
+              productKey={
+                selected.level ? selected.product.key : tracked.product.key
+              }
+              compact
+            />
+          )}
+        </div>
+        <div class="inventory-inspector-links">
+          <a
+            data-stock-edit
+            href={`/inventory/products/${encodeURIComponent(selected.product.key)}`}
+          >
+            Edit product
+          </a>
+          <a
+            data-stock-history
+            href={`/inventory/history?variantKey=${encodeURIComponent(selected.variant.key)}&locationKey=${encodeURIComponent(query.locationKey)}`}
+          >
+            Stock history
+          </a>
+          <a
+            data-stock-labels
+            href={`/inventory/products/${encodeURIComponent(selected.product.key)}/labels`}
+          >
+            Print internal labels
+          </a>
+        </div>
+        <p class="inventory-page-note">
+          Server-verified balances. Held and committed units are allocations,
+          not physical departures.
+        </p>
+      </aside>
+    )}
+  </div>
+  <dialog
+    class="inventory-mobile-dialog"
+    data-stock-dialog
+    aria-labelledby="stock-panel-title"
+  ></dialog>
+</section>

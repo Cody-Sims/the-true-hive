@@ -826,3 +826,154 @@ test("private listing bounds search and pagination, keeps drafts and inactive va
     status(404),
   );
 });
+
+test("stock shelves filter by one location before pagination and never treat missing balances as zero", async () => {
+  await createAdminLocation(pool, location(), actor);
+  await createAdminLocation(
+    pool,
+    {
+      operationId: randomUUID(),
+      location: { key: "market-room", name: "Other test location" },
+    },
+    actor,
+  );
+  for (let index = 0; index < 25; index += 1) {
+    const key = `shelf-${String(index).padStart(2, "0")}`;
+    await createAdminProduct(
+      pool,
+      {
+        operationId: randomUUID(),
+        product: {
+          ...product,
+          key,
+          slug: key,
+          category: index === 24 ? "honey" : "soap",
+        },
+        variants: [
+          { ...variants[0], key: `${key}-bar`, sku: `SHELF-${index}` },
+        ],
+      },
+      actor,
+    );
+  }
+  await pool.query(
+    "UPDATE inventory_levels SET on_hand=12,held=2 WHERE variant_key='shelf-24-bar' AND location_key='test-room'",
+  );
+  await pool.query(
+    "UPDATE inventory_levels SET on_hand=5,held=5 WHERE variant_key='shelf-22-bar' AND location_key='test-room'",
+  );
+  await pool.query(
+    "DELETE FROM inventory_levels WHERE variant_key='shelf-23-bar' AND location_key='test-room'",
+  );
+  const inStock = await listAdminProducts(pool, {
+    locationKey: "test-room",
+    stock: "in",
+    limit: 20,
+  });
+  assert.equal(inStock.total, 1);
+  assert.equal(inStock.products[0]?.key, "shelf-24");
+  assert.equal(inStock.locationKey, "test-room");
+  const out = await listAdminProducts(pool, {
+    locationKey: "test-room",
+    stock: "out",
+    limit: 20,
+  });
+  assert.equal(out.total, 23);
+  assert.equal(out.products.length, 20);
+  const lastOut = await listAdminProducts(pool, {
+    locationKey: "test-room",
+    stock: "out",
+    offset: 20,
+  });
+  assert.equal(
+    lastOut.products
+      .find((product) => product.key === "shelf-22")
+      ?.variants[0]?.levels.find((level) => level.locationKey === "test-room")
+      ?.onHand,
+    5,
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "test-room",
+        stock: "out",
+        offset: 20,
+      })
+    ).products.length,
+    3,
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "market-room",
+        stock: "out",
+      })
+    ).total,
+    25,
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "test-room",
+        stock: "untracked",
+      })
+    ).products[0]?.key,
+    "shelf-23",
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "test-room",
+        category: "honey",
+        stock: "out",
+      })
+    ).total,
+    0,
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "test-room",
+        category: "honey",
+        stock: "in",
+        search: "SHELF-24",
+      })
+    ).total,
+    1,
+  );
+});
+
+test("a stock filter and SKU search must match the same variant", async () => {
+  await createAdminLocation(pool, location(), actor);
+  await createAdminProduct(pool, draft(), actor);
+  await pool.query(
+    "UPDATE inventory_levels SET on_hand=4 WHERE variant_key='test-bar'",
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "test-room",
+        stock: "out",
+        search: "TEST-BAR",
+      })
+    ).total,
+    0,
+  );
+  assert.equal(
+    (
+      await listAdminProducts(pool, {
+        locationKey: "test-room",
+        stock: "out",
+        search: "TEST-BOX",
+      })
+    ).total,
+    1,
+  );
+  for (const query of [
+    { stock: "low" },
+    { category: "unknown" },
+    { locationKey: "../room" },
+    { locationKey: "not-a-location" },
+  ])
+    await assert.rejects(listAdminProducts(pool, query), status(400));
+});

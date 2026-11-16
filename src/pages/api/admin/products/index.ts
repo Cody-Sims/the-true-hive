@@ -7,7 +7,14 @@ import { adminRoute, readAdminQuery } from "../../../../server/admin/http.ts";
 export const GET = adminRoute(async (pool, _input, context) =>
   listAdminProducts(
     pool,
-    readAdminQuery(context.url, ["limit", "offset", "search"]),
+    readAdminQuery(context.url, [
+      "limit",
+      "offset",
+      "search",
+      "locationKey",
+      "category",
+      "stock",
+    ]),
   ),
 );
 

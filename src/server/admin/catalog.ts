@@ -388,8 +388,28 @@ export async function listAdminProducts(
   products: AdminProduct[];
   total: number;
   locations: AdminLocation[];
+  locationKey: string | null;
 }> {
-  const { value, limit, offset } = page(query, ["search"]);
+  const { value, limit, offset } = page(query, [
+    "search",
+    "locationKey",
+    "category",
+    "stock",
+  ]);
+  const requestedLocation =
+    value["locationKey"] === undefined || value["locationKey"] === ""
+      ? null
+      : key(value["locationKey"], "locationKey");
+  const category = choice(
+    value["category"] ?? "all",
+    ["all", "soap", "honey", "candles", "gifts"],
+    "category",
+  );
+  const stock = choice(
+    value["stock"] ?? "all",
+    ["all", "in", "out", "untracked"],
+    "stock",
+  );
   const search =
     value["search"] === undefined || value["search"] === ""
       ? null
@@ -398,23 +418,47 @@ export async function listAdminProducts(
     search === null ? null : `%${search.replace(/[\\%_]/g, "\\$&")}%`;
   const filter = `WHERE ($1::text IS NULL OR p.title ILIKE $1 OR p.slug ILIKE $1 OR EXISTS (
     SELECT 1 FROM product_variants v WHERE v.product_key=p.product_key AND v.sku ILIKE $1
+  ))
+  AND ($2::text='all' OR p.category=$2)
+  AND ($3::text='all' OR EXISTS (
+    SELECT 1 FROM product_variants v
+    LEFT JOIN inventory_levels s ON s.variant_key=v.variant_key AND s.location_key=$4::text
+    WHERE v.product_key=p.product_key
+      AND ($1::text IS NULL OR p.title ILIKE $1 OR p.slug ILIKE $1 OR v.sku ILIKE $1)
+      AND (
+        ($3='untracked' AND s.variant_key IS NULL)
+        OR ($3='in' AND s.on_hand-s.held-s.committed-s.unavailable > 0)
+        OR ($3='out' AND s.on_hand-s.held-s.committed-s.unavailable = 0)
+      )
   ))`;
   return transaction(
     pool,
     async (client) => {
+      const locations = await client.query<LocationRow>(locationQuery);
+      if (
+        requestedLocation &&
+        !locations.rows.some((location) => location.key === requestedLocation)
+      )
+        invalid("locationKey", "Choose a listed inventory location.");
+      const locationKey =
+        requestedLocation ??
+        locations.rows.find((location) => location.active)?.key ??
+        locations.rows[0]?.key ??
+        null;
+      const parameters = [pattern, category, stock, locationKey];
       const products = await client.query<ProductRow>(
-        `${productQuery} ${filter} ORDER BY p.display_order,p.product_key LIMIT $2 OFFSET $3`,
-        [pattern, limit, offset],
+        `${productQuery} ${filter} ORDER BY p.display_order,p.product_key LIMIT $5 OFFSET $6`,
+        [...parameters, limit, offset],
       );
       const count = await client.query<{ total: number }>(
         `SELECT count(*)::int AS total FROM products p ${filter}`,
-        [pattern],
+        parameters,
       );
-      const locations = await client.query<LocationRow>(locationQuery);
       return {
         products: products.rows.map(projectPhoto),
         total: count.rows[0]!.total,
         locations: locations.rows,
+        locationKey,
       };
     },
     true,

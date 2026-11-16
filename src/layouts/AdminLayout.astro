@@ -3,8 +3,9 @@ import "../styles/admin.css";
 interface Props {
   title: string;
   publicShell?: boolean;
+  compact?: boolean;
 }
-const { title, publicShell = false } = Astro.props;
+const { title, publicShell = false, compact = false } = Astro.props;
 const admin = Astro.locals.admin;
 if (!publicShell && (!admin || !Astro.locals.csrfToken)) {
   throw new Error("Verified inventory session required.");
@@ -23,7 +24,7 @@ const path = Astro.url.pathname;
     <meta name="csrf-token" content={Astro.locals.csrfToken} />
     <title>{title} | True Hive inventory</title>
   </head>
-  <body>
+  <body class:list={{ "admin-inventory": compact }}>
     <a class="admin-skip" href="#main">
       Skip to inventory
     </a>
