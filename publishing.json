@@ -16,5 +16,19 @@
     "design05", "design06", "design07", "design08", "design09", "design10",
     "changes", "sharing", "foundation", "operations", "inventory-phase"
   ],
+  "storefrontConcepts": {
+    "public": true,
+    "approvedOn": "2026-11-15",
+    "scope": "public-products-and-reference-images",
+    "approvedConcepts": ["atelier", "honeyglass", "field-notes", "soft-geometry", "night-apiary"],
+    "approvedAssets": [
+      "assets/soap-delight-bar.webp", "assets/soap-delight-bar-small.webp",
+      "assets/soap-delight-wolf.webp", "assets/soap-delight-wolf-small.webp",
+      "assets/soap-true-bar.webp", "assets/soap-true-bar-small.webp",
+      "assets/soap-true-wolf.webp", "assets/soap-true-wolf-small.webp",
+      "assets/hive.webp"
+    ],
+    "purpose": "Five separate design-review concepts using public product facts and original imagery. No live orders, payments, stock mutations or automatic live-design selection."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

@@ -30,3 +30,15 @@ test("publishing requires the approved public scope and complete design/document
   assert.throws(() => validatePublicationApproval({ ...approval, approvedDesigns: ["meadow"] }), /design/i);
   assert.throws(() => validatePublicationApproval({ ...approval, approvedDocuments: ["overview"] }), /document/i);
 });
+
+test("the five-concept review is explicitly approved and publishes only its bounded public sources", () => {
+  const files = publicationFiles();
+  for (const file of ["index.html", "concept.html", "styles.css", "app.mjs", "model.mjs", "data.mjs", "manifest.mjs"])
+    assert(files.includes(`prototypes/next/${file}`), file);
+  for (const name of ["soap-delight-bar", "soap-delight-wolf", "soap-true-bar", "soap-true-wolf"])
+    assert(files.includes(`prototypes/next/assets/${name}.webp`), name);
+  assert.throws(() => validatePublicationApproval({ ...approval, storefrontConcepts: undefined }), /concept/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, storefrontConcepts: { ...approval.storefrontConcepts, public: false } }), /concept/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, storefrontConcepts: { ...approval.storefrontConcepts, approvedConcepts: ["atelier"] } }), /concept/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, storefrontConcepts: { ...approval.storefrontConcepts, approvedAssets: ["../../.env"] } }), /asset/i);
+});

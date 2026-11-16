@@ -14,6 +14,13 @@ export default defineConfig({
   },
   webServer: [
     {
+      command:
+        "npm run build:pages && python3 -m http.server 4327 --bind 127.0.0.1 --directory dist",
+      url: "http://127.0.0.1:4327/prototypes/next/",
+      timeout: 30000,
+      reuseExistingServer: false,
+    },
+    {
       command: "npm run start",
       url: "http://127.0.0.1:4325/api/health/live",
       timeout: 30000,
