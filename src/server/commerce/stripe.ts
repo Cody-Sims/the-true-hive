@@ -403,7 +403,8 @@ function checkoutUrl(session: Stripe.Checkout.Session): string | null {
       !url.username &&
       !url.password &&
       !url.search &&
-      url.pathname === `/c/pay/${session.id}`
+      (url.pathname === `/c/pay/${session.id}` ||
+        url.pathname === `/g/pay/${session.id}`)
       ? url.href
       : null;
   } catch {
