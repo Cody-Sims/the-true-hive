@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
 import ProductCard from "../components/ProductCard.astro";
+import NoticePanel from "../components/NoticePanel.astro";
 import ServiceCards from "../components/ServiceCards.astro";
 import { Image } from "astro:assets";
 import hivePhoto from "../assets/honeybees-on-comb.webp";
@@ -76,10 +77,10 @@ try {
       </p>
     </div>
     {unavailable ? (
-      <div class="notice" role="status">
+      <NoticePanel role="status">
         <h3>The collection is temporarily unavailable.</h3>
         <p>Please try again shortly, or contact us for help.</p>
-      </div>
+      </NoticePanel>
     ) : catalog?.products.length ? (
       <div class="product-shelf">
         {catalog.products.slice(0, 3).map((product) => (
@@ -87,12 +88,12 @@ try {
         ))}
       </div>
     ) : (
-      <div class="notice">
+      <NoticePanel>
         <h3>No products available.</h3>
         <p>
           Check back soon or <a href="/contact">get in touch</a>.
         </p>
-      </div>
+      </NoticePanel>
     )}
     <div class="home-shelf-ending">
       <a class="text-link" href="/goods">

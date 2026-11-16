@@ -12,45 +12,23 @@ interface Props {
   level: AdminInventoryLevel;
   location?: AdminLocation | undefined;
   productKey: string;
-  inline?: boolean;
   compact?: boolean;
 }
-const {
-  variant,
-  level,
-  location,
-  productKey,
-  inline = false,
-  compact = false,
-} = Astro.props;
-const Editor = inline || compact ? "details" : "div";
-const Heading = inline ? "h4" : "h3";
+const { variant, level, location, productKey, compact = false } = Astro.props;
+const Editor = compact ? "details" : "div";
 ---
 
-<section
-  class:list={[
-    "admin-panel",
-    { "stock-count": inline, "inventory-count-form": compact },
-  ]}
-  data-stock-panel={inline || undefined}
->
+<section class:list={["admin-panel", { "inventory-count-form": compact }]}>
   {!compact && (
     <div class="stock-overview">
-      <Heading class="stock-location">
-        {inline
-          ? (location?.name ?? level.locationKey)
-          : `${variant.label} · ${location?.name ?? level.locationKey}`}
-      </Heading>
-      {!inline && (
-        <p class="admin-muted">
-          Current server balance, not a browser estimate.
-        </p>
-      )}
-      <Quantities level={level} compact={inline} />
+      <h3 class="stock-location">
+        {`${variant.label} · ${location?.name ?? level.locationKey}`}
+      </h3>
+      <p class="admin-muted">Current server balance, not a browser estimate.</p>
+      <Quantities level={level} />
     </div>
   )}
   <Editor data-stock-editor={compact || undefined}>
-    {inline && <summary>Add / Reduce stock</summary>}
     {compact && (
       <summary class="inventory-receive-toggle">
         Receive stock <span aria-hidden="true">+</span>
@@ -61,7 +39,6 @@ const Heading = inline ? "h4" : "h3";
       data-endpoint="/api/admin/adjustments"
       data-method="POST"
       data-refresh={`/api/admin/products/${encodeURIComponent(productKey)}`}
-      data-stock-controls={inline || undefined}
       data-stock-compact={compact || undefined}
       class="admin-form"
     >
@@ -70,35 +47,14 @@ const Heading = inline ? "h4" : "h3";
       <input name="expectedRevision" type="hidden" value={level.revision} />
       <fieldset data-intent-fields>
         <legend>
-          {inline
-            ? "Review an audited stock change"
-            : compact
-              ? "Receive or correct stock"
-              : "Audited count correction"}
+          {compact ? "Receive or correct stock" : "Audited count correction"}
         </legend>
-        {inline && (
-          <div class="admin-actions" aria-label="Prepare received units">
-            {[1, 10, 100].map((amount) => (
-              <button type="button" data-stock-add={amount}>
-                +{amount} received
-              </button>
-            ))}
-            <p>
-              Presets only fill Add units. Review the amount and enter a reason,
-              then confirm.
-            </p>
-          </div>
-        )}
         <div class="admin-grid">
           <label>
             Direction{" "}
             <AdminSelect name="direction" aria-label="Direction" required>
               <option value="increase">
-                {inline
-                  ? "Add units to on hand"
-                  : compact
-                    ? "Receive stock"
-                    : "Increase on hand"}
+                {compact ? "Receive stock" : "Increase on hand"}
               </option>
               <option value="reduce">
                 {compact ? "Reduce stock" : "Reduce on hand"}
@@ -145,10 +101,10 @@ const Heading = inline ? "h4" : "h3";
           <textarea
             name="reason"
             required
-            minlength={inline || compact ? "3" : "1"}
+            minlength={compact ? "3" : "1"}
             maxlength="500"
             placeholder={
-              inline || compact
+              compact
                 ? "Received delivery / damaged units / physical recount — explain why"
                 : undefined
             }
@@ -161,93 +117,9 @@ const Heading = inline ? "h4" : "h3";
         </p>
       </fieldset>
       <button type="submit">
-        {inline
-          ? "Confirm stock change"
-          : compact
-            ? "Confirm stock update"
-            : "Confirm count correction"}
+        {compact ? "Confirm stock update" : "Confirm count correction"}
       </button>
       <FormFeedback />
     </form>
   </Editor>
 </section>
-
-<style>
-  .stock-count {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    align-items: center;
-    min-width: 0;
-    padding: 0.6rem 0.75rem;
-    border-color: var(--line);
-    overflow-wrap: anywhere;
-  }
-  .stock-count .stock-overview {
-    display: grid;
-    flex: 1 1 27rem;
-    grid-template-columns: minmax(7rem, 1fr) minmax(12rem, 1.4fr);
-    gap: 0.5rem 1rem;
-    align-items: center;
-    min-width: 0;
-  }
-  .stock-count .stock-location {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-  .stock-count:not(:has([open])) :global([data-secondary-quantity]) {
-    display: none;
-  }
-  .stock-count:not(:has([open])) {
-    padding: 0.25rem 0;
-    border: 0;
-  }
-  .stock-count:not(:has([open]))
-    :global(.admin-quantities > div:not([data-secondary-quantity])) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.1rem 0.5rem;
-    align-items: baseline;
-    padding: 0;
-    border: 0;
-  }
-  .stock-count :global(details[open]) {
-    flex-basis: 100%;
-  }
-  .stock-count :global(summary) {
-    cursor: pointer;
-    font-weight: 700;
-    min-height: 2.75rem;
-    padding-block: 0.5rem;
-    font-size: 0.85rem;
-  }
-  .stock-count :global(.admin-form) {
-    margin-block: 0.75rem;
-  }
-  .stock-count :global(.admin-quantities) {
-    grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
-    gap: 0.4rem;
-    margin: 0;
-  }
-  .stock-count:not(:has([open])) :global(.admin-quantities) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .stock-count :global(.admin-quantities dd) {
-    font-size: 1.1rem;
-    margin-top: 0;
-  }
-  .stock-count :global(.admin-grid) {
-    grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
-  }
-  .stock-count :global(.admin-actions p) {
-    flex-basis: 100%;
-    margin-block: 0.25rem;
-  }
-  @media (max-width: 42rem) {
-    .stock-count .stock-overview {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-</style>
