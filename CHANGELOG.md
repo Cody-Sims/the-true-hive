@@ -25,6 +25,7 @@
 ### Changed
 
 - Simplify the global header to Store, Services and About us; keep cart/pickup navigation within the store and trim the footer to contact and policy links without repeated shopper contact prompts.
+- Use shared inventory navigation, page-heading and select components across Products, editors, locations, orders, history and store settings, with consistent mobile navigation, account disclosure and native dropdown styling.
 - Group Products into compact category shelves with visible stock status, location-specific availability filters and a focused desktop/mobile stock-update inspector; preserve product creation, labels, location controls and audited adjustments.
 - Replace repeated staging/coming-soon/paused-store prose with product-focused shopping pages, compact canonical starting prices, clearer buying controls and useful cart/checkout recovery links.
 - Retain one contextual unavailable-checkout state and explicit test-store/no-real-payment/pickup labels when test mode is configured; document the owner's temporary current-deployment sandbox authorization and rollback boundaries.

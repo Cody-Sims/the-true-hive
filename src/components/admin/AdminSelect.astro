@@ -1,0 +1,100 @@
+---
+import type { HTMLAttributes } from "astro/types";
+type Props = HTMLAttributes<"select">;
+const { class: className, multiple, size, ...attributes } = Astro.props;
+const listbox = multiple || Number(size) > 1;
+---
+
+<span class:list={["admin-select", { "admin-select-listbox": listbox }]}>
+  <select {...attributes} class={className} multiple={multiple} size={size}>
+    <slot />
+  </select>
+  {!listbox && (
+    <svg
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="m4 6 4 4 4-4"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  )}
+</span>
+
+<style>
+  .admin-select {
+    position: relative;
+    display: block;
+    min-width: 0;
+    width: 100%;
+    margin-top: 0.3rem;
+  }
+  .admin-select select {
+    display: block;
+    appearance: none;
+    width: 100%;
+    min-height: 2.75rem;
+    margin: 0 !important;
+    padding: 0.6rem 2.6rem 0.6rem 0.8rem;
+    border: 1px solid #b7c3a5;
+    border-radius: 0.4rem;
+    background: #fffdf7;
+    color: var(--forest);
+    cursor: pointer;
+    line-height: 1.4;
+    font-weight: 400;
+  }
+  .admin-select svg {
+    position: absolute;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #596a52;
+  }
+  .admin-select select:hover:not(:disabled) {
+    border-color: #728563;
+    background: #fbfcf5;
+  }
+  .admin-select select:focus-visible {
+    outline: 3px solid var(--tomato);
+    outline-offset: 3px;
+    border-color: var(--forest);
+  }
+  .admin-select select:disabled {
+    background: #eeeede;
+    color: #68725f;
+    border-color: #d3d9c6;
+    cursor: not-allowed;
+  }
+  .admin-select:has(select:disabled) svg {
+    opacity: 0.55;
+  }
+  .admin-select select[aria-invalid="true"] {
+    border-color: var(--tomato);
+  }
+  .admin-select-listbox select {
+    appearance: auto;
+    padding-right: 0.8rem;
+  }
+  @media (max-width: 760px) {
+    .admin-select select {
+      font-size: 1rem;
+    }
+  }
+  @media (forced-colors: active) {
+    .admin-select select {
+      appearance: auto;
+    }
+    .admin-select svg {
+      display: none;
+    }
+  }
+</style>

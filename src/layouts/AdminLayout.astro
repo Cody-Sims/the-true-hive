@@ -1,5 +1,7 @@
 ---
 import "../styles/admin.css";
+import InventoryNavbar from "../components/admin/InventoryNavbar.astro";
+import AdminPageHeader from "../components/admin/AdminPageHeader.astro";
 interface Props {
   title: string;
   publicShell?: boolean;
@@ -28,67 +30,11 @@ const path = Astro.url.pathname;
     <a class="admin-skip" href="#main">
       Skip to inventory
     </a>
-    <header class="admin-header admin-wrap">
-      <a
-        class="admin-brand"
-        href={publicShell ? "/inventory/login" : "/inventory/products"}
-      >
-        THE TRUE HIVE <span>Inventory workspace</span>
-      </a>
-      {!publicShell && admin && (
-        <>
-          <p class="admin-identity">
-            Verified administrator <span>{admin.uid}</span>
-          </p>
-          <nav aria-label="Inventory navigation">
-            <a
-              href="/inventory/products"
-              aria-current={
-                path.startsWith("/inventory/products") ? "page" : undefined
-              }
-            >
-              Products
-            </a>
-            <a
-              href="/inventory/locations"
-              aria-current={
-                path.startsWith("/inventory/locations") ? "page" : undefined
-              }
-            >
-              Locations
-            </a>
-            <a
-              href="/inventory/store"
-              aria-current={path === "/inventory/store" ? "page" : undefined}
-            >
-              Store settings
-            </a>
-            <a
-              href="/inventory/orders"
-              aria-current={
-                path.startsWith("/inventory/orders") ? "page" : undefined
-              }
-            >
-              Orders
-            </a>
-            <a
-              href="/inventory/history"
-              aria-current={
-                path.startsWith("/inventory/history") ? "page" : undefined
-              }
-            >
-              History
-            </a>
-            <button type="button" data-admin-logout>
-              Sign out
-            </button>
-          </nav>
-          <p data-admin-logout-status role="status" tabindex="-1"></p>
-        </>
-      )}
-    </header>
+    <InventoryNavbar path={path} admin={admin} publicShell={publicShell} />
     <main id="main" class="admin-wrap" tabindex="-1">
-      <h1>{title}</h1>
+      <AdminPageHeader title={title}>
+        <slot name="page-actions" />
+      </AdminPageHeader>
       <slot />
     </main>
     <footer class="admin-wrap admin-footer">
@@ -99,6 +45,7 @@ const path = Astro.url.pathname;
       import "../client/admin.ts";
       import "../client/ingredients.ts";
       import "../client/stock-controls.ts";
+      import "../client/inventory-nav.ts";
     </script>
   </body>
 </html>

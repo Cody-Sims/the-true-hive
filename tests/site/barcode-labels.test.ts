@@ -146,7 +146,7 @@ domTest(
           }),
       );
       await page.setContent(
-        `<base href="https://inventory.example.invalid/"><style>${css}</style><header class="admin-header"><span class="admin-identity">private@example.invalid</span><nav>Private navigation</nav></header><main><h1>Private title</h1>${html}</main><footer class="admin-footer">Private footer</footer>`,
+        `<base href="https://inventory.example.invalid/"><style>${css}</style><header class="admin-header"><span class="admin-identity">private@example.invalid</span><nav>Private navigation</nav></header><main><header class="admin-page-heading"><h1>Private title</h1></header>${html}</main><footer class="admin-footer">Private footer</footer>`,
       );
       await page.evaluate(() => {
         (window as unknown as { prints: number }).prints = 0;
@@ -184,6 +184,10 @@ domTest(
       );
       await page.emulateMedia({ media: "print" });
       assert.equal(await page.locator(".admin-header").isVisible(), false);
+      assert.equal(
+        await page.locator(".admin-page-heading").isVisible(),
+        false,
+      );
       assert.equal(await page.locator(".admin-footer").isVisible(), false);
       assert.equal(
         await page.locator("[data-print-labels]").isVisible(),

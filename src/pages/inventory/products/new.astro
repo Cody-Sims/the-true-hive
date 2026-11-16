@@ -7,6 +7,8 @@ if (!Astro.locals.admin || !Astro.locals.csrfToken)
 ---
 
 <AdminLayout title="Create product">
-  <a href="/inventory/products">Back to products</a>
+  <a href="/inventory/products" slot="page-actions">
+    Back to products
+  </a>
   <ProductForm photosEnabled={readProductImagesConfig().enabled} />
 </AdminLayout>
