@@ -5,8 +5,9 @@ interface Props {
   offset: number;
   total: number;
   search?: string;
+  filters?: Record<string, string>;
 }
-const { path, offset, total, search = "" } = Astro.props;
+const { path, offset, total, search = "", filters = {} } = Astro.props;
 ---
 
 <nav class="admin-pagination" aria-label="Result pages">
@@ -18,9 +19,9 @@ const { path, offset, total, search = "" } = Astro.props;
         : `${offset + 1}–${Math.min(offset + 20, total)} of ${total}`}
   </p>
   {offset > 0 && (
-    <a href={pageHref(path, offset - 20, search)}>Previous page</a>
+    <a href={pageHref(path, offset - 20, search, filters)}>Previous page</a>
   )}
   {offset + 20 < total && offset + 20 <= 10000 && (
-    <a href={pageHref(path, offset + 20, search)}>Next page</a>
+    <a href={pageHref(path, offset + 20, search, filters)}>Next page</a>
   )}
 </nav>

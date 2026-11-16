@@ -125,7 +125,7 @@ Use the types in `src/domain/admin.ts`. JSON success envelopes name their resour
 
 | Route | Request/result |
 |---|---|
-| `GET /api/admin/products` | Bounded limit/offset and search; `{ products, total, locations }` |
+| `GET /api/admin/products` | Bounded limit/offset, search, optional `locationKey`, `category` (`all/soap/honey/candles/gifts`) and `stock` (`all/in/out/untracked`); `{ products, total, locations, locationKey }` |
 | `GET /api/admin/products/:key` | `{ product }`, including private variant/location balances and revision |
 | `POST /api/admin/products` | UUID `operationId`, `product` fields and `variants`; atomic unpublished product creation and zero stock records |
 | `PUT /api/admin/products/:key` | UUID operation, `expectedRevision`, action `save/publish/archive`, product/variant fields; preserve stable referenced keys |
@@ -144,6 +144,10 @@ Product fields are bounded existing keys/slug/title/summary/details/category/ima
 `product.kind` is explicit on edits (`draft/concept/active`), with `draft` as the creation default. Each variant supplies stable key/SKU/label, integer-or-null `priceMinor`, `currency: "USD"` and explicit `active`. Existing keys and SKUs are retained; deactivate rather than delete. Private services take numeric pagination; HTTP/page adapters validate and convert query strings. USD prices are explicitly labeled cents in the admin, not silently rounded dollar amounts.
 
 Stock receipts distinguish the original adjustment's before/after result from refreshed current balances. Identical retries return the recorded operation; changed payload/actor under the same ID is a conflict. Stale revisions require a new reviewed intent, not a force-save.
+
+The Products workspace groups matching variants into collapsible category shelves and shows a focused stock inspector beside them, or in a modal on mobile. Search/category/stock filters apply before product pagination at one explicit location; stock and SKU conditions must match the same variant. The default location is the first active location by key, then the first configured location, or `null` when none exists. Unknown location keys are rejected. `out` means zero available units, including fully allocated on-hand stock; a missing balance is `untracked`, never an assumed zero. No low-stock threshold is invented.
+
+The inspector supports receiving and reductions using the existing adjustment endpoint, revision, signed session and audited reason. A balance preview is not a receipt. Uncertain, conflicting or not-yet-refreshed operations prevent changing variants/filters; unsubmitted values require confirmation before discarding. Confirmed/current balances update shelf quantities without optimistic writes, and filter results/page totals remain a disclosed snapshot until filters are reapplied. New-product creation, internal labels and location-management entry points remain available.
 
 ### Checkout and order contract
 
@@ -191,7 +195,7 @@ Frozen implementation signatures (HTTP inputs remain untrusted and are validated
 
 ```ts
 // src/server/admin/catalog.ts
-listAdminProducts(pool, query?) => Promise<{ products: AdminProduct[], total: number, locations: AdminLocation[] }>
+listAdminProducts(pool, query?) => Promise<{ products: AdminProduct[], total: number, locations: AdminLocation[], locationKey: string | null }>
 getAdminProduct(pool, key) => Promise<AdminProduct | null>
 createAdminProduct(pool, input, actorId) => Promise<{ product: AdminProduct, replayed: boolean }>
 updateAdminProduct(pool, key, input, actorId) => Promise<{ product: AdminProduct, replayed: boolean }>

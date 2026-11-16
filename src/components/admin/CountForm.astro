@@ -12,27 +12,42 @@ interface Props {
   location?: AdminLocation | undefined;
   productKey: string;
   inline?: boolean;
+  compact?: boolean;
 }
-const { variant, level, location, productKey, inline = false } = Astro.props;
+const {
+  variant,
+  level,
+  location,
+  productKey,
+  inline = false,
+  compact = false,
+} = Astro.props;
 const Editor = inline ? "details" : "div";
 const Heading = inline ? "h4" : "h3";
 ---
 
 <section
-  class:list={["admin-panel", { "stock-count": inline }]}
+  class:list={[
+    "admin-panel",
+    { "stock-count": inline, "inventory-count-form": compact },
+  ]}
   data-stock-panel={inline || undefined}
 >
-  <div class="stock-overview">
-    <Heading class="stock-location">
-      {inline
-        ? (location?.name ?? level.locationKey)
-        : `${variant.label} · ${location?.name ?? level.locationKey}`}
-    </Heading>
-    {!inline && (
-      <p class="admin-muted">Current server balance, not a browser estimate.</p>
-    )}
-    <Quantities level={level} compact={inline} />
-  </div>
+  {!compact && (
+    <div class="stock-overview">
+      <Heading class="stock-location">
+        {inline
+          ? (location?.name ?? level.locationKey)
+          : `${variant.label} · ${location?.name ?? level.locationKey}`}
+      </Heading>
+      {!inline && (
+        <p class="admin-muted">
+          Current server balance, not a browser estimate.
+        </p>
+      )}
+      <Quantities level={level} compact={inline} />
+    </div>
+  )}
   <Editor>
     {inline && <summary>Add / Reduce stock</summary>}
     <form
@@ -41,6 +56,7 @@ const Heading = inline ? "h4" : "h3";
       data-method="POST"
       data-refresh={`/api/admin/products/${encodeURIComponent(productKey)}`}
       data-stock-controls={inline || undefined}
+      data-stock-compact={compact || undefined}
       class="admin-form"
     >
       <input name="variantKey" type="hidden" value={variant.key} />
@@ -50,7 +66,9 @@ const Heading = inline ? "h4" : "h3";
         <legend>
           {inline
             ? "Review an audited stock change"
-            : "Audited count correction"}
+            : compact
+              ? "Receive or correct stock"
+              : "Audited count correction"}
         </legend>
         {inline && (
           <div class="admin-actions" aria-label="Prepare received units">
@@ -70,45 +88,78 @@ const Heading = inline ? "h4" : "h3";
             Direction{" "}
             <select name="direction" required>
               <option value="increase">
-                {inline ? "Add units to on hand" : "Increase on hand"}
+                {inline
+                  ? "Add units to on hand"
+                  : compact
+                    ? "Receive stock"
+                    : "Increase on hand"}
               </option>
-              <option value="reduce">Reduce on hand</option>
+              <option value="reduce">
+                {compact ? "Reduce stock" : "Reduce on hand"}
+              </option>
             </select>
           </label>
           <label>
-            Positive whole units{" "}
+            {compact ? "Units" : "Positive whole units"}{" "}
             <input
               name="amount"
               type="number"
               min="1"
               max="2147483647"
               step="1"
+              inputmode="numeric"
               required
             />
           </label>
         </div>
+        {compact && (
+          <>
+            <div
+              class="inventory-presets"
+              role="group"
+              aria-label="Quick quantities"
+            >
+              {[1, 6, 12, 24].map((units) => (
+                <button type="button" data-stock-preset={units}>
+                  +{units}
+                </button>
+              ))}
+            </div>
+            <p
+              data-stock-preview
+              class="inventory-balance-preview"
+              aria-live="polite"
+            >
+              Enter units to preview the new balance. No stock has changed.
+            </p>
+          </>
+        )}
         <label>
-          Reason{" "}
+          {compact ? "Reason / reference" : "Reason"}{" "}
           <textarea
             name="reason"
             required
-            minlength={inline ? "3" : "1"}
+            minlength={inline || compact ? "3" : "1"}
             maxlength="500"
             placeholder={
-              inline
+              inline || compact
                 ? "Received delivery / damaged units / physical recount — explain why"
                 : undefined
             }
             rows="2"
           ></textarea>
         </label>
-        <p>
+        <p class:list={{ "inventory-form-help": compact }}>
           The server rejects reductions below held + committed + unavailable. An
           uncertain response must be retried unchanged before another intent.
         </p>
       </fieldset>
       <button type="submit">
-        {inline ? "Confirm stock change" : "Confirm count correction"}
+        {inline
+          ? "Confirm stock change"
+          : compact
+            ? "Confirm stock update"
+            : "Confirm count correction"}
       </button>
       <FormFeedback />
     </form>

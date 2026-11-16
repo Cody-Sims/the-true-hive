@@ -3,8 +3,13 @@ import type { AdminInventoryLevel } from "../../domain/admin.ts";
 interface Props {
   level: AdminInventoryLevel;
   compact?: boolean;
+  sellableLabel?: string;
 }
-const { level, compact = false } = Astro.props;
+const {
+  level,
+  compact = false,
+  sellableLabel = "Available / Sellable",
+} = Astro.props;
 ---
 
 <dl
@@ -30,7 +35,7 @@ const { level, compact = false } = Astro.props;
     <dd data-quantity="unavailable">{level.unavailable}</dd>
   </div>
   <div>
-    <dt>Available / Sellable</dt>
+    <dt>{sellableLabel}</dt>
     <dd data-quantity="sellable">{level.sellable}</dd>
   </div>
   <div data-secondary-quantity={compact || undefined}>

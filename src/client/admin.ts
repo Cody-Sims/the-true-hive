@@ -217,6 +217,9 @@ function showLevel(level: AdminInventoryLevel) {
       if (quantity) quantity.textContent = String(level[key]);
     }
   }
+  document.dispatchEvent(
+    new CustomEvent("admin:stock-level", { detail: level }),
+  );
 }
 
 function setupProductPreview(form: HTMLFormElement) {
@@ -345,7 +348,16 @@ function setup(form: HTMLFormElement) {
     refresh.disabled = !form.dataset.refresh;
     review.hidden = next !== "conflict" || reviewedRevision === null;
     status.textContent = message;
+    form.dispatchEvent(new CustomEvent("admin:phase", { bubbles: true }));
     if (next !== "pending") status.focus();
+  }
+
+  function clearCompactCount() {
+    if (!form.hasAttribute("data-stock-compact")) return;
+    for (const name of ["amount", "reason"]) {
+      const field = input(form, name);
+      if (field) field.value = "";
+    }
   }
 
   function fieldErrors(fields?: Record<string, string>) {
@@ -619,6 +631,7 @@ function setup(form: HTMLFormElement) {
       const expected = input(form, "expectedRevision");
       if (expected) expected.value = String(revision);
       intent = null;
+      clearCompactCount();
       const terminal =
         form.dataset.method === "POST" &&
         form.dataset.adminForm !== "adjustment";
@@ -672,6 +685,7 @@ function setup(form: HTMLFormElement) {
       const expected = input(form, "expectedRevision");
       if (expected) expected.value = String(revision);
       intent = null;
+      clearCompactCount();
       const terminal =
         form.dataset.method === "POST" &&
         form.dataset.adminForm !== "adjustment";
@@ -725,6 +739,326 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
   "[data-admin-form]",
 ))
   setup(form);
+
+type StockRecord = {
+  productKey: string;
+  title: string;
+  status: string;
+  variant: {
+    key: string;
+    sku: string;
+    label: string;
+    active: boolean;
+    priceMinor: number | null;
+  };
+  level: AdminInventoryLevel | null;
+  locationKey: string;
+  locationName: string;
+};
+
+function setupInventoryWorkspace(workspace: HTMLElement) {
+  const inspectorNode = workspace.querySelector<HTMLElement>(
+    "[data-stock-inspector]",
+  );
+  const dialogNode = workspace.querySelector<HTMLDialogElement>(
+    "[data-stock-dialog]",
+  );
+  if (!inspectorNode || !dialogNode) return;
+  const inspector = inspectorNode;
+  const dialog = dialogNode;
+  const home = inspector.parentElement!;
+  const formHost = inspector.querySelector<HTMLElement>(
+    "[data-stock-form-host]",
+  )!;
+  const originalForm = formHost
+    .querySelector<HTMLFormElement>("form")
+    ?.cloneNode(true) as HTMLFormElement | undefined;
+  const status = workspace.querySelector<HTMLElement>(
+    "[data-stock-workspace-status]",
+  )!;
+  const mobile = window.matchMedia("(max-width: 760px)");
+  const rows = [...workspace.querySelectorAll<HTMLElement>("[data-stock-row]")];
+  const selectedRow = () =>
+    rows.find((row) => row.classList.contains("is-selected"))!;
+  const recordFor = (row: HTMLElement) =>
+    JSON.parse(row.dataset.stockRecord!) as StockRecord;
+  const currentForm = () => formHost.querySelector<HTMLFormElement>("form");
+  const locked = () =>
+    !["idle", undefined].includes(currentForm()?.dataset.phase);
+  const dirty = () => {
+    const form = currentForm();
+    return (
+      !!form &&
+      !formHost.hidden &&
+      !!(input(form, "amount")?.value || input(form, "reason")?.value)
+    );
+  };
+  let leaving = false;
+  const announce = (message: string) => {
+    status.textContent = message;
+    status.focus();
+    if (dialog.open) {
+      const feedback = currentForm()?.querySelector<HTMLElement>(
+        "[data-admin-status]",
+      );
+      if (feedback) {
+        feedback.textContent = message;
+        feedback.focus();
+      }
+    }
+  };
+  const canLeave = () => {
+    if (locked()) {
+      announce(
+        "Resolve the current stock operation before changing products or filters. Retry or review the existing operation.",
+      );
+      return false;
+    }
+    return (
+      !dirty() ||
+      window.confirm(
+        "Discard the unsubmitted quantity and reason? No new stock update has been sent.",
+      )
+    );
+  };
+  const stockLabel = (level: AdminInventoryLevel | null) =>
+    !level ? "Not tracked" : level.sellable === 0 ? "Out of stock" : "In stock";
+  const stockKey = (level: AdminInventoryLevel | null) =>
+    !level ? "untracked" : level.sellable === 0 ? "out" : "in";
+  function updatePreview() {
+    const form = currentForm();
+    const preview = form?.querySelector<HTMLElement>("[data-stock-preview]");
+    const record = recordFor(selectedRow());
+    if (!form || !preview || !record.level) return;
+    const raw = input(form, "amount")?.value ?? "";
+    const reason = input(form, "reason")!;
+    reason.setCustomValidity(
+      (reason.value.trim().match(/\p{L}/gu) ?? []).length >= 3
+        ? ""
+        : "Explain why stock changed, for example received delivery or damaged units.",
+    );
+    const amount = Number(raw);
+    const valid =
+      /^\d+$/.test(raw) &&
+      Number.isSafeInteger(amount) &&
+      amount >= 1 &&
+      amount <= 2147483647;
+    const delta =
+      input(form, "direction")?.value === "reduce" ? -amount : amount;
+    const next = record.level.onHand + delta;
+    const available = record.level.sellable + delta;
+    const safe = valid && next <= 2147483647 && available >= 0;
+    preview.textContent = !raw
+      ? "Enter units to preview the new balance. No stock has changed."
+      : !safe
+        ? "Enter positive whole units. Reductions cannot use held, committed, or unavailable units."
+        : `Preview only: on hand ${record.level.onHand} → ${next}; available ${record.level.sellable} → ${available}. No stock has changed.`;
+    const submit = form.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    )!;
+    submit.disabled = locked() || !safe;
+  }
+  function openInspector() {
+    if (!mobile.matches) return;
+    dialog.append(inspector);
+    if (!dialog.open) dialog.showModal();
+    const target = formHost.hidden
+      ? inspector.querySelector<HTMLElement>("[data-stock-edit]")
+      : currentForm()?.querySelector<HTMLElement>('[name="amount"]');
+    target?.focus();
+  }
+  function select(row: HTMLElement) {
+    if (row === selectedRow()) {
+      openInspector();
+      if (!mobile.matches)
+        inspector
+          .querySelector<HTMLElement>("[data-stock-title]")!
+          .focus({ preventScroll: true });
+      return;
+    }
+    if (!canLeave()) return;
+    const record = recordFor(row);
+    for (const candidate of rows) {
+      const active = candidate === row;
+      candidate.classList.toggle("is-selected", active);
+      const link = candidate.querySelector("[data-stock-select]")!;
+      if (active) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    }
+    status.textContent = "";
+    const set = (selector: string, value: string) => {
+      inspector.querySelector<HTMLElement>(selector)!.textContent = value;
+    };
+    set("[data-stock-title]", record.title);
+    set(
+      "[data-stock-variant]",
+      `${record.variant.label} / ${record.variant.sku}`,
+    );
+    set("[data-stock-location-name]", record.locationName);
+    set(
+      "[data-stock-record-meta]",
+      `${record.status}${record.variant.active ? "" : " / inactive variant"} / ${record.variant.priceMinor === null ? "No price" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(record.variant.priceMinor / 100)}`,
+    );
+    const badge = inspector.querySelector<HTMLElement>(
+      "[data-inspector-stock-state]",
+    )!;
+    badge.textContent = stockLabel(record.level);
+    badge.dataset.stockState = stockKey(record.level);
+    inspector.querySelector<HTMLAnchorElement>("[data-stock-edit]")!.href =
+      `/inventory/products/${encodeURIComponent(record.productKey)}`;
+    inspector.querySelector<HTMLAnchorElement>("[data-stock-history]")!.href =
+      `/inventory/history?${new URLSearchParams({ variantKey: record.variant.key, locationKey: record.locationKey })}`;
+    inspector.querySelector<HTMLAnchorElement>("[data-stock-labels]")!.href =
+      `/inventory/products/${encodeURIComponent(record.productKey)}/labels`;
+    inspector.querySelector<HTMLElement>("[data-stock-untracked]")!.hidden =
+      !!record.level;
+    inspector.querySelector<HTMLElement>("[data-stock-balances]")!.hidden =
+      !record.level;
+    formHost.hidden = !record.level;
+    if (record.level && originalForm) {
+      const form = originalForm.cloneNode(true) as HTMLFormElement;
+      form.dataset.refresh = `/api/admin/products/${encodeURIComponent(record.productKey)}`;
+      for (const [name, value] of Object.entries({
+        variantKey: record.variant.key,
+        locationKey: record.locationKey,
+        expectedRevision: record.level.revision,
+      }))
+        input(form, name)!.value = String(value);
+      formHost.replaceChildren(form);
+      setup(form);
+      const quantities = inspector.querySelector<HTMLElement>("[data-level]")!;
+      quantities.dataset.variant = record.variant.key;
+      quantities.dataset.location = record.locationKey;
+      for (const key of [
+        "onHand",
+        "held",
+        "committed",
+        "unavailable",
+        "sellable",
+        "revision",
+      ] as const) {
+        quantities.querySelector<HTMLElement>(
+          `[data-quantity="${key}"]`,
+        )!.textContent = String(record.level[key]);
+      }
+    }
+    updatePreview();
+    openInspector();
+    if (!mobile.matches) {
+      inspector
+        .querySelector<HTMLElement>("[data-stock-title]")!
+        .focus({ preventScroll: true });
+    }
+  }
+  workspace.classList.add("is-enhanced");
+  workspace.addEventListener("click", (event) => {
+    const target = event.target as Element;
+    const link = target.closest<HTMLAnchorElement>("[data-stock-select]");
+    if (
+      link &&
+      !(event as MouseEvent).metaKey &&
+      !(event as MouseEvent).ctrlKey &&
+      !(event as MouseEvent).shiftKey
+    ) {
+      event.preventDefault();
+      select(link.closest<HTMLElement>("[data-stock-row]")!);
+    }
+    const preset = target.closest<HTMLElement>("[data-stock-preset]");
+    if (preset && !locked()) {
+      input(currentForm()!, "direction")!.value = "increase";
+      input(currentForm()!, "amount")!.value = preset.dataset.stockPreset!;
+      updatePreview();
+    }
+    if (target.closest("[data-stock-close]") && !locked()) dialog.close();
+    else if (target.closest("[data-stock-close]"))
+      announce(
+        "Resolve the current stock operation before closing its details.",
+      );
+  });
+  workspace.addEventListener("input", updatePreview);
+  workspace.addEventListener("change", updatePreview);
+  workspace.addEventListener("admin:phase", updatePreview);
+  workspace
+    .querySelector("[data-stock-filters]")
+    ?.addEventListener("submit", (event) => {
+      if (!canLeave()) event.preventDefault();
+      else leaving = true;
+    });
+  document.addEventListener("click", (event) => {
+    const link = (event.target as Element).closest<HTMLAnchorElement>(
+      "a[href]",
+    );
+    if (
+      event.defaultPrevented ||
+      !link ||
+      link.target === "_blank" ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      link.getAttribute("href")?.startsWith("#")
+    )
+      return;
+    if (!canLeave()) event.preventDefault();
+    else leaving = true;
+  });
+  window.addEventListener("beforeunload", (event) => {
+    if (!leaving && (locked() || dirty())) event.preventDefault();
+  });
+  dialog.addEventListener("cancel", (event) => {
+    if (locked()) {
+      event.preventDefault();
+      announce(
+        "Resolve the current stock operation before closing its details.",
+      );
+    }
+  });
+  dialog.addEventListener("close", () => {
+    home.append(inspector);
+    selectedRow()
+      .querySelector<HTMLElement>("[data-stock-select]")
+      ?.focus({ preventScroll: true });
+  });
+  mobile.addEventListener("change", () => {
+    if (!mobile.matches && dialog.open) dialog.close();
+  });
+  document.addEventListener("admin:stock-level", (event) => {
+    const level = (event as CustomEvent<AdminInventoryLevel>).detail;
+    for (const row of rows) {
+      const record = recordFor(row);
+      if (
+        record.variant.key !== level.variantKey ||
+        record.locationKey !== level.locationKey
+      )
+        continue;
+      record.level = level;
+      row.dataset.stockRecord = JSON.stringify(record);
+      row.querySelector<HTMLElement>("[data-stock-on-hand]")!.textContent =
+        String(level.onHand);
+      row.querySelector<HTMLElement>("[data-stock-available]")!.textContent =
+        String(level.sellable);
+      const badge = row.querySelector<HTMLElement>("[data-stock-state]")!;
+      badge.dataset.stockState = stockKey(level);
+      badge.textContent = stockLabel(level);
+      if (row === selectedRow()) {
+        const selectedBadge = inspector.querySelector<HTMLElement>(
+          "[data-inspector-stock-state]",
+        )!;
+        selectedBadge.dataset.stockState = stockKey(level);
+        selectedBadge.textContent = stockLabel(level);
+      }
+      workspace.querySelector<HTMLElement>(
+        "[data-stock-snapshot-note]",
+      )!.hidden = false;
+    }
+    updatePreview();
+  });
+  updatePreview();
+}
+
+for (const workspace of document.querySelectorAll<HTMLElement>(
+  "[data-inventory-workspace]",
+))
+  setupInventoryWorkspace(workspace);
 
 function dismissFieldHelp(event: Event) {
   for (const help of document.querySelectorAll<HTMLDetailsElement>(

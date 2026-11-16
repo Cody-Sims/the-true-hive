@@ -4463,3 +4463,361 @@ domTest(
     }
   },
 );
+
+domTest(
+  "compact receiving keeps the existing audited stock contract",
+  async () => {
+    const page = await fixturePage("src/components/admin/CountForm.astro", {
+      variant: product.variants[0],
+      level,
+      productKey: product.key,
+      compact: true,
+    });
+    try {
+      assert.equal(await page.getByLabel("Units", { exact: true }).count(), 1);
+      assert.equal(await page.getByLabel("Reason / reference").count(), 1);
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Confirm stock update" })
+          .count(),
+        1,
+      );
+      assert.equal(await page.getByLabel("Direction").inputValue(), "increase");
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "5",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "hybrid stock details remain accessible and protect unsent reductions",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/InventoryWorkspace.astro",
+      workspaceProps(),
+    );
+    try {
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        if (width === 390)
+          await page
+            .getByRole("link", {
+              name: "View stock for Component-only record, Fixture format",
+            })
+            .click();
+        const result = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+          .analyze();
+        assert.deepEqual(
+          result.violations.map(({ id, nodes }) => ({
+            id,
+            targets: nodes.map((node) => node.target),
+          })),
+          [],
+        );
+        if (width === 390) await page.keyboard.press("Escape");
+      }
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.getByLabel("Direction").selectOption("reduce");
+      await page.getByLabel("Units", { exact: true }).fill("15");
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Confirm stock update" })
+          .isDisabled(),
+        true,
+      );
+      await page.getByLabel("Units", { exact: true }).fill("3");
+      assert.match(
+        (await page.locator("[data-stock-preview]").textContent())!,
+        /20.*17.*14.*11/,
+      );
+      const rejectDiscard = (dialog: import("@playwright/test").Dialog) =>
+        dialog.dismiss();
+      page.on("dialog", rejectDiscard);
+      await page
+        .getByRole("link", {
+          name: "View stock for Test-only honey, Fixture format",
+        })
+        .click();
+      assert.equal(
+        await page.getByLabel("Units", { exact: true }).inputValue(),
+        "3",
+      );
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        level.variantKey,
+      );
+      page.off("dialog", rejectDiscard);
+      page.once("dialog", (dialog) => dialog.accept());
+      await page
+        .getByRole("link", {
+          name: "View stock for Test-only honey, Fixture format",
+        })
+        .click();
+      assert.equal(
+        await page.getByLabel("Units", { exact: true }).inputValue(),
+        "",
+      );
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        "honey-variant",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+function workspaceProps(stock = "all") {
+  const outLevel = {
+    ...level,
+    variantKey: "honey-variant",
+    onHand: 0,
+    held: 0,
+    committed: 0,
+    unavailable: 0,
+    sellable: 0,
+  };
+  const products: AdminProduct[] = [
+    product,
+    {
+      ...product,
+      key: "honey-product",
+      title: "Test-only honey",
+      category: "honey",
+      variants: [
+        {
+          ...product.variants[0]!,
+          key: outLevel.variantKey,
+          sku: "HONEY-ONLY",
+          levels: [outLevel],
+        },
+      ],
+    },
+    {
+      ...product,
+      key: "missing-product",
+      title: "Missing balance record",
+      variants: [
+        {
+          ...product.variants[0]!,
+          key: "missing-variant",
+          sku: "MISSING-ONLY",
+          levels: [],
+        },
+      ],
+    },
+  ];
+  return {
+    products,
+    total: products.length,
+    locationKey: level.locationKey,
+    locations: [
+      {
+        key: level.locationKey,
+        name: "Test room",
+        publicLabel: null,
+        active: true,
+        pickupEnabled: false,
+        revision: 1,
+      },
+    ],
+    query: {
+      search: "",
+      offset: 0,
+      limit: 20,
+      category: "all",
+      stock,
+      locationKey: level.locationKey,
+    },
+  };
+}
+
+domTest(
+  "stock workspace combines category shelves, explicit stock states, and a mobile inspector",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/InventoryWorkspace.astro",
+      workspaceProps(),
+    );
+    try {
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      assert.equal(
+        await page.getByRole("group", { name: "Honey shelf" }).count(),
+        1,
+      );
+      assert.equal(
+        await page.getByRole("group", { name: "Soap shelf" }).count(),
+        1,
+      );
+      assert.equal(
+        await page
+          .getByText("Not tracked", { exact: true })
+          .first()
+          .isVisible(),
+        true,
+      );
+      const outLink = new URL(
+        (await page
+          .getByRole("link", { name: "Out of stock", exact: true })
+          .getAttribute("href"))!,
+        inventoryOrigin,
+      );
+      assert.equal(outLink.searchParams.get("stock"), "out");
+      assert.equal(outLink.searchParams.get("locationKey"), level.locationKey);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page
+        .getByRole("link", {
+          name: "View stock for Test-only honey, Fixture format",
+        })
+        .click();
+      const dialog = page.getByRole("dialog");
+      await dialog.waitFor({ state: "visible" });
+      assert.equal(
+        await dialog
+          .getByRole("heading", { name: "Test-only honey", exact: true })
+          .isVisible(),
+        true,
+      );
+      assert.equal(
+        await dialog.locator('[name="variantKey"]').inputValue(),
+        "honey-variant",
+      );
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      await page
+        .getByRole("link", {
+          name: "View stock for Missing balance record, Fixture format",
+        })
+        .click();
+      await dialog.waitFor({ state: "visible" });
+      assert.match(
+        await dialog.locator("[data-stock-untracked]").innerText(),
+        /not proof of zero stock/i,
+      );
+      assert.equal(
+        await dialog.locator("[data-stock-balances]").isVisible(),
+        false,
+      );
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "Confirm stock update" })
+          .isVisible(),
+        false,
+      );
+      for (const width of [320, 390, 768, 1024, 1440]) {
+        await page.setViewportSize({ width, height: 1000 });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+          `${width}px`,
+        );
+      }
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "workspace receiving preserves uncertain intent and updates shelf balances only from verified records",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/InventoryWorkspace.astro",
+      workspaceProps(),
+    );
+    const bodies: string[] = [];
+    const current = { ...level, onHand: 26, sellable: 20, revision: 6 };
+    await page.route("**/api/admin/products/fixture-product", (route) =>
+      route.fulfill({
+        json: {
+          product: {
+            ...product,
+            variants: [{ ...product.variants[0], levels: [current] }],
+          },
+        },
+      }),
+    );
+    await page.route("**/api/admin/adjustments", (route) => {
+      bodies.push(route.request().postData()!);
+      if (bodies.length === 1) return route.abort("failed");
+      return route.fulfill({
+        json: {
+          adjustment: {
+            operationId: JSON.parse(bodies[0]!).operationId,
+            beforeOnHand: 20,
+            onHand: 26,
+            replayed: true,
+          },
+          level: current,
+        },
+      });
+    });
+    try {
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.getByLabel("Units", { exact: true }).fill("6");
+      await page.getByLabel("Reason / reference").fill("Test stock receipt");
+      assert.match(
+        (await page.locator("[data-stock-preview]").textContent())!,
+        /20.*26/s,
+      );
+      await page.getByRole("button", { name: "Confirm stock update" }).click();
+      await waitPhase(page, "uncertain");
+      const row = page.locator('[data-stock-row="fixture-variant"]');
+      assert.equal(await row.locator("[data-stock-on-hand]").innerText(), "20");
+      await page
+        .getByRole("link", {
+          name: "View stock for Test-only honey, Fixture format",
+        })
+        .click();
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        level.variantKey,
+      );
+      assert.match(
+        (await page.locator("[data-stock-workspace-status]").textContent())!,
+        /resolve.*operation/i,
+      );
+      await page
+        .getByRole("button", { name: "Retry the same operation" })
+        .click();
+      await waitPhase(page, "idle");
+      assert.equal(bodies.length, 2);
+      assert.equal(bodies[0], bodies[1]);
+      assert.equal(await row.locator("[data-stock-on-hand]").innerText(), "26");
+      assert.equal(
+        await row.locator("[data-stock-available]").innerText(),
+        "20",
+      );
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "6",
+      );
+      assert.equal(
+        await page.getByLabel("Units", { exact: true }).inputValue(),
+        "",
+      );
+      await page
+        .getByRole("link", {
+          name: "View stock for Test-only honey, Fixture format",
+        })
+        .click();
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        "honey-variant",
+      );
+      assert.equal(
+        await page.locator('[name="expectedRevision"]').inputValue(),
+        "5",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
