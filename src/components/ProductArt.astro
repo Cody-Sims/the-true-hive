@@ -3,6 +3,7 @@ import soap from "../../prototypes/assets/soap.svg?url";
 import honey from "../../prototypes/assets/honey-jar.svg?url";
 import candle from "../../prototypes/assets/candle.svg?url";
 import type { ProductImage, ProductPhoto } from "../domain/catalog.ts";
+import { getSoapReference } from "../content/soap-references.ts";
 
 interface Props {
   image: ProductImage;
@@ -10,19 +11,34 @@ interface Props {
   eager?: boolean;
   photo?: ProductPhoto | null;
   photoSrc?: string | null;
+  referenceKey?: string | undefined;
 }
-const { image, alt = "", eager = false, photo, photoSrc } = Astro.props;
+const {
+  image,
+  alt = "",
+  eager = false,
+  photo,
+  photoSrc,
+  referenceKey,
+} = Astro.props;
 const illustrations = { soap, honey, candle };
+const reference = !photo ? getSoapReference(referenceKey) : null;
 ---
 
 <img
-  class="product-illustration"
+  class:list={["product-illustration", { "product-reference": !!reference }]}
   src={
-    photo ? (photoSrc ?? `/media/products/${photo.id}`) : illustrations[image]
+    photo
+      ? (photoSrc ?? `/media/products/${photo.id}`)
+      : (reference?.src ?? illustrations[image])
   }
-  alt={photo ? photo.alt : alt}
-  width={photo?.width ?? 420}
-  height={photo?.height ?? 360}
+  srcset={
+    reference ? `${reference.small} 480w, ${reference.src} 960w` : undefined
+  }
+  sizes={reference ? "(max-width: 700px) 90vw, 45vw" : undefined}
+  alt={photo ? photo.alt : (reference?.alt ?? alt)}
+  width={photo?.width ?? (reference ? 960 : 420)}
+  height={photo?.height ?? (reference ? 1440 : 360)}
   loading={eager ? "eager" : "lazy"}
   decoding="async"
 />
@@ -36,5 +52,8 @@ const illustrations = { soap, honey, candle };
     max-width: 30rem;
     margin-inline: auto;
     object-fit: contain;
+  }
+  .product-reference {
+    max-width: none;
   }
 </style>

@@ -436,25 +436,22 @@ test("active product cards show canonical prices and cart options without enabli
       },
     ],
   };
-  assert.match(
-    await render("src/components/ProductCard.astro", {
-      product,
-      testCheckoutEnabled: true,
-    }),
-    /href="\/goods\/test-product#add-to-cart"[^>]*>\s*Choose for your test cart\s*<\/a>/,
-  );
   const browseOnly = await render("src/components/ProductCard.astro", {
     product,
-    testCheckoutEnabled: false,
   });
+  assert.match(
+    browseOnly,
+    /href="\/goods\/test-product\?variant=test-variant#add-to-cart"/,
+  );
   assert.match(browseOnly, /\$4\.50/);
-  assert.match(browseOnly, /#add-to-cart/);
-  assert.match(browseOnly, /Choose options/);
-  assert.doesNotMatch(browseOnly, /Test checkout/);
+  assert.match(browseOnly, /Test format/);
+  assert.doesNotMatch(
+    browseOnly,
+    /Test checkout|data-add-to-cart|\/api\/checkout/,
+  );
   assert.doesNotMatch(
     await render("src/components/ProductCard.astro", {
       product: { ...product, kind: "concept" },
-      testCheckoutEnabled: true,
     }),
     /#add-to-cart|\$4\.50/,
   );
@@ -464,11 +461,183 @@ test("active product cards show canonical prices and cart options without enabli
         ...product,
         variants: [{ ...product.variants[0], priceMinor: null }],
       },
-      testCheckoutEnabled: true,
     }),
     /#add-to-cart/,
   );
 });
+
+test("unknown or unavailable preferred formats fall back to an offered variant without changing identity", async () => {
+  const record = {
+    ...product,
+    kind: "active",
+    variants: [
+      {
+        ...product.variants[0],
+        priceMinor: 1000,
+        stock: { state: "out_of_stock" },
+      },
+      {
+        ...product.variants[0],
+        key: "available-wolf",
+        label: "Wolf",
+        priceMinor: 1250,
+        stock: { state: "available" },
+      },
+    ],
+  };
+  for (const preferredVariantKey of [
+    record.variants[0]!.key,
+    "not-a-variant",
+  ]) {
+    const html = await render("src/components/AddToCart.astro", {
+      product: record,
+      preferredVariantKey,
+    });
+    assert.match(html, /value="fixture-variant"[^>]*disabled/);
+    assert.match(html, /value="available-wolf"[^>]*checked/);
+    assert.match(html, /Sold out/);
+    assert.doesNotMatch(html, /value="not-a-variant"/);
+  }
+});
+
+test("soap reference cards disclose generated imagery, show format prices and preserve real uploaded photos", async () => {
+  const record = {
+    ...product,
+    key: "coconut-milk-delight",
+    slug: "coconut-milk-delight",
+    kind: "active",
+    summary: "Long product description belongs on the product page.",
+    variants: [
+      {
+        ...product.variants[0],
+        priceMinor: 1000,
+        label: "Single 4oz bar",
+        stock: { state: "available" },
+      },
+      {
+        ...product.variants[0],
+        key: "fixture-wolf",
+        priceMinor: 1250,
+        label: "Single 1oz Wolf Mold",
+        stock: { state: "low_stock", remaining: 3 },
+      },
+    ],
+  };
+  const html = (
+    await render("src/components/ProductCard.astro", { product: record })
+  ).replace(/\s+/g, " ");
+  assert.match(html, /AI styling reference/);
+  assert.match(html, /soap-reference-ivory/);
+  assert.match(html, /variant=fixture-variant#add-to-cart/);
+  assert.match(html, /variant=fixture-wolf#add-to-cart/);
+  assert.match(html, /Single 4oz bar/);
+  assert.match(html, /Single 1oz Wolf Mold/);
+  assert.match(html, /\$10\.00/);
+  assert.match(html, /\$12\.50/);
+  assert.match(html, /Only 3 left/);
+  assert.doesNotMatch(html, /Long product description belongs/);
+  const real = await render("src/components/ProductCard.astro", {
+    product: {
+      ...record,
+      photo: {
+        id: "real-photo",
+        alt: "Owner's actual soap",
+        width: 800,
+        height: 1000,
+      },
+    },
+  });
+  assert.match(real, /\/media\/products\/real-photo/);
+  assert.doesNotMatch(real, /AI styling reference|soap-reference-ivory/);
+  const missing = await render("src/components/ProductArt.astro", {
+    image: "soap",
+    referenceKey: "unknown-product",
+  });
+  assert.doesNotMatch(missing, /soap-reference/);
+  const soldOut = await render("src/components/ProductCard.astro", {
+    product: {
+      ...record,
+      variants: record.variants.map((variant) => ({
+        ...variant,
+        stock: { state: "out_of_stock" },
+      })),
+    },
+  });
+  assert.match(soldOut, /Sold out/);
+  assert.doesNotMatch(soldOut, /\?variant=/);
+});
+
+domTest(
+  "visible format choices preselect a valid format and add only its canonical identity to the cart",
+  async () => {
+    const record = {
+      ...product,
+      kind: "active",
+      variants: [
+        {
+          ...product.variants[0],
+          label: "Single 4oz bar",
+          priceMinor: 1000,
+          stock: { state: "available" },
+        },
+        {
+          ...product.variants[0],
+          key: "fixture-wolf",
+          label: "Single 1oz Wolf Mold",
+          priceMinor: 1250,
+          stock: { state: "available" },
+        },
+      ],
+    };
+    const page = await fixturePage(
+      "src/components/AddToCart.astro",
+      {
+        product: record,
+        preferredVariantKey: "fixture-wolf",
+      },
+      "cart.ts",
+    );
+    let mutations = 0;
+    await page.route("**/api/catalog", (route) =>
+      route.fulfill({ json: { source: "database", products: [record] } }),
+    );
+    page.on("request", (request) => {
+      if (request.method() !== "GET") mutations++;
+    });
+    try {
+      const wolf = page.getByRole("radio", { name: /Single 1oz Wolf Mold/ });
+      assert.equal(await wolf.isChecked(), true);
+      await page.getByRole("radio", { name: /Single 4oz bar/ }).check();
+      await wolf.check();
+      await page
+        .getByRole("button", { name: "Add to cart", exact: true })
+        .click();
+      await page
+        .locator("[data-add-status]")
+        .getByText(/Added to your cart/)
+        .waitFor();
+      assert.deepEqual(
+        await page.evaluate(
+          () => JSON.parse(localStorage.getItem("true-hive-cart")!).lines,
+        ),
+        [{ variantKey: "fixture-wolf", quantity: 1 }],
+      );
+      assert.equal(mutations, 0);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
 
 test("compact shopping cards show a canonical starting price and preserve stock warnings", async () => {
   const pricedProduct = {

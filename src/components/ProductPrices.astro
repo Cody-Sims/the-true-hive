@@ -5,8 +5,9 @@ import StockNotice from "./StockNotice.astro";
 interface Props {
   product: Product;
   compact?: boolean;
+  showStock?: boolean;
 }
-const { product, compact = false } = Astro.props;
+const { product, compact = false, showStock = true } = Astro.props;
 const priced = pricedVariants(product);
 const prices = priced.map((variant) => variant.priceMinor!);
 const startingPrice = prices.length ? Math.min(...prices) : null;
@@ -25,7 +26,7 @@ const warnings = product.variants.filter((variant) => {
             ? "Price unavailable"
             : `${new Set(prices).size > 1 ? "From " : ""}${money(startingPrice)}`}
         </p>
-        {warnings.length > 0 && (
+        {showStock && warnings.length > 0 && (
           <ul>
             {warnings.map((variant) => (
               <li>
