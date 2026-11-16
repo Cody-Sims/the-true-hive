@@ -1,6 +1,7 @@
 import { designs } from "../prototypes/scripts/designs.mjs";
 import { documents } from "../prototypes/scripts/documents.mjs";
 import { products } from "../prototypes/scripts/catalog.mjs";
+import { concepts, reviewAssets, reviewFiles } from "../prototypes/next/manifest.mjs";
 
 export function publicationFiles() {
   const pages = ["index.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
@@ -19,12 +20,15 @@ export function publicationFiles() {
     ...products.map((product) => `prototypes/${product.image}`),
     "prototypes/assets/favicon.svg",
     ...documents.map((document) => document.path),
+    ...reviewFiles.map((file) => `prototypes/next/${file}`),
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
-      || !/^(?:prototypes\/.+\.(?:html|css|mjs|svg)|docs\/.+\.md|README\.md|CHANGELOG\.md)$/.test(file)) {
+      || !/^(?:prototypes\/.+\.(?:html|css|mjs|svg)|prototypes\/next\/assets\/.+\.webp|docs\/.+\.md|README\.md|CHANGELOG\.md)$/.test(file)) {
       throw new Error(`Unexpected public artifact path: ${file}`);
     }
+    if (file.endsWith(".webp") && !reviewAssets.includes(file.slice("prototypes/next/".length)))
+      throw new Error(`Unexpected concept asset: ${file}`);
   }
   return [...files].sort();
 }
@@ -44,5 +48,11 @@ export function validatePublicationApproval(approval) {
   }
   assertAllowlist(approval.approvedDesigns, designs.map((design) => design.id), "design");
   assertAllowlist(approval.approvedDocuments, documents.map((document) => document.id), "document");
+  const review = approval.storefrontConcepts;
+  if (!review || review.public !== true || review.scope !== "public-products-and-reference-images"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(review.approvedOn))
+    throw new Error("The new storefront concepts require explicit public review approval.");
+  assertAllowlist(review.approvedConcepts, concepts.map((concept) => concept.id), "concept");
+  assertAllowlist(review.approvedAssets, reviewAssets, "concept asset");
   return true;
 }

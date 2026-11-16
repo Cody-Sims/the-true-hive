@@ -251,6 +251,41 @@ Only existing server-rendered image templates are cloned, with no arbitrary
 image URLs, stock edits or checkout requests. Images remain viewable from direct
 variant links without JavaScript; interactive synchronization requires JavaScript.
 
+### Five new storefront review concepts
+
+The owner approved publishing five separate concepts at
+`https://preview.thetruehive.com/prototypes/next/` without replacing the live
+design. The old ten-design gallery remains intact and links to this new hub.
+
+| Concept | Layout and ingredient treatment |
+|---|---|
+| Ingredient Atelier | Tactile split layout with readable HTML ingredient notes layered beside the image |
+| Honeyglass | Sun-warmed product stage, alternating collection shelves and an ingredient ribbon |
+| Field Notes | Indexed collection rows and a precise ingredient ledger |
+| Soft Geometry | Sculptural bento layout with an expandable ingredient card |
+| Night Apiary | Dark forest image stage with a high-contrast ingredient drawer |
+
+Each direction includes home/store/product views plus Services/About and a
+local demo cart. Four individual variant images, variant links, saved ingredient
+names and snapshot prices are shared as data, while layouts and disclosure
+treatments differ. Ingredient text is selectable HTML, never embedded in the
+generated images. No formula percentages, benefits or claims are inferred.
+
+`prototypes/next/data.mjs` is a deliberate snapshot of already-public product
+information, not a live catalog fetch. Local cart identities and quantities use
+a review-only, per-concept session-storage key. No preview route creates an
+order, payment, stock hold or inventory mutation, and no credentials, private
+SKUs, exact stock counts, memberships or customer information are included.
+
+`publishing.json` separately approves the five concept IDs and nine exact image
+assets under `storefrontConcepts`. The Pages allowlist adds only the named
+review files; WebP files are accepted only from that exact asset list. The
+general private-file and regular-file/symlink safeguards are unchanged.
+`tests/browser/next-concepts.spec.ts` exercises all five directions against a
+loopback server serving the curated built artifact, including ingredient text,
+variant images, cart totals, mobile layout, accessibility and no API/mutation
+requests. No paid preview service or live-runtime flag is needed.
+
 ### Isolated Stripe sandbox activation checklist
 
 The owner confirmed the existing **The True Hive sandbox** account. Hosted

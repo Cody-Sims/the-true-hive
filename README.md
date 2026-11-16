@@ -50,6 +50,14 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
+Five new, separately reviewable concepts are at
+**https://preview.thetruehive.com/prototypes/next/**: Ingredient Atelier,
+Honeyglass, Field Notes, Soft Geometry and Night Apiary. Each covers home,
+store, product/ingredients and the shared service/about journeys. They use a
+static public product snapshot and local demo carts, never live inventory or
+payments. The original ten-design studio is preserved; no new concept is
+automatically selected for the live storefront.
+
 The private inventory home groups variants into collapsible category shelves,
 with location-specific stock status and in-stock/out-of-stock filters. Select a
 product name or row to open its focused stock inspector; on mobile it opens in
