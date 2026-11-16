@@ -1,6 +1,6 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
-import scene from "../../prototypes/assets/market-scene.svg?url";
+import hivePhoto from "../assets/honeybees-on-comb.webp?url";
 ---
 
 <SiteLayout
@@ -26,12 +26,14 @@ import scene from "../../prototypes/assets/market-scene.svg?url";
       </div>
       <figure class="story-page-illustration">
         <img
-          src={scene}
-          alt="Illustration of a market stand with honey, soap and candles."
-          width="880"
-          height="640"
+          src={hivePhoto}
+          alt="Honeybees tending golden honeycomb."
+          width="1600"
+          height="2133"
+          loading="lazy"
+          decoding="async"
         />
-        <figcaption>An illustrated look at The True Hive.</figcaption>
+        <figcaption>Honeybees on the comb.</figcaption>
       </figure>
     </div>
   </section>
@@ -183,6 +185,9 @@ import scene from "../../prototypes/assets/market-scene.svg?url";
   }
   .story-page-illustration img {
     width: 100%;
+    height: auto;
+    aspect-ratio: 1.2;
+    object-fit: cover;
     border-radius: 45% 45% 0 0;
     background: #eee7d6;
   }

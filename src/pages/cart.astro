@@ -10,8 +10,7 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
 
 <SiteLayout
   title="Your cart"
-  description="Review saved selections and current published prices. A cart does not reserve stock or place an order."
-  storefrontStatus={storefront}
+  description="Review your cart, update quantities and find local pickup details."
 >
   <section
     class="wrap cart-page"
@@ -22,11 +21,7 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
     <h1 data-cart-heading tabindex="-1">
       Your cart.
     </h1>
-    <p>
-      Saved on this device only. Adding items does not reserve stock. Current
-      catalog prices are refreshed here; the server verifies prices and
-      availability again at checkout.
-    </p>
+    <p>Review your items and pickup details.</p>
     <p data-cart-storage role="status"></p>
     <p data-cart-status role="status">
       Loading your saved selections…
@@ -34,23 +29,18 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
     <div data-cart-content aria-busy="true">
       <ul class="cart-lines" data-cart-lines aria-label="Saved cart items"></ul>
       <p data-cart-empty hidden>
-        Your cart is empty. Explore the goods to save active product selections.
-        Concepts are not for sale.
+        Your cart is empty. <a href="/goods">Shop the collection</a> to find
+        your favorite.
       </p>
       <p class="cart-subtotal">
         Subtotal: <strong data-cart-subtotal>Not yet verified</strong>
-      </p>
-      <p class="fine-print">
-        A subtotal is not a payment or stock confirmation. Missing prices are
-        never estimated. Taxes are not calculated in this test-only checkout
-        integration; no real purchase is available.
       </p>
       <div class="cart-actions">
         <button type="button" class="button" data-cart-clear disabled>
           Clear cart
         </button>
         <button type="button" class="button" data-cart-refresh>
-          Refresh prices and availability
+          Refresh cart
         </button>
         <a class="text-link" href="/goods">
           Keep exploring &rarr;
@@ -60,15 +50,12 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
     <PickupLocation />
     {paymentReady ? (
       <section class="cart-checkout" aria-labelledby="cart-checkout-title">
-        <h2 id="cart-checkout-title">TEST MODE — no real charge.</h2>
-        <p>
-          Stripe test checkout only. This is not a real purchase. Your cart is
-          not cleared on redirect or an unverified payment result.
-        </p>
+        <h2 id="cart-checkout-title">Stripe test checkout</h2>
+        <p>Test mode — no real payment. Tax is not calculated in this test.</p>
         {!storefront.checkoutEnabled && (
           <p>
-            New checkouts are paused. Only an existing checkout can be resumed;
-            your saved cart remains available.
+            Checkout is unavailable. You can still resume an existing test
+            checkout.
           </p>
         )}
         <button
@@ -85,24 +72,17 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
         <p data-cart-checkout-status role="status" tabindex="-1"></p>
       </section>
     ) : (
-      <aside class="notice">
-        <h2>
-          {storefront.state === "closed"
-            ? "Online ordering is paused."
-            : storefront.state === "unavailable"
-              ? "Online ordering is temporarily unavailable."
-              : "Online ordering isn't open yet."}
-        </h2>
+      <aside class="cart-checkout" aria-label="Checkout availability">
+        <button type="button" class="button button-primary" disabled>
+          Checkout unavailable
+        </button>
         <p>
-          You can browse published prices and save selections, but no purchase
-          is available. There is no stock hold or order until a checkout is
-          verified by the server.
+          Questions about ordering? <a href="/contact">Contact us</a>.
         </p>
       </aside>
     )}
     <noscript>
-      JavaScript is required to read the cart stored on your device. No order
-      has been placed.
+      Enable JavaScript to use your cart, or contact us for help.
     </noscript>
   </section>
 </SiteLayout>
@@ -159,6 +139,14 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
     max-width: 100%;
     white-space: normal;
     cursor: pointer;
+  }
+  .cart-page button:not(.button-primary) {
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--forest);
+    border-radius: 0.15rem;
+    color: var(--forest);
+    background: var(--paper);
+    font-weight: 600;
   }
   .cart-page button:disabled {
     opacity: 0.6;

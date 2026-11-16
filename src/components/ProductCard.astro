@@ -48,10 +48,13 @@ const categories = {
       image={product.imageKey}
       photo={product.photo ?? null}
       photoSrc={photoSrc}
+      alt={`${categories[product.category]} illustration.`}
     />
-    <span class="art-caption">
-      {product.photo ? "Product photo" : "Original illustration"}
-    </span>
+    {preview && (
+      <span class="art-caption">
+        {product.photo ? "Product photo" : "Original illustration"}
+      </span>
+    )}
   </ArtLink>
   <div class="shelf-copy">
     <p class="eyebrow">{categories[product.category]}</p>
@@ -68,12 +71,16 @@ const categories = {
         <span aria-hidden="true">&nearr;</span>
       </TitleLink>
     </h3>
+    {!preview && <ProductPrices product={product} compact />}
     <p class="shelf-description">{product.summary}</p>
-    {!preview && <ProductPrices product={product} />}
     <div class="shelf-meta">
-      <span class="pill">
-        {product.kind === "concept" ? "Concept product" : "Product information"}
-      </span>
+      {(preview || product.kind === "concept") && (
+        <span class="pill">
+          {product.kind === "concept"
+            ? "Concept product"
+            : "Product information"}
+        </span>
+      )}
       {canAddToCart && (
         <a class="text-link" href={`/goods/${product.slug}#add-to-cart`}>
           {testCheckoutEnabled ? "Choose for your test cart" : "Choose options"}
@@ -102,9 +109,10 @@ const categories = {
     position: relative;
     display: grid;
     min-height: 0;
-    aspect-ratio: 1.08;
+    aspect-ratio: 1.25;
+    grid-template-rows: auto minmax(0, 1fr);
     isolation: isolate;
-    padding: 2rem 0.75rem 1.6rem;
+    padding: 1.5rem 0.75rem 1.25rem;
     border: 1px solid transparent;
     border-radius: 0.2rem;
     text-decoration: none;
@@ -120,6 +128,11 @@ const categories = {
   }
   .shelf-art:hover {
     border-color: var(--forest);
+  }
+  .shelf-art :global(.product-illustration) {
+    height: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
   .soap-art {
     background: #e8e9dc;

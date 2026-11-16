@@ -8,9 +8,17 @@ The owner subsequently approved ingredient and quantity-display work, an
 inventory-priced shopping cart, and preparation against the existing named
 Stripe sandbox. The approved contact form opens a visitor-owned email draft
 without a provider or server submission. This is not authorization for live
-charges, invoicing, Tax activation or test purchases against operational stock.
+charges, invoicing, Tax activation or test purchases against ordinary stock.
 The [isolated sandbox checklist](14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist)
 records the remaining environment, credentials, webhook and rehearsal steps.
+
+On 2026-11-15 the owner additionally authorized temporarily using the current
+deployment as a test store. The scoped exception uses a clearly named synthetic
+stock location on the shared database, visible test labels and noindex; original
+Madisonville balances remain untouched. It does not activate live charges or
+waive payment verification, audit history, tax or eventual customer-launch gates.
+See the same runbook for setup and rollback; a confirmed planner guide is still
+not proof that an actual hosted test payment or webhook has succeeded.
 
 ## What was actually verified
 

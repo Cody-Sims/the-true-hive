@@ -330,8 +330,10 @@ figcaption {
 }
 .product-shelf {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
   gap: 1.5rem;
+  max-width: 60rem;
+  margin-inline: auto;
 }
 .shelf-product {
   min-width: 0;

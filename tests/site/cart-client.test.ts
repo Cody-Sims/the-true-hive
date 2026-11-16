@@ -462,7 +462,7 @@ test("a definitely closed store keeps the cart but stops fresh checkout attempts
   assert.equal(checkout.hasPendingIntent, false);
   assert.equal(storage.getItem("true-hive-checkout-pending"), null);
   assert.equal(storage.getItem("true-hive-cart"), cart);
-  assert.match(messages.at(-1)!, /paused/);
+  assert.match(messages.at(-1)!, /Checkout is unavailable/);
   await checkout.start([{ variantKey: "soap-bar", quantity: 3 }]);
   assert.equal(ids, 1);
   assert.equal(requests, 1);

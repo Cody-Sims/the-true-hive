@@ -5,22 +5,18 @@ import favicon from "../assets/favicon.svg?url";
 import shareImage from "../assets/social-card.png?url";
 import { readConfig } from "../server/config.ts";
 import { getCheckoutPresentation } from "../server/commerce/config.ts";
-import { getStorefrontStatus } from "../server/storefront.ts";
-import type { StorefrontStatus } from "../domain/storefront.ts";
 
 interface Props {
   title: string;
   description: string;
   path?: string;
   notFound?: boolean;
-  storefrontStatus?: StorefrontStatus;
 }
 const {
   title,
   description,
   path = Astro.url.pathname,
   notFound = false,
-  storefrontStatus,
 } = Astro.props;
 const config = readConfig();
 const cartPage = path === "/cart" || path === "/cart/";
@@ -30,19 +26,7 @@ const shoppingPage =
   path.startsWith("/goods/") ||
   cartPage ||
   path.startsWith("/checkout/");
-const storefront =
-  storefrontStatus ??
-  (shoppingPage
-    ? await getStorefrontStatus(config, getCheckoutPresentation().enabled)
-    : { checkoutEnabled: false, state: "unconfigured" });
-const shoppingNotice =
-  storefront.state === "closed"
-    ? "Online ordering is paused."
-    : storefront.state === "unavailable"
-      ? "Online ordering is temporarily unavailable."
-      : storefront.checkoutEnabled
-        ? "TEST MODE — no real charge. Online ordering isn't open yet."
-        : "Online ordering isn't open yet.";
+const testCheckout = getCheckoutPresentation().enabled;
 const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
 const isSearchResults =
   (Astro.url.pathname === "/goods" || Astro.url.pathname === "/goods/") &&
@@ -107,11 +91,11 @@ const schema = JSON.stringify({
     <a class="skip-link" href="#main">
       Skip to content
     </a>
-    {shoppingPage && (
+    {shoppingPage && testCheckout && (
       <aside class="opening-note" aria-label="Shopping information">
         <div class="wrap">
-          <span>Beekeeping in East Tennessee.</span>
-          <span>{shoppingNotice}</span>
+          <span>Stripe test checkout</span>
+          <span>Test store — no real payments or pickups.</span>
         </div>
       </aside>
     )}
@@ -187,7 +171,7 @@ const schema = JSON.stringify({
       </div>
       <div class="wrap footer-colophon">
         <span>Local care. A lasting connection.</span>
-        {shoppingPage && <span>{shoppingNotice}</span>}
+        <span>Madisonville, Tennessee</span>
       </div>
     </footer>
     <script>

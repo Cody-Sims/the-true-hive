@@ -65,7 +65,7 @@ const checkout = createCartCheckout({
     if (!checkoutStatus && phase !== "idle")
       showRecoveryNotice(
         message,
-        phase === "closed" ? "New checkouts are paused" : undefined,
+        phase === "closed" ? "Checkout unavailable" : undefined,
       );
     if (phase === "idle") {
       recoveryNotice?.remove();
@@ -329,7 +329,7 @@ async function refreshCatalog(initialRead = false) {
         ? "Current catalog prices loaded. These do not confirm the existing order total, payment or stock release. Pending checkout recovery is still required."
         : saved.recovered
           ? "Invalid saved cart data was removed. Current catalog prices are loaded; review your selections. No stock has been reserved."
-          : "Current catalog prices loaded. Your cart does not reserve stock.",
+          : "Your cart is up to date.",
     );
     return true;
   } catch {
@@ -349,9 +349,7 @@ clear?.addEventListener("click", () => {
   lines = [];
   persist();
   render();
-  announce(
-    "Your cart has been cleared. This does not cancel an existing checkout or release a stock hold.",
-  );
+  announce("Your cart has been cleared.");
   focusHeading();
 });
 refresh?.addEventListener("click", () => {

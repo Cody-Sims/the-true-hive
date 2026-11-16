@@ -6,8 +6,6 @@ import ProductPrices from "../../components/ProductPrices.astro";
 import ProductIngredients from "../../components/ProductIngredients.astro";
 import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
-import { getCheckoutPresentation } from "../../server/commerce/config.ts";
-import { getStorefrontStatus } from "../../server/storefront.ts";
 import { isRecordKey } from "../../server/inventory/rules.ts";
 
 const categories = {
@@ -17,11 +15,6 @@ const categories = {
   gifts: "Gifts",
 };
 const config = readConfig();
-const checkout =
-  config.catalogSource === "database"
-    ? getCheckoutPresentation()
-    : { enabled: false, locationKey: null };
-const storefront = await getStorefrontStatus(config, checkout.enabled);
 let product = null;
 let unavailable = false;
 if (isRecordKey(Astro.params["slug"])) {
@@ -33,13 +26,6 @@ if (isRecordKey(Astro.params["slug"])) {
   }
 }
 if (!product) Astro.response.status = unavailable ? 503 : 404;
-const testCheckoutEnabled =
-  storefront.checkoutEnabled &&
-  !!checkout.locationKey &&
-  product?.kind === "active" &&
-  product.variants.some(
-    (variant) => (variant.priceMinor ?? 0) > 0 && variant.currency === "USD",
-  );
 ---
 
 <SiteLayout
@@ -52,7 +38,6 @@ const testCheckoutEnabled =
     "Return to The True Hive collection to explore published product information."
   }
   notFound={!product}
-  storefrontStatus={storefront}
 >
   <div class="wrap product-detail">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -79,15 +64,10 @@ const testCheckoutEnabled =
             <ProductArt
               image={product.imageKey}
               photo={product.photo ?? null}
-              alt={`Original concept illustration for ${product.title}.`}
+              alt={`${categories[product.category]} illustration for ${product.title}.`}
               eager
             />
           </div>
-          <figcaption>
-            {product.photo
-              ? "Product photo."
-              : "Original illustration, not an approved product photograph."}
-          </figcaption>
         </figure>
         <section class="detail-copy" aria-labelledby="product-title">
           <div class="detail-overline">
@@ -101,21 +81,25 @@ const testCheckoutEnabled =
             </a>
           </div>
           <h1 id="product-title">{product.title}</h1>
-          <div class="product-status">
-            <span class="pill">
-              {product.kind === "concept"
-                ? "Concept product"
-                : "Product information"}
-            </span>
-          </div>
+          {product.kind === "concept" && (
+            <div class="product-status">
+              <span class="pill">Concept product</span>
+            </div>
+          )}
           <p class="detail-summary">{product.summary}</p>
           <ProductPrices product={product} />
+          <AddToCart product={product} />
+          <p>
+            <a class="text-link" href="/goods#pickup">
+              Local pickup in Madisonville
+            </a>
+          </p>
           {product.details.length > 0 && (
             <section
               class="product-notes"
               aria-labelledby="product-notes-title"
             >
-              <h2 id="product-notes-title">A closer look.</h2>
+              <h2 id="product-notes-title">Product details</h2>
               <ul>
                 {product.details.map((detail) => (
                   <li>{detail}</li>
@@ -124,35 +108,9 @@ const testCheckoutEnabled =
             </section>
           )}
           <ProductIngredients ingredients={product.ingredients ?? []} />
-          <AddToCart product={product} />
-          {testCheckoutEnabled ? (
-            <div class="notice">
-              <h2>TEST MODE — no real charge.</h2>
-              <p>
-                Review all your selections in the cart before continuing to
-                Stripe test checkout. This is not a real purchase.
-              </p>
-              <a class="text-link" href="/cart">
-                Review your test cart &rarr;
-              </a>
-            </div>
-          ) : (
-            <div class="notice">
-              <h2>
-                {storefront.state === "closed"
-                  ? "Purchases are paused."
-                  : "Good things take a little care."}
-              </h2>
-              <p>
-                Online ordering isn't open yet. You can browse published prices
-                and save active product selections in a cart, but this is not a
-                purchase or stock reservation. Concepts are not for sale.
-              </p>
-            </div>
-          )}
           <div class="detail-links">
             <a class="text-link" href="/contact">
-              Find our contact channels <span aria-hidden="true">&rarr;</span>
+              Questions? Contact us <span aria-hidden="true">&rarr;</span>
             </a>
             <a class="text-link" href="/goods">
               Back to all goods <span aria-hidden="true">&nearr;</span>
@@ -165,13 +123,13 @@ const testCheckoutEnabled =
         <p class="eyebrow">The collection</p>
         <h1>
           {unavailable
-            ? "The collection needs another moment."
+            ? "Product information is unavailable."
             : "That good isn't on the shelf."}
         </h1>
         <p>
           {unavailable
             ? "Catalog information could not be verified. Please try again later."
-            : "This product may not be published. Explore the current collection instead."}
+            : "We couldn't find this product. Explore the collection instead."}
         </p>
         <a class="button button-primary" href="/goods">
           Back to the collection <span aria-hidden="true">&rarr;</span>
@@ -237,13 +195,6 @@ const testCheckoutEnabled =
     opacity: 0.16;
     content: "";
   }
-  .detail-art figcaption {
-    margin-top: 0.75rem;
-    padding-top: 1rem;
-    border-color: var(--line);
-    font-size: 0.7rem;
-    text-align: left;
-  }
   .detail-copy {
     min-width: 0;
   }
@@ -300,14 +251,6 @@ const testCheckoutEnabled =
   }
   .product-notes li::marker {
     color: var(--tomato);
-  }
-  .detail-copy .notice {
-    margin-block: 2rem 1rem;
-    padding: 1.25rem 1.4rem;
-    background: transparent;
-  }
-  .detail-copy .notice h2 {
-    font-size: 1.6rem;
   }
   .detail-links {
     display: flex;

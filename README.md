@@ -2,7 +2,7 @@
 
 **The Apiary Market application foundation, ten preserved design directions, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
-Updated **November 14, 2026**. Status: **owner-approved inventory-backed public catalog and private inventory administration**, with checkout and live sales disabled.
+Updated **November 15, 2026**. Status: **inventory-backed storefront and private inventory administration**. Only Stripe test checkout is implemented; real payments are disabled.
 
 ## Build the actual site
 
@@ -15,7 +15,7 @@ npm run dev
 
 Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and does not invent prices/stock. For native build, database, CI and Render details, read [development and operations](docs/14-development-and-operations.md) and the [approved specification](docs/13-production-foundation.md).
 
-**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The public catalog is live at **https://thetruehive.com/** with `CATALOG_SOURCE=database`, reading published products from the same Neon PostgreSQL database as `inventory.thetruehive.com`; checkout remains disabled. The existing **https://the-true-hive-app.onrender.com/** endpoint remains available. Render follows this repository's `main` branch with **After CI Checks Pass** deployment enabled. The selected infrastructure remains one $7/month Render app in a Hobby workspace and Neon Free in Oregon, not a second service or paid database.
+**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The storefront is at **https://thetruehive.com/** with `CATALOG_SOURCE=database`, reading published products from the same Neon PostgreSQL database as `inventory.thetruehive.com`. The owner approved temporarily using this deployment as a clearly labelled test store; that is not approval for real payments. The existing **https://the-true-hive-app.onrender.com/** endpoint remains available. Render follows this repository's `main` branch with **After CI Checks Pass** deployment enabled. The selected infrastructure remains one $7/month Render app in a Hobby workspace and Neon Free in Oregon, not a second service or paid database.
 
 The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
@@ -27,9 +27,18 @@ deploying ingredient-aware code, and migration 005 before store controls.
 Authorized inventory administrators can allow or pause new checkouts under
 **Store settings**, while the catalog and cart remain visible. The switch
 cannot override runtime payment restrictions; taxes are not yet calculated.
-Stripe testing remains separately gated by the
-[isolated sandbox checklist](docs/14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist);
-never run simulated purchases against operational stock.
+Stripe testing follows the
+[sandbox runbook](docs/14-development-and-operations.md#isolated-stripe-sandbox-activation-checklist).
+The owner's temporary current-site exception uses only a clearly named
+test-stock location, test keys/events and non-indexable pages. Existing
+Madisonville balances must not be used for simulated purchases. Ongoing testing
+should return to a separate environment before a customer launch.
+
+Customer pages lead with products, ingredients, prices and useful shopping
+actions rather than implementation-stage notices. Actual stock states and
+checkout admission remain authoritative. When checkout is disabled, its status
+appears in the cart; when test mode is configured, shopping pages clearly
+identify the test store and no-real-payment/pickup scope.
 
 The private inventory home uses compact product/location rows with On hand and
 Available counts visible; expand stock controls for allocations and revisions,
