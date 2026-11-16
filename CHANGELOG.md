@@ -40,6 +40,7 @@
 ### Fixed
 
 - Accept Stripe's current `/g/pay/` hosted Checkout URL for the exact verified test session, retaining the existing `/c/pay/` route and strict host, identity and query checks.
+- Make product names and stock rows select their focused inventory panel, with keyboard selection, a clear active-row indicator and the prototype's image-led details and Receive action.
 - Preserve existing photo-audit actions when upgrading store settings, restrict public low-stock counts to the configured pickup location, and restore the latest saved cart after checkout recovery without overwriting another tab's changes.
 - Keep product drafts editable after an explicitly rejected duplicate key/slug/SKU instead of trapping creation in a revision-conflict workflow.
 - Keep process-only liveness available on the inventory hostname so shared-service health probes can succeed without opening private inventory or database readiness routes.

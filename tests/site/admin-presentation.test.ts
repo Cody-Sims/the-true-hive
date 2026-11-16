@@ -4474,6 +4474,7 @@ domTest(
       compact: true,
     });
     try {
+      await page.locator("[data-stock-editor] > summary").click();
       assert.equal(await page.getByLabel("Units", { exact: true }).count(), 1);
       assert.equal(await page.getByLabel("Reason / reference").count(), 1);
       assert.equal(
@@ -4522,6 +4523,7 @@ domTest(
         if (width === 390) await page.keyboard.press("Escape");
       }
       await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.locator("[data-stock-editor] > summary").click();
       await page.getByLabel("Direction").selectOption("reduce");
       await page.getByLabel("Units", { exact: true }).fill("15");
       assert.equal(
@@ -4565,6 +4567,165 @@ domTest(
       assert.equal(
         await page.locator('[name="variantKey"]').inputValue(),
         "honey-variant",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "product names and stock cells select the inspector like the workbench prototype",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/InventoryWorkspace.astro",
+      workspaceProps(),
+      "admin.ts",
+      {
+        path: "/inventory/products",
+        headers: await productionHeaders("/inventory/products"),
+      },
+    );
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    try {
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      const honey = page.locator('[data-stock-row="honey-variant"]');
+      await honey.getByText("Test-only honey", { exact: true }).click();
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        "honey-variant",
+      );
+      assert.equal(
+        await page.locator("[data-stock-title]").innerText(),
+        "Test-only honey",
+      );
+      assert.equal(
+        await honey
+          .locator("[data-stock-select]")
+          .first()
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+      await page
+        .locator('[data-stock-row="fixture-variant"] [data-stock-on-hand]')
+        .click();
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        "fixture-variant",
+      );
+      await honey
+        .getByRole("button", {
+          name: "Select stock for Test-only honey, Fixture format",
+        })
+        .focus();
+      await page.keyboard.press("Space");
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        "honey-variant",
+      );
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page
+        .locator('[data-stock-row="fixture-variant"]')
+        .getByText("Component-only record", { exact: true })
+        .click();
+      assert.deepEqual(errors, []);
+      const dialog = page.getByRole("dialog");
+      await dialog.waitFor({ state: "visible" });
+      assert.equal(
+        await dialog.locator('[name="variantKey"]').inputValue(),
+        "fixture-variant",
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(
+        await page
+          .locator(
+            '[data-stock-row="fixture-variant"] button[data-stock-select]',
+          )
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "receiving after mobile item selection updates only the selected variant",
+  async () => {
+    const props = workspaceProps();
+    const honey = props.products[1]!;
+    const before = honey.variants[0]!.levels[0]!;
+    const current = { ...before, onHand: 6, sellable: 6, revision: 6 };
+    const page = await fixturePage(
+      "src/components/admin/InventoryWorkspace.astro",
+      props,
+    );
+    const requests: Record<string, unknown>[] = [];
+    await page.route("**/api/admin/products/honey-product", (route) =>
+      route.fulfill({
+        json: {
+          product: {
+            ...honey,
+            variants: [{ ...honey.variants[0], levels: [current] }],
+          },
+        },
+      }),
+    );
+    await page.route("**/api/admin/adjustments", (route) => {
+      const body = route.request().postDataJSON();
+      requests.push(body);
+      return route.fulfill({
+        json: {
+          adjustment: {
+            operationId: body.operationId,
+            beforeOnHand: 0,
+            onHand: 6,
+            replayed: false,
+          },
+          level: current,
+        },
+      });
+    });
+    try {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const row = page.locator('[data-stock-row="honey-variant"]');
+      await row.getByText("Test-only honey", { exact: true }).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.locator("[data-stock-editor] > summary").click();
+      await dialog.getByLabel("Units", { exact: true }).fill("6");
+      await dialog
+        .getByLabel("Reason / reference")
+        .fill("Received sample delivery");
+      await dialog
+        .getByRole("button", { name: "Confirm stock update" })
+        .click();
+      await waitPhase(page, "idle");
+      assert.equal(requests.length, 1);
+      assert.deepEqual(
+        { ...requests[0], operationId: "uuid" },
+        {
+          expectedRevision: 5,
+          variantKey: "honey-variant",
+          locationKey: level.locationKey,
+          delta: 6,
+          reason: "Received sample delivery",
+          operationId: "uuid",
+        },
+      );
+      assert.equal(
+        await dialog.locator('[data-quantity="onHand"]').innerText(),
+        "6",
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(await row.locator("[data-stock-on-hand]").innerText(), "6");
+      assert.equal(
+        await page
+          .locator('[data-stock-row="fixture-variant"] [data-stock-on-hand]')
+          .innerText(),
+        "20",
       );
     } finally {
       await page.context().close();
@@ -4761,6 +4922,7 @@ domTest(
     });
     try {
       await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.locator("[data-stock-editor] > summary").click();
       await page.getByLabel("Units", { exact: true }).fill("6");
       await page.getByLabel("Reason / reference").fill("Test stock receipt");
       assert.match(
@@ -4799,10 +4961,7 @@ domTest(
         await page.locator('[name="expectedRevision"]').inputValue(),
         "6",
       );
-      assert.equal(
-        await page.getByLabel("Units", { exact: true }).inputValue(),
-        "",
-      );
+      assert.equal(await page.locator('[name="amount"]').inputValue(), "");
       await page
         .getByRole("link", {
           name: "View stock for Test-only honey, Fixture format",
