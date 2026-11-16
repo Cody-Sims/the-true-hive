@@ -283,6 +283,21 @@ test("reserve precedes card-only creation using immutable prices, stable identit
   assert.equal(h.creations.length, 1);
 });
 
+test("Stripe's g/pay hosted URL attaches and replays the same test session", async () => {
+  const h = harness();
+  h.current.url = `https://checkout.stripe.com/g/pay/${sessionId}#provider-fragment`;
+  assert.deepEqual(await h.services.createCheckout(intent), {
+    checkoutUrl: h.current.url,
+  });
+  assert.equal(h.stored.checkoutSessionId, sessionId);
+  assert.deepEqual(await h.services.createCheckout(intent), {
+    checkoutUrl: h.current.url,
+  });
+  assert.equal(h.creations.length, 1);
+  assert.equal(h.effects.filter((effect) => effect === "attach").length, 1);
+  assert.equal(h.effects.includes("quarantine"), false);
+});
+
 test("invalid intents cannot reserve inventory", async () => {
   for (const input of [
     { ...intent, operationId: "not-uuid" },
@@ -411,6 +426,12 @@ test("unsafe or live hosted session responses never escape as checkout redirects
     { url: "http://checkout.stripe.com/c/pay/foo" },
     { url: "https://name:password@checkout.stripe.com/c/pay/foo" },
     { url: "javascript:alert(1)" },
+    { url: `https://checkout.stripe.com/g/pay/${sessionId}-other` },
+    { url: `https://checkout.stripe.com/g/pay/${sessionId}/extra` },
+    {
+      url: `https://checkout.stripe.com/g/pay/${sessionId}?redirect=elsewhere`,
+    },
+    { url: `https://checkout.stripe.com/other/pay/${sessionId}` },
     { livemode: true },
     { expires_at: Math.floor(clock / 1000 + 7200) },
   ]) {
