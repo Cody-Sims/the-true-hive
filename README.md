@@ -50,7 +50,23 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
-The latest prototype refines the owner's chosen **02 / Guided editor**:
+The latest review compares **two scrolling prototypes** based on the guided editor:
+
+| Prototype | Behavior |
+|---|---|
+| [Shared page](https://preview.thetruehive.com/prototypes/guided-scroll/?layout=together) | One page scrollbar moves the form and product preview together; neither column has an independent scroll pane. |
+| [Compact preview](https://preview.thetruehive.com/prototypes/guided-scroll/?layout=compact) | A smaller summary card fits beside the editor without scrolling. The form is the editor's only scroll area; wheel input over the card also moves the form. |
+
+Switching layouts preserves the draft. The compact card shows up to two title
+lines, starting price and active-format count rather than an unbounded format
+list. Open the full card/product-page modal for the complete customer view.
+Phones and very short compact windows use the pop-out preview instead of an
+inline card. Both alternatives retain fictional in-memory data, local-only
+photo preview, variant actions and guarded demo publication. No live editor or
+inventory behavior is changed. Desktop/laptop/mobile screenshots and real
+wheel/keyboard behavior are checked with Playwright.
+
+The previous prototype refines the owner's chosen **02 / Guided editor**:
 **https://preview.thetruehive.com/prototypes/guided-next/**. Previous/Next stay
 anchored while each step scrolls independently and retains its inputs, selected
 photo and scroll position. On mobile, Preview opens a modal instead of adding

@@ -190,8 +190,14 @@ test("the current preview landing prioritizes editor studies and moves old galle
       page.getByRole("heading", { name: new RegExp(name) }),
     ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: /Open refined guided editor/ }),
+    page.getByRole("link", { name: "Previous guided refinement" }),
   ).toHaveAttribute("href", "guided-next/index.html");
+  await expect(
+    page.getByRole("link", { name: /Try shared page/ }),
+  ).toHaveAttribute("href", "guided-scroll/index.html?layout=together");
+  await expect(
+    page.getByRole("link", { name: /Try compact preview/ }),
+  ).toHaveAttribute("href", "guided-scroll/index.html?layout=compact");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page
     .getByRole("navigation", { name: "Review navigation" })
