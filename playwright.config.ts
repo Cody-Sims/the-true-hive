@@ -14,8 +14,9 @@ export default defineConfig({
   },
   webServer: [
     {
+      // Parallel browser contexts open several module connections at once.
       command:
-        "npm run build:pages && python3 -m http.server 4327 --bind 127.0.0.1 --directory dist",
+        'npm run build:pages && python3 -c \'from functools import partial; from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer; ThreadingHTTPServer.request_queue_size = 128; ThreadingHTTPServer(("127.0.0.1", 4327), partial(SimpleHTTPRequestHandler, directory="dist")).serve_forever()\'',
       url: "http://127.0.0.1:4327/prototypes/next/",
       timeout: 30000,
       reuseExistingServer: false,

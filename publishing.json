@@ -50,5 +50,12 @@
     "scope": "fictional-guided-editor-refinement",
     "purpose": "Owner chose direction 02 as the base for a new prototype with stable mobile navigation, a mobile preview modal and a card-to-product-page preview. Preserve previous comparisons and the live editor; fictional memory-only data and device-local photo previews, no backend or cart writes."
   },
+  "guidedScrollConcepts": {
+    "public": true,
+    "approvedOn": "2026-11-17",
+    "scope": "fictional-guided-scroll-comparison",
+    "approvedLayouts": ["together", "compact"],
+    "purpose": "Owner-requested guided prototypes comparing one page that scrolls both form and product together against a compact, non-scrolling preview with form-only scrolling. Visually verify with Playwright. Preserve previous studies, mobile pop-out detail preview and all live inventory boundaries; fictional memory-only data."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

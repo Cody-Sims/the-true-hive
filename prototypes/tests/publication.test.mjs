@@ -69,3 +69,11 @@ test("guided refinement publishes only approved fictional review files", () => {
   assert.throws(() => validatePublicationApproval({ ...approval, guidedRefinement: { ...approval.guidedRefinement, public: false } }), /guided/i);
   assert.throws(() => validatePublicationApproval({ ...approval, guidedRefinement: { ...approval.guidedRefinement, scope: "live-editor" } }), /guided/i);
 });
+
+test("scroll comparisons publish only the two approved fictional layouts", () => {
+  const files = publicationFiles().filter((file) => file.startsWith("prototypes/guided-scroll/"));
+  assert.deepEqual(files, ["app.mjs", "index.html", "manifest.mjs", "styles.css"].map((file) => `prototypes/guided-scroll/${file}`));
+  assert.throws(() => validatePublicationApproval({ ...approval, guidedScrollConcepts: undefined }), /scroll/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, guidedScrollConcepts: { ...approval.guidedScrollConcepts, public: false } }), /scroll/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, guidedScrollConcepts: { ...approval.guidedScrollConcepts, approvedLayouts: ["compact"] } }), /scroll/i);
+});

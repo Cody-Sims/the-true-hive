@@ -1,5 +1,5 @@
 import { exampleProduct, changeVariant, productIssues, validPrice } from "../editor/model.mjs";
-import { collectionCard, productPage } from "./preview.mjs";
+import { collectionCard, compactCard, productPage } from "./preview.mjs";
 import { escapeHtml as e } from "../scripts/dom.mjs";
 
 const isNew = new URLSearchParams(location.search).get("mode") === "new";
@@ -12,6 +12,8 @@ let previewView = "card";
 let previewVariant = product.variants[0]?.id;
 let previewOpener = null;
 let pendingAction = null;
+let pageScroll = false;
+let compactPreview = false;
 const positions = [0, 0, 0, 0];
 const labels = ["Essentials", "Photo & details", "Variants", "Review"];
 const form = document.querySelector("#product-form");
@@ -65,7 +67,7 @@ function renderVariants() {
 }
 
 function updatePresentation() {
-  document.querySelector("#desktop-card").innerHTML = collectionCard(product, source());
+  document.querySelector("#desktop-card").innerHTML = (compactPreview ? compactCard : collectionCard)(product, source());
   document.querySelector("#local-photo").src = source();
   document.querySelector("[data-remove-photo]").hidden = !photoUrl;
   document.querySelector("#dirty-state").textContent = dirty ? "Unsaved demo edits" : "Example / demo only";
@@ -78,7 +80,7 @@ function updatePresentation() {
 }
 
 function setStep(next) {
-  positions[step] = scroller.scrollTop;
+  positions[step] = pageScroll ? window.scrollY : scroller.scrollTop;
   step = Math.max(0, Math.min(3, next));
   for (const panel of scroller.querySelectorAll("[data-step-panel]")) panel.hidden = Number(panel.dataset.stepPanel) !== step;
   for (const button of form.querySelectorAll("[data-step]")) {
@@ -87,8 +89,18 @@ function setStep(next) {
   }
   document.querySelector("[data-previous]").disabled = step === 0;
   document.querySelector("[data-next]").disabled = step === 3;
-  scroller.scrollTop = positions[step];
+  if (pageScroll) window.scrollTo({ top: positions[step], behavior: "instant" });
+  else scroller.scrollTop = positions[step];
   document.querySelector(`#heading-${step}`).focus({ preventScroll: true });
+}
+
+export function configureFlow({ sharedPage = false, compact = false } = {}) {
+  pageScroll = sharedPage;
+  compactPreview = compact;
+  positions.fill(0);
+  scroller.scrollTop = 0;
+  window.scrollTo({ top: 0, behavior: "instant" });
+  updatePresentation();
 }
 
 function announce(message) {

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>One scroll, two ways | The True Hive</title>
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="app.mjs"></script>
+  </head>
+  <body class="guided-next guided-scroll" data-layout="together">
+    <a class="skip" href="#main">Skip to product editor</a>
+    <header class="flow-header">
+      <a class="brand" href="../index.html"><span class="brand-icon" aria-hidden="true">th</span><span>The True Hive<small>GUIDED EDITOR / SCROLLING STUDIES</small></span></a>
+      <nav aria-label="Prototype navigation"><a href="../guided-next/index.html">Previous iteration</a><a href="?mode=new" id="mode-link">Add product</a></nav>
+      <span class="demo-badge">Fictional demo</span>
+    </header>
+    <main id="main" tabindex="-1">
+      <section class="layout-review" aria-label="Compare scrolling layouts">
+        <div><p class="eyebrow">One scroll. Two ways to work.</p><p id="layout-description">The form and preview move together on one page.</p></div>
+        <div class="layout-options" role="group" aria-label="Scroll layout"><button type="button" data-layout-choice="together" aria-pressed="true">01 / Shared page</button><button type="button" data-layout-choice="compact" aria-pressed="false">02 / Compact preview</button></div>
+      </section>
+      <div class="flow-intro"><div><p class="eyebrow">Your product / at your pace</p><h1 id="editor-title">Edit product.</h1></div><div class="intro-save"><span id="dirty-state">Example loaded</span><button type="button" class="outline" id="save-demo">Save changes</button></div></div>
+      <div class="flow-layout">
+        <form id="product-form" class="workflow" novalidate>
+          <nav class="flow-steps" aria-label="Editing steps"></nav>
+          <div class="step-scroll"></div>
+          <p id="flow-feedback" role="status" tabindex="-1">Fictional example. Nothing is sent to inventory.</p>
+          <footer class="flow-dock">
+            <button type="button" class="outline" data-previous aria-label="Previous step"><span aria-hidden="true">&larr;</span> Previous</button>
+            <button type="button" class="preview-trigger" data-open-preview="card" aria-label="Preview product"><span class="preview-trigger-icon" aria-hidden="true">&#9671;</span> Preview</button>
+            <button type="button" data-next aria-label="Next step">Next <span aria-hidden="true">&rarr;</span></button>
+          </footer>
+        </form>
+        <aside class="desktop-preview" aria-label="Storefront preview">
+          <div class="preview-side-heading"><p class="eyebrow" id="preview-caption">Customer view</p><span class="live-dot">Live</span></div>
+          <div id="desktop-card"></div>
+          <button type="button" class="outline expand-preview" data-open-preview="product">Open full product page <span aria-hidden="true">&nearr;</span></button>
+          <p class="preview-explainer" id="preview-help">The preview shares the page's scroll. Open the full product page when you want a closer look.</p>
+        </aside>
+      </div>
+    </main>
+    <dialog id="customer-preview" class="customer-preview" aria-labelledby="preview-title">
+      <div class="preview-toolbar"><div><p class="eyebrow">A look around your store</p><h2 id="preview-title">Customer preview</h2></div><button type="button" class="quiet close-preview" aria-label="Close preview">Close <span aria-hidden="true">&times;</span></button></div>
+      <div class="preview-view-switch" role="group" aria-label="Preview view"><button type="button" class="outline" data-preview-view="card" aria-pressed="true">Collection card</button><button type="button" class="outline" data-preview-view="product" aria-pressed="false">Product page</button></div>
+      <div class="preview-stage" tabindex="0" aria-label="Scrollable customer preview"><div id="customer-view"></div></div>
+      <p class="preview-modal-note">Fictional demo only. No live product, upload, cart or inventory changes.</p>
+    </dialog>
+    <dialog id="record-action" aria-labelledby="action-title" aria-describedby="action-description">
+      <form method="dialog"><p class="eyebrow">Confirm action / demo</p><h2 id="action-title"></h2><p id="action-description"></p><div class="dialog-actions"><button value="cancel" class="quiet">Cancel</button><button value="confirm" id="confirm-action">Confirm</button></div></form>
+    </dialog>
+    <noscript><p class="no-script">This fictional editor prototype requires JavaScript. <a href="../index.html">Return to the review hub.</a></p></noscript>
+  </body>
+</html>

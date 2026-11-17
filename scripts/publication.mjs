@@ -5,6 +5,7 @@ import { concepts, reviewAssets, reviewFiles } from "../prototypes/next/manifest
 import { studies, productPageFiles } from "../prototypes/product-pages/manifest.mjs";
 import { editorDesigns, editorFiles } from "../prototypes/editor/manifest.mjs";
 import { guidedFiles } from "../prototypes/guided-next/manifest.mjs";
+import { scrollLayouts, scrollFiles } from "../prototypes/guided-scroll/manifest.mjs";
 
 export function publicationFiles() {
   const pages = ["index.html", "archive.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
@@ -27,6 +28,7 @@ export function publicationFiles() {
     ...productPageFiles.map((file) => `prototypes/product-pages/${file}`),
     ...editorFiles.map((file) => `prototypes/editor/${file}`),
     ...guidedFiles.map((file) => `prototypes/guided-next/${file}`),
+    ...scrollFiles.map((file) => `prototypes/guided-scroll/${file}`),
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
@@ -74,5 +76,10 @@ export function validatePublicationApproval(approval) {
   if (!refinement || refinement.public !== true || refinement.scope !== "fictional-guided-editor-refinement"
     || !/^\d{4}-\d{2}-\d{2}$/.test(refinement.approvedOn))
     throw new Error("The guided editor refinement requires explicit fictional-data preview approval.");
+  const scrolling = approval.guidedScrollConcepts;
+  if (!scrolling || scrolling.public !== true || scrolling.scope !== "fictional-guided-scroll-comparison"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(scrolling.approvedOn))
+    throw new Error("The guided scrolling studies require explicit fictional-data preview approval.");
+  assertAllowlist(scrolling.approvedLayouts, scrollLayouts, "scroll layout");
   return true;
 }

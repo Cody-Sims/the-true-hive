@@ -5,10 +5,23 @@ const money = (value) => validPrice(value) ? `$${Number(value).toFixed(2)}` : "P
 const active = (product) => product.variants.filter((variant) => variant.active);
 const lines = (text) => (text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 
+function startingPrice(variants) {
+  const prices = variants.filter((variant) => validPrice(variant.price)).map((variant) => Number(variant.price));
+  return prices.length ? `${new Set(prices).size > 1 ? "From " : ""}$${Math.min(...prices).toFixed(2)}` : "Add a price to preview";
+}
+
+export function compactCard(product, source) {
+  const variants = active(product);
+  return `<article class="customer-card compact-card">
+    <button type="button" class="customer-card-image" data-open-preview="product" aria-label="Open product page preview"><img src="${e(source)}" alt="${e(product.title || "Your product")} — compact preview" width="420" height="360"></button>
+    <div class="compact-card-copy"><p class="eyebrow">${e(product.category)}</p><h3><button type="button" class="compact-title" data-open-preview="product">${e(product.title || "Your product name")}</button></h3>
+      <div class="compact-card-meta"><strong>${startingPrice(variants)}</strong><span>${variants.length} active ${variants.length === 1 ? "format" : "formats"}</span></div>
+    </div></article>`;
+}
+
 export function collectionCard(product, source) {
   const variants = active(product);
-  const prices = variants.filter((variant) => validPrice(variant.price)).map((variant) => Number(variant.price));
-  const price = prices.length ? `${new Set(prices).size > 1 ? "From " : ""}$${Math.min(...prices).toFixed(2)}` : "Add a price to preview";
+  const price = startingPrice(variants);
   return `<article class="customer-card">
     <button type="button" class="customer-card-image" data-open-preview="product" aria-label="Open product page preview"><img src="${e(source)}" alt="${e(product.title || "Your product")} — preview image" width="420" height="360"><span>View product <span aria-hidden="true">&nearr;</span></span></button>
     <div class="customer-card-copy"><p class="eyebrow">${e(product.category)}</p><h3><button type="button" class="customer-title-link" data-open-preview="product">${e(product.title || "Your product name")} <span aria-hidden="true">&nearr;</span></button></h3><p class="customer-starting-price">${price}</p>

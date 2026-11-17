@@ -4,6 +4,7 @@
 
 ### Added
 
+- Two guided-editor scrolling prototypes: a shared page that moves form and product together, and a compact non-scrolling card beside a form-only scroll area; retain full-page modal preview and previous comparisons.
 - Refined direction 02 with anchored mobile step navigation, retained editing context, a mobile preview modal and clickable collection-card-to-product-page preview; preserve the original comparisons and live editor.
 - Three interactive Add / Edit product redesign studies with explicit variant archive/restore/delete actions; prioritize the current review and consolidate older concepts into a linked archive without changing the live editor.
 - Five fresh product-page-only studies with compact purchase, ingredient-map, format-comparison, paper-label and gallery-focused layouts; leave live home, store and product pages unchanged.
