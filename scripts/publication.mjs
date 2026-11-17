@@ -3,9 +3,10 @@ import { documents } from "../prototypes/scripts/documents.mjs";
 import { products } from "../prototypes/scripts/catalog.mjs";
 import { concepts, reviewAssets, reviewFiles } from "../prototypes/next/manifest.mjs";
 import { studies, productPageFiles } from "../prototypes/product-pages/manifest.mjs";
+import { editorDesigns, editorFiles } from "../prototypes/editor/manifest.mjs";
 
 export function publicationFiles() {
-  const pages = ["index.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
+  const pages = ["index.html", "archive.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
   const styles = ["shared.css", "index.css", "commerce.css", "plan.css"];
   const modules = ["catalog", "commerce-model", "commerce-views", "commerce", "designs", "documents", "dom",
     "gallery-view", "gallery", "plan-renderer", "plan"];
@@ -23,6 +24,7 @@ export function publicationFiles() {
     ...documents.map((document) => document.path),
     ...reviewFiles.map((file) => `prototypes/next/${file}`),
     ...productPageFiles.map((file) => `prototypes/product-pages/${file}`),
+    ...editorFiles.map((file) => `prototypes/editor/${file}`),
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
@@ -61,5 +63,10 @@ export function validatePublicationApproval(approval) {
     || !/^\d{4}-\d{2}-\d{2}$/.test(productPages.approvedOn))
     throw new Error("The new product-page studies require explicit public review approval.");
   assertAllowlist(productPages.approvedDesigns, studies.map((study) => study.id), "product-page design");
+  const editors = approval.editorConcepts;
+  if (!editors || editors.public !== true || editors.scope !== "fictional-add-edit-product"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(editors.approvedOn))
+    throw new Error("The new editor studies require explicit public, fictional-data review approval.");
+  assertAllowlist(editors.approvedDesigns, editorDesigns.map((entry) => entry.id), "editor design");
   return true;
 }

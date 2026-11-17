@@ -265,7 +265,7 @@ if (!design || !validScenario || !validFulfillment || !validVariant || (view ===
   content.setAttribute("aria-busy", "false");
   content.innerHTML = `<section class="page-intro"><div><p class="eyebrow">Invalid preview link</p>
     <h1>That concept could not be found.</h1></div><p>A design, product, format, or scenario in this URL is not part of the studio.
-    No cart or inventory was changed.</p></section><a class="primary-action" href="index.html">Return to all ten designs</a>`;
+    No cart or inventory was changed.</p></section><a class="primary-action" href="archive.html">Return to all ten designs</a>`;
 } else {
   state.variant ??= state.product?.variants[0].id;
   loadCart();
