@@ -37,5 +37,12 @@
     "approvedDesigns": ["quick-pick", "formula-map", "format-studio", "label-room", "gallery-focus"],
     "purpose": "Five new product-page-only prototypes requested by the owner. Reuse already-approved public product facts and variant images. No home/store redesign or live design selection; no real commerce or inventory actions."
   },
+  "editorConcepts": {
+    "public": true,
+    "approvedOn": "2026-11-16",
+    "scope": "fictional-add-edit-product",
+    "approvedDesigns": ["workbench", "guided", "variant-desk"],
+    "purpose": "Owner-requested Add / Edit product redesign prototypes with explicit variant archive, restore and delete actions. Fictional, memory-only data; no real admin identity, SKU, stock, upload or mutation API. Consolidate older studies into an archive while preserving review URLs. No live editor design is selected."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

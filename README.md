@@ -50,7 +50,19 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
-Five new, separately reviewable concepts are at
+The current review is **three Add / Edit product-page redesigns** at
+**https://preview.thetruehive.com/prototypes/editor/**: Workbench (split editing
+canvas), Guided editor (four focused steps), and Variant desk (master/detail
+format editing). Each supports adding and editing fictional products, a local
+photo preview, publication review, and explicit **Archive variant**, **Restore
+variant**, and **Delete variant** controls with confirmations and stock/history
+safeguards. Nothing is sent to inventory, uploaded or stored across reloads.
+These are proposals, not a selected or deployed redesign of the live editor.
+The preview landing page now prioritizes this comparison; older concepts are
+consolidated in the [design archive](prototypes/archive.html) and their existing
+direct URLs remain available.
+
+The earlier storefront concepts remain separately reviewable at
 **https://preview.thetruehive.com/prototypes/next/**: Ingredient Atelier,
 Honeyglass, Field Notes, Soft Geometry and Night Apiary. Each covers home,
 store, product/ingredients and the shared service/about journeys. They use a
@@ -58,7 +70,7 @@ static public product snapshot and local demo carts, never live inventory or
 payments. The original ten-design studio is preserved; no new concept is
 automatically selected for the live storefront.
 
-The newer **product-page-only** studies are at
+The earlier **customer product-page-only** studies are at
 **https://preview.thetruehive.com/prototypes/product-pages/**: Quick Pick,
 Formula Map, Format Studio, Label Room and Gallery Focus. These explore only
 the product detail area inside one fixed brand shell, not new home or store
@@ -89,7 +101,8 @@ addition to the public review's publication allowlist.
 
 | UI | What you can do |
 |---|---|
-| [Design gallery](prototypes/index.html) | Compare ten original homepage directions and their coordinated store flows |
+| [Current design review](prototypes/index.html) | Compare three Add / Edit product layouts with explicit variant lifecycle actions |
+| [Earlier design archive](prototypes/archive.html) | Revisit the ten original directions and later storefront/product-page studies |
 | [Project and business hub](prototypes/plan.html) | Read the actual plans, requirements, research, phases and business roadmap inside the UI |
 | [Partner workbook](prototypes/plan.html?doc=questions) | Review confirmed decisions and the unanswered questions to discuss together |
 | [Store preview](prototypes/store.html?design=hearth) | Browse/filter concepts, choose variants, build a demo cart and inspect checkout handoff |

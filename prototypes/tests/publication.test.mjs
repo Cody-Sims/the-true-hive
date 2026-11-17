@@ -51,3 +51,13 @@ test("new product-page-only studies require separate approval without adding hom
   assert.throws(() => validatePublicationApproval({ ...approval, productPageConcepts: { ...approval.productPageConcepts, scope: "whole-site" } }), /product.page/i);
   assert.throws(() => validatePublicationApproval({ ...approval, productPageConcepts: { ...approval.productPageConcepts, approvedDesigns: ["quick-pick"] } }), /product.page/i);
 });
+
+test("editor studies and the archive are explicitly scoped to fictional product management", () => {
+  const files = publicationFiles();
+  for (const file of ["index.html", "styles.css", "app.mjs", "model.mjs", "manifest.mjs"])
+    assert(files.includes(`prototypes/editor/${file}`), file);
+  assert(files.includes("prototypes/archive.html"));
+  assert.throws(() => validatePublicationApproval({ ...approval, editorConcepts: undefined }), /editor/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, editorConcepts: { ...approval.editorConcepts, scope: "private-inventory" } }), /editor/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, editorConcepts: { ...approval.editorConcepts, approvedDesigns: ["workbench"] } }), /editor/i);
+});

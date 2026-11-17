@@ -67,7 +67,7 @@ await writeFile(path.join(output, "index.html"), `<!doctype html>
 <link rel="icon" type="image/svg+xml" href="prototypes/assets/favicon.svg">
 <meta name="robots" content="noindex,nofollow"><meta http-equiv="refresh" content="0;url=prototypes/">
 <title>The True Hive | Public design review</title></head><body>
-<h1>The True Hive design and planning preview</h1><p><a href="prototypes/">Open the ten-design gallery</a></p>
+<h1>The True Hive product editor review</h1><p><a href="prototypes/">Compare the three Add / Edit product layouts</a></p>
 <p>Public owner-approved review only. No live orders, payments, reservations or inventory.</p></body></html>\n`);
 await writeFile(path.join(output, ".nojekyll"), "");
 await writeFile(path.join(output, markerName), JSON.stringify({

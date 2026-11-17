@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="description" content="Three interactive product adding and editing concepts for The True Hive. Fictional data; no real inventory connection.">
+    <title>Product editor studies | The True Hive</title>
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="app.mjs"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to editor</a>
+    <div class="review-banner" role="region" aria-label="Preview notice"><span class="review-dot" aria-hidden="true"></span> Interactive design study <span class="banner-detail">/ Fictional data. Nothing is sent or saved to inventory.</span></div>
+    <header class="review-header">
+      <a class="brand" href="../index.html"><span class="brand-icon" aria-hidden="true">th</span><span>The True Hive<small>PRODUCT WORKSPACE / PREVIEW</small></span></a>
+      <nav aria-label="Design review">
+        <a href="index.html">All editor designs</a>
+        <a href="../archive.html">Older studies <span aria-hidden="true">&nearr;</span></a>
+      </nav>
+    </header>
+    <div id="review-controls" class="review-controls" role="region" aria-label="Review configuration" hidden>
+      <label>Direction<select id="direction" aria-label="Editor direction"></select></label>
+      <div class="mode-switch" role="group" aria-label="Editor mode">
+        <a id="edit-mode" href="index.html">Edit example</a>
+        <a id="new-mode" href="index.html">Add product</a>
+      </div>
+      <p>Try archiving a stocked option, or deleting an unused one.</p>
+    </div>
+    <main id="main" tabindex="-1">
+      <div id="app"></div>
+      <noscript><section class="empty-state"><h1>Product editor studies</h1><p>These interactive, fictional editor demonstrations require JavaScript. No live product editor has been changed.</p><a href="../index.html">Back to the review hub</a></section></noscript>
+    </main>
+    <dialog id="action-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <form method="dialog">
+        <p class="eyebrow" id="dialog-kicker">Review this action</p>
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-description"></p>
+        <p id="dialog-consequence" class="dialog-note"></p>
+        <div class="dialog-actions"><button value="cancel" class="quiet">Cancel</button><button value="confirm" id="dialog-confirm">Confirm</button></div>
+      </form>
+    </dialog>
+    <footer class="review-footer">Design review only. All products, prices, quantities and histories here are fictional. Changes live in this tab's memory and reset on reload. No real admin access, uploads, orders or database writes.</footer>
+  </body>
+</html>
