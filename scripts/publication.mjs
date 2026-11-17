@@ -4,6 +4,7 @@ import { products } from "../prototypes/scripts/catalog.mjs";
 import { concepts, reviewAssets, reviewFiles } from "../prototypes/next/manifest.mjs";
 import { studies, productPageFiles } from "../prototypes/product-pages/manifest.mjs";
 import { editorDesigns, editorFiles } from "../prototypes/editor/manifest.mjs";
+import { guidedFiles } from "../prototypes/guided-next/manifest.mjs";
 
 export function publicationFiles() {
   const pages = ["index.html", "archive.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
@@ -25,6 +26,7 @@ export function publicationFiles() {
     ...reviewFiles.map((file) => `prototypes/next/${file}`),
     ...productPageFiles.map((file) => `prototypes/product-pages/${file}`),
     ...editorFiles.map((file) => `prototypes/editor/${file}`),
+    ...guidedFiles.map((file) => `prototypes/guided-next/${file}`),
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
@@ -68,5 +70,9 @@ export function validatePublicationApproval(approval) {
     || !/^\d{4}-\d{2}-\d{2}$/.test(editors.approvedOn))
     throw new Error("The new editor studies require explicit public, fictional-data review approval.");
   assertAllowlist(editors.approvedDesigns, editorDesigns.map((entry) => entry.id), "editor design");
+  const refinement = approval.guidedRefinement;
+  if (!refinement || refinement.public !== true || refinement.scope !== "fictional-guided-editor-refinement"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(refinement.approvedOn))
+    throw new Error("The guided editor refinement requires explicit fictional-data preview approval.");
   return true;
 }

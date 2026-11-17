@@ -89,6 +89,16 @@ h1, h2, h3 { line-height: 1.2; }
 .gallery-note { max-width: 770px; margin: 3rem auto; padding: 2rem; border-top: 1px solid var(--line); text-align: center; }
 .gallery-note h2 { font-family: Georgia, serif; font-size: 1.7rem; font-weight: 400; }
 .gallery-note p { color: var(--muted); font-size: .83rem; }
+.refinement-callout { max-width: 1240px; margin: 0 auto 2rem; padding: 1.8rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; border: 1px solid #bdc9af; border-radius: 9px; background: #eaf0df; }
+.refinement-callout > div:first-child { max-width: 620px; }
+.refinement-callout .eyebrow { font-size: .58rem; color: #536946; }
+.refinement-callout h2 { font: 400 2rem/1.1 Georgia, serif; margin-bottom: .7rem; }
+.refinement-callout p:not(.eyebrow) { font-size: .83rem; color: #526247; margin: 0; }
+.refinement-callout > div:last-child { display: grid; gap: .75rem; flex-shrink: 0; }
+.refinement-callout a { font-size: .75rem; min-height: 36px; display: flex; align-items: center; }
+.refinement-callout .refinement-primary { padding: .75rem 1rem; border-radius: 5px; background: var(--forest); color: var(--white); font-weight: 600; text-decoration: none; }
+@media (max-width: 1300px) { .refinement-callout { margin-inline: 1.5rem; } }
+@media (max-width: 680px) { .refinement-callout { display: block; padding: 1.5rem; margin-inline: 1rem; }.refinement-callout h2 { font-size: 1.8rem; }.refinement-callout > div:last-child { margin-top: 1.2rem; } }
 .editor-shell { max-width: 1390px; margin: auto; padding: 2rem 2.5rem 0; }
 .page-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.8rem; }
 .page-heading h1 { font: 400 clamp(2.2rem, 4vw, 3rem)/1.1 Georgia, serif; letter-spacing: -.04em; margin-bottom: .7rem; }

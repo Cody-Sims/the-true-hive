@@ -44,5 +44,11 @@
     "approvedDesigns": ["workbench", "guided", "variant-desk"],
     "purpose": "Owner-requested Add / Edit product redesign prototypes with explicit variant archive, restore and delete actions. Fictional, memory-only data; no real admin identity, SKU, stock, upload or mutation API. Consolidate older studies into an archive while preserving review URLs. No live editor design is selected."
   },
+  "guidedRefinement": {
+    "public": true,
+    "approvedOn": "2026-11-17",
+    "scope": "fictional-guided-editor-refinement",
+    "purpose": "Owner chose direction 02 as the base for a new prototype with stable mobile navigation, a mobile preview modal and a card-to-product-page preview. Preserve previous comparisons and the live editor; fictional memory-only data and device-local photo previews, no backend or cart writes."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

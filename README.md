@@ -50,7 +50,18 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
-The current review is **three Add / Edit product-page redesigns** at
+The latest prototype refines the owner's chosen **02 / Guided editor**:
+**https://preview.thetruehive.com/prototypes/guided-next/**. Previous/Next stay
+anchored while each step scrolls independently and retains its inputs, selected
+photo and scroll position. On mobile, Preview opens a modal instead of adding
+a long card beneath the form. Click its image or format to move from the
+collection card into a fuller product-page preview, including current photo,
+description, prices, active formats, details and ingredients; return to the
+card or close the modal without losing your editing context. Cart controls are
+non-operational. This remains a fictional, memory-only prototype; choosing 02
+as a base does not deploy an editor redesign to the live inventory.
+
+The original **three Add / Edit product-page redesigns** remain at
 **https://preview.thetruehive.com/prototypes/editor/**: Workbench (split editing
 canvas), Guided editor (four focused steps), and Variant desk (master/detail
 format editing). Each supports adding and editing fictional products, a local
