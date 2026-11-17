@@ -185,7 +185,13 @@ test("the current preview landing prioritizes editor studies and moves old galle
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Less form.",
   );
-  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(4);
+  for (const name of ["Workbench", "Guided editor", "Variant desk"])
+    await expect(
+      page.getByRole("heading", { name: new RegExp(name) }),
+    ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /Open refined guided editor/ }),
+  ).toHaveAttribute("href", "guided-next/index.html");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page
     .getByRole("navigation", { name: "Review navigation" })

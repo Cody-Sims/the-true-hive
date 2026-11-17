@@ -61,3 +61,11 @@ test("editor studies and the archive are explicitly scoped to fictional product 
   assert.throws(() => validatePublicationApproval({ ...approval, editorConcepts: { ...approval.editorConcepts, scope: "private-inventory" } }), /editor/i);
   assert.throws(() => validatePublicationApproval({ ...approval, editorConcepts: { ...approval.editorConcepts, approvedDesigns: ["workbench"] } }), /editor/i);
 });
+
+test("guided refinement publishes only approved fictional review files", () => {
+  const files = publicationFiles().filter((file) => file.startsWith("prototypes/guided-next/"));
+  assert.deepEqual(files, ["app.mjs", "index.html", "manifest.mjs", "preview.mjs", "styles.css"].map((file) => `prototypes/guided-next/${file}`));
+  assert.throws(() => validatePublicationApproval({ ...approval, guidedRefinement: undefined }), /guided/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, guidedRefinement: { ...approval.guidedRefinement, public: false } }), /guided/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, guidedRefinement: { ...approval.guidedRefinement, scope: "live-editor" } }), /guided/i);
+});
