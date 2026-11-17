@@ -82,3 +82,12 @@
   .guided-scroll[data-layout="compact"] .desktop-preview { display: none; }
   .guided-scroll[data-layout="compact"] .flow-layout { grid-template-columns: minmax(0, 1fr); }
 }
+
+.editor-comparison .guided-direction { display: flex; align-items: center; gap: .6rem; margin: 0; font-size: .64rem; font-weight: 500; }
+.editor-comparison .guided-direction select { width: auto; min-width: 165px; margin: 0; font-size: .75rem; }
+@media (max-width: 680px) {
+  .editor-comparison .flow-header { flex-wrap: wrap; }
+  .editor-comparison .flow-header nav { width: 100%; justify-content: space-between; gap: .75rem; }
+  .editor-comparison .guided-direction { flex: 1; }
+  .editor-comparison .guided-direction select { flex: 1; min-width: 0; font-size: .85rem; }
+}

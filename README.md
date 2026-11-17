@@ -66,6 +66,13 @@ photo preview, variant actions and guarded demo publication. No live editor or
 inventory behavior is changed. Desktop/laptop/mobile screenshots and real
 wheel/keyboard behavior are checked with Playwright.
 
+The improved version also replaces **02 / Guided editor** in the shared
+[three-direction comparison](https://preview.thetruehive.com/prototypes/editor/index.html?design=guided&mode=edit).
+Its Direction selector keeps Workbench, Guided editor and Variant desk together
+at the existing gallery URLs. Both scrolling options, Add/Edit modes and the
+mobile product-page modal remain available without an iframe or an extra scroll
+wrapper. Unsaved changes require confirmation before changing direction.
+
 The previous prototype refines the owner's chosen **02 / Guided editor**:
 **https://preview.thetruehive.com/prototypes/guided-next/**. Previous/Next stay
 anchored while each step scrolls independently and retains its inputs, selected
@@ -77,7 +84,7 @@ card or close the modal without losing your editing context. Cart controls are
 non-operational. This remains a fictional, memory-only prototype; choosing 02
 as a base does not deploy an editor redesign to the live inventory.
 
-The original **three Add / Edit product-page redesigns** remain at
+The **three Add / Edit product-page redesigns** are compared at
 **https://preview.thetruehive.com/prototypes/editor/**: Workbench (split editing
 canvas), Guided editor (four focused steps), and Variant desk (master/detail
 format editing). Each supports adding and editing fictional products, a local
