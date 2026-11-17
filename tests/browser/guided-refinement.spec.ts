@@ -149,7 +149,7 @@ test("variant archival changes both preview views without erasing its history", 
 test("mobile preview is a modal that opens the card's product page and returns without losing editing context", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 320, height: 667 });
   await page.goto(root);
   await expect(page.locator(".desktop-preview")).toBeHidden();
   const preview = page.getByRole("button", {
@@ -180,6 +180,18 @@ test("mobile preview is a modal that opens the card's product page and returns w
   await expect(preview).toBeFocused();
   expect(await preview.boundingBox()).toEqual(before);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  await preview.click();
+  await modal
+    .getByRole("button", { name: "Open product page preview", exact: true })
+    .click();
+  await modal.locator(".preview-stage").evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+  });
+  await modal.getByRole("button", { name: "Close preview" }).click();
+  await preview.click();
+  expect(
+    await modal.locator(".preview-stage").evaluate((node) => node.scrollTop),
+  ).toBe(0);
 });
 
 test("desktop preview reflects current text, photo, ingredients and format changes on a fuller page", async ({

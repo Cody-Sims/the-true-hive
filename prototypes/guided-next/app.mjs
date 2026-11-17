@@ -110,6 +110,7 @@ function showPreview(view, opener, variantId) {
   if (!preview.open) {
     previewOpener = opener;
     preview.showModal();
+    preview.querySelector(".preview-stage").scrollTop = 0;
     preview.querySelector(".close-preview").focus({ preventScroll: true });
   } else {
     preview.querySelector(".preview-stage").scrollTop = 0;
