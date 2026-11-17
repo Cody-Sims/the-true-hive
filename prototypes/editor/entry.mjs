@@ -34,6 +34,13 @@ if (params.get("design") !== "guided") {
     document.body.dataset.design = "guided";
     document.body.dataset.layout = "together";
     document.body.replaceChildren(...template.body.childNodes);
+    const regions = [document.querySelector(".flow-header"), document.querySelector("#main")];
+    for (const region of regions) {
+      region.inert = true;
+      region.setAttribute("aria-busy", "true");
+    }
+    loading.className = "guided-loading";
+    document.body.append(loading);
 
     const label = document.createElement("label");
     label.className = "guided-direction";
@@ -59,6 +66,11 @@ if (params.get("design") !== "guided") {
       location.href = url.href;
     });
     document.title = `Guided editor / ${params.get("mode") === "new" ? "Add" : "Edit"} product | The True Hive`;
+    for (const region of regions) {
+      region.inert = false;
+      region.removeAttribute("aria-busy");
+    }
+    loading.remove();
   } catch {
     document.body.className = "";
     document.body.innerHTML = '<main class="empty-state"><h1>Guided preview unavailable.</h1><p role="alert">The improved Guided editor could not be loaded. No product data was changed.</p><a href="index.html">Back to all designs</a></main>';
