@@ -96,6 +96,39 @@ test("guided gallery slot retains the mobile product-page pop-out", async ({
   });
 });
 
+test("guided gallery controls wait for their controller before accepting the first click", async ({
+  page,
+}) => {
+  let release!: () => void;
+  let requested!: () => void;
+  const ready = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const started = new Promise<void>((resolve) => {
+    requested = resolve;
+  });
+  await page.route("**/prototypes/guided-scroll/app.mjs", async (route) => {
+    requested();
+    await ready;
+    await route.continue();
+  });
+  const navigation = page.goto(`${root}index.html?design=guided&mode=edit`);
+  try {
+    await started;
+    await expect(page.locator("#main")).toHaveJSProperty("inert", true);
+    await expect(page.locator(".flow-header")).toHaveJSProperty("inert", true);
+    release();
+    await navigation;
+    await page
+      .getByRole("button", { name: "02 / Compact preview", exact: true })
+      .click();
+    await expect(page.locator(".compact-card")).toBeVisible();
+  } finally {
+    release();
+    await navigation.catch(() => {});
+  }
+});
+
 test("guided gallery loading failure offers a route back to the three-design comparison", async ({
   page,
 }) => {
