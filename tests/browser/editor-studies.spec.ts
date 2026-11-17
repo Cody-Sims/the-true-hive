@@ -6,6 +6,109 @@ const root =
   "http://127.0.0.1:4327/prototypes/editor/";
 const designs = ["workbench", "guided", "variant-desk"];
 
+test("guided gallery slot uses the improved prototype and keeps all three directions together", async ({
+  page,
+}) => {
+  await page.goto(`${root}index.html?design=guided&mode=edit`);
+  await expect(
+    page.getByRole("button", { name: "01 / Shared page", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "02 / Compact preview", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("iframe")).toHaveCount(0);
+  const directions = page.getByRole("combobox", { name: "Editor direction" });
+  await expect(directions.locator("option")).toHaveCount(3);
+  await expect(directions).toHaveValue("guided");
+  await page
+    .getByRole("button", { name: "02 / Compact preview", exact: true })
+    .click();
+  await expect(page.locator(".compact-card")).toBeVisible();
+  for (const design of ["workbench", "variant-desk", "guided"]) {
+    await page
+      .getByRole("combobox", { name: "Editor direction" })
+      .selectOption(design);
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/prototypes/editor/index\\.html\\?design=${design}&mode=edit`,
+      ),
+    );
+    await expect(
+      page.getByRole("combobox", { name: "Editor direction" }),
+    ).toHaveValue(design);
+  }
+  await expect(
+    page.getByRole("button", { name: "01 / Shared page", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Add product", exact: true }).click();
+  await expect(page).toHaveURL(/design=guided&mode=new/);
+  await expect(page.getByLabel("Product name", { exact: true })).toHaveValue(
+    "",
+  );
+  await expect(
+    page.getByRole("combobox", { name: "Editor direction" }),
+  ).toHaveValue("guided");
+  await page
+    .getByLabel("Product name", { exact: true })
+    .fill("Keep this unsaved draft");
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page
+    .getByRole("combobox", { name: "Editor direction" })
+    .selectOption("workbench");
+  await expect(
+    page.getByRole("combobox", { name: "Editor direction" }),
+  ).toHaveValue("guided");
+  await expect(page.getByLabel("Product name", { exact: true })).toHaveValue(
+    "Keep this unsaved draft",
+  );
+});
+
+test("guided gallery slot retains the mobile product-page pop-out", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${root}index.html?design=guided&mode=edit&layout=compact`);
+  await expect(
+    page.getByRole("combobox", { name: "Editor direction" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath("guided-gallery-mobile.png"),
+  });
+  await page
+    .getByRole("button", { name: "Preview product", exact: true })
+    .click();
+  const modal = page.getByRole("dialog", { name: "Customer preview" });
+  await modal
+    .getByRole("button", { name: "Open product page preview", exact: true })
+    .click();
+  await expect(modal.locator(".customer-product h2")).toHaveText(
+    "Amber candle",
+  );
+  await modal.getByRole("button", { name: "Close preview" }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({
+    path: testInfo.outputPath("guided-gallery-desktop.png"),
+  });
+});
+
+test("guided gallery loading failure offers a route back to the three-design comparison", async ({
+  page,
+}) => {
+  await page.route("**/prototypes/guided-scroll/index.html", (route) =>
+    route.fulfill({ status: 503, body: "Unavailable" }),
+  );
+  await page.goto(`${root}index.html?design=guided&mode=edit`);
+  await expect(page.getByRole("alert")).toContainText("could not be loaded");
+  await expect(
+    page.getByRole("link", { name: "Back to all designs" }),
+  ).toHaveAttribute("href", "index.html");
+});
+
 for (const design of designs) {
   test(`${design} clearly archives, restores and safely deletes variants without real writes`, async ({
     page,
@@ -113,10 +216,20 @@ for (const design of designs) {
     page,
   }, testInfo) => {
     await page.goto(`${root}index.html?design=${design}&mode=new`);
+    if (design === "guided")
+      await page
+        .getByRole("navigation", { name: "Editing steps" })
+        .getByRole("button", { name: /Review/ })
+        .click();
     await page.getByRole("button", { name: "Publish demo" }).click();
     await expect(page.getByRole("status")).toContainText(
       "Enter a product name",
     );
+    if (design === "guided")
+      await page
+        .getByRole("navigation", { name: "Editing steps" })
+        .getByRole("button", { name: /Essentials/ })
+        .click();
     await page
       .getByLabel("Product name", { exact: true })
       .fill("An example honey jar");
@@ -129,22 +242,37 @@ for (const design of designs) {
         .getByRole("navigation", { name: "Editing steps" })
         .getByRole("button", { name: /Variants/ })
         .click();
-    const variant = page.getByRole("group", {
-      name: "New variant",
-      exact: true,
-    });
+    const variant =
+      design === "guided"
+        ? page.locator('[data-variant="demo-1"]')
+        : page.getByRole("group", {
+            name: "New variant",
+            exact: true,
+          });
     await variant.getByLabel("Variant name").fill("Example jar");
     await variant.getByLabel(/Price \(USD\)/).fill("12.50");
     await page.getByRole("button", { name: "Save draft", exact: true }).click();
     await expect(page.getByRole("status")).toContainText(
       "Publication is unchanged",
     );
-    await expect(page.locator("[data-save-state]")).toContainText("Draft");
+    const publication = page.locator(
+      design === "guided" ? "#publication-label" : "[data-save-state]",
+    );
+    await expect(publication).toContainText("Draft");
+    if (design === "guided")
+      await page
+        .getByRole("navigation", { name: "Editing steps" })
+        .getByRole("button", { name: /Review/ })
+        .click();
     await page.getByRole("button", { name: "Publish demo" }).click();
     await expect(page.getByRole("status")).toContainText(
-      "real storefront was not changed",
+      design === "guided"
+        ? "real storefront did not change"
+        : "real storefront was not changed",
     );
-    await expect(page.locator("[data-save-state]")).toContainText("Visible");
+    await expect(publication).toContainText(
+      design === "guided" ? "Published" : "Visible",
+    );
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
       expect(
@@ -159,6 +287,7 @@ for (const design of designs) {
       path: testInfo.outputPath(`${design}-new-mobile.png`),
       fullPage: true,
     });
+
     await page.setViewportSize({ width: 1440, height: 1100 });
     await page.screenshot({
       path: testInfo.outputPath(`${design}-new-desktop.png`),

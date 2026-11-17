@@ -25,7 +25,9 @@ const source = () => photoUrl || `../assets/${product.category === "honey" ? "ho
 
 document.querySelector("#editor-title").textContent = isNew ? "Add a product." : "Edit your product.";
 document.querySelector("#save-demo").textContent = isNew ? "Save draft" : "Save changes";
-document.querySelector("#mode-link").href = isNew ? "?mode=edit" : "?mode=new";
+const modeUrl = new URL(location.href);
+modeUrl.searchParams.set("mode", isNew ? "edit" : "new");
+document.querySelector("#mode-link").href = modeUrl.href;
 document.querySelector("#mode-link").textContent = isNew ? "Edit example" : "Add product";
 document.querySelector(".flow-steps").innerHTML = labels.map((label, index) => `<button type="button" data-step="${index}" aria-controls="step-${index}" ${index === 0 ? 'aria-current="step"' : ""}><span>${index + 1}</span><span>${label}</span></button>`).join("");
 scroller.innerHTML = `
@@ -265,8 +267,11 @@ function save(publish = false) {
 }
 document.querySelector("#save-demo").addEventListener("click", () => save());
 form.addEventListener("submit", (event) => { event.preventDefault(); save(); });
+export function confirmLeave() {
+  return !dirty || window.confirm("Leave and discard your unsaved demo edits?");
+}
 for (const link of document.querySelectorAll(".flow-header a"))
-  link.addEventListener("click", (event) => { if (dirty && !window.confirm("Leave and discard your unsaved demo edits?")) event.preventDefault(); });
+  link.addEventListener("click", (event) => { if (!confirmLeave()) event.preventDefault(); });
 window.addEventListener("pagehide", (event) => { if (!event.persisted && photoUrl) URL.revokeObjectURL(photoUrl); });
 renderVariants();
 updatePresentation();
