@@ -1,6 +1,5 @@
 import { createServer } from "node:http";
 import { readFile, readdir } from "node:fs/promises";
-import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { stripTypeScriptTypes } from "node:module";
 import { parse } from "es-module-lexer";
 
@@ -52,32 +51,8 @@ async function builtPage(prefix) {
   return (await import(new URL(matches[0], chunks).href)).page();
 }
 const studio = await builtPage("_.._");
-const sprint = await builtPage("team-sprint_");
 const assets = new URL("dist-site/client/_astro/", root);
 const assetNames = new Set(await readdir(assets));
-const styles = [...assetNames].filter((name) =>
-  /^(?:SiteLayout|team-sprint)\..+\.css$/.test(name),
-);
-if (styles.length !== 2) throw new Error("Built sprint styles missing.");
-const layoutScript = [...assetNames].find((name) =>
-  /^SiteLayout\.astro_.*\.js$/.test(name),
-);
-if (!layoutScript) throw new Error("Built layout script missing.");
-const container = await AstroContainer.create();
-const html = (
-  await container.renderToString(sprint.default, {
-    request: new Request("http://127.0.0.1:4327/team-sprint"),
-    locals: { nonce: "component-fixture" },
-  })
-)
-  .replace(
-    "</head>",
-    `${styles.map((name) => `<link rel="stylesheet" href="/_astro/${name}">`).join("")}</head>`,
-  )
-  .replace(
-    /src="[^"]*SiteLayout\.astro\?[^"]*"/g,
-    `src="/_astro/${layoutScript}"`,
-  );
 
 createServer(async (incoming, outgoing) => {
   try {
@@ -94,14 +69,6 @@ createServer(async (incoming, outgoing) => {
         let response;
         if (!["GET", "HEAD"].includes(request.method))
           response = new Response(null, { status: 405 });
-        else if (path === "/team-sprint")
-          response = new Response(
-            html.replaceAll(
-              'nonce="component-fixture"',
-              `nonce="${locals.nonce}"`,
-            ),
-            { headers: { "content-type": "text/html" } },
-          );
         else if (path.startsWith("/_astro/") && assetNames.has(path.slice(8))) {
           response = new Response(
             await readFile(new URL(path.slice(8), assets)),

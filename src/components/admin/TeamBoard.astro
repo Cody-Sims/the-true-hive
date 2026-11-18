@@ -1,0 +1,325 @@
+---
+import {
+  taskAssignees,
+  taskStatuses,
+  type TeamTask,
+} from "../../domain/team-board.ts";
+
+interface Props {
+  tasks: TeamTask[];
+}
+const { tasks } = Astro.props;
+const assigneeLabels = Object.fromEntries(taskAssignees);
+---
+
+<div data-team-board>
+  <p class="team-intro">
+    Drag a card to move it. On a phone or with a keyboard, open the card and
+    choose its status. Saved changes are shared.
+  </p>
+  <div class="team-toolbar">
+    <label>
+      Find a task
+      <input
+        data-team-search
+        type="search"
+        placeholder="Title, ID, or epic"
+        maxlength="160"
+      />
+    </label>
+    <label>
+      Assignee
+      <select data-team-owner>
+        <option value="">Everyone</option>
+        {taskAssignees.map(([key, name]) => (
+          <option value={key}>{name}</option>
+        ))}
+        <option value="unassigned">Unassigned</option>
+      </select>
+    </label>
+    <label>
+      Status
+      <select data-team-status>
+        <option value="">All statuses</option>
+        {taskStatuses.map(([key, name]) => (
+          <option value={key}>{name}</option>
+        ))}
+      </select>
+    </label>
+  </div>
+  <p class="team-feedback" role="status" data-team-feedback tabindex="-1">
+    {tasks.length
+      ? `${tasks.length} tasks on the board.`
+      : "No tasks have been imported yet."}
+  </p>
+  <div class="team-lanes">
+    {taskStatuses.map(([status, name]) => (
+      <section
+        class="team-lane"
+        data-team-lane={status}
+        aria-labelledby={`team-${status}`}
+      >
+        <h2 id={`team-${status}`}>
+          {name}{" "}
+          <span data-team-count>
+            {tasks.filter((task) => task.status === status).length}
+          </span>
+        </h2>
+        <ul data-team-list role="list">
+          {tasks
+            .filter((task) => task.status === status)
+            .map((task) => (
+              <li
+                draggable="true"
+                data-team-card={task.id}
+                data-status={task.status}
+                data-assignee={task.assignee ?? ""}
+                data-revision={task.revision}
+                data-rank={task.rank}
+                data-search={`${task.id} ${task.title} ${task.epic}`.toLowerCase()}
+              >
+                <button
+                  type="button"
+                  class="team-card-button"
+                  data-team-open
+                  aria-haspopup="dialog"
+                >
+                  <span class="team-card-meta">
+                    {task.id} · {task.priority}
+                  </span>
+                  <strong data-team-title>{task.title}</strong>
+                  <span class="team-card-meta" data-team-assignee>
+                    {task.assignee
+                      ? assigneeLabels[task.assignee]
+                      : "Unassigned"}
+                  </span>
+                </button>
+                <template>
+                  <div class="team-details">
+                    <p class="team-card-meta">
+                      {task.id} · {task.priority} · {task.epic}{" "}
+                      {task.detail.size && `· Size ${task.detail.size}`}
+                    </p>
+                    {task.detail.scope && <p>{task.detail.scope}</p>}
+                    {task.detail.acceptance && (
+                      <section>
+                        <h3>Done when</h3>
+                        <p>{task.detail.acceptance}</p>
+                      </section>
+                    )}
+                    {task.detail.prerequisites && (
+                      <section>
+                        <h3>Prerequisites</h3>
+                        <p>{task.detail.prerequisites}</p>
+                      </section>
+                    )}
+                    {task.detail.iteration && (
+                      <section>
+                        <h3>{task.detail.iteration}</h3>
+                        {task.detail.pilot && <p>{task.detail.pilot}</p>}
+                        {task.detail.timebox && <p>{task.detail.timebox}</p>}
+                        {task.detail.checklist && (
+                          <p>{task.detail.checklist}</p>
+                        )}
+                      </section>
+                    )}
+                  </div>
+                </template>
+              </li>
+            ))}
+        </ul>
+        <p class="team-drop-note">Drop a card here to move it to {name}.</p>
+      </section>
+    ))}
+  </div>
+
+  <dialog class="team-modal" aria-labelledby="team-task-title">
+    <div class="team-modal-head">
+      <h2 id="team-task-title" data-team-modal-title></h2>
+      <form method="dialog">
+        <button class="team-close" autofocus>
+          Close
+        </button>
+      </form>
+    </div>
+    <div data-team-detail></div>
+    <form class="team-edit" method="dialog" data-team-edit>
+      <label>
+        Assignee
+        <select name="assignee">
+          <option value="">Unassigned</option>
+          {taskAssignees.map(([key, name]) => (
+            <option value={key}>{name}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Status
+        <select name="status">
+          {taskStatuses.map(([key, name]) => (
+            <option value={key}>{name}</option>
+          ))}
+        </select>
+      </label>
+      <button type="submit">Save changes</button>
+      <p role="status" data-team-edit-feedback></p>
+    </form>
+  </dialog>
+  <noscript>
+    <p>JavaScript is required to open task details and save changes.</p>
+  </noscript>
+</div>
+
+<script>
+  import { mountTeamBoard } from "../../client/team-board.ts";
+  const board = document.querySelector<HTMLElement>("[data-team-board]");
+  const token = document.querySelector<HTMLMetaElement>(
+    'meta[name="csrf-token"]',
+  )?.content;
+  if (board && token) mountTeamBoard(board, token);
+</script>
+
+<style is:global>
+  [data-team-board] [hidden] {
+    display: none;
+  }
+  [data-team-board] .team-intro {
+    max-width: 62ch;
+  }
+  [data-team-board] .team-toolbar,
+  [data-team-board] .team-edit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.65rem;
+    margin-block: 0.85rem;
+  }
+  [data-team-board] label {
+    display: grid;
+    gap: 0.3rem;
+    min-width: 0;
+    flex: 1 1 10rem;
+    font-weight: 650;
+  }
+  [data-team-board] :is(button, input, select) {
+    min-height: 2.75rem;
+  }
+  [data-team-board] .team-feedback,
+  [data-team-board] .team-card-meta,
+  [data-team-board] .team-drop-note {
+    color: #4a5d50;
+    font-size: 0.85rem;
+  }
+  [data-team-board] .team-lanes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.7rem;
+  }
+  [data-team-board] .team-lane {
+    min-width: 0;
+    border: 1px solid #c9cbb9;
+    border-radius: 0.55rem;
+    background: #efebdf;
+    padding: 0.65rem;
+  }
+  [data-team-board] .team-lane[data-over] {
+    outline: 2px solid #355747;
+    background: #e4ecdf;
+  }
+  [data-team-board] .team-lane h2 {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-block: 0.2rem 0.55rem;
+    font-size: 1rem;
+  }
+  [data-team-board] .team-lane h2 span {
+    padding-inline: 0.35rem;
+    background: #dedfce;
+    border-radius: 0.4rem;
+  }
+  [data-team-board] .team-lane ul {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  [data-team-board] .team-card-button {
+    display: grid;
+    width: 100%;
+    gap: 0.25rem;
+    border: 1px solid #c9cbb9;
+    border-radius: 0.4rem;
+    padding: 0.55rem;
+    background: #fffdf7;
+    color: #243d35;
+    text-align: left;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+  [data-team-board] .team-card-button:hover {
+    border-color: #355747;
+    background: #fffdf7;
+  }
+  [data-team-board] .team-card-button:focus-visible {
+    outline-offset: -3px;
+  }
+  [data-team-board] .team-drop-note {
+    margin: 0.6rem 0 0;
+  }
+  [data-team-board] .team-modal {
+    width: min(100% - 1rem, 38rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  [data-team-board] .team-modal::backdrop {
+    background: #172a22ad;
+  }
+  [data-team-board] .team-modal-head {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 0.65rem;
+    padding: 0.75rem;
+    background: #fffdf7;
+    border-bottom: 1px solid #c9cbb9;
+  }
+  [data-team-board] .team-modal-head h2 {
+    margin: 0;
+    font-size: clamp(1.15rem, 4vw, 1.6rem);
+    overflow-wrap: anywhere;
+  }
+  [data-team-board] .team-details,
+  [data-team-board] .team-edit {
+    padding: 0.75rem;
+    overflow-wrap: anywhere;
+  }
+  [data-team-board] .team-details section {
+    margin-block-start: 0.75rem;
+  }
+  [data-team-board] .team-details h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+  [data-team-board] .team-edit [role="status"] {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  @media (min-width: 42rem) {
+    [data-team-board] .team-lanes {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 76rem) {
+    [data-team-board] .team-lanes {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+</style>

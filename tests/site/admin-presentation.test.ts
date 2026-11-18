@@ -4600,6 +4600,7 @@ domTest(
       ["/inventory/products/fixture-product", "Products", false],
       ["/inventory/products/fixture-product/photo", "Products", false],
       ["/inventory/products/fixture-product/labels", "Products", false],
+      ["/team-sprint", "Team board", false],
       ["/inventory/locations", "Locations", false],
       ["/inventory/locations/fixture-location", "Locations", false],
       ["/inventory/orders", "Orders", false],
@@ -4635,7 +4636,14 @@ domTest(
               .getByRole("link")
               .allTextContents()
               .then((text) => text.map((value) => value.trim())),
-            ["Products", "Locations", "Store settings", "Orders", "History"],
+            [
+              "Products",
+              "Team board",
+              "Locations",
+              "Store settings",
+              "Orders",
+              "History",
+            ],
           );
           assert.equal(
             await nav.locator('[aria-current="page"]').innerText(),

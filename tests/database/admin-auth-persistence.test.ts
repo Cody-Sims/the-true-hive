@@ -49,6 +49,10 @@ beforeEach(async () => {
   await operator.query(
     `GRANT SELECT,UPDATE ON storefront_settings TO "${role}"`,
   );
+  await operator.query(
+    `GRANT SELECT, UPDATE(assignee,status,revision,updated_at,updated_by)
+     ON team_tasks TO "${role}"`,
+  );
   runtime = new Pool({ ...options, max: 1 });
   await runtime.query(`SET ROLE "${role}"`);
   await runtime.query("SET search_path=public");
@@ -62,7 +66,7 @@ afterEach(async () => {
       DROP TABLE public.admin_sessions,public.admin_memberships,public.admin_operations,
         public.payment_events,public.order_lines,public.orders,public.inventory_movements,
         public.inventory_levels,public.inventory_locations,public.product_variants,
-        public.products,public.storefront_settings,public.schema_migrations CASCADE;
+        public.products,public.storefront_settings,public.team_tasks,public.schema_migrations CASCADE;
       DROP FUNCTION public.prevent_inventory_history_changes(),
         public.prevent_admin_commerce_history_changes(),
         public.valid_product_ingredients(jsonb);
@@ -239,6 +243,34 @@ test("store settings runtime requires SELECT and UPDATE, and rejects destructive
   }
   await operator.query(
     `GRANT SELECT ON storefront_settings TO "${role}" WITH GRANT OPTION`,
+  );
+  await assert.rejects(
+    checkAdminDatabaseAccess(runtime),
+    AdminConfigurationError,
+  );
+});
+
+test("team board runtime requires exactly the read and workflow-write permissions", async () => {
+  for (const privilege of ["SELECT", "UPDATE(status)"]) {
+    await operator.query(`REVOKE ${privilege} ON team_tasks FROM "${role}"`);
+    await assert.rejects(
+      checkAdminDatabaseAccess(runtime),
+      AdminConfigurationError,
+    );
+    await operator.query(`GRANT ${privilege} ON team_tasks TO "${role}"`);
+    await checkAdminDatabaseAccess(runtime);
+  }
+  for (const privilege of ["UPDATE(title)", "INSERT(title)", "DELETE"]) {
+    await operator.query(`GRANT ${privilege} ON team_tasks TO "${role}"`);
+    await assert.rejects(
+      checkAdminDatabaseAccess(runtime),
+      AdminConfigurationError,
+    );
+    await operator.query(`REVOKE ${privilege} ON team_tasks FROM "${role}"`);
+    await checkAdminDatabaseAccess(runtime);
+  }
+  await operator.query(
+    `GRANT UPDATE(status) ON team_tasks TO "${role}" WITH GRANT OPTION`,
   );
   await assert.rejects(
     checkAdminDatabaseAccess(runtime),

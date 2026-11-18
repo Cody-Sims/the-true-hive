@@ -9,6 +9,7 @@
 
 ### Added
 
+- Private, shared team sprint board with drag-and-drop status changes, touch and keyboard controls, two assignees, search, and filters. The separate prototype remains read-only.
 - A direct-link, mobile-friendly team sprint board on the main website, with read-only task details and no private backlog data.
 - Connected fictional post-checkout pickup and operator-hours prototypes, with per-location windows, date exceptions, confirmation/rescheduling, conflict recovery and affected-booking review; add an explicitly draft implementation plan without enabling real scheduling.
 
