@@ -36,6 +36,7 @@ function customer() {
   const paid = state.order.payment === "paid";
   const dates = SAMPLE_DATES.slice(ui.week * 7, ui.week * 7 + 7);
   const slots = availableSlots(state, ui.siteId, ui.date);
+  if (ui.slot && !slots.some((slot) => slot.id === ui.slot.id)) ui.slot = null;
   const site = currentSite();
   return `${hero(`${e(state.order.id)} / ${paid ? "Payment verified (demo)" : "Payment processing (demo)"}`, "Good things,<br>picked up.", "Choose the place and time that works for you. We'll keep the details together.")}
     ${!paid ? '<div class="warning"><strong>Payment is still being verified.</strong>No pickup can be booked until the server confirms payment. This example does not charge anything.</div>' : ""}

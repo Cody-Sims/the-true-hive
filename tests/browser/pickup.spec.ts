@@ -128,7 +128,9 @@ test("pickup last-slot conflict keeps a customer's previous appointment", async 
 test("pickup operator weekly hours and date overrides change only the selected site", async ({
   page,
 }) => {
-  await open(page, "operator");
+  await open(page);
+  await page.getByRole("button", { name: "6:00 PM", exact: true }).click();
+  await operatorView(page);
   await page.getByLabel("Tuesday start", { exact: true }).fill("19:00");
   page.once("dialog", (dialog) => dialog.dismiss());
   await customerView(page);
@@ -142,6 +144,9 @@ test("pickup operator weekly hours and date overrides change only the selected s
     "Demo availability applied",
   );
   await customerView(page);
+  await expect(
+    page.getByRole("button", { name: "Confirm demo pickup", exact: true }),
+  ).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "6:00 PM", exact: true }),
   ).toHaveCount(0);
