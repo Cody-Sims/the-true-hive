@@ -57,5 +57,11 @@
     "approvedLayouts": ["together", "compact"],
     "purpose": "Owner-requested guided prototypes comparing one page that scrolls both form and product together against a compact, non-scrolling preview with form-only scrolling. Visually verify with Playwright. Preserve previous studies, mobile pop-out detail preview and all live inventory boundaries; fictional memory-only data."
   },
+  "teamSprintPreview": {
+    "public": true,
+    "approvedOn": "2026-11-17",
+    "scope": "sanitized-read-only-sprint",
+    "purpose": "Owner-requested website view for the cofounder. Publish only a general launch-preparation snapshot, with no private backlog, operational details, account data or editing."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

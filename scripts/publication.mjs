@@ -29,6 +29,7 @@ export function publicationFiles() {
     ...editorFiles.map((file) => `prototypes/editor/${file}`),
     ...guidedFiles.map((file) => `prototypes/guided-next/${file}`),
     ...scrollFiles.map((file) => `prototypes/guided-scroll/${file}`),
+    "prototypes/team-sprint/index.html",
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
@@ -81,5 +82,9 @@ export function validatePublicationApproval(approval) {
     || !/^\d{4}-\d{2}-\d{2}$/.test(scrolling.approvedOn))
     throw new Error("The guided scrolling studies require explicit fictional-data preview approval.");
   assertAllowlist(scrolling.approvedLayouts, scrollLayouts, "scroll layout");
+  const teamSprint = approval.teamSprintPreview;
+  if (!teamSprint || teamSprint.public !== true || teamSprint.scope !== "sanitized-read-only-sprint"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(teamSprint.approvedOn))
+    throw new Error("The team sprint requires approval for a sanitized read-only preview.");
   return true;
 }
