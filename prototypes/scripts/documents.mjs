@@ -33,6 +33,7 @@ export const documents = [
   { id: "foundation", group: "Application delivery", title: "Apiary Market application foundation", path: "docs/13-production-foundation.md" },
   { id: "operations", group: "Application delivery", title: "Development, CI and Render", path: "docs/14-development-and-operations.md" },
   { id: "inventory-phase", group: "Application delivery", title: "Secure inventory admin and connected checkout", path: "docs/15-inventory-admin-and-commerce.md" },
+  { id: "pickup", group: "Application delivery", title: "Draft pickup scheduling plan", path: "docs/21-pickup-scheduling-plan.md" },
 ];
 
 export function getDocument(id) {

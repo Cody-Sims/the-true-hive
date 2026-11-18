@@ -96,3 +96,11 @@ test("the public sprint review publishes only an approved, read-only snapshot", 
   assert.match(html, /read-only/i);
   assert.doesNotMatch(html, /<(?:script|form|iframe)\b/i, "do not ship an editor or load the private queue");
 });
+
+test("pickup studies publish only scoped fictional sources and their draft plan", () => {
+  assert.deepEqual(publicationFiles().filter((file) => file.startsWith("prototypes/pickup/")),
+    ["app.mjs", "index.html", "manifest.mjs", "model.mjs", "styles.css"].map((file) => `prototypes/pickup/${file}`));
+  assert.ok(publicationFiles().includes("docs/21-pickup-scheduling-plan.md"));
+  assert.throws(() => validatePublicationApproval({ ...approval, pickupScheduling: undefined }), /pickup/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, pickupScheduling: { ...approval.pickupScheduling, scope: "real-customer-bookings" } }), /pickup/i);
+});

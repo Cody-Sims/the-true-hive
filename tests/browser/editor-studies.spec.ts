@@ -146,8 +146,10 @@ test("guided gallery controls wait for their controller before accepting the fir
     await started;
     await expect(page.locator("#main")).toHaveJSProperty("inert", true);
     await expect(page.locator(".flow-header")).toHaveJSProperty("inert", true);
+    await expect(page.locator("#direction")).toBeDisabled();
     release();
     await navigation;
+    await expect(page.locator("#direction")).toBeEnabled();
     await page
       .getByRole("button", { name: "02 / Compact preview", exact: true })
       .click();

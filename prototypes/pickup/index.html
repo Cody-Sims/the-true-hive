@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="description" content="Fictional review of customer pickup booking and per-location operator hours. No real orders or bookings.">
+    <title>Pickup studio | The True Hive</title>
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="app.mjs"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to pickup study</a>
+    <header>
+    <div class="notice">INTERACTIVE PICKUP STUDY <span>Fictional locations, orders &amp; hours. Nothing is booked or sent.</span></div>
+    <div class="wrap header">
+      <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">th</span><span>The True Hive<small>PICKUP STUDIO</small></span></a>
+      <nav aria-label="Study navigation"><a href="../index.html">Editor studies</a><a href="../plan.html?doc=pickup">Read the draft plan &nearr;</a></nav>
+    </div>
+    <div class="wrap review-tools">
+      <div class="view-switch" role="group" aria-label="Prototype view"><button type="button" data-view="customer" disabled>Customer after checkout</button><button type="button" data-view="operator" disabled>Operator hours</button></div>
+      <div class="scenario-tools"><label>Restart example as<select id="scenario" disabled><option value="paid">Paid / times available</option><option value="pending">Payment processing</option><option value="full">No times available</option></select></label><button type="button" class="text-button" id="reset-demo" disabled>Reset demo</button></div>
+    </div>
+    <p class="wrap feedback" id="feedback" role="status" aria-atomic="true"></p>
+    </header>
+    <main id="main" class="wrap" tabindex="-1" aria-busy="true"><p>Preparing the fictional pickup study...</p></main>
+    <dialog id="impact-review" aria-labelledby="impact-title" aria-describedby="impact-message">
+      <form method="dialog"><p class="eyebrow">Existing appointments come first</p><h2 id="impact-title">Review the affected pickups.</h2><p id="impact-message"></p><ul id="impact-list"></ul><p>Keep their original details and flag them for review. No customer is silently moved or cancelled, and no notification is sent.</p><div class="actions"><button value="cancel" class="secondary">Keep current hours</button><button value="confirm">Apply &amp; flag for review</button></div></form>
+    </dialog>
+    <footer class="wrap footer"><p>Memory-only review. Reload resets both views. No real payment, inventory, customer data or booking API is connected.</p><a href="../plan.html?doc=pickup">Policies and implementation plan &rarr;</a></footer>
+    <noscript><p class="wrap">This fictional study needs JavaScript. <a href="../plan.html?doc=pickup">Read the draft plan.</a></p></noscript>
+  </body>
+</html>

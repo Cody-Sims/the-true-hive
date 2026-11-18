@@ -41,6 +41,8 @@ if (!["guided", "workbench"].includes(selected)) {
     document.body.replaceChildren(...template.body.childNodes);
     const regions = [document.querySelector(".flow-header"), document.querySelector("#main")];
     function setReady(ready) {
+      const direction = document.querySelector("#direction");
+      if (direction) direction.disabled = !ready;
       for (const region of regions) {
         region.inert = !ready;
         if (ready) region.removeAttribute("aria-busy");
@@ -55,6 +57,7 @@ if (!["guided", "workbench"].includes(selected)) {
     label.className = "guided-direction";
     label.append("Direction");
     const direction = document.createElement("select");
+    direction.disabled = true;
     direction.id = "direction";
     direction.setAttribute("aria-label", "Editor direction");
     for (const design of editorDesigns)
