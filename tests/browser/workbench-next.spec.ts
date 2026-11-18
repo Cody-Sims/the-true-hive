@@ -100,39 +100,93 @@ test("Workbench autosaves incomplete text and variants, restores on reload and i
   expect(await page.evaluate((k) => localStorage.getItem(k), key())).toBeNull();
 });
 
-test("Workbench fits the viewport and keeps the customer rail non-scrolling", async ({
+test("Workbench scrolls the whole page with the form and product moving together", async ({
   page,
 }, testInfo) => {
   for (const viewport of [
     { width: 1440, height: 1000 },
     { width: 1280, height: 720 },
     { width: 1024, height: 650 },
+    { width: 1440, height: 500 },
   ]) {
     await page.setViewportSize(viewport);
     await page.goto(url());
+    await expect(page.locator("#direction")).toBeEnabled();
     const rail = page.getByRole("complementary", {
       name: "Storefront preview",
     });
-    const box = await rail.boundingBox();
-    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    await page.evaluate(() => window.scrollTo(0, 0));
     expect(
       await rail.evaluate((node) => node.scrollHeight <= node.clientHeight),
     ).toBe(true);
-    await rail.hover();
-    await page.mouse.wheel(0, 400);
-    await expect
-      .poll(() =>
-        page.locator(".bench-form-scroll").evaluate((node) => node.scrollTop),
-      )
-      .toBeGreaterThan(100);
-    expect(await rail.evaluate((node) => node.scrollTop)).toBe(0);
-    expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await page.screenshot({
       path: testInfo.outputPath(
-        `workbench-${viewport.width}x${viewport.height}.png`,
+        `workbench-page-${viewport.width}x${viewport.height}.png`,
+      ),
+      fullPage: true,
+    });
+    await rail.hover();
+    const before = await page.evaluate(() => ({
+      y: scrollY,
+      form: document.querySelector(".bench-pane")!.getBoundingClientRect().top,
+      product: document.querySelector(".bench-preview")!.getBoundingClientRect()
+        .top,
+    }));
+    await page.evaluate(() => {
+      document.documentElement.dataset["scrolling"] = "true";
+      document.addEventListener(
+        "scrollend",
+        () => {
+          document.documentElement.dataset["scrolling"] = "false";
+        },
+        { once: true },
+      );
+    });
+    await page.mouse.wheel(0, 350);
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(before.y + 100);
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-scrolling",
+      "false",
+    );
+    const after = await page.evaluate(() => ({
+      y: scrollY,
+      form: document.querySelector(".bench-pane")!.getBoundingClientRect().top,
+      product: document.querySelector(".bench-preview")!.getBoundingClientRect()
+        .top,
+    }));
+    expect(after.form - before.form).toBeCloseTo(-(after.y - before.y), 0);
+    expect(after.product - before.product).toBeCloseTo(
+      -(after.y - before.y),
+      0,
+    );
+    expect(
+      await page
+        .locator(".bench-form-scroll")
+        .evaluate((node) => node.scrollTop),
+    ).toBe(0);
+    expect(await rail.evaluate((node) => node.scrollTop)).toBe(0);
+    await page.screenshot({
+      path: testInfo.outputPath(
+        `workbench-scrolled-${viewport.width}x${viewport.height}.png`,
       ),
     });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.keyboard.press("PageDown");
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(100);
   }
+  await page.getByRole("button", { name: "Variants", exact: true }).click();
+  await expect(page.locator("#bench-variants h2")).toBeFocused();
+  await expect(page.locator("#bench-variants h2")).toBeInViewport({ ratio: 1 });
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(300);
+  expect(
+    await page.locator(".bench-form-scroll").evaluate((node) => node.scrollTop),
+  ).toBe(0);
 });
 
 test("Workbench mobile preview opens the product page and returns to the form", async ({
@@ -151,6 +205,7 @@ test("Workbench mobile preview opens the product page and returns to the form", 
     .getByRole("button", { name: "Preview product", exact: true })
     .click();
   const modal = page.getByRole("dialog", { name: "Customer preview" });
+  await expect(page.locator("body")).toHaveCSS("overflow-y", "hidden");
   await modal
     .getByRole("button", { name: "Open product page preview", exact: true })
     .click();
@@ -160,6 +215,7 @@ test("Workbench mobile preview opens the product page and returns to the form", 
   await expect(modal.locator(".customer-product h2")).toBeFocused();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await modal.getByRole("button", { name: "Close preview" }).click();
+  await expect(page.locator("body")).toHaveCSS("overflow-y", "visible");
   await expect(
     page.getByRole("button", { name: "Preview product", exact: true }),
   ).toBeFocused();
