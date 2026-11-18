@@ -65,6 +65,7 @@
 
 ### Fixed
 
+- Run forked native component browser gates before customer journeys so competing Chromium workers do not consume their unchanged 45-second subprocess budgets; retain partial diagnostics on failures.
 - Keep the background product form still while the native mobile preview is open, restoring ordinary document scrolling when it closes.
 - Declare the native studio and artifact-verifier parsers as production dependencies and verify a clean production-only native build in CI, instead of relying on development packages or incidental transitive copies.
 - Retire the superseded inventory-list component and only its dedicated fixtures/tests; preserve current shelves, stock updates and published design history.

@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
+const componentGates = ["**/inventory-ui.spec.ts", "**/pickup-ui.spec.ts"];
+
 export default defineConfig({
   testDir: "./tests/browser",
   fullyParallel: true,
@@ -7,6 +9,19 @@ export default defineConfig({
   retries: 0,
   workers: 2,
   reporter: "line",
+  projects: [
+    {
+      name: "component-gates",
+      testMatch: componentGates,
+      fullyParallel: false,
+      workers: 1,
+    },
+    {
+      name: "customer-journeys",
+      testIgnore: componentGates,
+      dependencies: ["component-gates"],
+    },
+  ],
   use: {
     baseURL: "http://127.0.0.1:4325",
     browserName: "chromium",

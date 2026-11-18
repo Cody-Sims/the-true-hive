@@ -26,7 +26,7 @@ test("isolated inventory and inquiry components pass the browser gate", () => {
       timeout: 45000,
     },
   );
-  expect(result.error).toBeUndefined();
+  expect(result.error, `${result.stdout}\n${result.stderr}`).toBeUndefined();
   expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
   expect(result.stdout).toMatch(/skipped 0/);
 });
