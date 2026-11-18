@@ -1,6 +1,8 @@
 import type { AdminConfig } from "../admin/config.ts";
 import { createHash } from "node:crypto";
 
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
+
 export interface VerifiedIdentity {
   uid: string;
   aud: string;
@@ -85,7 +87,7 @@ export function createAdminAuth(
       validate(identity, false, true, true);
       if (!(await dependencies.isMember(identity.uid)))
         throw new AdminAuthError();
-      const expiresIn = 8 * 60 * 60 * 1000;
+      const expiresIn = ADMIN_SESSION_MAX_AGE_SECONDS * 1000;
       const cookie = await dependencies.createSessionCookie(token, expiresIn);
       const sessionIdentity = await verified(cookie, true);
       validate(sessionIdentity, true, true, true);

@@ -14,7 +14,7 @@ remain public for storefront rendering; private studio files never enter that
 static/image pipeline. Database readiness is private; process-only liveness stays public.
 
 Google identity alone is insufficient. Existing Firebase project/issuer,
-verified email, TOTP, fresh sign-in, eight-hour session, active database
+verified email, TOTP, fresh sign-in, seven-day session, active database
 membership and revocation checks remain in force. A single host-only `__Host-`
 session unlocks all workspaces and enables administrator navigation on the public
 site. Logout/revocation applies everywhere. No Domain cookie or frontend-only

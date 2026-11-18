@@ -1,6 +1,6 @@
 import type { AdminConfig } from "../admin/config.ts";
 import type { createAdminAuth, AdminIdentity } from "./service.ts";
-import { AdminAuthError } from "./service.ts";
+import { AdminAuthError, ADMIN_SESSION_MAX_AGE_SECONDS } from "./service.ts";
 import { issueCsrf, verifyCsrf } from "./csrf.ts";
 import { createAttemptLimiter } from "./limiter.ts";
 import { HttpInputError, readJsonBody } from "../http-input.ts";
@@ -211,6 +211,26 @@ export function createAdminBoundary(
         ) {
           attempts.consume();
           const cookies = readCookies(request, config);
+          if (cookies.session) {
+            try {
+              verifications.consume();
+              locals.admin = await auth.authenticate(cookies.session);
+              result.response = new Response(null, {
+                status: 303,
+                headers: {
+                  location: adminReturnTo(url.searchParams.get("returnTo")),
+                  "cache-control": "no-store",
+                },
+              });
+              return result;
+            } catch (error) {
+              if (
+                !(error instanceof AdminAuthError) ||
+                ![401, 403].includes(error.status)
+              )
+                throw error;
+            }
+          }
           result.cookies.push(shell(cookies.session, locals, cookies.nonce));
           return result;
         }
@@ -312,7 +332,12 @@ export function createAdminBoundary(
         const names = cookieNames(config);
         response.headers.append(
           "set-cookie",
-          serializeCookie(config, names.session, login.cookie, 8 * 3600),
+          serializeCookie(
+            config,
+            names.session,
+            login.cookie,
+            ADMIN_SESSION_MAX_AGE_SECONDS,
+          ),
         );
         response.headers.append("set-cookie", shell(login.cookie, {}));
         response.headers.set("cache-control", "no-store");
