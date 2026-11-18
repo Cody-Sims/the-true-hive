@@ -40,12 +40,16 @@ if (!["guided", "workbench"].includes(selected)) {
     else document.body.dataset.layout = "together";
     document.body.replaceChildren(...template.body.childNodes);
     const regions = [document.querySelector(".flow-header"), document.querySelector("#main")];
-    for (const region of regions) {
-      region.inert = true;
-      region.setAttribute("aria-busy", "true");
+    function setReady(ready) {
+      for (const region of regions) {
+        region.inert = !ready;
+        if (ready) region.removeAttribute("aria-busy");
+        else region.setAttribute("aria-busy", "true");
+      }
+      if (ready) loading.remove();
+      else { loading.className = "guided-loading"; document.body.append(loading); }
     }
-    loading.className = "guided-loading";
-    document.body.append(loading);
+    setReady(false);
 
     const label = document.createElement("label");
     label.className = "guided-direction";
@@ -70,14 +74,13 @@ if (!["guided", "workbench"].includes(selected)) {
       url.searchParams.set("design", direction.value);
       url.searchParams.set("mode", params.get("mode") === "new" ? "new" : "edit");
       url.searchParams.delete("layout");
+      loading.textContent = "Loading the selected editor...";
+      setReady(false);
       location.href = url.href;
     });
     document.title = `${name} editor / ${params.get("mode") === "new" ? "Add" : "Edit"} product | The True Hive`;
-    for (const region of regions) {
-      region.inert = false;
-      region.removeAttribute("aria-busy");
-    }
-    loading.remove();
+    setReady(true);
+    window.addEventListener("pageshow", (event) => { if (event.persisted) setReady(true); });
   } catch {
     document.body.className = "";
     document.body.innerHTML = `<main class="empty-state"><h1>${name} preview unavailable.</h1><p role="alert">The improved ${name} editor could not be loaded. No product data was changed.</p><a href="index.html">Back to all designs</a></main>`;

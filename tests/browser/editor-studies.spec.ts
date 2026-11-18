@@ -36,6 +36,14 @@ test("guided gallery slot uses the improved prototype and keeps all three direct
     await expect(
       page.getByRole("combobox", { name: "Editor direction" }),
     ).toHaveValue(design);
+    if (design === "workbench")
+      await expect(page.locator(".bench-pane")).toBeVisible();
+    else if (design === "variant-desk")
+      await expect(page.locator('[data-editor="variant-desk"]')).toBeVisible();
+    else
+      await expect(
+        page.getByRole("button", { name: "01 / Shared page", exact: true }),
+      ).toBeVisible();
   }
   await expect(
     page.getByRole("button", { name: "01 / Shared page", exact: true }),
@@ -61,6 +69,32 @@ test("guided gallery slot uses the improved prototype and keeps all three direct
   await expect(page.getByLabel("Product name", { exact: true })).toHaveValue(
     "Keep this unsaved draft",
   );
+});
+
+test("comparison controls pause before leaving for another direction", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.addEventListener("beforeunload", () => {
+      sessionStorage.setItem(
+        "fixture:direction-inert",
+        String(document.querySelector<HTMLElement>(".flow-header")?.inert),
+      );
+    });
+  });
+  await page.goto(`${root}index.html?design=guided&mode=edit`);
+  await expect(
+    page.getByRole("button", { name: "01 / Shared page", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Editor direction" })
+    .selectOption("workbench");
+  await expect(page.locator(".bench-pane")).toBeVisible();
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("fixture:direction-inert"),
+    ),
+  ).toBe("true");
 });
 
 test("guided gallery slot retains the mobile product-page pop-out", async ({
