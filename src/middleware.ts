@@ -33,15 +33,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
     });
   }
   for (const cookie of cookies) response.headers.append("Set-Cookie", cookie);
-  if (context.locals.admin || isAdminPath(context.url.pathname)) {
+  const sensitivePickup =
+    /^\/(?:checkout\/return|api\/pickup|api\/checkout\/access|api\/admin\/pickup|inventory\/pickups)(?:\/|$)/.test(
+      context.url.pathname,
+    );
+  if (
+    context.locals.admin ||
+    isAdminPath(context.url.pathname) ||
+    sensitivePickup
+  ) {
     response.headers.set("Cache-Control", "private, no-store");
     response.headers.append("Vary", "Cookie");
   }
-  if (isAdminPath(context.url.pathname)) {
+  if (isAdminPath(context.url.pathname) || sensitivePickup) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
   response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Referrer-Policy",
+    sensitivePickup
+      ? "no-referrer"
+      : (response.headers.get("Referrer-Policy") ??
+          "strict-origin-when-cross-origin"),
+  );
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set(
     "Permissions-Policy",

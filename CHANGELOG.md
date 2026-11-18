@@ -10,6 +10,8 @@
 ### Added
 
 - Private, shared team sprint board with drag-and-drop status changes, touch and keyboard controls, two assignees, search, and filters. The separate prototype remains read-only.
+- Native post-checkout pickup selection and private inventory scheduling, with explicit site policies, dated hours, atomic capacity, retained appointments/impact review, paid-unscheduled/help queues and operator assistance; start disabled with no seeded sites or hours.
+- Distinct audited archive/restore-to-draft and guarded permanent product/variant deletion; preserve stock, order, movement, photo and identity history.
 - A direct-link, mobile-friendly team sprint board on the main website, with read-only task details and no private backlog data.
 - Connected fictional post-checkout pickup and operator-hours prototypes, with per-location windows, date exceptions, confirmation/rescheduling, conflict recovery and affected-booking review; add an explicitly draft implementation plan without enabling real scheduling.
 
@@ -41,6 +43,7 @@
 
 ### Changed
 
+- Integrate the native shared-page Workbench, current-data mobile preview and bounded account/product-scoped editable drafts; give the remaining inventory pages a cohesive shell while preserving explicit save/publication/physical-handoff controls.
 - Replace Guided in the existing three-direction editor comparison with the improved scrolling/modal prototype while preserving gallery URLs, Add/Edit modes and unsaved-draft protection.
 - Share public catalog-notice presentation and retire the legacy inline stock-control branch/client while preserving current storefront states, receiving, corrections and retry protections.
 - Give the storefront an image-led product display with concise cards, visible per-format prices, direct format links and native product-page variant choices while preserving actual stock and checkout authority.
@@ -77,6 +80,7 @@
 
 ### Security
 
+- Establish HttpOnly same-browser access before checkout reservation, bind only newly created orders, require session-bound CSRF for scheduling, and support expiry/revocation without public order claiming; apply forward migrations 007/008 and exact runtime grants before deployment.
 - Local review now serves only the curated static artifact, preventing private environment, agent configuration and server files from being fetched through the preview.
 - Inventory host/session/MFA/member/CSRF controls, locally revocable sessions and private runtime permission preflight; no personal-site admin-claim or owner-email fallback.
 - Session creation serializes with membership revocation, and runtime permission checks reject protected column-only write grants.

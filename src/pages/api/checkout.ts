@@ -12,6 +12,9 @@ import {
   type CheckoutServices,
 } from "../../server/commerce/stripe.ts";
 import { jsonResponse } from "../../server/http.ts";
+import { requireBuyerMutation } from "../../server/pickup/access.ts";
+import { PickupError } from "../../server/pickup/rules.ts";
+import { pickupErrorResponse } from "../../server/pickup/http.ts";
 
 export interface CheckoutHttpDependencies {
   getConfig(): CheckoutConfig;
@@ -86,11 +89,12 @@ export function createCheckoutHandler(dependencies: CheckoutHttpDependencies) {
           "Use an application/json request.",
         );
       }
+      const buyer = requireBuyerMutation(request, config.siteOrigin);
       const input = validateCheckoutIntent(
         await dependencies.readJsonBody(request, CHECKOUT_JSON_LIMIT),
       );
       const services = await dependencies.getServices();
-      const result = await services.createCheckout(input);
+      const result = await services.createCheckout(input, buyer.hash);
       if ("terminal" in result) {
         return jsonResponse({
           terminal: {
@@ -105,7 +109,10 @@ export function createCheckoutHandler(dependencies: CheckoutHttpDependencies) {
       }
       return jsonResponse({ checkoutUrl: result.checkoutUrl });
     } catch (error) {
-      const response = checkoutErrorResponse(error);
+      const response =
+        error instanceof PickupError
+          ? pickupErrorResponse(error)
+          : checkoutErrorResponse(error);
       if (response.status === 429) response.headers.set("Retry-After", "60");
       return response;
     }

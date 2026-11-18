@@ -88,10 +88,10 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
   const required: Record<string, string[]> = {
     admin_memberships: ["SELECT"],
     admin_sessions: ["SELECT", "INSERT", "UPDATE"],
-    products: ["SELECT", "INSERT", "UPDATE"],
-    product_variants: ["SELECT", "INSERT", "UPDATE"],
+    products: ["SELECT", "INSERT", "UPDATE", "DELETE"],
+    product_variants: ["SELECT", "INSERT", "UPDATE", "DELETE"],
     inventory_locations: ["SELECT", "INSERT", "UPDATE"],
-    inventory_levels: ["SELECT", "INSERT", "UPDATE"],
+    inventory_levels: ["SELECT", "INSERT", "UPDATE", "DELETE"],
     inventory_movements: ["SELECT", "INSERT"],
     admin_operations: ["SELECT", "INSERT"],
     orders: ["SELECT", "INSERT", "UPDATE"],
@@ -99,12 +99,35 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     payment_events: ["SELECT", "INSERT"],
     storefront_settings: ["SELECT", "UPDATE"],
     team_tasks: ["SELECT"],
+    pickup_settings: ["SELECT", "UPDATE"],
+    pickup_sites: ["SELECT", "INSERT", "UPDATE"],
+    pickup_site_stock_locations: ["SELECT", "INSERT", "DELETE"],
+    pickup_bookings: ["SELECT", "INSERT", "UPDATE"],
+    pickup_help_requests: ["SELECT", "INSERT", "UPDATE"],
   };
+  const noDelegation = [
+    "REFERENCES",
+    "TRIGGER",
+    "SELECT WITH GRANT OPTION",
+    "INSERT WITH GRANT OPTION",
+    "UPDATE WITH GRANT OPTION",
+    "DELETE WITH GRANT OPTION",
+  ];
   const forbidden: Record<string, string[]> = {
     admin_memberships: ["INSERT", "UPDATE", "DELETE", "TRUNCATE"],
     inventory_movements: ["UPDATE", "DELETE", "TRUNCATE"],
     admin_operations: ["UPDATE", "DELETE", "TRUNCATE"],
     payment_events: ["UPDATE", "DELETE", "TRUNCATE"],
+    order_lines: ["UPDATE", "DELETE", "TRUNCATE"],
+    inventory_locations: ["DELETE", "TRUNCATE"],
+    products: ["TRUNCATE", ...noDelegation],
+    product_variants: ["TRUNCATE", ...noDelegation],
+    inventory_levels: ["TRUNCATE", ...noDelegation],
+    pickup_settings: ["INSERT", "DELETE", "TRUNCATE", ...noDelegation],
+    pickup_sites: ["DELETE", "TRUNCATE", ...noDelegation],
+    pickup_site_stock_locations: ["UPDATE", "TRUNCATE", ...noDelegation],
+    pickup_bookings: ["DELETE", "TRUNCATE", ...noDelegation],
+    pickup_help_requests: ["DELETE", "TRUNCATE", ...noDelegation],
     storefront_settings: [
       "INSERT",
       "DELETE",
@@ -139,7 +162,7 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
       AND CASE WHEN (entry->>'expected')::boolean = false
         AND entry->>'privilege' IN (
           'INSERT','UPDATE','REFERENCES',
-          'SELECT WITH GRANT OPTION','UPDATE WITH GRANT OPTION'
+          'SELECT WITH GRANT OPTION','INSERT WITH GRANT OPTION','UPDATE WITH GRANT OPTION'
         )
         THEN NOT has_any_column_privilege(current_user,
           to_regclass('public.' || (entry->>'table')), entry->>'privilege')

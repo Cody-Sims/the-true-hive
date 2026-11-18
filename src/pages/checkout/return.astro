@@ -1,23 +1,19 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
-import PageIntro from "../../components/PageIntro.astro";
-import ActionLink from "../../components/ActionLink.astro";
+import CustomerPickup from "../../components/pickup/CustomerPickup.astro";
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
 ---
 
 <SiteLayout
   title="Back from test checkout"
-  description="Return to your cart to check your Stripe test checkout status."
-  notFound
+  description="Check your test checkout status and arrange pickup for a paid test order. No real payment."
+  noIndex
 >
-  <PageIntro
-    class="wrap page-intro"
-    eyebrow="Stripe test checkout — no real payment"
-    description="Return to your cart to check the status of your test checkout before trying again."
-  >
-    <Fragment slot="heading">Back from test checkout.</Fragment>
-    <ActionLink class="button button-primary" href="/cart">
-      View your cart
-    </ActionLink>
-    <ActionLink href="/goods">Keep shopping</ActionLink>
-  </PageIntro>
+  <div class="wrap">
+    <CustomerPickup />
+  </div>
 </SiteLayout>
+<script>
+  import "../../client/pickup.ts";
+</script>

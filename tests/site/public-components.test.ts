@@ -141,6 +141,110 @@ function markup(html: string): string {
 
 const { contact } = readConfig();
 
+for (const search of ["", "?payment=paid"]) {
+  test(`native checkout return preserves private SEO and test-only status disclosure ${search || "(no query)"}`, async () => {
+    const response = await pageResponse("checkout/return", { search });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+    const html = await response.text();
+    assert.match(
+      html,
+      /<title>Back from test checkout \| The True Hive<\/title>/,
+    );
+    assert.match(
+      html,
+      /<meta name="description" content="Check your test checkout status and arrange pickup for a paid test order\. No real payment\.">/,
+    );
+    assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+    assert.doesNotMatch(html, /rel="canonical"/);
+    const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1];
+    assert(main, "the native return flow keeps the main landmark");
+    assert.equal((main.match(/<h1\b/g) ?? []).length, 1);
+    assert.match(
+      main,
+      /<h1 id="pickup-title">A little closer to pickup\.<\/h1>/,
+    );
+    assert.match(main, /Stripe test checkout — no real payment/);
+    assert.match(markup(main), /Returning here does not confirm payment\./);
+    assert.doesNotMatch(
+      main,
+      /class="pickup-receipt"|I confirm this pickup time|Pickup complete/,
+      "neither a return visit nor a paid-looking query is a verified order or booking",
+    );
+  });
+}
+
+test("native checkout return bootstraps the customer controller with same-browser and cart/contact recovery", async () => {
+  const response = await pageResponse("checkout/return");
+  const html = await response.text();
+  const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1];
+  assert(main);
+  const customers = [
+    ...main.matchAll(
+      /<section\b(?=[^>]*data-pickup-mode="customer")[^>]*>[\s\S]*?<\/section>/g,
+    ),
+  ];
+  assert.equal(
+    customers.length,
+    1,
+    "the real page renders one customer pickup root",
+  );
+  const customer = markup(customers[0]![0]);
+  assert.match(customer, /aria-labelledby="pickup-title"/);
+  assert.match(
+    customer,
+    /<button type="button" data-pickup-refresh>Refresh status<\/button>/,
+  );
+  assert.match(
+    customer,
+    /<button type="button" data-pickup-retry hidden>Retry exact request<\/button>/,
+  );
+  assert.match(
+    customer,
+    /<p class="pickup-feedback" data-pickup-status role="status" tabindex="-1">Loading the current test checkout status…<\/p>/,
+  );
+  assert.match(customer, /<div data-pickup-content><\/div>/);
+  assert.match(customer, /Use the same browser as checkout\./);
+  assert.match(customer, /An order number alone cannot restore access\./);
+  assert.match(customer, /Your cart and checkout recovery stay unchanged\./);
+  assert.deepEqual(
+    [...customer.matchAll(/<a href="([^"]+)">([^<]+)<\/a>/g)].map(
+      ([, href, label]) => ({ href, label }),
+    ),
+    [
+      { href: "/cart", label: "View your cart" },
+      { href: "/contact", label: "Contact the shop" },
+    ],
+  );
+  assert.match(
+    customer,
+    /<noscript>JavaScript is required to retrieve your private test checkout status\. Your cart remains available\.<\/noscript>/,
+  );
+  assert.doesNotMatch(
+    customer,
+    /data-pickup-authorized|data-pickup-mode="admin"|session_id|csrfToken/,
+    "buyer access and CSRF are fetched in memory, not embedded in the return document",
+  );
+  const file = new URL("src/pages/checkout/return.astro", root);
+  const compiled = transform(await readFile(file, "utf8"), {
+    filename: file.pathname,
+    internalURL: "astro/compiler-runtime",
+    resolvePath: (specifier) => specifier,
+  });
+  assert(
+    compiled.scripts.some(
+      (script) =>
+        script.type === "inline" &&
+        typeof script.code === "string" &&
+        parse(script.code)[0].some(
+          (entry) => entry.specifier === "../../client/pickup.ts",
+        ),
+    ),
+    "the actual return page wires the customer controller, not just its markup",
+  );
+});
+
 for (const page of [
   {
     path: "index",
@@ -428,24 +532,6 @@ for (const page of [
       `<a class="text-link" href="/goods">Browse the collection <span aria-hidden="true">&rarr;</span></a>`,
       `<a class="text-link" href="/contact">Contact channels <span aria-hidden="true">&rarr;</span></a>`,
       `<a class="text-link" href="${contact.phoneHref}">Call ${contact.phone} <span aria-hidden="true">&rarr;</span></a>`,
-    ],
-  },
-  {
-    path: "checkout/return",
-    title: "Back from test checkout",
-    description:
-      "Return to your cart to check your Stripe test checkout status.",
-    intro: `<section class="wrap page-intro">
-      <p class="eyebrow">Stripe test checkout — no real payment</p>
-      <h1>Back from test checkout.</h1>
-      <p>Return to your cart to check the status of your test checkout before
-        trying again.</p>
-      <a class="button button-primary" href="/cart">View your cart</a>
-      <a class="text-link" href="/goods">Keep shopping</a>
-    </section>`,
-    actions: [
-      `<a class="button button-primary" href="/cart">View your cart</a>`,
-      `<a class="text-link" href="/goods">Keep shopping</a>`,
     ],
   },
   {

@@ -40,14 +40,15 @@ if (!product) Astro.response.status = unavailable ? 503 : 404;
         product={product}
         photosEnabled={readProductImagesConfig().enabled}
       />
-      <section aria-label="Location balances">
+      <section aria-label="Location balances" class="admin-record-section">
+        <p class="admin-eyebrow">Separate from product editing</p>
         <h2>Physical stock and allocations</h2>
         <p>
           Held, paid commitments and unavailable units are not physical
           departures. Only recorded pickup reduces paid merchandise on hand.
         </p>
         {product.variants.map((variant) => (
-          <section>
+          <section class="admin-balance-card">
             <h3>
               {variant.label} · {variant.sku}
             </h3>

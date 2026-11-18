@@ -3,11 +3,16 @@ import type { AdminVariant } from "../../domain/admin.ts";
 import FieldHelp from "./FieldHelp.astro";
 interface Props {
   variant?: AdminVariant;
+  baselineIndex?: number;
 }
-const { variant } = Astro.props;
+const { variant, baselineIndex } = Astro.props;
 ---
 
-<fieldset data-admin-variant class="admin-panel">
+<fieldset
+  data-admin-variant
+  data-baseline-index={baselineIndex}
+  class="admin-panel workbench-variant"
+>
   <legend>Variant</legend>
   <div class="admin-field">
     <FieldHelp label="Variant key">
@@ -75,10 +80,10 @@ const { variant } = Astro.props;
       <span>Price (USD cents)</span>
       <input
         name="priceMinor"
-        type="number"
-        min="1"
-        step="1"
-        max="2147483647"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]+"
+        maxlength="32"
         value={variant?.priceMinor ?? ""}
         placeholder="e.g. 450 ($4.50)"
       />
@@ -109,7 +114,26 @@ const { variant } = Astro.props;
     />{" "}
     Active variant
   </label>
+  <div class="admin-actions">
+    <button type="button" class="admin-secondary" data-workbench-toggle-variant>
+      {variant?.active ? "Archive variant" : "Restore variant"}
+    </button>
+    {variant ? (
+      <button type="button" class="admin-danger" data-admin-delete-variant>
+        Delete saved variant
+      </button>
+    ) : (
+      <button
+        type="button"
+        class="admin-secondary"
+        data-workbench-remove-variant
+      >
+        Remove unsaved variant
+      </button>
+    )}
+  </div>
   <p class="admin-muted">
-    Referenced keys are permanent. Deactivate a variant instead of deleting it.
+    Archive / Restore changes this form only. Save to apply. Referenced keys and
+    SKUs stay permanent.
   </p>
 </fieldset>

@@ -709,11 +709,15 @@ Provision roles deliberately with the direct owner connection after the forward 
 | Records/operation | Public read role | Private inventory role | Direct owner/operator |
 |---|---|---|---|
 | Catalog/variant/location/count reads | Existing public query access | Read | Manage |
-| Product/variant/location/count writes | Denied | Required insert/update only | Manage |
+| Product/variant/location/count writes | Denied | Required insert/update; guarded unused product/variant and associated zero-level deletion; no location deletion | Manage |
 | Movement/admin-operation/payment-event history | Denied | Read/insert; no update/delete/truncate | Append-only guards still apply |
 | Orders/order snapshots | Denied | Required read/insert/order update; no snapshot rewriting | Recovery/reconciliation |
 | Store purchase setting | Read only | Read/update existing singleton; no insert/delete/truncate/delegation | Forward migration and explicit role grants |
 | Team board | Denied | Read; update only `status`, `assignee`, `revision`, `updated_at`, and `updated_by` | Import the approved backlog privately; no records in Git or public artifacts |
+| Pickup settings | Denied | Read/update existing singleton only | Forward migration and explicit role grants |
+| Pickup sites | Denied | Read/insert/update; no delete | Provision policies privately |
+| Pickup-site stock mappings | Denied | Read/insert/delete mappings; no update | Review site impact |
+| Pickup appointments/help | Denied | Read/insert/update; no delete | Audited recovery, not history erasure |
 | Admin membership | Denied | Read only; no grant/revoke | Private grant/revoke |
 | Local admin sessions | Denied | Read/insert/revoke | Recovery |
 | Schema creation, role management, migrations | Denied | Denied | Deliberate operator action |
@@ -738,6 +742,54 @@ do not grant the public role any access. Import the private sprint seed once
 with the owner connection, preserve existing progress on retry, and verify
 100 task IDs with the supplied initial assignments. No inventory or payment
 records are changed by the board migration.
+
+### Native Workbench and pickup rollout
+
+Before deploying the Workbench/pickup integration, verify the intended database
+and TLS target and take a fresh private backup with a readable archive listing.
+Apply **007_catalog_record_actions.sql** and **008_pickup_scheduling.sql** using
+the normal migration runner and direct owner connection. Do not edit migrations
+001-006 or run the application with owner credentials. The new tables start
+empty, with a disabled pickup-settings singleton; legacy order access remains
+unbound and cannot be adopted by a newly presented cookie.
+
+Provision only these additions for the existing verified private runtime role:
+`DELETE` on `products`, `product_variants`, `inventory_levels`;
+`SELECT, UPDATE` on `pickup_settings`;
+`SELECT, INSERT, UPDATE` on `pickup_sites`, `pickup_bookings`,
+`pickup_help_requests`; and `SELECT, INSERT, DELETE` on
+`pickup_site_stock_locations`. Preserve existing required grants. Do not grant
+these tables to the public-read role or grant delete/truncate, history rewrites,
+delegation, triggers, role ownership or schema creation as a shortcut.
+`checkAdminDatabaseAccess` enforces the exact privilege matrix, including
+column-only delegation and forbidden writes. Verify the restricted role before
+releasing the new code; migrations do not guess SQL role names.
+
+After protected checks/deployment, verify the actual storefront return page,
+same-origin buyer access, private host/MFA/CSRF boundaries, native Workbench
+scrolling and mobile preview, and empty/disabled scheduling. Rehearse booking,
+last-place contention, help, impact review, lost-response exact retry and physical
+handoff only with isolated test data. Never make a real pickup promise merely
+to test a release. Existing Stripe-test restrictions remain authoritative.
+
+The operator configures `/inventory/pickups` explicitly before enabling
+self-service. All sites initially share one operator; cross-site travel is
+reserved as well as site capacity. Site changes recompute the exact impact
+under the same database lock as booking. Acknowledgement retains appointments
+as `needs_review`; reopening hours does not silently reconfirm them.
+Disabled self-service preserves confirmations, paid-unscheduled/help queues
+and operator-assisted arrangements. Only the existing order **Record pickup**
+operation performs physical stock accounting.
+
+Customer access uses a host-only HttpOnly SameSite=Lax cookie established by
+`POST /api/checkout/access` before reservation, with a 30-day per-order access
+limit and session-bound `X-Pickup-CSRF`. It is not a URL capability, public
+order-ID lookup or cross-device recovery mechanism. No customer scheduling
+credential or appointment is persisted in Web Storage. Private directions are
+withheld for pending, unowned, expired/revoked, needs-review, ended or collected
+contexts. There is no new notification provider, automatic refund or retention
+policy. Revert application code/disable scheduling if necessary; never drop
+booking/audit data or restore old inventory to roll back a UI deployment.
 
 ### Stock and sandbox rehearsals
 

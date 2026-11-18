@@ -80,6 +80,14 @@ const { contact } = readConfig();
       uses separate authentication and security cookies. Its sign-in process is
       separate from public browsing.
     </p>
+    <p>
+      The product Workbench can keep bounded, account-and-product-scoped
+      editable drafts in this device's local storage. Drafts do not store
+      photos, stock counts, SKUs, customer data or authentication credentials.
+      Administrators can clear editable drafts; clearing one does not undo a
+      server save. A small recovery marker may remain while an uncertain save
+      needs authoritative review.
+    </p>
     <h2>Shopping</h2>
     <p>
       Your cart uses browser storage on this device for selected variant
@@ -93,6 +101,20 @@ const { contact } = readConfig();
       the same request. This is not a payment confirmation. Clearing a cart,
       closing a tab or clearing browser storage does not cancel a server order
       or release a stock hold.
+    </p>
+    <p>
+      Checkout establishes a necessary HttpOnly cookie for same-browser order
+      access. The cookie may last 30 days; access to each associated order
+      expires 30 days after its creation and can be revoked by an authorized
+      operator. The server stores a hash, not the browser's cookie value.
+      Changing browsers or clearing cookies does not transfer order access.
+    </p>
+    <p>
+      Pickup appointments and requests for scheduling help are stored with their
+      order and audit records, not in browser storage. Scheduling help does not
+      submit an email or collect a new contact address. Clearing or expiring
+      browser access does not delete an order, appointment or audit record.
+      Contact the operator if you need help accessing an existing order.
     </p>
     <p>
       When test checkout is enabled, payment details are entered on Stripe's

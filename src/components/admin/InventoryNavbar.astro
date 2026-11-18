@@ -12,6 +12,7 @@ const links = [
   ["/inventory/locations", "Locations"],
   ["/inventory/store", "Store settings"],
   ["/inventory/orders", "Orders"],
+  ["/inventory/pickups", "Pickup scheduling"],
   ["/inventory/history", "History"],
 ] as const;
 const active = (href: string) => path === href || path.startsWith(`${href}/`);
@@ -232,7 +233,7 @@ const active = (href: string) => path === href || path.startsWith(`${href}/`);
   .admin-navbar-status:empty {
     display: none;
   }
-  @media (max-width: 850px) {
+  @media (max-width: 1180px) {
     .admin-navbar-inner {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 0.25rem 1rem;

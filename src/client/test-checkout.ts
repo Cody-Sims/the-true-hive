@@ -1,3 +1,5 @@
+import { requestCheckout } from "./checkout-request.ts";
+
 for (const form of document.querySelectorAll<HTMLFormElement>(
   "[data-test-checkout]",
 )) {
@@ -32,17 +34,7 @@ for (const form of document.querySelectorAll<HTMLFormElement>(
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        mode: "same-origin",
-        credentials: "same-origin",
-        redirect: "error",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body,
+      const response = await requestCheckout(body, {
         signal: controller.signal,
       });
       const result = (await response.json()) as {

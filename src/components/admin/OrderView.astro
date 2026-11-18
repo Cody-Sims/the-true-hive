@@ -9,6 +9,7 @@ const { order } = Astro.props;
 ---
 
 <section class="admin-panel">
+  <p class="admin-eyebrow">Immutable merchandise / operational record</p>
   <h2>Order {order.id}</h2>
   <p>
     State: <strong data-order-state>{order.state}</strong> · revision{" "}
@@ -26,6 +27,9 @@ const { order } = Astro.props;
       Reconciliation required: {order.reconciliationReason}
     </p>
   )}
+  <p>
+    <a href="/inventory/pickups">Review pickup scheduling</a>
+  </p>
 </section>
 <table class="admin-table" role="table">
   <caption>Immutable merchandise snapshots</caption>

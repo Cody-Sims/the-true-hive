@@ -39,6 +39,11 @@ export function isPublicPath(path: string) {
       "/api/catalog",
       "/api/availability",
       "/api/checkout",
+      "/api/checkout/access",
+      "/api/pickup/context",
+      "/api/pickup/availability",
+      "/api/pickup/booking",
+      "/api/pickup/help",
       "/api/webhooks/stripe",
       "/api/health/live",
     ].includes(path.replace(/\/$/, "") || "/") ||

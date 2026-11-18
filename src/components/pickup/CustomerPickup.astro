@@ -1,0 +1,46 @@
+---
+import "../../styles/pickup.css";
+---
+
+<section
+  class="pickup-app pickup-customer"
+  data-pickup-mode="customer"
+  aria-labelledby="pickup-title"
+>
+  <header class="pickup-intro">
+    <p class="pickup-eyebrow">Stripe test checkout — no real payment</p>
+    <h1 id="pickup-title">A little closer to pickup.</h1>
+    <p>
+      Check your test checkout status, then arrange a time when your order is
+      paid. Returning here does not confirm payment.
+    </p>
+  </header>
+  <div class="pickup-notice">
+    <p>
+      Use the same browser as checkout. If your order is missing, expired or no
+      longer accessible, contact the shop directly. An order number alone cannot
+      restore access.
+    </p>
+    <p>
+      Your cart and checkout recovery stay unchanged.{" "}
+      <a href="/cart">View your cart</a> ·{" "}
+      <a href="/contact">Contact the shop</a>
+    </p>
+  </div>
+  <div class="pickup-toolbar">
+    <button type="button" data-pickup-refresh>
+      Refresh status
+    </button>
+    <button type="button" data-pickup-retry hidden>
+      Retry exact request
+    </button>
+  </div>
+  <p class="pickup-feedback" data-pickup-status role="status" tabindex="-1">
+    Loading the current test checkout status…
+  </p>
+  <div data-pickup-content></div>
+  <noscript>
+    JavaScript is required to retrieve your private test checkout status. Your
+    cart remains available.
+  </noscript>
+</section>

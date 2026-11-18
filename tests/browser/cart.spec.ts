@@ -229,7 +229,14 @@ test("a server-confirmed released checkout restores the latest saved cart before
     });
   });
   const requests: { operationId: string; lines: unknown[] }[] = [];
+  let accessAttempts = 0;
+  await page.route("**/api/checkout/access", async (route) => {
+    accessAttempts++;
+    expect(route.request().postData()).toBe("{}");
+    await route.fulfill({ json: { ready: true, csrfToken: "A".repeat(43) } });
+  });
   await page.route("**/api/checkout", async (route) => {
+    expect(route.request().headers()["x-pickup-csrf"]).toBe("A".repeat(43));
     requests.push(route.request().postDataJSON());
     await route.fulfill(
       requests.length === 1
@@ -331,6 +338,12 @@ test("a server-confirmed released checkout restores the latest saved cart before
     "was rejected",
   );
   expect(requests).toHaveLength(2);
+  expect(accessAttempts).toBe(2);
+  expect(
+    await page.evaluate(() =>
+      JSON.stringify({ ...sessionStorage, ...localStorage }),
+    ),
+  ).not.toContain("A".repeat(43));
   expect(requests[1]!.operationId).not.toBe(pending.operationId);
   expect(requests[1]!.lines).toEqual([
     { variantKey: "cart-test-pair", quantity: 2 },

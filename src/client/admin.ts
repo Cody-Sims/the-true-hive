@@ -3,10 +3,12 @@ import type {
   AdminLocation,
   AdminOrder,
   AdminProduct,
+  AdminDeletionReceipt,
 } from "../domain/admin.ts";
 import type { StoreSettings } from "../domain/storefront.ts";
 import { initSkuSuggestions } from "./sku.ts";
 import { initLabelPrinting } from "./barcode-print.ts";
+import { setupWorkbench, workbenchFingerprint } from "./workbench.ts";
 
 initSkuSuggestions();
 initLabelPrinting();
@@ -18,6 +20,7 @@ type Envelope = {
   locations?: AdminLocation[];
   order?: AdminOrder;
   settings?: StoreSettings;
+  deleted?: AdminDeletionReceipt;
   adjustment?: {
     operationId: string;
     beforeOnHand: number;
@@ -63,7 +66,12 @@ function serialize(form: HTMLFormElement, action: string): Payload {
       : {};
   switch (form.dataset.adminForm) {
     case "product": {
-      if (editing && action === "archive") return { ...revision, action };
+      if (editing && (action === "archive" || action === "restore"))
+        return { ...revision, action };
+      if (action === "publish" && form.dataset.productStatus === "archived")
+        throw new Error(
+          "Restore the archived product to draft before publishing.",
+        );
       const product = {
         key: text(data, "key"),
         slug: text(data, "slug"),
@@ -276,7 +284,80 @@ function setupProductPreview(form: HTMLFormElement) {
     const artPanel = preview.querySelector<HTMLElement>(".shelf-art")!;
     artPanel.classList.remove("soap-art", "honey-art", "candle-art");
     if (template) artPanel.classList.add(`${art}-art`);
+    const fillLines = (
+      selector: string,
+      name: string,
+      tag: string,
+      empty: string,
+    ) => {
+      const host = preview.querySelector(selector)!;
+      const lines = value(name)
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      host.replaceChildren(
+        ...(lines.length ? lines : [empty]).map((line) => {
+          const node = document.createElement(tag);
+          node.textContent = line;
+          return node;
+        }),
+      );
+    };
+    fillLines(
+      "[data-preview-details]",
+      "details",
+      "p",
+      "No details entered yet.",
+    );
+    fillLines(
+      "[data-preview-ingredients]",
+      "ingredients",
+      "li",
+      "Ingredients not provided.",
+    );
+    const variants = [
+      ...form.querySelectorAll<HTMLElement>(
+        "[data-admin-variants] > [data-admin-variant]",
+      ),
+    ];
+    preview.querySelector("[data-preview-variants]")!.replaceChildren(
+      ...variants.map((row) => {
+        const item = document.createElement("li");
+        const label = row
+          .querySelector<HTMLInputElement>('[name="label"]')!
+          .value.trim();
+        const rawPrice = row
+          .querySelector<HTMLInputElement>('[name="priceMinor"]')!
+          .value.trim();
+        const price =
+          /^\d+$/.test(rawPrice) &&
+          Number(rawPrice) > 0 &&
+          Number(rawPrice) <= 2147483647
+            ? new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+              }).format(Number(rawPrice) / 100)
+            : rawPrice
+              ? "Incomplete price — review"
+              : "Price not set";
+        const active = row.querySelector<HTMLInputElement>(
+          '[name="variantActive"]',
+        )!.checked;
+        item.textContent = `${label || "Unnamed format"} · ${price}${active ? "" : " · inactive"}`;
+        return item;
+      }),
+    );
   };
+  const card = preview.querySelector<HTMLButtonElement>("[data-preview-card]")!;
+  const full = preview.querySelector<HTMLButtonElement>("[data-preview-full]")!;
+  const detail = preview.querySelector<HTMLElement>("[data-preview-detail]")!;
+  const selectView = (expanded: boolean) => {
+    detail.hidden = !expanded;
+    card.setAttribute("aria-pressed", String(!expanded));
+    full.setAttribute("aria-pressed", String(expanded));
+  };
+  card.addEventListener("click", () => selectView(false));
+  full.addEventListener("click", () => selectView(true));
   form.addEventListener("input", update);
   form.addEventListener("change", update);
   update();
@@ -284,8 +365,15 @@ function setupProductPreview(form: HTMLFormElement) {
 
 function setup(form: HTMLFormElement) {
   let phase: Phase = "idle";
-  let intent: { payload: Payload; body: string } | null = null;
+  let intent: {
+    payload: Payload;
+    body: string;
+    endpoint?: string;
+    method?: string;
+    deletion?: { type: "product" | "variant"; key: string; productKey: string };
+  } | null = null;
   let reviewedRevision: number | null = null;
+  let confirmedProductRevision: number | null = null;
   let currentOrder: AdminOrder | null = null;
   const fields = form.querySelector<HTMLFieldSetElement>(
     "[data-intent-fields]",
@@ -336,6 +424,7 @@ function setup(form: HTMLFormElement) {
     });
   }
   setupProductPreview(form);
+  setupWorkbench(form);
 
   function state(next: Phase, message: string) {
     phase = next;
@@ -505,10 +594,28 @@ function setup(form: HTMLFormElement) {
     }
   }
 
+  function reviewInterveningProductRevision(revision: number) {
+    if (
+      form.dataset.adminForm !== "product" ||
+      confirmedProductRevision === null ||
+      revision <= confirmedProductRevision
+    )
+      return false;
+    intent = null;
+    reviewedRevision = revision;
+    state(
+      "conflict",
+      `Your product save at revision ${confirmedProductRevision} is confirmed, but the refreshed server record is now revision ${revision}. Your earlier form values are preserved. Review the newer record explicitly or reopen it before allowing another operation.`,
+    );
+    return true;
+  }
+
   function showReceipt(body: Envelope) {
     receipt.hidden = false;
     const operationId = String(intent!.payload.operationId);
-    if (form.dataset.adminForm === "store" && body.settings) {
+    if (body.deleted) {
+      receiptText.textContent = `Operation ${operationId} confirmed: ${body.deleted.type} ${body.deleted.key} deleted, product revision ${body.deleted.revision}. Open the authoritative record before another operation.`;
+    } else if (form.dataset.adminForm === "store" && body.settings) {
       receiptText.textContent = `Operation ${operationId} confirmed: ${body.settings.purchasesEnabled ? "New checkouts allowed" : "New checkouts paused"}, revision ${body.settings.revision}. Payment and tax configuration remain separate.`;
     } else if (body.adjustment) {
       const result = body.adjustment;
@@ -520,13 +627,16 @@ function setup(form: HTMLFormElement) {
     } else if (body.order) {
       receiptText.textContent = `Operation ${operationId} confirmed: order ${body.order.id}, ${body.order.state}, revision ${body.order.revision}.`;
     }
-    const resource = body.settings
-      ? "store"
-      : body.product
-        ? `products/${encodeURIComponent(body.product.key)}`
-        : body.location
-          ? `locations/${encodeURIComponent(body.location.key)}`
-          : null;
+    const resource =
+      body.deleted?.type === "product"
+        ? "products"
+        : body.settings
+          ? "store"
+          : body.product
+            ? `products/${encodeURIComponent(body.product.key)}`
+            : body.location
+              ? `locations/${encodeURIComponent(body.location.key)}`
+              : null;
     if (resource) {
       const link = document.createElement("a");
       link.href = `/inventory/${resource}`;
@@ -538,18 +648,32 @@ function setup(form: HTMLFormElement) {
 
   async function send() {
     if (!intent || phase === "pending") return;
+    const retrying = phase === "uncertain";
     state(
       "pending",
       form.dataset.adminForm === "store"
         ? "Waiting for a verified store-setting receipt. No change has been assumed."
         : "Waiting for a verified server response. No quantity change has been assumed.",
     );
+    if (
+      form.dataset.workbenchStorage &&
+      form.dataset.workbenchSafetyStored !== "true"
+    ) {
+      if (!retrying) intent = null;
+      state(
+        retrying ? "uncertain" : "idle",
+        retrying
+          ? "The same operation was not retried because its local safety marker could not be persisted. Restore browser storage and retry this unchanged operation; do not start a new one."
+          : "No request was sent: browser storage could not preserve an unresolved-outcome safety marker. Free local storage and try again. Your edits remain in this tab.",
+      );
+      return;
+    }
     let response: Response;
     let body: Envelope;
     try {
       ({ response, body } = await request(
-        form.dataset.endpoint!,
-        form.dataset.method ?? "POST",
+        intent.endpoint ?? form.dataset.endpoint!,
+        intent.method ?? form.dataset.method ?? "POST",
         intent.body,
       ));
     } catch {
@@ -610,7 +734,55 @@ function setup(form: HTMLFormElement) {
         body.order?.state !== "picked_up"
       )
         throw new Error("Pickup is not confirmed.");
-      revision = applyRecord(body);
+      if (intent.deletion) {
+        const deleted = body.deleted;
+        if (
+          !deleted ||
+          deleted.type !== intent.deletion.type ||
+          deleted.key !== intent.deletion.key ||
+          deleted.productKey !== intent.deletion.productKey ||
+          !Number.isSafeInteger(deleted.revision) ||
+          deleted.revision <= Number(intent.payload.expectedRevision)
+        )
+          throw new Error("A matching deletion receipt could not be verified.");
+        if (
+          deleted.type === "variant" &&
+          (body.product?.key !== deleted.productKey ||
+            body.product.revision !== deleted.revision)
+        )
+          throw new Error(
+            "The current product was missing from the variant deletion receipt.",
+          );
+      }
+      if (form.dataset.adminForm === "product") {
+        const record = body.product;
+        const requestedKey =
+          (intent!.payload.product as { key?: string } | undefined)?.key ??
+          input(form, "key")?.value;
+        if (
+          intent.deletion?.type !== "product" &&
+          (!record ||
+            record.key !== requestedKey ||
+            !["draft", "published", "archived"].includes(record.status) ||
+            !Array.isArray(record.variants) ||
+            !Number.isSafeInteger(record.revision) ||
+            record.revision <= Number(intent.payload.expectedRevision ?? 0))
+        )
+          throw new Error("The product receipt did not match this record.");
+        if (record) {
+          form.dataset.productStatus = record.status;
+          const status = form.querySelector("[data-workbench-record-status]");
+          if (status) status.textContent = record.status;
+          const revision = form.querySelector(
+            "[data-workbench-record-revision]",
+          );
+          if (revision) revision.textContent = String(record.revision);
+        }
+      }
+      revision =
+        intent.deletion?.type === "product"
+          ? body.deleted!.revision
+          : applyRecord(body);
       showReceipt(body);
     } catch {
       state(
@@ -621,20 +793,62 @@ function setup(form: HTMLFormElement) {
       );
       return;
     }
+    if (
+      form.dataset.adminForm === "product" &&
+      (body.product || body.deleted)
+    ) {
+      confirmedProductRevision = revision;
+      form.dispatchEvent(
+        new CustomEvent("admin:product-receipt", {
+          detail: {
+            ...(body.product ?? body.deleted),
+            action: intent.payload.action,
+            deleted: !!body.deleted,
+          },
+          bubbles: true,
+        }),
+      );
+    }
     fieldErrors();
     state(
       "confirmed",
       "Server receipt confirmed. Refreshing the current record separately.",
     );
+    if (intent.deletion) {
+      intent = null;
+      form.dataset.recordReloadRequired = "true";
+      state(
+        "confirmed",
+        "Deletion receipt verified. Open the authoritative product list or record to continue; the current form is no longer editable.",
+      );
+      refresh.hidden = true;
+      return;
+    }
+    if (
+      form.dataset.adminForm === "product" &&
+      (intent.payload.action === "archive" ||
+        intent.payload.action === "restore")
+    ) {
+      intent = null;
+      form.dataset.recordReloadRequired = "true";
+      state(
+        "confirmed",
+        "Record state receipt verified. Open the authoritative product record to review its current controls before another operation. Other unsaved form edits were not part of this state-only action.",
+      );
+      refresh.hidden = true;
+      return;
+    }
     try {
       if (form.dataset.refresh) revision = await authoritative();
+      if (reviewInterveningProductRevision(revision)) return;
       const expected = input(form, "expectedRevision");
       if (expected) expected.value = String(revision);
       intent = null;
       clearCompactCount();
       const terminal =
-        form.dataset.method === "POST" &&
-        form.dataset.adminForm !== "adjustment";
+        (form.dataset.method === "POST" &&
+          form.dataset.adminForm !== "adjustment") ||
+        form.dataset.recordReloadRequired === "true";
       state(
         terminal ? "confirmed" : "idle",
         form.dataset.adminForm === "store"
@@ -651,10 +865,11 @@ function setup(form: HTMLFormElement) {
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (phase !== "idle") return;
+    if (phase !== "idle" || form.dataset.workbenchBlocked === "true") return;
     const action =
       (event.submitter as HTMLButtonElement | null)?.value || "save";
-    if (action !== "archive" && !form.reportValidity()) return;
+    if (action !== "archive" && action !== "restore" && !form.reportValidity())
+      return;
     try {
       const payload = {
         ...serialize(form, action),
@@ -673,6 +888,52 @@ function setup(form: HTMLFormElement) {
   retry.addEventListener("click", () => {
     if (phase === "uncertain") void send();
   });
+  form.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest<HTMLElement>(
+      "[data-admin-delete-product], [data-admin-delete-variant]",
+    );
+    if (!button || phase !== "idle" || form.dataset.workbenchBlocked === "true")
+      return;
+    if (workbenchFingerprint(form) !== form.dataset.workbenchBaseline) {
+      status.textContent =
+        "Unsaved edits must be saved or explicitly discarded with Reset to server values before permanent deletion.";
+      status.focus();
+      return;
+    }
+    const productKey = input(form, "key")!.value;
+    const row = button.closest("[data-admin-variant]");
+    const type = row ? "variant" : "product";
+    const key = row
+      ? row.querySelector<HTMLInputElement>('[name="variantKey"]')!.value
+      : productKey;
+    if (
+      !window.confirm(
+        `Permanently delete this ${type} (${key})? This cannot be undone. The server will refuse deletion when inventory, history, orders, photos or publication rules require the record.`,
+      )
+    )
+      return;
+    try {
+      const payload = {
+        operationId: crypto.randomUUID(),
+        expectedRevision: integer(
+          input(form, "expectedRevision")!.value,
+          "Revision",
+        ),
+      };
+      intent = {
+        payload,
+        body: JSON.stringify(payload),
+        method: "DELETE",
+        endpoint: `${form.dataset.endpoint}${row ? `/variants/${encodeURIComponent(key)}` : ""}`,
+        deletion: { type, key, productKey },
+      };
+      fieldErrors();
+      void send();
+    } catch (error) {
+      status.textContent =
+        error instanceof Error ? error.message : "Review the record revision.";
+    }
+  });
   refresh.addEventListener("click", async () => {
     if (phase === "conflict") {
       await resolveConflict();
@@ -682,13 +943,15 @@ function setup(form: HTMLFormElement) {
     refresh.disabled = true;
     try {
       const revision = await authoritative();
+      if (reviewInterveningProductRevision(revision)) return;
       const expected = input(form, "expectedRevision");
       if (expected) expected.value = String(revision);
       intent = null;
       clearCompactCount();
       const terminal =
-        form.dataset.method === "POST" &&
-        form.dataset.adminForm !== "adjustment";
+        (form.dataset.method === "POST" &&
+          form.dataset.adminForm !== "adjustment") ||
+        form.dataset.recordReloadRequired === "true";
       state(
         terminal ? "confirmed" : "idle",
         "Current server records verified. The earlier operation remains confirmed.",
@@ -728,6 +991,7 @@ function setup(form: HTMLFormElement) {
       const list = form.querySelector("[data-admin-variants]");
       if (template && list && list.childElementCount < 50) {
         list.append(template.content.cloneNode(true));
+        form.dispatchEvent(new Event("input", { bubbles: true }));
         list.lastElementChild
           ?.querySelector<HTMLInputElement>("input")
           ?.focus();

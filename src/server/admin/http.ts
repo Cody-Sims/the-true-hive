@@ -2,6 +2,8 @@ import type { APIContext, APIRoute } from "astro";
 import type { Pool } from "pg";
 import type { AdminActor } from "../../domain/admin.ts";
 import { AdminError, adminError } from "./errors.ts";
+import { PickupError } from "../pickup/rules.ts";
+import { pickupErrorResponse } from "../pickup/http.ts";
 
 type AdminHandler = (
   pool: Pool,
@@ -64,6 +66,7 @@ export function adminRoute(
         result.replayed === true;
       return json(result, created && !replayed ? 201 : 200);
     } catch (error) {
+      if (error instanceof PickupError) return pickupErrorResponse(error);
       const safe = adminError(error);
       return json(
         {

@@ -90,6 +90,9 @@ beforeEach(async () => {
     "003_product_photos.sql",
     "004_product_ingredients.sql",
     "005_storefront_settings.sql",
+    "006_team_board.sql",
+    "007_catalog_record_actions.sql",
+    "008_pickup_scheduling.sql",
   ]) {
     await pool.query(
       await readFile(

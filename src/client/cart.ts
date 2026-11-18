@@ -11,6 +11,7 @@ import {
 } from "../domain/cart.ts";
 import { readStoredCart, saveStoredCart } from "./cart-storage.ts";
 import { createCartCheckout } from "./cart-checkout.ts";
+import { requestCheckout } from "./checkout-request.ts";
 
 const storage = () => window.localStorage;
 const saved = readStoredCart(storage);
@@ -76,19 +77,7 @@ const checkout = createCartCheckout({
     render();
   },
   async request(body) {
-    return fetch("/api/checkout", {
-      method: "POST",
-      mode: "same-origin",
-      credentials: "same-origin",
-      redirect: "error",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body,
-      signal: AbortSignal.timeout(15000),
-    });
+    return requestCheckout(body, { signal: AbortSignal.timeout(15000) });
   },
 });
 

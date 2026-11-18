@@ -27,6 +27,13 @@ if (!location) Astro.response.status = unavailable ? 503 : 404;
   <a href="/inventory/locations" slot="page-actions">
     Back to locations
   </a>
+  <p class="admin-page-intro">
+    Keep the internal record, public label and pickup eligibility distinct.
+    Changing eligibility does not create pickup windows or move stock.
+  </p>
+  <p class="admin-actions">
+    <a href="/inventory/pickups">Review pickup scheduling</a>
+  </p>
   {location ? (
     <LocationForm location={location} />
   ) : (

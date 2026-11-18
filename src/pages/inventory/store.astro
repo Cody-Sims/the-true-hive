@@ -19,13 +19,33 @@ try {
 ---
 
 <AdminLayout title="Store settings">
-  {settings ? (
-    <StoreSettingsForm
-      settings={settings}
-      paymentReady={getCheckoutPresentation().enabled}
-    />
-  ) : (
-    <ReadState unavailable />
-  )}
-  <PickupLocation />
+  <a href="/inventory/pickups" slot="page-actions">
+    Pickup scheduling
+  </a>
+  <p class="admin-page-intro">
+    One deliberate switch for new checkouts. Existing orders and their stock
+    commitments remain separate.
+  </p>
+  <section class="admin-record-section" aria-label="Checkout availability">
+    <p class="admin-eyebrow">Storefront controls</p>
+    <h2>Checkout availability</h2>
+    {settings ? (
+      <StoreSettingsForm
+        settings={settings}
+        paymentReady={getCheckoutPresentation().enabled}
+      />
+    ) : (
+      <ReadState unavailable />
+    )}
+  </section>
+  <section
+    class="admin-record-section"
+    aria-label="Published pickup information"
+  >
+    <p class="admin-eyebrow">What customers see</p>
+    <PickupLocation />
+    <p>
+      <a href="/inventory/pickups">Review pickup windows and scheduling</a>
+    </p>
+  </section>
 </AdminLayout>

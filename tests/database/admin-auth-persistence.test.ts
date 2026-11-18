@@ -43,6 +43,16 @@ beforeEach(async () => {
     `GRANT SELECT,INSERT,UPDATE ON products,product_variants,inventory_locations,inventory_levels,orders,admin_sessions TO "${role}"`,
   );
   await operator.query(
+    `GRANT DELETE ON products,product_variants,inventory_levels TO "${role}"`,
+  );
+  await operator.query(
+    `GRANT SELECT,INSERT,UPDATE ON pickup_sites,pickup_bookings,pickup_help_requests TO "${role}"`,
+  );
+  await operator.query(
+    `GRANT SELECT,INSERT,DELETE ON pickup_site_stock_locations TO "${role}"`,
+  );
+  await operator.query(`GRANT SELECT,UPDATE ON pickup_settings TO "${role}"`);
+  await operator.query(
     `GRANT SELECT,INSERT ON inventory_movements,admin_operations,order_lines,payment_events TO "${role}"`,
   );
   await operator.query(`GRANT SELECT ON admin_memberships TO "${role}"`);
@@ -63,13 +73,15 @@ afterEach(async () => {
   await runtime?.end();
   if (migrated) {
     await operator.query(`
-      DROP TABLE public.admin_sessions,public.admin_memberships,public.admin_operations,
+      DROP TABLE public.pickup_help_requests,public.pickup_bookings,public.pickup_site_stock_locations,
+        public.pickup_sites,public.pickup_settings,public.admin_sessions,public.admin_memberships,public.admin_operations,
         public.payment_events,public.order_lines,public.orders,public.inventory_movements,
         public.inventory_levels,public.inventory_locations,public.product_variants,
         public.products,public.storefront_settings,public.team_tasks,public.schema_migrations CASCADE;
       DROP FUNCTION public.prevent_inventory_history_changes(),
         public.prevent_admin_commerce_history_changes(),
-        public.valid_product_ingredients(jsonb);
+        public.valid_product_ingredients(jsonb),
+        public.prevent_pickup_buyer_rebinding();
       DROP FUNCTION IF EXISTS public.pause_session_insert_fixture();
     `);
     migrated = false;
@@ -248,6 +260,64 @@ test("store settings runtime requires SELECT and UPDATE, and rejects destructive
     checkAdminDatabaseAccess(runtime),
     AdminConfigurationError,
   );
+});
+
+test("native catalog and scheduling startup requires exactly the new write grants", async () => {
+  for (const [table, privilege] of [
+    ["products", "DELETE"],
+    ["product_variants", "DELETE"],
+    ["inventory_levels", "DELETE"],
+    ["pickup_sites", "SELECT"],
+    ["pickup_sites", "INSERT"],
+    ["pickup_sites", "UPDATE"],
+    ["pickup_bookings", "INSERT"],
+    ["pickup_bookings", "UPDATE"],
+    ["pickup_help_requests", "INSERT"],
+    ["pickup_site_stock_locations", "DELETE"],
+    ["pickup_settings", "SELECT"],
+    ["pickup_settings", "UPDATE"],
+  ]) {
+    await operator.query(`REVOKE ${privilege} ON ${table} FROM "${role}"`);
+    await assert.rejects(
+      checkAdminDatabaseAccess(runtime),
+      AdminConfigurationError,
+    );
+    await operator.query(`GRANT ${privilege} ON ${table} TO "${role}"`);
+    await checkAdminDatabaseAccess(runtime);
+  }
+});
+
+test("native scheduling runtime rejects destructive and delegating grants", async () => {
+  for (const [table, privilege] of [
+    ["pickup_settings", "INSERT"],
+    ["pickup_settings", "DELETE"],
+    ["pickup_settings", "TRUNCATE"],
+    ["pickup_sites", "DELETE"],
+    ["pickup_bookings", "DELETE"],
+    ["pickup_help_requests", "DELETE"],
+    ["pickup_site_stock_locations", "UPDATE"],
+    ["pickup_sites", "UPDATE WITH GRANT OPTION"],
+    ["order_lines", "DELETE"],
+    ["inventory_locations", "DELETE"],
+  ]) {
+    const [base] = privilege!.split(" WITH GRANT OPTION");
+    const grantOption = privilege!.includes("WITH GRANT OPTION")
+      ? " WITH GRANT OPTION"
+      : "";
+    await operator.query(
+      `GRANT ${base} ON ${table} TO "${role}"${grantOption}`,
+    );
+    await assert.rejects(
+      checkAdminDatabaseAccess(runtime),
+      AdminConfigurationError,
+    );
+    if (grantOption)
+      await operator.query(
+        `REVOKE GRANT OPTION FOR ${base} ON ${table} FROM "${role}"`,
+      );
+    else await operator.query(`REVOKE ${base} ON ${table} FROM "${role}"`);
+    await checkAdminDatabaseAccess(runtime);
+  }
 });
 
 test("team board runtime requires exactly the read and workflow-write permissions", async () => {

@@ -45,9 +45,51 @@ const preview: Product = {
     </summary>
     <p>
       Your collection card, updated as you type. Previewing never saves or
-      publishes. Details and prices are not shown on collection cards.
+      publishes. Open the full product view to review details and ingredients.
     </p>
+    <div
+      class="workbench-preview-switch"
+      role="group"
+      aria-label="Preview view"
+    >
+      <button
+        type="button"
+        class="admin-secondary"
+        data-preview-card
+        aria-pressed="true"
+      >
+        Collection card
+      </button>
+      <button
+        type="button"
+        class="admin-secondary"
+        data-preview-full
+        aria-pressed="false"
+      >
+        Open full product preview
+      </button>
+    </div>
     <ProductCard product={preview} preview photoSrc={photoSrc} />
+    <section
+      class="workbench-preview-formats"
+      aria-label="Current editable formats"
+    >
+      <h4>Formats &amp; prices</h4>
+      <ul data-preview-variants></ul>
+      <p class="admin-muted">
+        Preview only. Availability and checkout are not evaluated here.
+      </p>
+    </section>
+    <section data-preview-detail hidden aria-label="Full product details">
+      <h4>Details</h4>
+      <div data-preview-details></div>
+      <h4>Ingredients</h4>
+      <ul data-preview-ingredients></ul>
+      <p>
+        Formats and prices above reflect this form, including inactive formats
+        marked for review. No cart actions are enabled.
+      </p>
+    </section>
     <p class="admin-muted">
       Store URL: <code data-preview-url>/goods/{preview.slug}</code>
     </p>

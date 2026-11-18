@@ -1,0 +1,45 @@
+---
+import "../../styles/pickup.css";
+const authorized = Boolean(
+  Astro.locals.admin?.uid &&
+  Astro.locals.admin.actorId &&
+  Astro.locals.csrfToken,
+);
+---
+
+{authorized ? (
+  <section
+    class="pickup-app"
+    data-pickup-mode="admin"
+    data-pickup-authorized="true"
+    aria-label="Pickup scheduling"
+  >
+    <header class="pickup-intro">
+      <p class="pickup-eyebrow">Inventory / Pickup desk</p>
+      <h2>Make room for a good handoff.</h2>
+      <p>
+        Manage collection windows and help paid orders find a time. Scheduling
+        never records physical pickup, changes stock, or changes payment.
+      </p>
+      <a href="/inventory/orders">Orders &amp; physical pickup →</a>
+    </header>
+    <div class="pickup-toolbar">
+      <button type="button" data-pickup-refresh>
+        Refresh records
+      </button>
+      <button type="button" data-pickup-retry hidden>
+        Retry exact request
+      </button>
+    </div>
+    <p class="pickup-feedback" data-pickup-status role="status" tabindex="-1">
+      Loading pickup records…
+    </p>
+    <div data-pickup-content></div>
+    <noscript>
+      JavaScript is required to manage pickup scheduling. Physical pickup
+      remains available from orders.
+    </noscript>
+  </section>
+) : (
+  <p>A verified inventory session is required.</p>
+)}

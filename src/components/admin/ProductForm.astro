@@ -6,6 +6,7 @@ import FieldHelp from "./FieldHelp.astro";
 import IngredientTools from "./IngredientTools.astro";
 import ProductPreview from "./ProductPreview.astro";
 import AdminSelect from "./AdminSelect.astro";
+import { createHash } from "node:crypto";
 interface Props {
   product?: AdminProduct;
   photosEnabled?: boolean;
@@ -14,6 +15,15 @@ const { product, photosEnabled = false } = Astro.props;
 const endpoint = product
   ? `/api/admin/products/${encodeURIComponent(product.key)}`
   : "/api/admin/products";
+const actor = Astro.locals.admin;
+const storageKey =
+  actor?.actorId && actor.uid && Astro.locals.csrfToken
+    ? `hive-workbench:v1:${createHash("sha256")
+        .update(JSON.stringify([actor.actorId, actor.uid]))
+        .digest("hex")}:${createHash("sha256")
+        .update(JSON.stringify(product?.key ?? null))
+        .digest("hex")}`
+    : undefined;
 ---
 
 <form
@@ -22,7 +32,107 @@ const endpoint = product
   data-method={product ? "PUT" : "POST"}
   data-refresh={product ? endpoint : undefined}
   class="admin-form admin-product-form"
+  data-workbench
+  data-workbench-storage={storageKey}
+  data-workbench-base-revision={product?.revision ?? ""}
+  data-product-status={product?.status ?? "draft"}
 >
+  <header class="workbench-intro">
+    <div>
+      <p class="admin-eyebrow">
+        Product workbench / {product ? "Edit record" : "Start something good"}
+      </p>
+      <h2>{product ? "Everything in reach." : "Make room on the shelf."}</h2>
+      <p>
+        Shape the product, review the customer view, then save deliberately.
+        Stock is managed separately.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="admin-secondary workbench-mobile-preview"
+      data-workbench-open-preview
+    >
+      Preview product
+    </button>
+  </header>
+  <nav class="workbench-sections" aria-label="Product sections">
+    <a href="#workbench-essentials">01 Essentials</a>
+    <a href="#workbench-story">02 Photo &amp; details</a>
+    <a href="#workbench-variants">03 Variants</a>
+    <a href="#workbench-record">04 Record &amp; publication</a>
+  </nav>
+  <section class="workbench-drafts" aria-label="Device-local draft">
+    <p data-workbench-draft-status role="status" tabindex="-1">
+      {storageKey
+        ? "Bounded editable-text recovery is limited to 12 records for this account for 30 days. Unresolved-operation markers never expire. Local autosave is not a server save or publication."
+        : "Local draft storage is disabled without a verified administrator session."}
+    </p>
+    <p>
+      Recovery never stores photos, stock, variant keys or SKUs. Existing
+      variant identities come from the server; re-enter new unsaved variant keys
+      and SKUs after restoring a local draft.
+    </p>
+    <div class="admin-actions">
+      <button
+        type="button"
+        class="admin-secondary"
+        data-workbench-restore
+        hidden
+      >
+        Restore local draft
+      </button>
+      <button
+        type="button"
+        class="admin-secondary"
+        data-workbench-review-draft
+        hidden
+      >
+        Review local draft
+      </button>
+      <button type="button" class="admin-secondary" data-workbench-keep hidden>
+        Keep this tab's edits
+      </button>
+      <button
+        type="button"
+        class="admin-secondary"
+        data-workbench-clear
+        disabled={!storageKey}
+      >
+        Clear local draft
+      </button>
+      <button type="button" class="admin-secondary" data-workbench-reset>
+        Reset to server values
+      </button>
+      <button
+        type="button"
+        class="admin-secondary"
+        data-workbench-resolved
+        hidden
+      >
+        I reviewed the authoritative record
+      </button>
+    </div>
+    <details data-workbench-draft-review hidden>
+      <summary>Stored editable text (read-only)</summary>
+      <pre data-workbench-draft-text></pre>
+    </details>
+    <p data-workbench-safety hidden>
+      An earlier operation has an unverified outcome. No new mutation is allowed
+      until you review the
+      <a
+        href={
+          product
+            ? `/inventory/products/${encodeURIComponent(product.key)}`
+            : "/inventory/products"
+        }
+      >
+        authoritative record
+      </a>
+      and <a href="/inventory/history">operation history</a>. Never resend an
+      uncertain operation as a new one.
+    </p>
+  </section>
   <input
     type="hidden"
     name="expectedRevision"
@@ -30,259 +140,343 @@ const endpoint = product
   />
   <fieldset data-intent-fields>
     <legend>
-      {product
-        ? `Edit ${product.status} product · revision ${product.revision}`
-        : "Create an unpublished product"}
+      {product ? "Edit product content" : "Create an unpublished product"}
     </legend>
-    <p>
+    <p class="workbench-desktop-preview-link">
       <a href={`#product-preview-${product?.key ?? "new"}`}>
         Jump to storefront preview
       </a>
     </p>
-    {!product && (
-      <p class="admin-muted">
-        Start with the product name. We suggest the two identifiers below;
-        review them and change them if needed. Select an (i) for help; select it
-        again or press Escape to close. Nothing is published or added to stock
-        when you create a draft. Examples inside empty fields are hints, not
-        saved values.
-      </p>
-    )}
-    <label>
-      Product name{" "}
-      <input
-        name="title"
-        required
-        minlength="1"
-        maxlength="160"
-        value={product?.title ?? ""}
-        placeholder="e.g. Lavender soap (4 oz)"
-      />
-    </label>
-    <div class="admin-grid">
-      <div class="admin-field">
-        <FieldHelp label="Product key">
-          A permanent internal identifier for the whole product, such as
-          <code>lavender-soap-4oz</code>. Use a unique combination of lowercase
-          letters, numbers and hyphens, up to 80 characters. It is suggested
-          from the name for new products and cannot change after saving.
-        </FieldHelp>
-        <label>
-          <span>Product key</span>
-          <input
-            name="key"
-            required
-            value={product?.key ?? ""}
-            readonly={!!product}
-            pattern="[a-z0-9][a-z0-9-]{0,79}"
-            maxlength="80"
-            placeholder="e.g. lavender-soap-4oz"
-          />
-        </label>
-      </div>
-      <div class="admin-field">
-        <FieldHelp label="Store URL name">
-          Also called a slug: the readable part of a product's storefront link.
-          For example, <code>/goods/lavender-soap-4oz</code>. Use unique
-          lowercase letters, numbers and hyphens, up to 80 characters. Changing
-          an existing slug changes its link; old links are not automatically
-          redirected.
-        </FieldHelp>
-        <label>
-          <span>Store URL name (slug)</span>
-          <input
-            name="slug"
-            required
-            value={product?.slug ?? ""}
-            pattern="[a-z0-9][a-z0-9-]{0,79}"
-            maxlength="80"
-            placeholder="e.g. lavender-soap-4oz"
-          />
-        </label>
-      </div>
-    </div>
-    <div class="admin-field">
-      <FieldHelp label="Summary">
-        A short description for the collection card. Describe what the product
-        is using confirmed facts; save longer instructions for Details.
-      </FieldHelp>
-      <label for={`summary-${product?.key ?? "new"}`}>
-        <span>Summary</span>
-      </label>
-      <textarea
-        id={`summary-${product?.key ?? "new"}`}
-        name="summary"
-        required
-        minlength="1"
-        maxlength="1000"
-        rows="3"
-        placeholder="e.g. A lavender-scented, 4 oz soap bar for everyday use."
-      >{product?.summary ?? ""}</textarea>
-    </div>
-    <div class="admin-field">
-      <FieldHelp label="Details">
-        Longer confirmed information, such as size, care or use. Put each
-        paragraph on its own line. Do not include private addresses or
-        unverified claims.
-      </FieldHelp>
-      <label for={`details-${product?.key ?? "new"}`}>
-        <span>Details (one paragraph per line)</span>
-      </label>
-      <textarea
-        id={`details-${product?.key ?? "new"}`}
-        name="details"
-        maxlength="24011"
-        rows="4"
-        placeholder={"e.g. Size: 4 oz.\nCare: Let the bar dry between uses."}
-      >{product?.details.join("\n") ?? ""}</textarea>
-    </div>
-    <div class="admin-field">
-      <FieldHelp label="Ingredients">
-        Enter only confirmed ingredients in the intended order, one per line.
-        Leave blank if not yet verified. Up to 40 ingredients, each at most 200
-        characters. Plain text only; do not invent ingredients or allergen
-        claims.
-      </FieldHelp>
-      <label for={`ingredients-${product?.key ?? "new"}`}>
-        <span>Ingredients (one per line)</span>
-      </label>
-      <textarea
-        id={`ingredients-${product?.key ?? "new"}`}
-        name="ingredients"
-        rows="4"
-      >{product?.ingredients?.join("\n") ?? ""}</textarea>
-      <IngredientTools
-        ingredients={product?.ingredients ?? []}
-        details={product?.details ?? []}
-        fieldKey={product?.key ?? "new"}
-      />
-    </div>
-    <div class="admin-grid">
-      <div class="admin-field">
-        <FieldHelp label="Category">
-          The collection used to group this product in the shop. Choose the
-          closest match; it does not change stock or publish the product.
-        </FieldHelp>
-        <label>
-          <span>Category</span>
-          <AdminSelect name="category" aria-label="Category" required>
-            <option value="" selected={!product}>
-              Choose a category
-            </option>
-            {["soap", "honey", "candles", "gifts"].map((category) => (
-              <option
-                value={category}
-                selected={product?.category === category}
-              >
-                {category}
-              </option>
-            ))}
-          </AdminSelect>
-        </label>
-      </div>
-      <div class="admin-field">
-        <FieldHelp label="Placeholder illustration">
-          Original placeholder artwork, not a product photograph.
-          {photosEnabled
-            ? "This is the fallback when no product photo is attached. Manage the primary photo separately after saving."
-            : "Choose the closest illustration for now. Product-photo upload storage still needs its separate setup and billing authorization."}
-        </FieldHelp>
-        <label>
-          <span>Placeholder illustration</span>
-          <AdminSelect
-            name="imageKey"
-            aria-label="Placeholder illustration"
-            required
-          >
-            <option value="" selected={!product}>
-              Choose an illustration
-            </option>
-            {["soap", "honey", "candle"].map((image) => (
-              <option value={image} selected={product?.imageKey === image}>
-                {image}
-              </option>
-            ))}
-          </AdminSelect>
-        </label>
-      </div>
-      <div class="admin-field">
-        <FieldHelp label="Record type">
-          Draft is work in progress. Real product describes actual goods;
-          Concept is only an illustrative idea. Choosing Real product does not
-          publish it: publication is a separate reviewed action.
-        </FieldHelp>
-        <label>
-          <span>Record type</span>
-          <AdminSelect name="kind" aria-label="Record type">
-            {["draft", "concept", "active"].map((kind) => (
-              <option
-                value={kind}
-                selected={(product?.kind ?? "draft") === kind}
-              >
-                {kind === "active"
-                  ? "Real product"
-                  : kind === "draft"
-                    ? "Draft"
-                    : "Concept"}
-              </option>
-            ))}
-          </AdminSelect>
-        </label>
-      </div>
-    </div>
-    <h2>Variants</h2>
-    <p>
-      A variant is one sellable size, scent or format of this product. Even a
-      product sold in just one format needs one variant. Enter your own stock
-      code; prices may stay blank for a draft. Counted stock is added separately
-      through an audited adjustment, not this form.
-    </p>
-    <div data-admin-variants>
-      {product?.variants.length ? (
-        product.variants.map((variant) => <VariantFields variant={variant} />)
-      ) : (
-        <VariantFields />
+    <section id="workbench-essentials" class="workbench-section" tabindex="-1">
+      <p class="admin-eyebrow">01 / The essentials</p>
+      <h2>A name, a place, a first impression.</h2>
+      {!product && (
+        <p class="admin-muted">
+          Start with the product name. We suggest the two identifiers below;
+          review them and change them if needed. Select an (i) for help; select
+          it again or press Escape to close. Nothing is published or added to
+          stock when you create a draft. Examples inside empty fields are hints,
+          not saved values.
+        </p>
       )}
-    </div>
-    <template data-admin-variant-template>
-      <VariantFields />
-    </template>
-    <button type="button" data-admin-add-variant>
-      Add another variant
-    </button>
+      <label>
+        Product name{" "}
+        <input
+          name="title"
+          required
+          minlength="1"
+          maxlength="160"
+          value={product?.title ?? ""}
+          placeholder="e.g. Lavender soap (4 oz)"
+        />
+      </label>
+      <div class="admin-grid">
+        <div class="admin-field">
+          <FieldHelp label="Product key">
+            A permanent internal identifier for the whole product, such as
+            <code>lavender-soap-4oz</code>. Use a unique combination of
+            lowercase letters, numbers and hyphens, up to 80 characters. It is
+            suggested from the name for new products and cannot change after
+            saving.
+          </FieldHelp>
+          <label>
+            <span>Product key</span>
+            <input
+              name="key"
+              required
+              value={product?.key ?? ""}
+              readonly={!!product}
+              pattern="[a-z0-9][a-z0-9-]{0,79}"
+              maxlength="80"
+              placeholder="e.g. lavender-soap-4oz"
+            />
+          </label>
+        </div>
+        <div class="admin-field">
+          <FieldHelp label="Store URL name">
+            Also called a slug: the readable part of a product's storefront
+            link. For example, <code>/goods/lavender-soap-4oz</code>. Use unique
+            lowercase letters, numbers and hyphens, up to 80 characters.
+            Changing an existing slug changes its link; old links are not
+            automatically redirected.
+          </FieldHelp>
+          <label>
+            <span>Store URL name (slug)</span>
+            <input
+              name="slug"
+              required
+              value={product?.slug ?? ""}
+              pattern="[a-z0-9][a-z0-9-]{0,79}"
+              maxlength="80"
+              placeholder="e.g. lavender-soap-4oz"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="admin-field">
+        <FieldHelp label="Summary">
+          A short description for the collection card. Describe what the product
+          is using confirmed facts; save longer instructions for Details.
+        </FieldHelp>
+        <label for={`summary-${product?.key ?? "new"}`}>
+          <span>Summary</span>
+        </label>
+        <textarea
+          id={`summary-${product?.key ?? "new"}`}
+          name="summary"
+          required
+          minlength="1"
+          maxlength="1000"
+          rows="3"
+          placeholder="e.g. A lavender-scented, 4 oz soap bar for everyday use."
+        >{product?.summary ?? ""}</textarea>
+      </div>
+    </section>
+    <section id="workbench-story" class="workbench-section" tabindex="-1">
+      <p class="admin-eyebrow">02 / Photo &amp; details</p>
+      <h2>Tell the real product story.</h2>
+      <aside class="admin-notice" aria-label="Product photo">
+        <h3>Primary product photo</h3>
+        {photosEnabled ? (
+          product ? (
+            <p>
+              Save any product edits first.{" "}
+              <a
+                href={`/inventory/products/${encodeURIComponent(product.key)}/photo`}
+              >
+                {product.photo
+                  ? "Review or replace product photo"
+                  : "Upload a product photo"}
+              </a>{" "}
+              opens a separate protected editor; it does not save these fields.
+            </p>
+          ) : (
+            <p>
+              Save the draft first. Then open its separate product photo editor.
+            </p>
+          )
+        ) : (
+          <p>
+            Use an original illustration for now. Product-photo storage is not
+            enabled.
+          </p>
+        )}
+      </aside>
+      <div class="admin-field">
+        <FieldHelp label="Details">
+          Longer confirmed information, such as size, care or use. Put each
+          paragraph on its own line. Do not include private addresses or
+          unverified claims.
+        </FieldHelp>
+        <label for={`details-${product?.key ?? "new"}`}>
+          <span>Details (one paragraph per line)</span>
+        </label>
+        <textarea
+          id={`details-${product?.key ?? "new"}`}
+          name="details"
+          maxlength="24011"
+          rows="4"
+          placeholder={"e.g. Size: 4 oz.\nCare: Let the bar dry between uses."}
+        >{product?.details.join("\n") ?? ""}</textarea>
+      </div>
+      <div class="admin-field">
+        <FieldHelp label="Ingredients">
+          Enter only confirmed ingredients in the intended order, one per line.
+          Leave blank if not yet verified. Up to 40 ingredients, each at most
+          200 characters. Plain text only; do not invent ingredients or allergen
+          claims.
+        </FieldHelp>
+        <label for={`ingredients-${product?.key ?? "new"}`}>
+          <span>Ingredients (one per line)</span>
+        </label>
+        <textarea
+          id={`ingredients-${product?.key ?? "new"}`}
+          name="ingredients"
+          rows="4"
+        >{product?.ingredients?.join("\n") ?? ""}</textarea>
+        <IngredientTools
+          ingredients={product?.ingredients ?? []}
+          details={product?.details ?? []}
+          fieldKey={product?.key ?? "new"}
+        />
+      </div>
+      <div class="admin-grid">
+        <div class="admin-field">
+          <FieldHelp label="Category">
+            The collection used to group this product in the shop. Choose the
+            closest match; it does not change stock or publish the product.
+          </FieldHelp>
+          <label>
+            <span>Category</span>
+            <AdminSelect name="category" aria-label="Category" required>
+              <option value="" selected={!product}>
+                Choose a category
+              </option>
+              {["soap", "honey", "candles", "gifts"].map((category) => (
+                <option
+                  value={category}
+                  selected={product?.category === category}
+                >
+                  {category}
+                </option>
+              ))}
+            </AdminSelect>
+          </label>
+        </div>
+        <div class="admin-field">
+          <FieldHelp label="Placeholder illustration">
+            Original placeholder artwork, not a product photograph.
+            {photosEnabled
+              ? "This is the fallback when no product photo is attached. Manage the primary photo separately after saving."
+              : "Choose the closest illustration for now. Product-photo upload storage still needs its separate setup and billing authorization."}
+          </FieldHelp>
+          <label>
+            <span>Placeholder illustration</span>
+            <AdminSelect
+              name="imageKey"
+              aria-label="Placeholder illustration"
+              required
+            >
+              <option value="" selected={!product}>
+                Choose an illustration
+              </option>
+              {["soap", "honey", "candle"].map((image) => (
+                <option value={image} selected={product?.imageKey === image}>
+                  {image}
+                </option>
+              ))}
+            </AdminSelect>
+          </label>
+        </div>
+        <div class="admin-field">
+          <FieldHelp label="Record type">
+            Draft is work in progress. Real product describes actual goods;
+            Concept is only an illustrative idea. Choosing Real product does not
+            publish it: publication is a separate reviewed action.
+          </FieldHelp>
+          <label>
+            <span>Record type</span>
+            <AdminSelect name="kind" aria-label="Record type">
+              {["draft", "concept", "active"].map((kind) => (
+                <option
+                  value={kind}
+                  selected={(product?.kind ?? "draft") === kind}
+                >
+                  {kind === "active"
+                    ? "Real product"
+                    : kind === "draft"
+                      ? "Draft"
+                      : "Concept"}
+                </option>
+              ))}
+            </AdminSelect>
+          </label>
+        </div>
+      </div>
+    </section>
+    <section id="workbench-variants" class="workbench-section" tabindex="-1">
+      <p class="admin-eyebrow">03 / Formats &amp; prices</p>
+      <h2>Variants</h2>
+      <p>
+        A variant is one sellable size, scent or format of this product. Even a
+        product sold in just one format needs one variant. Enter your own stock
+        code; prices may stay blank for a draft. Counted stock is added
+        separately through an audited adjustment, not this form.
+      </p>
+      <div data-admin-variants>
+        {product?.variants.length ? (
+          product.variants.map((variant, baselineIndex) => (
+            <VariantFields variant={variant} baselineIndex={baselineIndex} />
+          ))
+        ) : (
+          <VariantFields />
+        )}
+      </div>
+      <template data-admin-variant-template>
+        <VariantFields />
+      </template>
+      <button type="button" data-admin-add-variant>
+        Add another variant
+      </button>
+    </section>
+    <section id="workbench-record" class="workbench-section" tabindex="-1">
+      <p class="admin-eyebrow">04 / A deliberate decision</p>
+      <h2>Record &amp; publication</h2>
+      <p class="workbench-record-status">
+        Server state:{" "}
+        <strong data-workbench-record-status>
+          {product?.status ?? "Not created"}
+        </strong>
+        {product && (
+          <>
+            {" "}
+            · revision{" "}
+            <span data-workbench-record-revision>{product.revision}</span>
+          </>
+        )}
+      </p>
+      <p>
+        Save keeps publication unchanged. Publish requires valid content and an
+        active real product with an active positive-price USD variant. Archive
+        unpublishes without deleting inventory or history.
+      </p>
+      {product?.status === "archived" && (
+        <p class="admin-notice">
+          Saving this archived record does not publish or restore it. Restore to
+          draft is a separate action.
+        </p>
+      )}
+      {product && (
+        <details class="workbench-record-tools">
+          <summary>Permanent record controls</summary>
+          <p>
+            Deletion is permanent and separately confirmed. The server checks
+            balances, movements, orders, photo references and publication
+            validity. Archive is usually the safer choice.
+          </p>
+          <button type="button" class="admin-danger" data-admin-delete-product>
+            Delete product permanently
+          </button>
+        </details>
+      )}
+    </section>
   </fieldset>
   <ProductPreview {...(product ? { product } : {})} />
-  {photosEnabled && (
-    <aside class="admin-notice" aria-label="Product photo">
-      <h2>Primary product photo</h2>
-      {product ? (
-        <p>
-          Save any product edits first.{" "}
-          <a
-            href={`/inventory/products/${encodeURIComponent(product.key)}/photo`}
-          >
-            {product.photo
-              ? "Review or replace product photo"
-              : "Upload a product photo"}
-          </a>{" "}
-          opens a separate editor; it does not save these fields.
-        </p>
-      ) : (
-        <p>
-          Save the draft first. Then open its separate product photo editor.
-        </p>
-      )}
-    </aside>
-  )}
-  <p class="admin-notice">
-    Save keeps publication unchanged. Publish requires valid content and an
-    active real product with an active positive-price USD variant. Archive
-    unpublishes without deleting inventory or history.
-  </p>
-  <div class="admin-actions">
+  <dialog
+    class="workbench-preview-dialog"
+    data-workbench-dialog
+    aria-label="Customer preview"
+  >
+    <div class="workbench-dialog-toolbar">
+      <h2>Customer preview</h2>
+      <button
+        type="button"
+        class="admin-secondary"
+        data-workbench-close-preview
+      >
+        Close preview
+      </button>
+    </div>
+    <div data-workbench-dialog-content></div>
+  </dialog>
+  <footer class="admin-actions workbench-action-dock">
+    <span>
+      Server save / <strong>not local autosave</strong>
+    </span>
     <button type="submit" name="action" value="save">
       {product ? "Save changes" : "Create unpublished product"}
     </button>
+    {product?.status === "archived" && (
+      <button
+        type="submit"
+        name="action"
+        value="restore"
+        formnovalidate
+        class="admin-secondary"
+      >
+        Restore to draft
+      </button>
+    )}
     {product && product.status !== "archived" && (
       <>
         <button type="submit" name="action" value="publish">
@@ -299,6 +493,6 @@ const endpoint = product
         </button>
       </>
     )}
-  </div>
+  </footer>
   <FormFeedback />
 </form>

@@ -6,7 +6,7 @@ interface Props {
 const { movements } = Astro.props;
 ---
 
-<ol class="admin-history">
+<ol class="admin-history" aria-label="Recorded stock movements">
   {movements.map((movement) => (
     <li>
       <p>

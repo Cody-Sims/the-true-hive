@@ -16,6 +16,16 @@ try {
 ---
 
 <AdminLayout title="Locations">
+  <a href="#new-location" slot="page-actions">
+    Add location
+  </a>
+  <p class="admin-page-intro">
+    Keep physical stock locations and pickup eligibility explicit. A public
+    label is not an address or a promise of availability.
+  </p>
+  <p class="admin-actions">
+    <a href="/inventory/pickups">Manage pickup scheduling</a>
+  </p>
   {!locations ? (
     <ReadState unavailable />
   ) : locations.length ? (
@@ -56,8 +66,11 @@ try {
   ) : (
     <ReadState empty="No locations established." />
   )}
-  <h2 id="new-location" tabindex="-1">
-    Create location
-  </h2>
-  <LocationForm />
+  <section class="admin-record-section" aria-labelledby="new-location">
+    <p class="admin-eyebrow">A new place to keep things</p>
+    <h2 id="new-location" tabindex="-1">
+      Create location
+    </h2>
+    <LocationForm />
+  </section>
 </AdminLayout>

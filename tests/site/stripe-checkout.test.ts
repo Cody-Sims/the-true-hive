@@ -20,6 +20,7 @@ import {
 } from "../../src/pages/api/checkout.ts";
 import { createStripeWebhookHandler } from "../../src/pages/api/webhooks/stripe.ts";
 import { runCheckoutReconciliation } from "../../scripts/reconcile-checkout.mjs";
+import { buyerHeaders } from "../fixtures/buyer.ts";
 
 const clock = 1_900_000_000_000;
 const orderId = "c995d058-17dc-46b6-9c63-0984c9dc3f17";
@@ -778,6 +779,7 @@ test("checkout route uses bounded JSON and returns only checkoutUrl; errors cann
       headers: {
         Origin: config.siteOrigin,
         "Content-Type": "application/json",
+        ...buyerHeaders(config.siteOrigin),
       },
       body: JSON.stringify(intent),
     });
@@ -808,6 +810,7 @@ test("checkout route returns only the same-intent terminal acknowledgment after 
         headers: {
           Origin: config.siteOrigin,
           "Content-Type": "application/json",
+          ...buyerHeaders(config.siteOrigin),
         },
         body: JSON.stringify(intent),
       }),
@@ -849,6 +852,7 @@ test("terminal replay cannot bypass a canonical payload conflict from reservatio
       headers: {
         Origin: config.siteOrigin,
         "Content-Type": "application/json",
+        ...buyerHeaders(config.siteOrigin),
       },
       body: JSON.stringify({
         ...intent,

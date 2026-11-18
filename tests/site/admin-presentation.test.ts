@@ -8,6 +8,7 @@ import { parse } from "es-module-lexer";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import type {
   Browser,
+  BrowserContext,
   Page,
   Request as BrowserRequest,
 } from "@playwright/test";
@@ -230,7 +231,91 @@ test("verified inventory navigation includes store purchase controls", async () 
   );
   assert.match(html, /href="\/inventory\/store"/);
   assert.match(html, /Store settings/);
+  assert.match(html, /href="\/inventory\/pickups"/);
 });
+
+test("Workbench drafts require a verified actor and use an opaque account and record namespace", async () => {
+  const anonymous = await render("src/components/admin/ProductForm.astro", {
+    product,
+  });
+  assert.doesNotMatch(anonymous, /data-workbench-storage="[^"]+"/);
+  const options = (actorId: string) => ({
+    locals: {
+      admin: { uid: "private-fixture-uid", actorId },
+      csrfToken: "private-fixture-token",
+    },
+  });
+  const html = await render(
+    "src/components/admin/ProductForm.astro",
+    { product },
+    options("private-fixture-actor"),
+  );
+  const key = html.match(/data-workbench-storage="([^"]+)"/)?.[1];
+  assert.match(key ?? "", /^hive-workbench:v1:[a-f0-9]{64}:[a-f0-9]{64}$/);
+  assert.doesNotMatch(key ?? "", /private-fixture|fixture-product/);
+  const other = await render(
+    "src/components/admin/ProductForm.astro",
+    { product },
+    options("other-actor"),
+  );
+  assert.notEqual(other.match(/data-workbench-storage="([^"]+)"/)?.[1], key);
+  assert.match(html, /data-workbench-base-revision="7"/);
+  assert.match(html, /id="workbench-essentials"/);
+  assert.match(html, /id="workbench-story"/);
+  assert.match(html, /id="workbench-variants"/);
+  assert.match(html, /id="workbench-record"/);
+  assert.match(html, /<dialog[^>]+data-workbench-dialog/);
+});
+
+domTest(
+  "Workbench bounds device recovery to twelve records per account without evicting unresolved operations",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    try {
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("Seed editable recovery");
+      await page.waitForFunction(() => localStorage.length === 1);
+      await page.evaluate(() => {
+        const key =
+          document.querySelector<HTMLElement>("[data-workbench]")!.dataset
+            .workbenchStorage!;
+        const prefix = key.slice(0, key.lastIndexOf(":") + 1);
+        const draft = JSON.parse(localStorage.getItem(key)!);
+        for (let index = 0; index < 12; index++)
+          localStorage.setItem(
+            `${prefix}${String(index).padStart(64, "0")}`,
+            JSON.stringify({
+              ...draft,
+              updatedAt: Date.now() - 1000 * (index + 1),
+              ...(index === 11
+                ? { kind: "safety", fields: undefined, variants: undefined }
+                : {}),
+            }),
+          );
+      });
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("Trigger bounded recovery");
+      await page.waitForFunction(() => localStorage.length <= 12);
+      assert.equal(
+        await page.evaluate(() =>
+          Object.values(localStorage).some(
+            (raw) => JSON.parse(raw).kind === "safety",
+          ),
+        ),
+        true,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
 
 test("ingredient editing is explicit, empty by default, ordered and escaped", async () => {
   const saved = await render("src/components/admin/ProductForm.astro", {
@@ -347,11 +432,14 @@ async function fixturePage(
     path?: string;
     csrf?: string;
     locals?: Record<string, unknown>;
+    context?: BrowserContext;
   } = {},
 ) {
-  const context = await browser.newContext({
-    viewport: { width: 320, height: 1000 },
-  });
+  const context =
+    options.context ??
+    (await browser.newContext({
+      viewport: { width: 320, height: 1000 },
+    }));
   const page = await context.newPage();
   page.setDefaultTimeout(3000);
   page.setDefaultNavigationTimeout(3000);
@@ -370,13 +458,24 @@ async function fixturePage(
   const { clientModules, entrypoints } = await loadBrowserClients(client);
   const nonce =
     options.headers?.["content-security-policy"]?.match(/'nonce-([^']+)'/)?.[1];
-  await page.route("**/*", (route) => {
+  await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     const module = clientModules.get(url.pathname);
     if (url.origin === inventoryOrigin && module !== undefined)
       return route.fulfill({
         contentType: "text/javascript",
         body: module,
+      });
+    const illustration = ["soap.svg", "honey-jar.svg", "candle.svg"].find(
+      (name) =>
+        url.pathname === new URL(`prototypes/assets/${name}`, root).pathname,
+    );
+    if (url.origin === inventoryOrigin && illustration)
+      return route.fulfill({
+        contentType: "image/svg+xml",
+        body: await readFile(
+          new URL(`prototypes/assets/${illustration}`, root),
+        ),
       });
     if (route.request().isNavigationRequest()) {
       return route.fulfill({
@@ -387,6 +486,14 @@ async function fixturePage(
     }
     return route.abort();
   });
+  if (
+    (Array.isArray(client) ? client : [client]).includes("test-checkout.ts")
+  ) {
+    await page.route("**/api/checkout/access", async (route) => {
+      assert.equal(route.request().postData(), "{}");
+      await route.fulfill({ json: { ready: true, csrfToken: "A".repeat(43) } });
+    });
+  }
   await page.goto(
     `${inventoryOrigin}${options.path ?? "/inventory/products/fixture-product"}`,
   );
@@ -406,6 +513,750 @@ async function waitPhase(
   await page
     .locator(`${selector}[data-phase="${phase}"]`)
     .waitFor({ state: "attached", timeout: 3000 });
+}
+
+const workbenchLocals = {
+  admin: { uid: "workbench-fixture-uid", actorId: "workbench-fixture-actor" },
+  csrfToken: "workbench-fixture-token",
+};
+
+domTest(
+  "Workbench recovers bounded editable text without persisting immutable variant identifiers or operational data",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    try {
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("Changed only on this device");
+      // Text input is deliberate: incomplete cents must not be coerced to zero.
+      await page.locator('[name="priceMinor"]').fill("45");
+      await page.waitForFunction(() => localStorage.length === 1);
+      const stored = await page.evaluate(() =>
+        localStorage.getItem(localStorage.key(0)!)!,
+      );
+      assert.match(stored, /Changed only on this device/);
+      assert.doesNotMatch(
+        stored,
+        /COMPONENT-ONLY|fixture-variant|onHand|sellable|levels|csrf|workbench-fixture|photo/i,
+      );
+      await page.reload();
+      await page
+        .getByRole("button", { name: "Restore local draft", exact: true })
+        .click();
+      assert.equal(
+        await page.getByLabel("Product name", { exact: true }).inputValue(),
+        "Changed only on this device",
+      );
+      assert.equal(
+        await page.locator('[name="sku"]').inputValue(),
+        "COMPONENT-ONLY",
+      );
+      assert.equal(
+        await page.locator('[name="variantKey"]').inputValue(),
+        "fixture-variant",
+      );
+      assert.equal(
+        await page.locator('[name="priceMinor"]').inputValue(),
+        "45",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench refuses stale, corrupt, future and oversized drafts without replacing server fields",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    try {
+      await page.getByLabel("Product name", { exact: true }).fill("Stale text");
+      await page.waitForFunction(() => localStorage.length === 1);
+      const saved = await page.evaluate(() =>
+        localStorage.getItem(localStorage.key(0)!)!,
+      );
+      const key = await page
+        .locator("[data-workbench]")
+        .getAttribute("data-workbench-storage");
+      for (const [raw, message] of [
+        [
+          JSON.stringify({ ...JSON.parse(saved), baseRevision: 6 }),
+          /newer|revision|stale/i,
+        ],
+        ["{not json", /corrupt|unreadable/i],
+        [
+          JSON.stringify({ ...JSON.parse(saved), version: 99 }),
+          /newer|version/i,
+        ],
+        [" ".repeat(100000), /large|bounded/i],
+      ] as const) {
+        await page.evaluate(
+          ([key, raw]) => localStorage.setItem(key!, raw!),
+          [key, raw],
+        );
+        await page.reload();
+        assert.equal(
+          await page.getByLabel("Product name", { exact: true }).inputValue(),
+          product.title,
+        );
+        assert.equal(
+          await page
+            .getByRole("button", { name: "Restore local draft", exact: true })
+            .isVisible(),
+          false,
+        );
+        assert.match(
+          await page.locator("[data-workbench-draft-status]").innerText(),
+          message,
+        );
+      }
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench safety markers survive reload and never persist a frozen request or silently permit a new operation",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    let requests = 0;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      requests++;
+      return route.abort();
+    });
+    try {
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("Uncertain edit");
+      await page
+        .getByRole("button", { name: "Save changes", exact: true })
+        .click();
+      await waitPhase(page, "uncertain");
+      const raw = await page.evaluate(() =>
+        localStorage.getItem(localStorage.key(0)!)!,
+      );
+      assert.match(raw, /"kind":"safety"/);
+      assert.doesNotMatch(
+        raw,
+        /Uncertain edit|COMPONENT-ONLY|fixture-variant|operationId|payload/,
+      );
+      await page.reload();
+      assert.match(
+        await page.locator("[data-workbench-draft-status]").innerText(),
+        /unverified|unresolved/i,
+      );
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Save changes", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.equal(requests, 1);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench has one document scroll, a current-data detail preview and a native mobile preview dialog",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+    );
+    try {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page
+        .getByLabel("Details (one paragraph per line)", { exact: true })
+        .fill("Confirmed detail\n<script>no execution</script>");
+      await page.locator('[name="priceMinor"]').fill("725");
+      await page
+        .getByRole("button", { name: "Open full product preview", exact: true })
+        .click();
+      const detail = page.locator("[data-preview-detail]");
+      await detail.waitFor();
+      assert.match(await detail.innerText(), /Confirmed detail/);
+      assert.match(
+        await page.locator("[data-preview-variants]").innerText(),
+        /Fixture format/,
+      );
+      assert.match(
+        await page.locator("[data-preview-variants]").innerText(),
+        /\$7\.25/,
+      );
+      assert.match(await detail.innerText(), /Fixture first/);
+      assert.equal(
+        await detail.locator("script, [data-add-to-cart]").count(),
+        0,
+      );
+      await page
+        .getByRole("button", { name: "Collection card", exact: true })
+        .click();
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const screenshots = process.env["INVENTORY_UI_SCREENSHOT_DIR"];
+      if (screenshots)
+        await page.screenshot({
+          path: `${screenshots}/workbench-native-desktop.png`,
+        });
+      const before = await page.locator("[data-product-preview]").boundingBox();
+      await page.evaluate(() => window.scrollBy(0, 300));
+      const after = await page.locator("[data-product-preview]").boundingBox();
+      assert.equal(Math.round(before!.y - after!.y), 300);
+      assert.deepEqual(
+        await page
+          .locator("[data-intent-fields], [data-product-preview]")
+          .evaluateAll((nodes) =>
+            nodes.map((node) => getComputedStyle(node).overflowY),
+          ),
+        ["visible", "visible"],
+      );
+      await page.setViewportSize({ width: 320, height: 900 });
+      await page
+        .getByRole("button", { name: "Preview product", exact: true })
+        .click();
+      const dialog = page.getByRole("dialog", {
+        name: "Customer preview",
+        exact: true,
+      });
+      assert.equal(
+        await dialog.evaluate((node) => (node as HTMLDialogElement).open),
+        true,
+      );
+      assert.equal(await dialog.locator("[data-product-preview]").count(), 1);
+      if (screenshots)
+        await page.screenshot({
+          path: `${screenshots}/workbench-native-mobile-preview.png`,
+        });
+      await page.keyboard.press("Escape");
+      assert.equal(await dialog.isVisible(), false);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench cross-tab drafts require an explicit choice and safety markers cannot be overwritten by another editor",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    const second = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals, context: page.context() },
+    );
+    try {
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("First tab only");
+      await second.locator("[data-workbench-keep]").waitFor();
+      assert.equal(
+        await second
+          .getByRole("button", { name: "Save changes", exact: true })
+          .isDisabled(),
+        true,
+      );
+      await second
+        .getByLabel("Product name", { exact: true })
+        .fill("Explicit second-tab choice");
+      page.once("dialog", (dialog) => dialog.accept());
+      await page
+        .getByRole("button", { name: "Clear local draft", exact: true })
+        .click();
+      await second
+        .getByRole("button", { name: "Keep this tab's edits", exact: true })
+        .waitFor();
+      second.once("dialog", (dialog) => dialog.accept());
+      await second
+        .getByRole("button", { name: "Keep this tab's edits", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Restore local draft", exact: true })
+        .waitFor();
+      page.once("dialog", (dialog) => dialog.accept());
+      await page
+        .getByRole("button", { name: "Restore local draft", exact: true })
+        .click();
+      assert.equal(
+        await page.getByLabel("Product name", { exact: true }).inputValue(),
+        "Explicit second-tab choice",
+      );
+      await second.route("**/api/admin/products/fixture-product", (route) =>
+        route.abort(),
+      );
+      await second
+        .getByRole("button", { name: "Save changes", exact: true })
+        .click();
+      await waitPhase(second, "uncertain");
+      await page.locator("[data-workbench-safety]").waitFor();
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Save changes", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Clear local draft", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Keep this tab's edits", exact: true })
+          .isVisible(),
+        false,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench recovers incomplete price text and new variant labels but requires re-entry of unsaved identities",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    try {
+      await page
+        .getByRole("button", { name: "Add another variant", exact: true })
+        .click();
+      const row = page
+        .locator("[data-admin-variants] > [data-admin-variant]")
+        .last();
+      await row
+        .locator('[name="variantKey"]')
+        .fill("never-persist-this-variant");
+      await row.locator('[name="sku"]').fill("NEVER-PERSIST-THIS-SKU");
+      await row.locator('[name="label"]').fill("New reviewed format");
+      await row.locator('[name="priceMinor"]').fill("12.");
+      await page.waitForFunction(() =>
+        Object.values(localStorage).some((raw) => raw.includes("12.")),
+      );
+      await page.reload();
+      await page
+        .getByRole("button", { name: "Restore local draft", exact: true })
+        .click();
+      const restored = page
+        .locator("[data-admin-variants] > [data-admin-variant]")
+        .last();
+      assert.equal(
+        await restored.locator('[name="priceMinor"]').inputValue(),
+        "12.",
+      );
+      assert.equal(
+        await restored.locator('[name="label"]').inputValue(),
+        "New reviewed format",
+      );
+      assert.equal(
+        await restored.locator('[name="variantKey"]').inputValue(),
+        "",
+      );
+      assert.equal(await restored.locator('[name="sku"]').inputValue(), "");
+      assert.match(
+        await page.locator("[data-workbench-draft-status]").innerText(),
+        /re-enter/i,
+      );
+      assert.doesNotMatch(
+        await page.evaluate(() => JSON.stringify(localStorage)),
+        /NEVER-PERSIST|never-persist/,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+domTest(
+  "Workbench archives variants locally and guarded deletion requires clean edits and a matching tombstone receipt",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    const requests: { method: string; body: Record<string, unknown> }[] = [];
+    await page.route(
+      "**/api/admin/products/fixture-product/variants/fixture-variant",
+      async (route) => {
+        requests.push({
+          method: route.request().method(),
+          body: route.request().postDataJSON(),
+        });
+        assert.equal(
+          route.request().headers()["x-csrf-token"],
+          "component-only-signed-token",
+        );
+        await route.fulfill({
+          json: {
+            deleted: {
+              type: "variant",
+              key: "fixture-variant",
+              productKey: "fixture-product",
+              revision: 8,
+            },
+            product: { ...product, revision: 8, variants: [] },
+          },
+        });
+      },
+    );
+    try {
+      await page
+        .getByRole("button", { name: "Restore variant", exact: true })
+        .click();
+      assert.equal(
+        await page.locator('[name="variantActive"]').isChecked(),
+        true,
+      );
+      assert.equal(requests.length, 0);
+      await page
+        .getByRole("button", { name: "Delete saved variant", exact: true })
+        .click();
+      assert.match(
+        await page.locator("[data-admin-status]").innerText(),
+        /unsaved|save|reset/i,
+      );
+      assert.equal(requests.length, 0);
+      page.once("dialog", (dialog) => dialog.accept());
+      await page
+        .getByRole("button", { name: "Reset to server values", exact: true })
+        .click();
+      page.once("dialog", (dialog) => dialog.accept());
+      await page
+        .getByRole("button", { name: "Delete saved variant", exact: true })
+        .click();
+      await waitPhase(page, "confirmed");
+      assert.equal(requests.length, 1);
+      assert.equal(requests[0]!.method, "DELETE");
+      assert.equal(requests[0]!.body.expectedRevision, 7);
+      assert.match(String(requests[0]!.body.operationId), /^[a-f0-9-]{36}$/);
+      assert.deepEqual(Object.keys(requests[0]!.body).sort(), [
+        "expectedRevision",
+        "operationId",
+      ]);
+      assert.match(
+        await page.locator("[data-admin-receipt-text]").innerText(),
+        /deleted|deletion/i,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench does not send a new operation when the verified account cannot persist an unresolved-outcome safety marker",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    let requests = 0;
+    await page.route("**/api/admin/products/fixture-product", (route) => {
+      requests++;
+      return route.abort();
+    });
+    try {
+      await page.evaluate(() => {
+        Storage.prototype.setItem = () => {
+          throw new DOMException("Storage full", "QuotaExceededError");
+        };
+      });
+      await page
+        .getByLabel("Product name", { exact: true })
+        .fill("Only this tab");
+      await page
+        .getByRole("button", { name: "Save changes", exact: true })
+        .click();
+      await waitPhase(page, "idle");
+      assert.equal(requests, 0);
+      assert.match(
+        await page.locator("[data-admin-status]").innerText(),
+        /safety|storage/i,
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench product deletion freezes the same UUID through a mismatched receipt and clears recovery only after a matching tombstone",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product },
+      "admin.ts",
+      { locals: workbenchLocals },
+    );
+    const attempts: string[] = [];
+    await page.route("**/api/admin/products/fixture-product", async (route) => {
+      assert.equal(route.request().method(), "DELETE");
+      attempts.push(route.request().postData()!);
+      return route.fulfill({
+        json: {
+          deleted: {
+            type: "product",
+            key: attempts.length === 1 ? "wrong-product" : product.key,
+            productKey: product.key,
+            revision: 8,
+          },
+        },
+      });
+    });
+    try {
+      await page.locator(".workbench-record-tools > summary").click();
+      page.once("dialog", (dialog) => dialog.accept());
+      await page
+        .getByRole("button", {
+          name: "Delete product permanently",
+          exact: true,
+        })
+        .click();
+      await waitPhase(page, "uncertain");
+      assert.match(
+        await page.evaluate(() => localStorage.getItem(localStorage.key(0)!)!),
+        /"kind":"safety"/,
+      );
+      await page
+        .getByRole("button", { name: "Retry the same operation", exact: true })
+        .click();
+      await waitPhase(page, "confirmed");
+      assert.equal(attempts.length, 2);
+      assert.equal(attempts[0], attempts[1]);
+      assert.equal(await page.evaluate(() => localStorage.length), 0);
+      assert.equal(
+        await page.locator("[data-admin-receipt] a").getAttribute("href"),
+        "/inventory/products",
+      );
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "Workbench saves archived products without publishing and restores through a separate minimal operation",
+  async () => {
+    const archived = { ...product, status: "archived" };
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      { product: archived },
+      "admin.ts",
+    );
+    const requests: Record<string, unknown>[] = [];
+    await page.route("**/api/admin/products/fixture-product", async (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({
+          json: { product: { ...archived, revision: 8 } },
+        });
+      const body = route.request().postDataJSON();
+      requests.push(body);
+      return route.fulfill({
+        json: {
+          product: {
+            ...archived,
+            status: body.action === "restore" ? "draft" : "archived",
+            revision: body.action === "restore" ? 9 : 8,
+          },
+        },
+      });
+    });
+    try {
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Publish product", exact: true })
+          .count(),
+        0,
+      );
+      await page
+        .getByRole("button", { name: "Save changes", exact: true })
+        .click();
+      await waitPhase(page, "idle");
+      assert.equal(requests[0]!.action, "save");
+      assert.equal(
+        await page.locator("[data-workbench-record-status]").innerText(),
+        "archived",
+      );
+      await page
+        .getByRole("button", { name: "Restore to draft", exact: true })
+        .click();
+      await waitPhase(page, "confirmed");
+      assert.equal(requests[1]!.action, "restore");
+      assert.equal(requests[1]!.expectedRevision, 8);
+      assert.deepEqual(Object.keys(requests[1]!).sort(), [
+        "action",
+        "expectedRevision",
+        "operationId",
+      ]);
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+for (const manualRefresh of [false, true]) {
+  domTest(
+    `Workbench requires review of an intervening product revision after ${manualRefresh ? "manual" : "automatic"} receipt refresh`,
+    async () => {
+      const page = await fixturePage(
+        "src/components/admin/ProductForm.astro",
+        { product },
+        "admin.ts",
+        { locals: workbenchLocals },
+      );
+      let writes = 0;
+      let reads = 0;
+      await page.route(
+        "**/api/admin/products/fixture-product",
+        async (route) => {
+          if (route.request().method() === "GET") {
+            reads++;
+            if (manualRefresh && reads === 1) return route.abort();
+            return route.fulfill({
+              json: {
+                product: {
+                  ...product,
+                  title: "Another administrator's intervening edit",
+                  revision: 9,
+                },
+              },
+            });
+          }
+          writes++;
+          return route.fulfill({
+            json: {
+              product: {
+                ...product,
+                title: "My confirmed revision eight",
+                revision: 8,
+              },
+            },
+          });
+        },
+      );
+      try {
+        await page
+          .getByLabel("Product name", { exact: true })
+          .fill("My confirmed revision eight");
+        await page
+          .getByRole("button", { name: "Save changes", exact: true })
+          .click();
+        if (manualRefresh) {
+          await page.waitForFunction(() =>
+            document
+              .querySelector("[data-admin-status]")
+              ?.textContent?.includes(
+                "refreshed current records are unavailable",
+              ),
+          );
+          await page
+            .getByRole("button", {
+              name: "Refresh authoritative record",
+              exact: true,
+            })
+            .click();
+        }
+        await page
+          .locator("[data-admin-current-text]")
+          .filter({
+            hasText: "Another administrator's intervening edit",
+          })
+          .waitFor();
+        assert.equal(
+          await page.locator("[data-admin-form]").getAttribute("data-phase"),
+          "conflict",
+        );
+        assert.notEqual(
+          await page.locator('[name="expectedRevision"]').inputValue(),
+          "9",
+        );
+        assert.equal(
+          await page.getByLabel("Product name", { exact: true }).inputValue(),
+          "My confirmed revision eight",
+        );
+        assert.match(
+          await page.locator("[data-admin-receipt-text]").innerText(),
+          /revision 8/,
+        );
+        assert.match(
+          await page.locator("[data-admin-current-text]").innerText(),
+          /"revision": 9/,
+        );
+        assert.equal(
+          await page
+            .getByRole("button", { name: "Save changes", exact: true })
+            .isDisabled(),
+          true,
+        );
+        await page
+          .locator("[data-admin-form]")
+          .evaluate((form) =>
+            form.dispatchEvent(
+              new SubmitEvent("submit", { bubbles: true, cancelable: true }),
+            ),
+          );
+        assert.equal(writes, 1);
+        assert.equal(await page.evaluate(() => localStorage.length), 0);
+        await page
+          .getByRole("button", {
+            name: "I reviewed the current record; allow a new intent",
+            exact: true,
+          })
+          .click();
+        await waitPhase(page, "idle");
+        assert.equal(
+          await page.locator('[name="expectedRevision"]').inputValue(),
+          "9",
+        );
+        assert.equal(
+          await page
+            .getByRole("button", { name: "Save changes", exact: true })
+            .isEnabled(),
+          true,
+        );
+        assert.equal(writes, 1);
+      } finally {
+        await page.context().close();
+      }
+    },
+  );
 }
 
 test("active product cards show canonical prices and cart options without enabling checkout", async () => {
@@ -1031,6 +1882,7 @@ domTest(
         headers: await productionHeaders("/inventory/products/new"),
       },
     );
+    await page.setViewportSize({ width: 1280, height: 1000 });
     let mutations = 0;
     await page.route("**/api/**", (route) => {
       if (route.request().method() !== "GET") mutations++;
@@ -1147,6 +1999,7 @@ domTest(
       product: { ...product, photo },
       photosEnabled: true,
     });
+    await page.setViewportSize({ width: 1280, height: 1000 });
     try {
       const preview = page.getByRole("complementary", {
         name: "Storefront preview",
@@ -4604,6 +5457,7 @@ domTest(
       ["/inventory/locations", "Locations", false],
       ["/inventory/locations/fixture-location", "Locations", false],
       ["/inventory/orders", "Orders", false],
+      ["/inventory/pickups", "Pickup scheduling", false],
       ["/inventory/orders/fixture-order", "Orders", false],
       ["/inventory/history", "History", false],
       ["/inventory/store/", "Store settings", false],
@@ -4642,6 +5496,7 @@ domTest(
               "Locations",
               "Store settings",
               "Orders",
+              "Pickup scheduling",
               "History",
             ],
           );
