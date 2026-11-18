@@ -33,9 +33,7 @@ export function readAdminConfig(
     throw new AdminConfigurationError();
   let origin: URL;
   try {
-    origin = new URL(
-      environment["INVENTORY_ORIGIN"] ?? "https://inventory.thetruehive.com",
-    );
+    origin = new URL(environment["SITE_URL"] ?? "https://thetruehive.com");
   } catch {
     throw new AdminConfigurationError();
   }
@@ -45,12 +43,25 @@ export function readAdminConfig(
   );
   if (
     (origin.protocol !== "https:" &&
-      !(development && loopback && origin.protocol === "http:")) ||
+      !(
+        (development || flag === "false") &&
+        loopback &&
+        origin.protocol === "http:"
+      )) ||
     origin.username ||
     origin.password ||
     origin.pathname !== "/" ||
     origin.search ||
     origin.hash
+  )
+    throw new AdminConfigurationError();
+  if (
+    environment["INVENTORY_ORIGIN"] &&
+    environment["INVENTORY_ORIGIN"] !== origin.origin &&
+    !(
+      origin.origin === "https://thetruehive.com" &&
+      environment["INVENTORY_ORIGIN"] === "https://inventory.thetruehive.com"
+    )
   )
     throw new AdminConfigurationError();
   const enabled = flag === "true";

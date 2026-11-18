@@ -173,6 +173,7 @@ test("disabled startup config needs no credentials, unsafe enabled configuration
 function enabledEnvironment() {
   return {
     INVENTORY_ENABLED: "true",
+    SITE_URL: "https://inventory.example",
     INVENTORY_ORIGIN: "https://inventory.example",
     ADMIN_DATABASE_URL: config.databaseUrl!,
     ADMIN_CSRF_SECRET: randomBytes(32).toString("base64"),
@@ -217,9 +218,81 @@ test("enabled configuration needs at least 32 decoded secret bytes and rejects e
   );
 });
 
+test("legacy deployed origin setting boots with canonical-only authorization and fixed read redirects", async () => {
+  const migrated = readAdminConfig({
+    ...enabledEnvironment(),
+    SITE_URL: "https://thetruehive.com",
+    INVENTORY_ORIGIN: "https://inventory.thetruehive.com",
+  });
+  assert.equal(migrated.origin, "https://thetruehive.com");
+  assert.equal(migrated.secureCookies, true);
+  const f = fixture();
+  const login = await f.auth.login("id-token");
+  const boundary = createAdminBoundary(migrated, f.auth);
+  const cookie = `${cookieNames(migrated).session}=${login.cookie}`;
+  const locals: AdminLocals = {};
+  assert.equal(
+    (
+      await boundary.gate(
+        new Request("https://thetruehive.com/prototypes/", {
+          headers: { cookie },
+        }),
+        locals,
+      )
+    ).response,
+    null,
+  );
+  assert.equal(locals.admin?.uid, login.uid);
+  for (const method of ["GET", "HEAD", "POST", "PUT", "DELETE"]) {
+    const legacyLocals: AdminLocals = {};
+    const response = (
+      await boundary.gate(
+        new Request("https://inventory.thetruehive.com/inventory/products", {
+          method,
+          headers: { cookie },
+        }),
+        legacyLocals,
+      )
+    ).response!;
+    assert.equal(response.status, ["GET", "HEAD"].includes(method) ? 308 : 404);
+    assert.equal(
+      response.headers.get("location"),
+      ["GET", "HEAD"].includes(method)
+        ? "https://thetruehive.com/inventory/products"
+        : null,
+    );
+    assert.equal(legacyLocals.admin, undefined);
+  }
+  for (const retained of [
+    "https://inventory.thetruehive.com/",
+    "https://preview.thetruehive.com",
+    "https://evil.example",
+  ]) {
+    assert.throws(
+      () =>
+        readAdminConfig({
+          ...enabledEnvironment(),
+          SITE_URL: "https://thetruehive.com",
+          INVENTORY_ORIGIN: retained,
+        }),
+      AdminConfigurationError,
+    );
+  }
+  assert.throws(
+    () =>
+      readAdminConfig({
+        ...enabledEnvironment(),
+        SITE_URL: "https://shop.example",
+        INVENTORY_ORIGIN: "https://inventory.thetruehive.com",
+      }),
+    AdminConfigurationError,
+  );
+});
+
 test("HTTP inventory cookies are loopback-development-only, never a production relaxation", () => {
   const env = {
     ...enabledEnvironment(),
+    SITE_URL: "http://127.0.0.1:4321",
     INVENTORY_ORIGIN: "http://127.0.0.1:4321",
   };
   assert.throws(
@@ -268,17 +341,20 @@ test("exact inventory origin rejects replayed cookies and forwarded host spoofin
     new Request("https://inventory.example/shop"),
     {},
   );
-  assert.equal(publicShop.response?.status, 404);
+  assert.equal(publicShop.response?.status, 303);
   const root = await boundary.gate(
     new Request("https://inventory.example/"),
     {},
   );
-  assert.equal(root.response?.headers.get("location"), "/inventory/products");
+  assert.equal(root.response, null);
   const anonymous = await boundary.gate(
     new Request("https://inventory.example/inventory/products"),
     {},
   );
-  assert.equal(anonymous.response?.headers.get("location"), "/inventory/login");
+  assert.equal(
+    anonymous.response?.headers.get("location"),
+    "/inventory/login?returnTo=%2Finventory%2Fproducts",
+  );
   assert.equal(
     (
       await boundary.gate(
@@ -322,6 +398,116 @@ test("inventory root and private HEAD requests receive authenticated CSRF shell 
       assert(locals.csrfToken);
       assert.equal(result.cookies.length, 1);
     }
+  }
+});
+
+test("one administrator session unlocks the storefront, studio and raw planning files; revocation applies everywhere", async () => {
+  const f = fixture();
+  const login = await f.auth.login("id-token");
+  const boundary = createAdminBoundary(config, f.auth);
+  for (const path of [
+    "/",
+    "/goods",
+    "/cart",
+    "/contact",
+    "/team-sprint",
+    "/prototypes/editor/index.html",
+    "/prototypes/next/assets/soap-true-bar.webp",
+    "/prototypes/plan.html",
+    "/docs/09-local-business-launch-plan.md",
+    "/README.md",
+  ]) {
+    const locals: AdminLocals = {};
+    const result = await boundary.gate(
+      new Request(`${config.origin}${path}`, {
+        headers: { cookie: `${cookieNames(config).session}=${login.cookie}` },
+      }),
+      locals,
+    );
+    assert.equal(result.response, null, path);
+    assert.equal(locals.admin?.uid, login.uid, path);
+  }
+  f.setMember(false);
+  for (const path of ["/", "/prototypes/plan.html", "/README.md"]) {
+    const locals: AdminLocals = {};
+    const result = await boundary.gate(
+      new Request(`${config.origin}${path}`, {
+        headers: { cookie: `${cookieNames(config).session}=${login.cookie}` },
+      }),
+      locals,
+    );
+    assert.equal(locals.admin, undefined);
+    assert.equal(result.response?.status ?? 200, path === "/" ? 200 : 303);
+  }
+});
+
+test("anonymous storefront stays public while every private page, source and encoded alias is gated", async () => {
+  const boundary = createAdminBoundary(config, fixture().auth);
+  for (const path of [
+    "/",
+    "/goods",
+    "/goods/soap",
+    "/about",
+    "/services",
+    "/cart",
+    "/cart/",
+    "/contact",
+    "/api/catalog",
+    "/api/health/live",
+    "/_image",
+  ]) {
+    assert.equal(
+      (await boundary.gate(new Request(`${config.origin}${path}`), {}))
+        .response,
+      null,
+      path,
+    );
+  }
+  for (const path of [
+    "/prototypes/",
+    "/team-sprint",
+    "/prototypes/editor/",
+    "/prototypes/guided-scroll/",
+    "/prototypes/pickup/app.mjs",
+    "/prototypes/next/assets/soap-true-bar.webp",
+    "/prototypes/inventory.html",
+    "/prototypes/scripts/documents.mjs",
+    "/docs/00-project-brief.md",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/business",
+    "/api/health/ready",
+  ]) {
+    const result = await boundary.gate(
+      new Request(`${config.origin}${path}`),
+      {},
+    );
+    assert.equal(
+      result.response?.status,
+      path.startsWith("/api/") ? 401 : 303,
+      path,
+    );
+    if (!path.startsWith("/api/")) {
+      const location = new URL(
+        result.response!.headers.get("location")!,
+        config.origin,
+      );
+      assert.equal(location.pathname, "/inventory/login");
+      assert.equal(location.searchParams.get("returnTo"), path);
+    }
+  }
+  for (const path of [
+    "/%70rototypes/plan.html",
+    "/docs%252f00-project-brief.md",
+    "//docs/00-project-brief.md",
+    "/prototypes%5cplan.html",
+  ]) {
+    assert.equal(
+      (await boundary.gate(new Request(`${config.origin}${path}`), {})).response
+        ?.status,
+      400,
+      path,
+    );
   }
 });
 
@@ -496,8 +682,8 @@ test("shared-service liveness remains available on the inventory host without op
       assert.deepEqual(locals, {});
     }
     for (const [path, method, status] of [
-      ["/api/health/live", "POST", enabled ? 404 : 503],
-      ["/api/health/ready", "GET", enabled ? 404 : 503],
+      ["/api/health/live", "POST", null],
+      ["/api/health/ready", "GET", enabled ? 401 : 503],
       ["/api/admin/products", "GET", enabled ? 401 : 503],
     ] as const) {
       const result = await boundary.gate(
@@ -505,12 +691,108 @@ test("shared-service liveness remains available on the inventory host without op
         {},
       );
       assert.equal(
-        result.response?.status,
+        result.response?.status ?? null,
         status,
         `${enabled} ${method} ${path}`,
       );
     }
     assert.equal(f.writes(), 0);
+  }
+});
+
+test("configured administrator origin is the public site origin, never a sibling cookie scope", () => {
+  const env = enabledEnvironment();
+  assert.equal(
+    readAdminConfig({
+      ...env,
+      SITE_URL: "https://thetruehive.com",
+      INVENTORY_ORIGIN: undefined,
+    }).origin,
+    "https://thetruehive.com",
+  );
+  assert.throws(
+    () =>
+      readAdminConfig({
+        ...env,
+        SITE_URL: "https://thetruehive.com",
+        INVENTORY_ORIGIN: "https://preview.thetruehive.com",
+      }),
+    AdminConfigurationError,
+  );
+});
+
+test("legacy inventory and preview hosts redirect only safe reads to the canonical app without trusting forwarded hosts", async () => {
+  const boundary = createAdminBoundary(
+    { ...config, origin: "https://thetruehive.com" },
+    fixture().auth,
+  );
+  for (const [source, target] of [
+    ["https://inventory.thetruehive.com/", "/inventory/products"],
+    ["https://inventory.thetruehive.com/inventory/orders", "/inventory/orders"],
+    ["https://preview.thetruehive.com/", "/prototypes/"],
+    [
+      "https://preview.thetruehive.com/prototypes/plan.html?doc=business",
+      "/prototypes/plan.html?doc=business",
+    ],
+  ]) {
+    const result = await boundary.gate(new Request(source!), {});
+    assert.equal(result.response?.status, 308);
+    assert.equal(
+      result.response?.headers.get("location"),
+      `https://thetruehive.com${target}`,
+    );
+    assert.deepEqual(result.cookies, []);
+  }
+  for (const request of [
+    new Request("https://inventory.thetruehive.com/api/admin/logout", {
+      method: "POST",
+    }),
+    new Request("https://preview.thetruehive.com/%70rototypes/plan.html"),
+    new Request("https://preview.thetruehive.com/", {
+      headers: { host: "evil.example" },
+    }),
+    new Request("https://evil.example/", {
+      headers: { "x-forwarded-host": "preview.thetruehive.com" },
+    }),
+  ]) {
+    assert.equal((await boundary.gate(request, {})).response?.status, 404);
+  }
+});
+
+test("successful login honors only validated same-origin private return paths", async () => {
+  for (const [returnTo, expected] of [
+    [
+      "/prototypes/plan.html?doc=business",
+      "/prototypes/plan.html?doc=business",
+    ],
+    ["/docs/00-project-brief.md", "/docs/00-project-brief.md"],
+    ["/inventory/orders", "/inventory/orders"],
+    ["https://evil.example/inventory/orders", "/inventory/products"],
+    ["//evil.example/inventory/orders", "/inventory/products"],
+    ["/\\evil.example/inventory/orders", "/inventory/products"],
+    ["/%2f%2fevil.example", "/inventory/products"],
+    ["/inventory/../about", "/inventory/products"],
+    ["/inventory/orders/.", "/inventory/products"],
+    ["/inventory/orders/./", "/inventory/products"],
+    ["/inventory/orders//", "/inventory/products"],
+    ["/inventory/%252e%252e/about", "/inventory/products"],
+    ["/api/admin/logout", "/inventory/products"],
+    ["/api", "/inventory/products"],
+    ["/api?next=/inventory/orders", "/inventory/products"],
+    ["/inventory/login", "/inventory/products"],
+    ["/goods", "/inventory/products"],
+    ["/inventory/orders%0d%0aLocation:evil", "/inventory/products"],
+  ]) {
+    const boundary = createAdminBoundary(config, fixture().auth);
+    const shell = await loginShell(boundary);
+    const base = mutation("session", shell.cookie, shell.csrf);
+    const request = new Request(
+      `${base.url}?${new URLSearchParams({ returnTo: returnTo! })}`,
+      base,
+    );
+    const response = await boundary.endpoint(request, "session");
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { redirect: expected }, returnTo);
   }
 });
 

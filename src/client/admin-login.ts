@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { adminReturnTo } from "../server/auth/paths.ts";
 import {
   browserPopupRedirectResolver,
   getMultiFactorResolver,
@@ -92,7 +93,12 @@ if (root) {
 
     async function post(action: "session" | "enrollment", user: User) {
       const idToken = await user.getIdToken(true);
-      const response = await fetch(`/api/admin/${action}`, {
+      const returnTo = adminReturnTo(
+        new URL(window.location.href).searchParams.get("returnTo"),
+      );
+      const query =
+        action === "session" ? `?${new URLSearchParams({ returnTo })}` : "";
+      const response = await fetch(`/api/admin/${action}${query}`, {
         method: "POST",
         credentials: "same-origin",
         headers: {
@@ -110,12 +116,16 @@ if (root) {
 
     async function exchange(user: User) {
       const result = await post("session", user);
-      if (!("redirect" in result) || result.redirect !== "/inventory/products")
+      if (
+        !("redirect" in result) ||
+        typeof result.redirect !== "string" ||
+        adminReturnTo(result.redirect) !== result.redirect
+      )
         throw new Error("Invalid response");
       hideSecrets();
       resolver = null;
       await signOut(auth);
-      window.location.assign("/inventory/products");
+      window.location.assign(result.redirect);
     }
 
     async function fail() {

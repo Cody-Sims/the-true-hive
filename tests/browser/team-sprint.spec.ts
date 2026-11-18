@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const preview = new URL(
-  "../../dist/prototypes/team-sprint/index.html",
-  import.meta.url,
-).href;
+const fixtureOrigin = "http://127.0.0.1:4327";
+const preview = `${fixtureOrigin}/prototypes/team-sprint/index.html`;
 
 const cards = [
   [
@@ -115,7 +113,7 @@ test("a waiting card's details can be read and dismissed by touch on a small scr
 test("the main-site sprint board is available by direct link and supports keyboard review", async ({
   page,
 }) => {
-  const response = await page.goto("/team-sprint");
+  const response = await page.goto(`${fixtureOrigin}/team-sprint`);
   expect(response?.status()).toBe(200);
   await expect(
     page.getByRole("heading", { name: "Team sprint board" }),
@@ -152,10 +150,9 @@ test("the main-site sprint board is available by direct link and supports keyboa
 
 test("the main-site board and an open detail fit a narrow phone with touch controls", async ({
   browser,
-  baseURL,
 }) => {
   const context = await browser.newContext({
-    ...(baseURL ? { baseURL } : {}),
+    baseURL: fixtureOrigin,
     viewport: { width: 320, height: 480 },
     isMobile: true,
     hasTouch: true,
@@ -199,10 +196,9 @@ test("the main-site board and an open detail fit a narrow phone with touch contr
 
 test("main-site task details remain readable when JavaScript is unavailable", async ({
   browser,
-  baseURL,
 }) => {
   const context = await browser.newContext({
-    ...(baseURL ? { baseURL } : {}),
+    baseURL: fixtureOrigin,
     javaScriptEnabled: false,
   });
   try {

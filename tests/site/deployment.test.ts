@@ -1,9 +1,34 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { IncomingMessage } from "node:http";
+import { Socket } from "node:net";
+import { createRequestFromNodeRequest } from "astro/app/node";
+import astroConfig from "../../astro.config.mjs";
+import { readAdminConfig } from "../../src/server/admin/config.ts";
+import { isInventoryRequest } from "../../src/server/auth/http.ts";
 import {
   assertPublicFiles,
   assertCheckedDeployment,
 } from "../../scripts/site-artifact-policy.mjs";
+
+test("the built adapter preserves exact local app origins instead of substituting an untrusted-host fallback", () => {
+  const allowedDomains = astroConfig.security?.allowedDomains;
+  assert(allowedDomains);
+  for (const port of [4321, 4325, 4326]) {
+    const incoming = new IncomingMessage(new Socket());
+    incoming.url = "/";
+    incoming.method = "GET";
+    incoming.headers.host = `127.0.0.1:${port}`;
+    const request = createRequestFromNodeRequest(incoming, {
+      allowedDomains,
+      port,
+    });
+    const settings = readAdminConfig({ SITE_URL: `http://127.0.0.1:${port}` });
+    assert.equal(request.url, `${settings.origin}/`);
+    assert.equal(isInventoryRequest(request, settings), true);
+    incoming.destroy();
+  }
+});
 
 test("public output cannot contain planning, server source, environment files or database connection code", () => {
   assert.doesNotThrow(() =>
