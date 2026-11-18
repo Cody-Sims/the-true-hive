@@ -693,6 +693,9 @@ button:disabled {
 .workbench-mobile-preview {
   display: none;
 }
+html:has(.workbench-preview-dialog[open]) {
+  overflow: hidden;
+}
 .workbench-preview-dialog {
   width: min(100% - 1rem, 40rem);
   max-height: calc(100dvh - 2rem);

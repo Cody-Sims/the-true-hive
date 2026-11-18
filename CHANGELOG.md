@@ -65,6 +65,7 @@
 
 ### Fixed
 
+- Keep the background product form still while the native mobile preview is open, restoring ordinary document scrolling when it closes.
 - Retire the superseded inventory-list component and only its dedicated fixtures/tests; preserve current shelves, stock updates and published design history.
 - Accept Stripe's current `/g/pay/` hosted Checkout URL for the exact verified test session, retaining the existing `/c/pay/` route and strict host, identity and query checks.
 - Make product names and stock rows select their focused inventory panel, with keyboard selection, a clear active-row indicator and the prototype's image-led details and Receive action.
