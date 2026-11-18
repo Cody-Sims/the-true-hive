@@ -6,6 +6,7 @@ import type {
   AdminMovement,
   AdminProduct,
   AdminVariant,
+  AdminDeletionReceipt,
 } from "../../domain/admin.ts";
 import { adjustStock, type AdjustmentResult } from "../inventory/adjust.ts";
 import { isRecordKey, validateAdjustment } from "../inventory/rules.ts";
@@ -488,7 +489,11 @@ interface OperationResult extends QueryResultRow {
   action: string;
   resource_key: string;
   request_hash: string;
-  result: { product?: ProductReceipt; location?: AdminLocation };
+  result: {
+    product?: ProductReceipt;
+    location?: AdminLocation;
+    deleted?: AdminDeletionReceipt;
+  };
 }
 
 async function beginOperation(
@@ -541,8 +546,8 @@ async function recordOperation(
   resourceKey: string,
   hash: string,
   before: ProductReceipt | AdminLocation | null,
-  after: ProductReceipt | AdminLocation,
-  result: { product: ProductReceipt } | { location: AdminLocation },
+  after: ProductReceipt | AdminLocation | null,
+  result: OperationResult["result"],
 ) {
   // PostgreSQL measures the actual JSONB text budget; any failure rolls back the mutation.
   await client.query(
@@ -554,7 +559,7 @@ async function recordOperation(
       resourceKey,
       hash,
       before === null ? null : JSON.stringify(before),
-      JSON.stringify(after),
+      after === null ? null : JSON.stringify(after),
       JSON.stringify(result),
     ],
   );
@@ -585,6 +590,31 @@ async function replayProduct(
       levels: levels.rows.filter((level) => level.variantKey === variant.key),
     })),
   };
+}
+
+async function assertKeyNotDeleted(
+  client: PoolClient,
+  type: "product" | "variant",
+  recordKey: string,
+) {
+  const used = (
+    await client.query<{ used: boolean }>(
+      `SELECT EXISTS(SELECT 1 FROM admin_operations WHERE
+      ($1='product' AND action='delete_product' AND resource_key=$2)
+      OR ($1='variant' AND action='delete_variant' AND result#>>'{deleted,key}'=$2)
+      OR ($1='variant' AND action='delete_product' AND EXISTS(
+        SELECT 1 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(before_data->'variants')='array'
+          THEN before_data->'variants' ELSE '[]'::jsonb END) v WHERE v->>'key'=$2))) AS used`,
+      [type, recordKey],
+    )
+  ).rows[0]!.used;
+  if (used)
+    throw new AdminError(
+      409,
+      "DUPLICATE_RECORD",
+      "A deleted stable record key cannot be reused. Choose a new key.",
+      { key: "Choose an unused stable key." },
+    );
 }
 
 async function writeVariants(
@@ -627,6 +657,7 @@ async function writeVariants(
         ],
       );
     } else {
+      await assertKeyNotDeleted(client, "variant", variant.key);
       await client.query(
         "INSERT INTO product_variants (variant_key,product_key,sku,label,price_minor,currency,active,display_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
         [
@@ -671,6 +702,7 @@ export async function createAdminProduct(
         product: await replayProduct(client, op.result.product),
         replayed: true,
       };
+    await assertKeyNotDeleted(client, "product", product.key);
     await client.query(
       "INSERT INTO products (product_key,slug,title,summary,details,category,image_key,kind,ingredients) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9::jsonb)",
       [
@@ -726,11 +758,19 @@ export async function updateAdminProduct(
   const revision = integer(value["expectedRevision"], "expectedRevision");
   const action = choice(
     value["action"],
-    ["save", "publish", "archive"],
+    ["save", "publish", "archive", "restore"],
     "action",
   );
+  if (
+    action === "restore" &&
+    (value["product"] !== undefined || value["variants"] !== undefined)
+  )
+    invalid(
+      "action",
+      "Restore the saved product separately from content edits.",
+    );
   const hasContent =
-    action !== "archive" ||
+    (action !== "archive" && action !== "restore") ||
     value["product"] !== undefined ||
     value["variants"] !== undefined;
   const product = hasContent ? productFields(value["product"]) : null;
@@ -743,7 +783,9 @@ export async function updateAdminProduct(
       ? "publish_product"
       : action === "archive"
         ? "archive_product"
-        : "update_product";
+        : action === "restore"
+          ? "restore_product"
+          : "update_product";
   return transaction(pool, async (client) => {
     const op = await beginOperation(
       client,
@@ -774,6 +816,18 @@ export async function updateAdminProduct(
         409,
         "REVISION_CONFLICT",
         "The product revision changed. Review the current record.",
+      );
+    if (action === "publish" && locked.archived)
+      throw new AdminError(
+        409,
+        "RESTORE_REQUIRED",
+        "Restore the archived product to draft before publishing.",
+      );
+    if (action === "restore" && !locked.archived)
+      throw new AdminError(
+        409,
+        "RESTORE_NOT_NEEDED",
+        "Only an archived product can be restored to draft.",
       );
     await client.query(
       'SELECT variant_key FROM product_variants WHERE product_key=$1 ORDER BY variant_key COLLATE "C" FOR UPDATE',
@@ -1017,4 +1071,214 @@ export async function listAdminHistory(
       createdAt: new Date(row.createdAt).toISOString(),
     }));
   });
+}
+
+type DeletionResult = {
+  deleted: AdminDeletionReceipt;
+  product?: AdminProduct;
+  replayed: boolean;
+};
+
+async function deleteCatalogRecord(
+  pool: Pool,
+  productKey: unknown,
+  variantKey: string | null,
+  input: unknown,
+  actorId: string,
+): Promise<DeletionResult> {
+  const resourceKey = key(productKey, "key");
+  const value = object(input, "request");
+  only(value, ["operationId", "expectedRevision"], "request");
+  const identity = operation(value, actorId);
+  const revision = integer(value["expectedRevision"], "expectedRevision");
+  const action = variantKey === null ? "delete_product" : "delete_variant";
+  return transaction(pool, async (client) => {
+    const op = await beginOperation(client, identity, action, resourceKey, {
+      expectedRevision: revision,
+      variantKey,
+    });
+    if (op.result?.deleted)
+      return {
+        deleted: op.result.deleted,
+        ...(op.result.product
+          ? { product: await replayProduct(client, op.result.product) }
+          : {}),
+        replayed: true,
+      };
+    const locked = (
+      await client.query<{ revision: number; has_photo: boolean }>(
+        "SELECT revision,photo IS NOT NULL AS has_photo FROM products WHERE product_key=$1 FOR UPDATE",
+        [resourceKey],
+      )
+    ).rows[0];
+    if (!locked)
+      throw new AdminError(404, "NOT_FOUND", "The product does not exist.");
+    if (locked.revision !== revision || revision >= 2147483647)
+      throw new AdminError(
+        409,
+        "REVISION_CONFLICT",
+        "The product revision changed. Review its current record.",
+      );
+    await client.query(
+      'SELECT variant_key FROM product_variants WHERE product_key=$1 ORDER BY variant_key COLLATE "C" FOR UPDATE',
+      [resourceKey],
+    );
+    const before = (await readProduct(client, resourceKey))!;
+    if (
+      variantKey !== null &&
+      !before.variants.some((variant) => variant.key === variantKey)
+    )
+      throw new AdminError(
+        404,
+        "NOT_FOUND",
+        "The variant does not exist on this product.",
+      );
+    const blocked = (reason: string): never => {
+      throw new AdminError(
+        409,
+        "DELETE_BLOCKED",
+        `${reason} Archive instead to retain the records.`,
+      );
+    };
+    if (
+      variantKey !== null &&
+      before.status === "published" &&
+      !before.variants.some(
+        (variant) =>
+          variant.key !== variantKey &&
+          variant.active &&
+          variant.currency === "USD" &&
+          variant.priceMinor !== null &&
+          variant.priceMinor > 0,
+      )
+    )
+      blocked(
+        "A published product needs an active positive-price USD variant.",
+      );
+    if (
+      variantKey === null &&
+      (locked.has_photo ||
+        (
+          await client.query<{ used: boolean }>(
+            "SELECT EXISTS(SELECT 1 FROM admin_operations WHERE resource_key=$1 AND action IN ('attach_product_photo','remove_product_photo')) AS used",
+            [resourceKey],
+          )
+        ).rows[0]!.used)
+    )
+      blocked("A current photo or photo history prevents permanent deletion.");
+    const keys = before.variants
+      .filter((variant) => variantKey === null || variant.key === variantKey)
+      .map((variant) => variant.key);
+    const levels = await client.query<LevelRow>(
+      `SELECT ${levelFields} FROM inventory_levels s WHERE s.variant_key=ANY($1::text[])
+       ORDER BY s.variant_key COLLATE "C",s.location_key COLLATE "C" FOR UPDATE`,
+      [keys],
+    );
+    const locations = Number(
+      (await client.query("SELECT count(*) FROM inventory_locations")).rows[0]
+        .count,
+    );
+    if (levels.rows.length !== keys.length * locations)
+      blocked("Missing inventory balances cannot be verified as zero.");
+    if (
+      levels.rows.some(
+        (level) =>
+          level.onHand !== 0 ||
+          level.held !== 0 ||
+          level.committed !== 0 ||
+          level.unavailable !== 0,
+      )
+    )
+      blocked("Inventory balances and allocations must all be zero.");
+    const used = (
+      await client.query<{ used: boolean }>(
+        `SELECT EXISTS(SELECT 1 FROM inventory_movements WHERE variant_key=ANY($1::text[]))
+        OR EXISTS(SELECT 1 FROM order_lines WHERE variant_key=ANY($1::text[])) AS used`,
+        [keys],
+      )
+    ).rows[0]!.used;
+    if (used)
+      blocked(
+        "Movement history or order references prevent permanent deletion.",
+      );
+    await client.query(
+      "DELETE FROM inventory_levels WHERE variant_key=ANY($1::text[])",
+      [keys],
+    );
+    await client.query(
+      "DELETE FROM product_variants WHERE variant_key=ANY($1::text[])",
+      [keys],
+    );
+    let updated: AdminProduct | undefined;
+    if (variantKey === null)
+      await client.query("DELETE FROM products WHERE product_key=$1", [
+        resourceKey,
+      ]);
+    else {
+      await client.query(
+        "UPDATE products SET revision=revision+1 WHERE product_key=$1",
+        [resourceKey],
+      );
+      updated = (await readProduct(client, resourceKey))!;
+    }
+    const deleted: AdminDeletionReceipt = {
+      type: variantKey === null ? "product" : "variant",
+      key: variantKey ?? resourceKey,
+      productKey: resourceKey,
+      revision: revision + 1,
+    };
+    const after = updated ? receipt(updated) : null;
+    await recordOperation(
+      client,
+      identity,
+      action,
+      resourceKey,
+      op.hash,
+      receipt(before),
+      after,
+      { deleted, ...(after ? { product: after } : {}) },
+    );
+    return {
+      deleted,
+      ...(updated ? { product: updated } : {}),
+      replayed: false,
+    };
+  });
+}
+
+export async function deleteAdminProduct(
+  pool: Pool,
+  productKey: unknown,
+  input: unknown,
+  actorId: string,
+): Promise<{ deleted: AdminDeletionReceipt; replayed: boolean }> {
+  const result = await deleteCatalogRecord(
+    pool,
+    productKey,
+    null,
+    input,
+    actorId,
+  );
+  return { deleted: result.deleted, replayed: result.replayed };
+}
+
+export async function deleteAdminVariant(
+  pool: Pool,
+  productKey: unknown,
+  variantKey: unknown,
+  input: unknown,
+  actorId: string,
+): Promise<{
+  deleted: AdminDeletionReceipt;
+  product: AdminProduct;
+  replayed: boolean;
+}> {
+  const result = await deleteCatalogRecord(
+    pool,
+    productKey,
+    key(variantKey, "variantKey"),
+    input,
+    actorId,
+  );
+  return { ...result, product: result.product! };
 }

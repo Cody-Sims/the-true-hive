@@ -142,6 +142,7 @@ export interface CheckoutPersistence {
     pool: Pool,
     input: CheckoutIntent,
     locationKey: string,
+    buyerHash?: string,
   ): Promise<CheckoutReservation>;
   attachCheckoutSession(
     pool: Pool,
@@ -483,12 +484,16 @@ export function createCheckoutServices(dependencies: CheckoutDependencies) {
   }
 
   return {
-    async createCheckout(input: unknown): Promise<CheckoutResult> {
+    async createCheckout(
+      input: unknown,
+      buyerHash?: string,
+    ): Promise<CheckoutResult> {
       const intent = validateCheckoutIntent(input);
       const order = await persistence.reserveCheckout(
         pool,
         intent,
         config.locationKey,
+        buyerHash,
       );
       if (
         !validReservation(order) ||

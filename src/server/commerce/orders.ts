@@ -46,6 +46,8 @@ interface OrderRow extends QueryResultRow {
   paid_at: Date | null;
   picked_up_at: Date | null;
   reconciliation_reason: string | null;
+  buyer_hash: string | null;
+  buyer_access_expires_at: Date | null;
 }
 
 interface LineRow extends QueryResultRow {
@@ -218,7 +220,15 @@ export async function reserveCheckout(
   pool: Pool,
   input: unknown,
   locationKey: string,
+  buyerHash?: string,
 ): Promise<CheckoutReservation> {
+  if (
+    buyerHash !== undefined &&
+    (typeof buyerHash !== "string" || !/^[0-9a-f]{64}$/.test(buyerHash))
+  )
+    throw new OrderConflictError(
+      "Browser checkout access could not be verified.",
+    );
   const intent = validateCheckout(input, locationKey);
   const hash = requestHash({
     locationKey: intent.locationKey,
@@ -228,6 +238,15 @@ export async function reserveCheckout(
     await lockIdentity(client, intent.operationId);
     const old = await findOrder(client, intent.operationId, true);
     if (old) {
+      if (
+        old.buyer_hash &&
+        (old.buyer_hash !== buyerHash ||
+          !old.buyer_access_expires_at ||
+          old.buyer_access_expires_at.getTime() <= Date.now())
+      )
+        throw new OrderConflictError(
+          "This checkout requires its original authorized browser.",
+        );
       if (old.request_hash !== hash)
         throw new OrderConflictError(
           "This operation ID was used for a different checkout.",
@@ -328,10 +347,17 @@ export async function reserveCheckout(
     }
     const row = (
       await client.query<OrderRow>(
-        `INSERT INTO orders (order_key,request_hash,location_key,total_minor,checkout_expires_at)
-       VALUES ($1,$2,$3,$4,clock_timestamp() + interval '1 hour')
+        `INSERT INTO orders (order_key,request_hash,location_key,total_minor,checkout_expires_at,buyer_hash,buyer_access_expires_at)
+       VALUES ($1,$2,$3,$4,clock_timestamp() + interval '1 hour',$5,
+         CASE WHEN $5::text IS NULL THEN NULL ELSE CURRENT_TIMESTAMP + interval '720 hours' END)
        RETURNING *`,
-        [intent.operationId, hash, intent.locationKey, total],
+        [
+          intent.operationId,
+          hash,
+          intent.locationKey,
+          total,
+          buyerHash ?? null,
+        ],
       )
     ).rows[0]!;
     for (const line of lines) {

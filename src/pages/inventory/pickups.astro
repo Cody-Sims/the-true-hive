@@ -1,0 +1,16 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminPickup from "../../components/pickup/AdminPickup.astro";
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+---
+
+<AdminLayout title="Pickup scheduling">
+  <a slot="page-actions" href="/inventory/orders">
+    Orders &amp; physical pickup
+  </a>
+  <AdminPickup />
+</AdminLayout>
+<script>
+  import "../../client/pickup.ts";
+</script>

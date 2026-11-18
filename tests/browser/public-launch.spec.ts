@@ -48,9 +48,10 @@ test("global navigation stays focused while shopping links stay in the store", a
       await expect(
         header.getByRole("link", { name: "Store", exact: true }),
       ).toHaveAttribute("aria-current", "page");
-      await expect(
-        page.getByRole("main").locator('a[href="/contact"]'),
-      ).toHaveCount(0);
+      const contact = page.getByRole("main").locator('a[href="/contact"]');
+      if (path === "/checkout/return")
+        await expect(contact).toHaveText("Contact the shop");
+      else await expect(contact).toHaveCount(0);
     } else {
       await expect(store).toHaveCount(0);
       await expect(page.locator('a[href="/cart"]')).toHaveCount(0);

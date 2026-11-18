@@ -1,6 +1,7 @@
 import {
   getAdminProduct,
   updateAdminProduct,
+  deleteAdminProduct,
 } from "../../../../server/admin/catalog.ts";
 import { AdminError } from "../../../../server/admin/errors.ts";
 import { adminRoute } from "../../../../server/admin/http.ts";
@@ -15,5 +16,11 @@ export const GET = adminRoute(async (pool, _input, context) => {
 export const PUT = adminRoute(
   async (pool, input, context, admin) =>
     updateAdminProduct(pool, context.params["key"], input, admin.actorId),
+  true,
+);
+
+export const DELETE = adminRoute(
+  async (pool, input, context, admin) =>
+    deleteAdminProduct(pool, context.params["key"], input, admin.actorId),
   true,
 );

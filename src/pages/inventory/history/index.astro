@@ -36,11 +36,15 @@ function href(next: number) {
 ---
 
 <AdminLayout title="Stock history">
-  <p>
+  <a href="/inventory/products" slot="page-actions">
+    Back to products
+  </a>
+  <p class="admin-page-intro">
     Private, append-only counted-stock history. Audit text is displayed as text,
     never rendered as HTML.
   </p>
-  <form method="get" class="admin-form">
+  <form method="get" class="admin-form admin-panel">
+    <p class="admin-eyebrow">Find an audited movement</p>
     <div class="admin-grid">
       <label>
         Variant key (optional){" "}

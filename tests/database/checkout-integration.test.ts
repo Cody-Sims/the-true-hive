@@ -13,6 +13,7 @@ import {
 } from "../../src/server/commerce/stripe.ts";
 import { createCheckoutHandler } from "../../src/pages/api/checkout.ts";
 import { readJsonBody } from "../../src/server/http-input.ts";
+import { buyerHeaders } from "../fixtures/buyer.ts";
 
 const connection = process.env["TEST_DATABASE_URL"];
 assert(connection, "Use the isolated true_hive_test database.");
@@ -187,11 +188,12 @@ function provider(dropFirstResponse = false) {
 
 test("a lost create response retries the same provider intent without duplicating a hold or session", async () => {
   const input = intent();
+  const buyerHash = "b".repeat(64);
   const fixture = provider(true);
-  await assert.rejects(fixture.services.createCheckout(input));
+  await assert.rejects(fixture.services.createCheckout(input, buyerHash));
   await pool.query("UPDATE storefront_settings SET purchases_enabled=false");
-  const retry = await fixture.services.createCheckout(input);
-  const again = await fixture.services.createCheckout(input);
+  const retry = await fixture.services.createCheckout(input, buyerHash);
+  const again = await fixture.services.createCheckout(input, buyerHash);
   assert("checkoutUrl" in retry && "checkoutUrl" in again);
   assert.equal(retry.checkoutUrl, again.checkoutUrl);
   assert.equal(fixture.sessions.size, 1);
@@ -205,6 +207,10 @@ test("a lost create response retries the same provider intent without duplicatin
   assert.equal(
     (await pool.query("SELECT count(*)::int AS n FROM orders")).rows[0].n,
     1,
+  );
+  assert.equal(
+    (await pool.query("SELECT buyer_hash FROM orders")).rows[0].buyer_hash,
+    buyerHash,
   );
 });
 
@@ -314,6 +320,7 @@ test("real stock conflicts reach the public checkout as conflicts, not uncertain
       headers: {
         Origin: config.siteOrigin,
         "Content-Type": "application/json",
+        ...buyerHeaders(config.siteOrigin),
       },
       body: JSON.stringify(intent()),
     }),
@@ -342,6 +349,7 @@ test("a closed store returns STORE_CLOSED with no provider call, stock mutation 
       headers: {
         Origin: config.siteOrigin,
         "Content-Type": "application/json",
+        ...buyerHeaders(config.siteOrigin),
       },
       body: JSON.stringify(input),
     }),

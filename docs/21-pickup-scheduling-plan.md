@@ -1,12 +1,17 @@
 # Specification: pickup scheduling after checkout
 
-Status: **draft / production policies not approved**
+Status: **implementation scope approved / production policies not approved**
 
-Version: 1
+Version: 2
 
-Date: 2026-11-17
+Date: 2026-11-18
 
-Scope approved for this delivery: a plan and fictional, public review prototypes.
+Agreement: the owner explicitly requested implementation of both the Workbench
+editor and pickup scheduling, pickup management inside inventory, and cohesive
+remaining inventory pages on 2026-11-18. The Workbench uses the subsequently
+requested whole-page scrolling, not its earlier independently scrolling form.
+This approves technical integration, not guessed operating hours, private
+directions, refund rules, live payments or new paid providers.
 
 ## Objective
 
@@ -18,7 +23,8 @@ payment, inventory or physical-handoff authority.
 [Customer prototype](../prototypes/pickup/index.html?view=customer) /
 [Operator prototype](../prototypes/pickup/index.html?view=operator).
 Changes connect within the same tab; reloading resets the fictional data.
-These are not real reservations, directions or notifications.
+Those review pages remain fictional. The native implementation must use real
+authenticated services, not the prototype's fixtures or fixed December offset.
 
 ## Users and Use Cases
 
@@ -31,9 +37,21 @@ These are not real reservations, directions or notifications.
 
 ## Requirements
 
+Approved inventory integration:
+
+| ID | Behavior | Observable acceptance |
+|---|---|---|
+| W1 | Use the Workbench for native Add/Edit product pages, with one document scrollbar. | Form and customer preview move together; section shortcuts scroll the document; existing product keys, SKUs and quantities remain authoritative. |
+| W2 | Keep a mobile preview modal and a card-to-product-detail preview based on the current form. | Current title, image, formats, USD prices, details and ingredients are visible; preview never adds to a cart, uploads or publishes. |
+| W3 | Restore bounded, account/product-scoped editable drafts on the inventory origin. | Never persist credentials, buyer data, quantities, stock/history, photo bytes or filenames; stale revisions and unverified saves cannot silently overwrite a record or restart a mutation. |
+| W4 | Expose distinct archive/restore/delete actions with server enforcement. | Archive remains reversible; permanent deletion rejects balances, movements, order/photo references or a resulting invalid published product, and records an idempotent audit receipt. |
+| W5 | Preserve existing save/publication/physical-stock confirmation boundaries. | Saving never publishes implicitly, restoring an archived product returns it to draft, and preview/draft changes never change stock. |
+| I1 | Make products, locations, store settings, orders, history, labels/photos and login visually cohesive. | Shared navigation, page headers, cards, controls and responsive layout; no lost actions, unsafe unknown-as-zero states or authorization bypass. |
+| I2 | Make pickup management part of the private inventory workspace. | A navigation entry exposes site hours, date exceptions, impact review, appointments, paid-unscheduled/help queues and operator-assisted arrangements. |
+
 Functional:
 
-| ID | Proposed behavior | Observable acceptance |
+| ID | Behavior | Observable acceptance |
 |---|---|---|
 | R1 | Offer booking only for a server-verified eligible paid order. A redirect is not payment evidence. | Pending, forged, expired, wrong-order and already-collected contexts cannot create or change a booking. |
 | R2 | Choose an approved pickup site, date and available time, then confirm explicit details. | Changing location/date clears the old time; confirmation shows the site, full date, start/end and named timezone. |
@@ -60,14 +78,17 @@ Non-functional:
 
 ## Non-Goals
 
-This delivery does not implement a booking backend, migrations, live payments,
-refunds, shipping, delivery, tours, calendar-provider integration, SMS, email
-delivery, real addresses, actual opening hours or a new admin hostname.
-It does not select or deploy an inventory-editor design.
-The prototype has one weekly window per day and two illustrative December weeks;
-it is not a production recurrence, DST or concurrency engine.
+No live payments, automatic refunds, shipping, delivery, tours, calendar-provider
+integration, SMS/email delivery, invented addresses/hours or new admin hostname.
+No prototype fixtures become operational records. Sites and hours start empty;
+customer scheduling starts disabled until an authorized operator configures and
+enables it. Cancellation/refund and automated cross-device recovery policies are
+not inferred from approval of the design.
 
 ## Existing-System Constraints
+
+The following is the pre-integration baseline; new scheduling contracts must
+preserve its order and stock authority.
 
 - `src/domain/admin.ts:62-82` defines order states and `AdminOrder.locationKey`;
   there are no appointment DTOs. `src/server/commerce/orders.ts:217-356`
@@ -77,8 +98,9 @@ it is not a production recurrence, DST or concurrency engine.
 - Payment settlement is separate (`orders.ts:443-523`). Actual handoff uses
   `recordOrderPickup` (`orders.ts:747` onward) with inventory locks and movements.
   A calendar confirmation must not call that operation.
-- `src/pages/checkout/return.astro` is currently a generic test-checkout return,
-  not an authenticated order-management page.
+- Before integration, `src/pages/checkout/return.astro` was a generic test-checkout
+  return. The native page now reads scoped payment/appointment context; the
+  redirect itself still grants no paid-order authority.
 - `src/server/commerce/config.ts:7-23` permits only disabled or Stripe-test
   checkout. Existing purchase admission, host separation, MFA and test-only
   restrictions remain in force. The operator implementation belongs in the
@@ -86,25 +108,32 @@ it is not a production recurrence, DST or concurrency engine.
 
 ## Interfaces and Data Contracts
 
-Proposed, not implemented:
+Implementation contract:
 
 - `pickup_sites`: opaque key, approved public label/area, active flag, IANA
-  timezone, private directions reference and revision. Explicitly map allowed
+  timezone, private directions and revision. Explicitly map allowed
   stock-authority locations to sites; selection never moves stock.
-- `pickup_availability`: site key, weekly local-time windows, dated overrides
-  or closure, notice/horizon/duration/capacity, effective date and revision.
+- Availability policy is stored on `pickup_sites`: weekly local-time windows,
+  dated overrides or closure, notice/horizon/duration/capacity and revision.
   Validate ordered, non-overlapping windows; reject unsupported overnight
   ranges explicitly rather than guessing.
 - `pickup_bookings`: booking/order/site keys, UTC start/end, timezone and
-  public-label snapshot, revision, actor and separate booking status
-  (`scheduled`, `needs_review`, `cancelled`, `completed`). Preserve change
-  history and enforce at most one current booking per order. A needs-review
-  appointment retains its capacity until explicitly resolved.
-- Proposed read endpoint: scoped `GET /api/pickup/availability?site=...&from=...`;
-  bounded date span and eligible sites; opaque slot ID, UTC interval, display
-  timezone and availability revision. No buyer data in public responses.
-- Proposed confirm/reschedule endpoint: scoped `POST /api/pickup/booking`
-  with slot ID, expected order/booking/availability revisions and UUID
+  public-label/cutoff/travel snapshot, revision and separate booking status
+  (`scheduled`, `needs_review`). `completed` is derived from the order's actual
+  physical pickup, never a calendar mutation. Immutable operations record the
+  actor/change history. Enforce one current booking per order; needs-review
+  appointments retain capacity until explicitly resolved.
+- `GET /api/pickup/context` returns the latest ten browser-owned orders and a
+  memory-only CSRF token. Private directions are returned only for a paid,
+  scheduled appointment whose end has not passed and whose site remains
+  approved for the order. The 30-day order-access limit still applies.
+- Scoped `GET /api/pickup/availability?orderId=...&siteKey=...&from=YYYY-MM-DD&days=1`
+  accepts at most seven days; returns opaque slot IDs, canonical UTC intervals,
+  timezone/offset labels and settings/order/booking/site revisions. Public site
+  projections never contain private directions or stock-location keys/counts.
+- Scoped `POST /api/pickup/booking` accepts `orderId`, `siteKey`, `date`, `slotId`,
+  `expectedOrderRevision`, `expectedBookingRevision` (nullable),
+  `expectedSiteRevision`, `expectedSettingsRevision` and UUID `operationId`
   idempotency key. Resolve canonical times/site on the server, lock the order
   and relevant capacity deterministically, validate eligibility, then commit
   the replacement and old-slot release in one transaction.
@@ -112,17 +141,53 @@ Proposed, not implemented:
   unauthorized context, stale/full slot, revised booking and temporarily
   unavailable service. A conflict refreshes choices without discarding the
   current appointment.
-- Proposed private `/inventory/pickups` and hours controls reuse existing
+- `POST /api/pickup/help` accepts UUID `operationId`, `orderId` and expected
+  order/booking revisions, storing a durable operator-queue flag. It works for
+  eligible paid orders even when self-service is disabled or no time is suitable;
+  it does not send an email or promise a response time.
+- Private `/inventory/pickups` and `/api/admin/pickup` dashboard/hours controls reuse existing
   authentication, MFA, membership checks, CSRF, audit and revisions. Mutating
   availability must serialize against booking writers, not merely hide a slot
   in the browser.
+- Private endpoints add `sites` (POST), `sites/[key]` (GET/PUT), `settings`
+  (POST), `availability` (GET), `booking` (POST) and `access` (POST, immutable
+  browser-access revocation). Site updates require the current revision and,
+  for affected appointments, exact `impactAck` from a 409 impact review.
+  Settings require a revision and explicit enabled value. Admin actors come
+  only from the verified MFA session, never JSON.
+
+Buyer access is established by a bounded, same-origin pre-checkout request
+before stock can be reserved. A host-only HttpOnly nonce is then bound, as a
+hash, only when an order is first created. Losing a checkout response must not
+lose the already-established browser access or change the frozen checkout
+intent. Existing legacy orders are not claimable merely by supplying their ID.
+The existing return URL may list only the latest ten orders bound to that
+browser; no access token is placed in a URL or browser storage.
+
+Technical access is limited to 30 days from order creation, with a maximum
+28-calendar-day booking window. This is a credential-expiry limit, not a data
+deletion or refund policy. Operators can arrange eligible paid orders inside
+inventory if the buyer loses same-browser access. No email account or provider
+is introduced.
+
+All sites share one operator resource initially. Different-site appointments
+include configured travel buffers; increasing buffers/capacity restrictions or
+changing hours requires impact review. Confirmation of an hours change must
+acknowledge the exact, transactionally recomputed affected set/revisions.
+Canonical UTC intervals, not a browser's display text, determine occupancy.
+
+Site timezone, notice, booking window, slot length/capacity, rescheduling cutoff,
+travel buffer and allowed fulfillment-stock locations require explicit operator
+configuration. Zero notice/buffer/cutoff is allowed only as an explicit setting.
+Private arrival instructions stay separate from the public site label/area.
 
 ## Security and Privacy
 
 Use server-verified paid-order authority, not a query-string order ID, guessed
 reference, browser price, success flag or unsigned checkout redirect.
-Proposed same-browser access uses a narrowly scoped, expiring HttpOnly secure
-session bound to the checkout/order; verify the exact design before implementation.
+Same-browser access uses a narrowly scoped, expiring HttpOnly secure
+session bound to the checkout/order. Establish it before creating any stock hold,
+validate strict same-origin JSON mutations, and keep only hashes server-side.
 Cross-device recovery and management-link delivery remain owner decisions.
 Never put order access tokens in analytics, referrers, ordinary logs or public
 prototype URLs. Apply CSRF and same-origin checks, rate limits and enumeration
@@ -170,7 +235,7 @@ database concurrency, notification delivery, real availability or DST behavior.
 
 ## Open Questions
 
-Owner decisions required before production implementation:
+Owner configuration and decisions required before operational customer launch:
 
 1. Which sites are approved, what may be shown publicly, and when are private
    directions released? Complete the arrival/access walkthrough privately.
@@ -204,17 +269,21 @@ operator/travel interval or enforce non-overlapping service windows.
 
 ## Rollout and Rollback
 
-Proposed execution order after policy agreement:
+Implementation may proceed under the explicit scope agreement above. Real
+operating values remain required configuration, not consent by omission.
+Delivery sequence:
 
 | ID / size | Owner and exclusive boundary | Depends on | Completion evidence |
 |---|---|---|---|
-| P1 / S | Owner: private site/policy approval; no code mutation | None | Signed-off decisions above, approved public/private copy and recovery owner |
+| P1 / S | Integration owner: record scope agreement and safe unconfigured defaults | None | This version; no fixtures/hours seeded, existing live-payment restrictions retained |
+| W0 / M | Inventory UI: shared layout, navigation, headers, panels and safe catalog actions | P1 | Authenticated responsive/a11y checks across inventory; DB tests for guarded restore/delete and audit replay |
+| W1 / M | Product UI: real Workbench, current-data previews and bounded editable drafts | W0 | Native editor browser tests for shared scrolling, preview, restore/clear/conflicts, saving and publication |
 | P2 / M | Backend: domain contracts, additive migration and scoped paid-order access | P1 | `npm run test:db` plus new cross-order, payment, expiry, CSRF and recovery authorization tests on an isolated DB |
 | P3 / M | Availability service: per-site IANA rules, exceptions and shared-operator/travel intervals | P2 | Deterministic DST, notice/horizon, closure and cross-site occupancy tests; bounded slot responses without private data |
 | P4 / M | Booking service: atomic confirm/reschedule, retries, audit and hours-impact transaction | P3 | `npm run test:db`; simultaneous last-slot, booking-versus-closure, retry and failed-reschedule tests; unchanged order/stock snapshots |
 | P5 / M | Customer UI: scoped checkout return and pickup management routes | P4 contracts | `npm run test:e2e -- --grep pickup`; pending, full, conflict, receipt and reschedule flows |
 | P6 / M | Operator UI: private hours, closures, impact review and appointment queue | P4 contracts | Same browser selector plus MFA/revocation/revision tests; no silent booking loss |
-| P7 / M | Release coordinator: manifests, documentation and staged integration | P5, P6 | `npm run format:check`, `npm run check`, `npm test`, `npm run test:db`, `npm run build:site`, `npm run check:site-artifact`, full `npm run test:e2e`; protected CI and isolated hosted rehearsal |
+| P7 / M | Release coordinator: manifests, documentation and staged integration | W1, P5, P6 | `npm run format:check`, `npm run check`, `npm test`, `npm run test:db`, `npm run build:site`, `npm run check:site-artifact`, full `npm run test:e2e`; protected CI and isolated hosted rehearsal |
 
 P5 and P6 may proceed in parallel only after P4 contracts stabilize, with disjoint
 UI files and separate validation ports/databases. One integration owner serializes

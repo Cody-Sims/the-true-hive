@@ -26,7 +26,7 @@ const path = Astro.url.pathname;
     <meta name="csrf-token" content={Astro.locals.csrfToken} />
     <title>{title} | True Hive inventory</title>
   </head>
-  <body class:list={{ "admin-inventory": compact }}>
+  <body class:list={["admin-app", { "admin-inventory": compact }]}>
     <a class="admin-skip" href="#main">
       Skip to inventory
     </a>

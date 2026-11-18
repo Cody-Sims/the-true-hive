@@ -1,0 +1,226 @@
+.pickup-app {
+  --pickup-ink: #263d35;
+  --pickup-muted: #52635a;
+  --pickup-line: #c9cbb9;
+  --pickup-paper: #fffdf6;
+  color: var(--pickup-ink);
+  max-width: 76rem;
+  margin: 0 auto;
+  padding-block: 1.5rem 4rem;
+  line-height: 1.6;
+}
+.pickup-app * {
+  box-sizing: border-box;
+}
+.pickup-app [hidden] {
+  display: none !important;
+}
+.pickup-intro {
+  max-width: 54rem;
+  margin-bottom: 1.5rem;
+}
+.pickup-intro h1,
+.pickup-intro h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  line-height: 1.12;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  margin: 0.4rem 0 1rem;
+  text-wrap: balance;
+}
+.pickup-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.pickup-app h3 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 1.65rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.25;
+}
+.pickup-app h4 {
+  font-size: 1rem;
+  margin-block: 1rem 0.5rem;
+}
+.pickup-app p {
+  margin-block: 0.5rem 1rem;
+}
+.pickup-app a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+}
+.pickup-toolbar,
+.pickup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin-block: 1rem;
+}
+.pickup-app button {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--pickup-ink);
+  background: var(--pickup-ink);
+  color: #fffdf6;
+  border-radius: 0.4rem;
+  font: inherit;
+  cursor: pointer;
+}
+.pickup-app button.pickup-secondary {
+  background: transparent;
+  color: var(--pickup-ink);
+}
+.pickup-app button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pickup-app :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #738474;
+  border-radius: 0.3rem;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  background: #fffef9;
+  color: var(--pickup-ink);
+}
+.pickup-app :is(input[type="checkbox"], input[type="radio"]) {
+  width: 1.2rem;
+  min-height: 1.2rem;
+  accent-color: var(--pickup-ink);
+  flex-shrink: 0;
+}
+.pickup-app label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+  min-width: 0;
+}
+.pickup-app .pickup-check {
+  display: flex;
+  align-items: start;
+  gap: 0.65rem;
+  font-weight: 400;
+}
+.pickup-app :focus-visible {
+  outline: 3px solid #aa631e;
+  outline-offset: 3px;
+}
+.pickup-card,
+.pickup-notice,
+.pickup-feedback:not(:empty) {
+  border: 1px solid var(--pickup-line);
+  border-radius: 0.75rem;
+  padding: clamp(1rem, 2.5vw, 1.8rem);
+  margin-block: 1rem;
+  background: var(--pickup-paper);
+  overflow-wrap: anywhere;
+}
+.pickup-notice {
+  background: #efe7cc;
+}
+.pickup-feedback {
+  white-space: pre-line;
+}
+.pickup-feedback[data-tone="error"] {
+  border-color: #9c3e24;
+  background: #fff1e9;
+}
+.pickup-app fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.pickup-card form {
+  margin-block: 1rem;
+}
+.pickup-app legend {
+  font-weight: 700;
+  margin-bottom: 0.65rem;
+}
+.pickup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.pickup-grid > .pickup-wide {
+  grid-column: 1 / -1;
+}
+.pickup-muted {
+  color: var(--pickup-muted);
+  font-size: 0.92rem;
+}
+.pickup-order-id {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+.pickup-badge {
+  display: inline-block;
+  border: 1px solid #9fa997;
+  border-radius: 2rem;
+  padding: 0.1rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.pickup-receipt {
+  padding: 1rem;
+  background: #eef0df;
+  border-left: 4px solid #526c50;
+  margin-block: 1rem;
+}
+.pickup-instructions {
+  white-space: pre-wrap;
+}
+.pickup-day {
+  border-top: 1px solid var(--pickup-line);
+  padding-block: 0.75rem;
+}
+.pickup-window {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: end;
+  margin-block: 0.75rem;
+}
+.pickup-window button {
+  margin: 0;
+}
+.pickup-app details {
+  border-top: 1px solid var(--pickup-line);
+  padding-block: 0.75rem;
+}
+.pickup-app summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding-block: 0.4rem;
+}
+.pickup-customer {
+  max-width: 62rem;
+  padding-top: clamp(2rem, 6vw, 5rem);
+}
+.pickup-app ul {
+  padding-left: 1.25rem;
+}
+@media (max-width: 650px) {
+  .pickup-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pickup-window {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .pickup-window button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .pickup-app button {
+    max-width: 100%;
+  }
+}

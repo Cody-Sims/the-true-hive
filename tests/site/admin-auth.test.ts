@@ -96,6 +96,37 @@ function fixture(overrides: Partial<VerifiedIdentity> = {}) {
   };
 }
 
+test("only the explicit buyer endpoints bypass administrator auth while retaining the default-private boundary", async () => {
+  const f = fixture();
+  const boundary = createAdminBoundary(config, f.auth);
+  for (const [path, method] of [
+    ["/api/checkout/access", "POST"],
+    ["/api/pickup/context", "GET"],
+    ["/api/pickup/availability", "GET"],
+    ["/api/pickup/booking", "POST"],
+    ["/api/pickup/help", "POST"],
+  ] as const) {
+    const result = await boundary.gate(
+      new Request(`${config.origin}${path}`, { method }),
+      {},
+    );
+    assert.equal(result.response, null, path);
+  }
+  for (const path of [
+    "/api/pickup/internal",
+    "/api/pickup/context/extra",
+    "/api/checkout/access/extra",
+    "/api/admin/pickup",
+  ]) {
+    const result = await boundary.gate(
+      new Request(`${config.origin}${path}`),
+      {},
+    );
+    assert.equal(result.response?.status, 401, path);
+  }
+  assert.equal(f.writes(), 0);
+});
+
 test("login rejects first factor, wrong project, unverified email, stale and future auth without writes", async () => {
   for (const override of [
     { firebase: { sign_in_provider: "google.com" } },

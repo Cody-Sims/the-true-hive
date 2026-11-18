@@ -19,7 +19,13 @@ const publicConfig = JSON.stringify({
   .replaceAll("&", "\\u0026");
 ---
 
-<section data-admin-login data-csrf-token={csrfToken} class="admin-panel">
+<section
+  data-admin-login
+  data-csrf-token={csrfToken}
+  class="admin-panel admin-login-card"
+>
+  <p class="admin-eyebrow">A private place to keep things moving</p>
+  <h2>Welcome to your workspace.</h2>
   <script
     is:inline
     type="application/json"

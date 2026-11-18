@@ -107,6 +107,8 @@ test("002 preserves applied 001 checksums, stable keys and append-only legacy re
       "004_product_ingredients.sql",
       "005_storefront_settings.sql",
       "006_team_board.sql",
+      "007_catalog_record_actions.sql",
+      "008_pickup_scheduling.sql",
     ]);
     assert.deepEqual(await migrateDatabase(pool), []);
     assert.equal(
@@ -180,6 +182,8 @@ test("new allocation and archive constraints reject invalid counts with overflow
     "004_product_ingredients.sql",
     "005_storefront_settings.sql",
     "006_team_board.sql",
+    "007_catalog_record_actions.sql",
+    "008_pickup_scheduling.sql",
   ]);
   await fixture();
   for (const sql of [
@@ -249,7 +253,7 @@ test("admin records bound identity, session hashes and append-only operation pay
   );
   for (const [actor, action, resource, requestHash, result] of [
     ["user@example.com", "create_product", "product", hash, "{}"],
-    ["operator:test", "delete_product", "product", hash, "{}"],
+    ["operator:test", "unregistered_action", "product", hash, "{}"],
     ["operator:test", "create_product", "x".repeat(81), hash, "{}"],
     ["operator:test", "create_product", "product", "not-a-hash", "{}"],
     [

@@ -5,6 +5,13 @@ export interface AdminActor {
   actorId: string;
 }
 
+export interface AdminDeletionReceipt {
+  type: "product" | "variant";
+  key: string;
+  productKey: string;
+  revision: number;
+}
+
 export interface AdminLocation {
   key: string;
   name: string;

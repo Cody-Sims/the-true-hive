@@ -2,7 +2,7 @@
 
 **The Apiary Market application foundation, ten preserved design directions, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
-Updated **November 15, 2026**. Status: **inventory-backed storefront and private inventory administration**. Only Stripe test checkout is implemented; real payments are disabled.
+Updated **November 18, 2026**. Status: **inventory-backed storefront, native Workbench and private pickup scheduling**. Only Stripe test checkout is implemented; real payments are disabled.
 
 ## Build the actual site
 
@@ -50,16 +50,40 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
-The new [private pickup studio](https://thetruehive.com/prototypes/pickup/)
+Native Add/Edit now uses the selected **Workbench**: form and customer preview
+share the page scrollbar, phones open a card/product-detail preview modal, and
+bounded account/product-scoped local drafts recover editable fields without
+storing photos, stock, SKUs or credentials. Archive, restore-to-draft and guarded
+permanent product/variant deletion are distinct audited actions. Products,
+locations, orders, history, store settings and sign-in share the inventory shell.
+
+**Pickup** is part of private inventory at `/inventory/pickups`. Authorized
+operators configure sites, IANA timezones, stock-location mappings, weekly
+windows, date overrides, notice/horizon, capacity, cutoff and travel policies.
+Scheduling starts **disabled with no sites or hours**. Hours changes require
+review of the exact affected appointments, which remain reserved and marked
+for review. Paid-unscheduled/help queues and operator-assisted arrangements
+remain available; scheduling never changes stock or marks an order collected.
+
+The checkout return page reads server-verified payment and same-browser access
+before offering location/date/time selection, confirmation, rescheduling or a
+durable help request. Private directions appear only for an authorized paid,
+scheduled, not-ended appointment. Lost browser access and legacy orders need
+operator assistance, not a public order-ID claim. Apply migrations **007/008**
+and the exact private runtime grants **before deploying** this code; see the
+[native rollout runbook](docs/14-development-and-operations.md#native-workbench-and-pickup-rollout).
+No live payments, actual opening hours or notification provider are enabled.
+
+The preserved [private pickup studio](https://thetruehive.com/prototypes/pickup/)
 connects a fictional post-checkout location/date/time flow with an operator
 workspace for per-location weekly hours, notice/horizon/slot/capacity examples,
 date closures/overrides and impacted appointments. Try booking, rescheduling,
 last-slot conflicts, pending payment and no-availability recovery. Changes
 connect within the same tab and reset on reload; no customer records, directions,
 backend writes, payment, stock or notifications are involved.
-The [draft scheduling plan](docs/21-pickup-scheduling-plan.md) separates appointment
+The [approved integration plan](docs/21-pickup-scheduling-plan.md) separates appointment
 sites from inventory authority and records implementation phases and business
-decisions still needing approval. The prototype is not a real booking system.
+decisions still needing approval. The prototype is not the native booking system.
 
 **01 / Workbench** in the [three-direction comparison](https://thetruehive.com/prototypes/editor/index.html?design=workbench&mode=edit)
 now uses one page scrollbar: the form and customer/review column move together,
@@ -117,7 +141,8 @@ photo preview, publication review, and explicit **Archive variant**, **Restore
 variant**, and **Delete variant** controls with confirmations and stock/history
 safeguards. Nothing is sent to inventory or uploaded.
 Workbench stores local text drafts only; Guided and Variant desk remain
-memory-only. These are proposals, not a deployed redesign of the live editor.
+memory-only. These comparison pages remain fictional; native inventory uses
+the selected Workbench described above.
 The preview landing page now prioritizes this comparison; older concepts are
 consolidated in the [design archive](prototypes/archive.html) and their existing
 direct URLs remain available.
