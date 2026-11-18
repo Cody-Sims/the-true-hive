@@ -25,7 +25,7 @@ export function decodeDraft(raw, mode) {
       || !p || !text(p.title, 160) || !text(p.summary, 1000) || !text(p.details, 24011)
       || !text(p.ingredients, 8192) || !["soap", "honey", "candles", "gifts"].includes(p.category)
       || !["draft", "published", "archived"].includes(p.status) || !Array.isArray(p.variants) || p.variants.length > 50
-      || p.variants.some((v) => !v || !/^demo-[1-9]\d{0,5}$/.test(v.id) || !text(v.label, 160) || !text(v.price, 32) || typeof v.active !== "boolean")
+      || p.variants.some((v) => !v || typeof v.id !== "string" || !/^demo-[1-9]\d{0,5}$/.test(v.id) || !text(v.label, 160) || !text(v.price, 32) || typeof v.active !== "boolean")
       || new Set(p.variants.map((v) => v.id)).size !== p.variants.length) throw new Error();
     const baseline = exampleProduct(mode);
     return {

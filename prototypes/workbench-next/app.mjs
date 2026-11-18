@@ -75,12 +75,15 @@ function fillFields() {
   for (const field of form.querySelectorAll("[data-field]")) field.value = product[field.dataset.field] || "";
   renderVariants();
 }
+function publicationIssues() {
+  return [...productIssues(product, true), ...(product.status === "archived" ? ["Restore this product to draft before publishing."] : [])];
+}
 function update() {
   document.querySelector("#desktop-card").innerHTML = compactCard(product, source());
   document.querySelector("#local-photo").src = source();
   document.querySelector("[data-remove-photo]").hidden = !photoUrl && !missingPhoto;
   document.querySelector("#photo-reminder").hidden = !missingPhoto;
-  const issues = productIssues(product, true);
+  const issues = publicationIssues();
   document.querySelector("#readiness-summary").textContent = issues.length ? `${issues.length} details to review before demo publication.` : `${product.variants.filter((v) => v.active).length} active formats. Essentials are ready to review.`;
   document.querySelector("[data-save-state]").textContent = product.status === "published" ? "Visible in this demo" : product.status === "archived" ? "Archived in demo" : "Draft / not on storefront";
   document.querySelector("[data-product-archive]").textContent = product.status === "archived" ? "Restore product to draft" : "Archive product";
@@ -129,7 +132,7 @@ function confirmAction(title, description, label, action) {
 actionDialog.addEventListener("close", () => { const action = pendingAction; pendingAction = null; if (actionDialog.returnValue === "confirm") action?.(); });
 
 function reviewPublication(requireValid = false) {
-  const issues = productIssues(product, true);
+  const issues = publicationIssues();
   if (requireValid && issues.length) { announce(issues.join(" ")); return; }
   document.querySelector("#publish-summary").innerHTML = `<p><strong>${e(product.title || "Unnamed product")}</strong> / ${product.variants.filter((v) => v.active).length} active formats</p>${issues.length ? `<ul>${issues.map((issue) => `<li>${e(issue)}</li>`).join("")}</ul>` : "<p>The fictional product has the essentials for publication.</p>"}`;
   document.querySelector("#confirm-publish").disabled = issues.length > 0;
@@ -137,7 +140,7 @@ function reviewPublication(requireValid = false) {
   publishDialog.showModal();
 }
 publishDialog.addEventListener("close", () => {
-  if (publishDialog.returnValue !== "confirm" || productIssues(product, true).length) return;
+  if (publishDialog.returnValue !== "confirm" || publicationIssues().length) return;
   product.status = "published";
   changed();
   persist();

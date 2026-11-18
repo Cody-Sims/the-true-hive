@@ -39,6 +39,7 @@ test("corrupt, future, unbounded and duplicate-ID drafts are rejected rather tha
   const valid = JSON.parse(encodeDraft(exampleProduct(), "edit", false, 1));
   for (const raw of ["{", "x".repeat(131073), JSON.stringify({ ...valid, version: 99 }),
     JSON.stringify({ ...valid, product: { ...valid.product, title: "x".repeat(161) } }),
+    JSON.stringify({ ...valid, product: { ...valid.product, variants: [{ ...valid.product.variants[0], id: ["demo-1"] }] } }),
     JSON.stringify({ ...valid, product: { ...valid.product, variants: [valid.product.variants[0], valid.product.variants[0]] } })])
     assert.equal(decodeDraft(raw, "edit").state, "invalid");
 });

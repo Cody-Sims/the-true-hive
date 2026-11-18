@@ -8,6 +8,55 @@ const key = (mode = "edit") => `true-hive:prototype:workbench:v1:${mode}`;
 const url = (mode = "edit") =>
   `${root}index.html?design=workbench&mode=${mode}`;
 
+test("archived Workbench products cannot publish through review or a forged dialog confirmation", async ({
+  page,
+}) => {
+  await page.goto(url());
+  await page.locator(".product-actions summary").click();
+  await page
+    .getByRole("button", { name: "Archive product", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Archive product", exact: true })
+    .click();
+  await expect(page.locator("[data-save-state]")).toHaveText(
+    "Archived in demo",
+  );
+  await page.getByRole("button", { name: "Review publication" }).click();
+  const disabled = await page
+    .getByRole("button", { name: "Confirm demo publication" })
+    .isDisabled();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const dialog =
+          document.querySelector<HTMLDialogElement>("#publish-review")!;
+        dialog.addEventListener("close", () => resolve(), { once: true });
+        dialog.close("confirm");
+      }),
+  );
+  await expect(page.locator("[data-save-state]")).toHaveText(
+    "Archived in demo",
+  );
+  expect(disabled).toBe(true);
+  await page
+    .getByRole("button", { name: "Restore product to draft", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Restore to draft", exact: true })
+    .click();
+  await expect(page.locator("[data-save-state]")).toHaveText(
+    "Draft / not on storefront",
+  );
+  await page.getByRole("button", { name: "Review publication" }).click();
+  await page.getByRole("button", { name: "Confirm demo publication" }).click();
+  await expect(page.locator("[data-save-state]")).toHaveText(
+    "Visible in this demo",
+  );
+});
+
 test("Workbench autosaves incomplete text and variants, restores on reload and isolates Add/Edit drafts", async ({
   page,
 }) => {
