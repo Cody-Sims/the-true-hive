@@ -4,6 +4,7 @@
 
 ### Added
 
+- A direct-link, mobile-friendly team sprint board on the main website, with read-only task details and no private backlog data.
 - Connected fictional post-checkout pickup and operator-hours prototypes, with per-location windows, date exceptions, confirmation/rescheduling, conflict recovery and affected-booking review; add an explicitly draft implementation plan without enabling real scheduling.
 
 - Improve Workbench with a viewport-fit customer/review rail, mobile preview modal, section shortcuts and device-local draft autosave/restore, with clear/reset and storage/cross-tab warnings; photos and real inventory are never persisted.

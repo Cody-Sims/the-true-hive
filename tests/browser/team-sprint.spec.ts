@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 const preview = new URL(
   "../../dist/prototypes/team-sprint/index.html",
@@ -106,6 +107,116 @@ test("a waiting card's details can be read and dismissed by touch on a small scr
     await expect(close).toBeInViewport();
     await close.tap();
     await expect(detail).not.toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test("the main-site sprint board is available by direct link and supports keyboard review", async ({
+  page,
+}) => {
+  const response = await page.goto("/team-sprint");
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", { name: "Team sprint board" }),
+  ).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, nofollow",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link", { name: /sprint/i }),
+  ).toHaveCount(0);
+
+  const title = "Verify soap format details";
+  const card = page.locator("summary").filter({ hasText: title });
+  await card.press("Enter");
+  const detail = page.getByRole("dialog", { name: title, exact: true });
+  await expect(
+    detail.getByRole("heading", { name: "Checklist" }),
+  ).toBeVisible();
+  await expect(detail.getByRole("heading", { name: "Handoff" })).toBeVisible();
+  await expect(
+    detail.getByRole("heading", { name: "Done when" }),
+  ).toBeVisible();
+  await expect(
+    detail.getByRole("button", { name: "Close", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(detail).not.toBeVisible();
+  await expect(card).toBeFocused();
+});
+
+test("the main-site board and an open detail fit a narrow phone with touch controls", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({
+    ...(baseURL ? { baseURL } : {}),
+    viewport: { width: 320, height: 480 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto("/team-sprint");
+    const status = page.getByRole("navigation", { name: "Sprint status" });
+    await status.getByRole("link", { name: /waiting/i }).tap();
+    await expect(page).toHaveURL(/#waiting$/);
+    await expect(
+      page.getByRole("heading", { name: "Waiting", exact: true }),
+    ).toBeInViewport();
+
+    const title = "Write simple pickup instructions";
+    await page.locator("summary").filter({ hasText: title }).tap();
+    const detail = page.getByRole("dialog", { name: title, exact: true });
+    await expect(detail).toBeVisible();
+    const scan = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(scan.violations).toEqual([]);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(320);
+    const box = await detail.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    const done = detail.getByRole("heading", { name: "Done when" });
+    await done.scrollIntoViewIfNeeded();
+    await expect(done).toBeInViewport();
+    const close = detail.getByRole("button", { name: "Close", exact: true });
+    await expect(close).toBeInViewport();
+    await close.tap();
+    await expect(detail).not.toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test("main-site task details remain readable when JavaScript is unavailable", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({
+    ...(baseURL ? { baseURL } : {}),
+    javaScriptEnabled: false,
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto("/team-sprint");
+    const summary = page
+      .locator("summary")
+      .filter({ hasText: "Verify soap format details" });
+    const card = page.locator("details").filter({ has: summary });
+    const checklist = card.getByRole("heading", { name: "Checklist" });
+    await expect(checklist).not.toBeVisible();
+    await summary.click();
+    await expect(checklist).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   } finally {
     await context.close();
   }

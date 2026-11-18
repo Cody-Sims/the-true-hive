@@ -10,7 +10,12 @@ Status: **owner-approved inventory-backed public catalog and private inventory p
 | Apiary Market application | `src/` and `migrations/` | `dist-site/` | Existing native Render service at `https://thetruehive.com`; Neon PostgreSQL remains the selected database |
 | Private inventory workspace | Same application, `/inventory/` and `/api/admin/` | Same `dist-site/` | `https://inventory.thetruehive.com`; same service and database, Google/TOTP and server-side membership required |
 
-Production uses original prototype illustrations and first-party brand assets in `src/assets/`, not prototype HTML, scripts, demo prices or browser cart. Application public output excludes plans, database code and review files.
+Production uses original prototype illustrations and first-party brand assets in `src/assets/`, not prototype HTML, scripts, demo prices or browser cart. Application public output excludes planning documents, database code and standalone prototype files.
+
+The [team sprint board](https://thetruehive.com/team-sprint) is a native read-only
+Astro page, reachable by direct link and excluded from indexing and the
+storefront navigation. Only the six publication-safe starter cards are
+present; the private backlog and task editing are not part of this route.
 
 ## Run the application
 

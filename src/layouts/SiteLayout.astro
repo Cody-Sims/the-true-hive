@@ -11,12 +11,14 @@ interface Props {
   description: string;
   path?: string;
   notFound?: boolean;
+  noIndex?: boolean;
 }
 const {
   title,
   description,
   path = Astro.url.pathname,
   notFound = false,
+  noIndex = false,
 } = Astro.props;
 const config = readConfig();
 const cartPage = path === "/cart" || path === "/cart/";
@@ -31,7 +33,7 @@ const isErrorDocument = notFound || (Astro.response.status ?? 200) >= 400;
 const isSearchResults =
   (Astro.url.pathname === "/goods" || Astro.url.pathname === "/goods/") &&
   Astro.url.searchParams.has("q");
-const omitCanonical = isErrorDocument || isSearchResults || cartPage;
+const omitCanonical = isErrorDocument || isSearchResults || cartPage || noIndex;
 const canonicalUrl = new URL(config.siteOrigin);
 canonicalUrl.pathname = new URL(path, config.siteOrigin).pathname;
 const canonical = canonicalUrl.href;
@@ -57,7 +59,11 @@ const schema = JSON.stringify({
     <meta
       name="robots"
       content={
-        config.indexable && !omitCanonical ? "index, follow" : "noindex, follow"
+        noIndex
+          ? "noindex, nofollow"
+          : config.indexable && !omitCanonical
+            ? "index, follow"
+            : "noindex, follow"
       }
     />
     {!omitCanonical && <link rel="canonical" href={canonical} />}
