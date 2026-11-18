@@ -50,7 +50,19 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
-The latest review compares **two scrolling prototypes** based on the guided editor:
+**01 / Workbench** in the [three-direction comparison](https://preview.thetruehive.com/prototypes/editor/index.html?design=workbench&mode=edit)
+now uses a screen-height form with section shortcuts, a compact customer/review
+rail that fits the viewport, and a mobile card/product-page preview modal.
+Editable prototype text and variants autosave to a versioned, bounded
+`localStorage` draft, separately for Add and Edit. Incomplete drafts restore on
+reload; clear/reset requires confirmation. Save failures, corrupt drafts and
+other-tab changes are disclosed instead of silently overwriting data.
+Photos are never persisted or uploaded; restored drafts ask for reattachment.
+Only fictional editable content is stored, not stock/history metadata, real
+SKUs, credentials or other application data. Local drafts can be cleared or
+evicted by the browser and are not an inventory backup.
+
+The guided review compares **two scrolling prototypes**:
 
 | Prototype | Behavior |
 |---|---|
@@ -90,8 +102,9 @@ canvas), Guided editor (four focused steps), and Variant desk (master/detail
 format editing). Each supports adding and editing fictional products, a local
 photo preview, publication review, and explicit **Archive variant**, **Restore
 variant**, and **Delete variant** controls with confirmations and stock/history
-safeguards. Nothing is sent to inventory, uploaded or stored across reloads.
-These are proposals, not a selected or deployed redesign of the live editor.
+safeguards. Nothing is sent to inventory or uploaded.
+Workbench stores local text drafts only; Guided and Variant desk remain
+memory-only. These are proposals, not a deployed redesign of the live editor.
 The preview landing page now prioritizes this comparison; older concepts are
 consolidated in the [design archive](prototypes/archive.html) and their existing
 direct URLs remain available.
