@@ -98,6 +98,7 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     order_lines: ["SELECT", "INSERT"],
     payment_events: ["SELECT", "INSERT"],
     storefront_settings: ["SELECT", "UPDATE"],
+    team_tasks: ["SELECT"],
   };
   const forbidden: Record<string, string[]> = {
     admin_memberships: ["INSERT", "UPDATE", "DELETE", "TRUNCATE"],
@@ -105,6 +106,15 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     admin_operations: ["UPDATE", "DELETE", "TRUNCATE"],
     payment_events: ["UPDATE", "DELETE", "TRUNCATE"],
     storefront_settings: [
+      "INSERT",
+      "DELETE",
+      "TRUNCATE",
+      "REFERENCES",
+      "TRIGGER",
+      "SELECT WITH GRANT OPTION",
+      "UPDATE WITH GRANT OPTION",
+    ],
+    team_tasks: [
       "INSERT",
       "DELETE",
       "TRUNCATE",
@@ -138,5 +148,16 @@ export async function checkAdminDatabaseAccess(pool: Pick<Pool, "query">) {
     [JSON.stringify(checks)],
   );
   if (result.rows[0]?.safe !== true) throw new AdminConfigurationError();
+  const taskWrites = await pool.query<{ safe: boolean }>(
+    `SELECT COALESCE(
+      NOT has_table_privilege(current_user, 'public.team_tasks', 'UPDATE')
+      AND count(*) FILTER (WHERE attname::text = ANY($1::text[])) = cardinality($1::text[])
+      AND bool_and(has_column_privilege(current_user, attrelid, attnum, 'UPDATE')
+        = (attname::text = ANY($1::text[]))), false) AS safe
+      FROM pg_attribute
+      WHERE attrelid = to_regclass('public.team_tasks') AND attnum > 0 AND NOT attisdropped`,
+    [["assignee", "status", "revision", "updated_at", "updated_by"]],
+  );
+  if (taskWrites.rows[0]?.safe !== true) throw new AdminConfigurationError();
   await pool.query("EXPLAIN SELECT photo FROM public.products WHERE false");
 }
