@@ -745,6 +745,12 @@ records are changed by the board migration.
 
 ### Native Workbench and pickup rollout
 
+Forked native component browser gates run first in a single-worker Playwright
+project, before the two-worker customer journeys. This isolates their existing
+45-second subprocess budgets from competing browser workers without retries,
+longer deadlines or dropped cases. Full browser validation includes both
+projects.
+
 The authenticated studio's Markdown parser is bundled into the native server.
 It and the artifact verifier's directly imported YAML parser belong in
 production dependencies, not incidental transitive copies. The required `site-checks` job finishes
