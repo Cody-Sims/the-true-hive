@@ -96,12 +96,23 @@ test("read-only APIs expose explicit concepts but no real count, SKU, audit or p
   expect(
     (await request.post("/api/catalog", { data: { stock: 100 } })).status(),
   ).toBeGreaterThanOrEqual(400);
-  const ready = await (await request.get("/api/health/ready")).json();
-  expect(ready.inventoryConnected).toBe(false);
-  expect(ready.checkoutEnabled).toBe(false);
+  expect((await request.get("/api/health/ready")).status()).toBe(503);
+  expect((await request.get("/api/health/live")).status()).toBe(200);
   for (const path of [
     "/prototypes/market.html",
     "/docs/09-local-business-launch-plan.md",
+    "/team-sprint",
+    "/prototypes/editor/",
+    "/prototypes/workbench-next/",
+    "/prototypes/next/assets/soap-true-bar.webp",
+    "/prototypes/pickup/app.mjs",
+  ]) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(503);
+    expect(response.headers()["cache-control"], path).toBe("private, no-store");
+    expect(await response.text(), path).not.toMatch(/<html|export |RIFF/);
+  }
+  for (const path of [
     "/server/entry.mjs",
     "/migrations/001_inventory.sql",
     "/.env",

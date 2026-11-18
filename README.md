@@ -15,7 +15,7 @@ npm run dev
 
 Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and does not invent prices/stock. For native build, database, CI and Render details, read [development and operations](docs/14-development-and-operations.md) and the [approved specification](docs/13-production-foundation.md).
 
-**Host boundary:** `preview.thetruehive.com` keeps all prototypes. The storefront is at **https://thetruehive.com/** with `CATALOG_SOURCE=database`, reading published products from the same Neon PostgreSQL database as `inventory.thetruehive.com`. The owner approved temporarily using this deployment as a clearly labelled test store; that is not approval for real payments. The existing **https://the-true-hive-app.onrender.com/** endpoint remains available. Render follows this repository's `main` branch with **After CI Checks Pass** deployment enabled. The selected infrastructure remains one $7/month Render app in a Hobby workspace and Neon Free in Oregon, not a second service or paid database.
+**Host boundary:** the public storefront and private inventory/studio share **https://thetruehive.com/**. Inventory, `/team-sprint`, all prototypes, planning documents and their dependencies require the existing Google + TOTP + active administrator membership. A single host-only session enables navigation across these workspaces; revocation applies everywhere. Exact legacy inventory/preview hosts only redirect safe reads; other hosts are denied except process liveness. Pages publishes redirects only, not private files. Follow the [canonical rollout](docs/14-development-and-operations.md#canonical-administrator-rollout). `CATALOG_SOURCE=database`, existing Neon authority, Stripe test-only restrictions and Render's **After CI Checks Pass** deployment remain unchanged; no new paid service is introduced.
 
 The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
@@ -50,7 +50,7 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
-The new [pickup studio](https://preview.thetruehive.com/prototypes/pickup/)
+The new [private pickup studio](https://thetruehive.com/prototypes/pickup/)
 connects a fictional post-checkout location/date/time flow with an operator
 workspace for per-location weekly hours, notice/horizon/slot/capacity examples,
 date closures/overrides and impacted appointments. Try booking, rescheduling,
@@ -61,7 +61,7 @@ The [draft scheduling plan](docs/21-pickup-scheduling-plan.md) separates appoint
 sites from inventory authority and records implementation phases and business
 decisions still needing approval. The prototype is not a real booking system.
 
-**01 / Workbench** in the [three-direction comparison](https://preview.thetruehive.com/prototypes/editor/index.html?design=workbench&mode=edit)
+**01 / Workbench** in the [three-direction comparison](https://thetruehive.com/prototypes/editor/index.html?design=workbench&mode=edit)
 now uses one page scrollbar: the form and customer/review column move together,
 without an independently scrolling form or a pinned product preview. Section
 shortcuts jump within the page; Preview and publication controls stay in reach
@@ -79,8 +79,8 @@ The guided review compares **two scrolling prototypes**:
 
 | Prototype | Behavior |
 |---|---|
-| [Shared page](https://preview.thetruehive.com/prototypes/guided-scroll/?layout=together) | One page scrollbar moves the form and product preview together; neither column has an independent scroll pane. |
-| [Compact preview](https://preview.thetruehive.com/prototypes/guided-scroll/?layout=compact) | A smaller summary card fits beside the editor without scrolling. The form is the editor's only scroll area; wheel input over the card also moves the form. |
+| [Shared page](https://thetruehive.com/prototypes/guided-scroll/?layout=together) | One page scrollbar moves the form and product preview together; neither column has an independent scroll pane. |
+| [Compact preview](https://thetruehive.com/prototypes/guided-scroll/?layout=compact) | A smaller summary card fits beside the editor without scrolling. The form is the editor's only scroll area; wheel input over the card also moves the form. |
 
 Switching layouts preserves the draft. The compact card shows up to two title
 lines, starting price and active-format count rather than an unbounded format
@@ -92,14 +92,14 @@ inventory behavior is changed. Desktop/laptop/mobile screenshots and real
 wheel/keyboard behavior are checked with Playwright.
 
 The improved version also replaces **02 / Guided editor** in the shared
-[three-direction comparison](https://preview.thetruehive.com/prototypes/editor/index.html?design=guided&mode=edit).
+[three-direction comparison](https://thetruehive.com/prototypes/editor/index.html?design=guided&mode=edit).
 Its Direction selector keeps Workbench, Guided editor and Variant desk together
 at the existing gallery URLs. Both scrolling options, Add/Edit modes and the
 mobile product-page modal remain available without an iframe or an extra scroll
 wrapper. Unsaved changes require confirmation before changing direction.
 
 The previous prototype refines the owner's chosen **02 / Guided editor**:
-**https://preview.thetruehive.com/prototypes/guided-next/**. Previous/Next stay
+**https://thetruehive.com/prototypes/guided-next/**. Previous/Next stay
 anchored while each step scrolls independently and retains its inputs, selected
 photo and scroll position. On mobile, Preview opens a modal instead of adding
 a long card beneath the form. Click its image or format to move from the
@@ -110,7 +110,7 @@ non-operational. This remains a fictional, memory-only prototype; choosing 02
 as a base does not deploy an editor redesign to the live inventory.
 
 The **three Add / Edit product-page redesigns** are compared at
-**https://preview.thetruehive.com/prototypes/editor/**: Workbench (split editing
+**https://thetruehive.com/prototypes/editor/**: Workbench (split editing
 canvas), Guided editor (four focused steps), and Variant desk (master/detail
 format editing). Each supports adding and editing fictional products, a local
 photo preview, publication review, and explicit **Archive variant**, **Restore
@@ -123,7 +123,7 @@ consolidated in the [design archive](prototypes/archive.html) and their existing
 direct URLs remain available.
 
 The earlier storefront concepts remain separately reviewable at
-**https://preview.thetruehive.com/prototypes/next/**: Ingredient Atelier,
+**https://thetruehive.com/prototypes/next/**: Ingredient Atelier,
 Honeyglass, Field Notes, Soft Geometry and Night Apiary. Each covers home,
 store, product/ingredients and the shared service/about journeys. They use a
 static public product snapshot and local demo carts, never live inventory or
@@ -131,7 +131,7 @@ payments. The original ten-design studio is preserved; no new concept is
 automatically selected for the live storefront.
 
 The earlier **customer product-page-only** studies are at
-**https://preview.thetruehive.com/prototypes/product-pages/**: Quick Pick,
+**https://thetruehive.com/prototypes/product-pages/**: Quick Pick,
 Formula Map, Format Studio, Label Room and Gallery Focus. These explore only
 the product detail area inside one fixed brand shell, not new home or store
 pages. Switch products/formats to compare the four reference images and exact
@@ -155,7 +155,7 @@ GTINs or provider fees. See the [inventory workbench guide](docs/14-development-
 The repository's `docs/20-reusable-components-and-cleanup.md` guide records
 existing UI boundaries, current extractions, proven-dead code and
 separately gated follow-up work. It is repository maintenance guidance, not an
-addition to the public review's publication allowlist.
+addition to the private studio's source manifest.
 
 ## Open the studio
 
@@ -168,27 +168,27 @@ addition to the public review's publication allowlist.
 | [Store preview](prototypes/store.html?design=hearth) | Browse/filter concepts, choose variants, build a demo cart and inspect checkout handoff |
 | [Inventory lab](prototypes/inventory.html?design=hearth) | Explore fictional variant/location stock, sold-out and inventory-outage states |
 
-Use the local HTTP preview, not `file://`, for the gallery's interactive features, shop and planning viewer. The preview command builds and serves only the approved static artifact, never private repository files. If the server is already running, open **http://127.0.0.1:4173/prototypes/**. Otherwise:
+Use the authenticated native app, not `file://` or a repository-root HTTP server, for the studio. The production entry point is **https://thetruehive.com/prototypes/**. For local setup:
 
 ```sh
 git clone https://github.com/Cody-Sims/the-true-hive.git
 cd the-true-hive
 npm ci --ignore-scripts
-npm run preview
+npm run dev
 ```
 
-In another terminal:
+Configure the real isolated Firebase/TOTP/membership credentials privately and use a matching development loopback `SITE_URL` before signing in. Then:
 
 ```sh
-open http://127.0.0.1:4173/prototypes/
-open http://127.0.0.1:4173/prototypes/plan.html
+open http://127.0.0.1:4321/prototypes/
+open http://127.0.0.1:4321/prototypes/plan.html
 ```
 
 The only studio browser-rendering dependency is the locally served, pinned Markdown parser; no CDN, remote font, live social feed or third-party tracking is loaded. Core homepage concepts still use ordinary HTML/CSS/SVG. `npm test` runs prototype and application unit cases; database and built-browser gates are separate commands in the operations guide.
 
-For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes automatic deployment from reviewed `main` updates and the custom preview hostname, **https://preview.thetruehive.com/**. Its valid HTTPS certificate and enforced HTTPS were verified on October 31, 2026. The main domain and mail settings remain unchanged.
+For an existing checkout, skip the clone step. The [sharing/CI guide](docs/12-sharing-and-deployment.md) describes native deployment and mandatory replacement of the earlier public Pages site with canonical redirects. Mail settings remain unchanged.
 
-After editing planning or prototype sources, run `npm run build:pages` and refresh, or restart `npm run preview`, to regenerate the curated local review.
+After editing planning or prototype sources, refresh the native development app or rebuild/restart the native server. `npm run build:pages` and `npm run preview` intentionally contain only redirects, never the studio.
 
 **Contact behavior:** the Contact page shows the current approved/configured channels. The inquiry form prepares an email draft for the visitor to send; repository maintenance does not configure mail delivery, forwarding or a mailbox.
 
@@ -259,8 +259,8 @@ Business milestones **B0-B6** in the business plan are a separate readiness road
 
 ## Privacy and release boundary
 
-The owner approved the **complete current planning snapshot** for a public repository/Pages review on 2026-10-28. Future confidential details, buyer identity/terms, private finances, credentials and customer records are not included in that approval. **Noindex is not authentication.**
+The earlier public Pages approval is superseded by authenticated studio access and a redirect-only artifact. The repository and historical GitHub source remain public; application authentication does not erase previously disclosed copies. Future confidential details, buyer identity/terms, private finances, credentials and customer records must not enter public Git. **Noindex is not authentication.**
 
-The Pages build publishes a curated static artifact, not the repository root. This is not the future production business site: real commerce uses appropriate hosting and excludes review plans, demo catalog/stock and sample carts. Review all future public commits; even files excluded from Pages are visible if committed to the public repository.
+The Pages build publishes only fixed canonical redirect HTML, `.nojekyll` and empty-source metadata. The native server bundles the complete current studio privately, including binary images. Review all future public commits; files excluded from Pages are still visible if committed to the public repository.
 
 Before public launch, resolve the relevant [partner-workbook questions](docs/10-partner-workbook.md), approve real copy/assets/contacts, and implement only the selected production direction.

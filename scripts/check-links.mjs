@@ -2,7 +2,8 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import MarkdownIt from "markdown-it";
-import { publicationFiles } from "./publication.mjs";
+import { privateStudioFiles } from "./private-studio.mjs";
+import { assertRedirectArtifact } from "./redirect-artifact.mjs";
 import { documents, getDocument } from "../prototypes/scripts/documents.mjs";
 import { getDesign } from "../prototypes/scripts/designs.mjs";
 import { products, scenarios } from "../prototypes/scripts/catalog.mjs";
@@ -11,7 +12,12 @@ import { renderPlanMarkdown } from "../prototypes/scripts/plan-renderer.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const built = process.argv.includes("--built");
 const directory = built ? path.join(root, "dist") : root;
-const allowed = new Set(publicationFiles());
+if (built) {
+  assertRedirectArtifact(directory);
+  console.log("Pages artifact contains only canonical redirects and build metadata.");
+  process.exit(0);
+}
+const allowed = new Set(privateStudioFiles());
 const parser = new MarkdownIt({ html: false });
 const failures = [];
 let checked = 0;
