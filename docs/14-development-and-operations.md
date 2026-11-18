@@ -14,8 +14,9 @@ Production uses original prototype illustrations and first-party brand assets in
 
 The [team sprint board](https://thetruehive.com/team-sprint) is a native read-only
 Astro page, reachable by direct link and excluded from indexing and the
-storefront navigation. Only the six publication-safe starter cards are
-present; the private backlog and task editing are not part of this route.
+storefront navigation. It contains only the six publication-safe starter cards.
+The editable Team board is under Inventory navigation and requires the existing
+administrator sign-in and MFA. Its two assignee labels do not grant sign-in access.
 
 ## Run the application
 
@@ -673,6 +674,7 @@ Provision roles deliberately with the direct owner connection after the forward 
 | Movement/admin-operation/payment-event history | Denied | Read/insert; no update/delete/truncate | Append-only guards still apply |
 | Orders/order snapshots | Denied | Required read/insert/order update; no snapshot rewriting | Recovery/reconciliation |
 | Store purchase setting | Read only | Read/update existing singleton; no insert/delete/truncate/delegation | Forward migration and explicit role grants |
+| Team board | Denied | Read; update only `status`, `assignee`, `revision`, `updated_at`, and `updated_by` | Import the approved backlog privately; no records in Git or public artifacts |
 | Admin membership | Denied | Read only; no grant/revoke | Private grant/revoke |
 | Local admin sessions | Denied | Read/insert/revoke | Recovery |
 | Schema creation, role management, migrations | Denied | Denied | Deliberate operator action |
@@ -690,6 +692,13 @@ npm run admin:access -- revoke
 ```
 
 Run grant/revoke only as deliberate operator actions against the intended database. The command prints no identity or connection values; a help call performs no database/provider work. Real PostgreSQL cases cover grant, session revocation, rollback and runtime-role denial.
+
+For the Team board, apply `006_team_board.sql` after taking a private backup.
+Grant the inventory runtime role `SELECT` and column-scoped `UPDATE` as above;
+do not grant the public role any access. Import the private sprint seed once
+with the owner connection, preserve existing progress on retry, and verify
+100 task IDs with the supplied initial assignments. No inventory or payment
+records are changed by the board migration.
 
 ### Stock and sandbox rehearsals
 

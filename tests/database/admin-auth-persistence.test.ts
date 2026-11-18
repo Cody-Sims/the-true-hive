@@ -62,7 +62,7 @@ afterEach(async () => {
       DROP TABLE public.admin_sessions,public.admin_memberships,public.admin_operations,
         public.payment_events,public.order_lines,public.orders,public.inventory_movements,
         public.inventory_levels,public.inventory_locations,public.product_variants,
-        public.products,public.storefront_settings,public.schema_migrations CASCADE;
+        public.products,public.storefront_settings,public.team_tasks,public.schema_migrations CASCADE;
       DROP FUNCTION public.prevent_inventory_history_changes(),
         public.prevent_admin_commerce_history_changes(),
         public.valid_product_ingredients(jsonb);

@@ -1,0 +1,26 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import TeamBoard from "../../components/admin/TeamBoard.astro";
+import { getAdminPool } from "../../server/admin/pool.ts";
+import { getTeamTasks } from "../../server/admin/team-board.ts";
+
+if (!Astro.locals.admin || !Astro.locals.csrfToken)
+  return new Response(null, { status: 403 });
+
+let tasks: Awaited<ReturnType<typeof getTeamTasks>> | null = null;
+try {
+  tasks = await getTeamTasks(getAdminPool());
+} catch {
+  Astro.response.status = 503;
+}
+---
+
+<AdminLayout title="Team sprint board">
+  {tasks ? (
+    <TeamBoard tasks={tasks} />
+  ) : (
+    <p role="status">
+      The shared board is temporarily unavailable. Reload to try again.
+    </p>
+  )}
+</AdminLayout>
