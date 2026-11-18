@@ -62,8 +62,10 @@ sites from inventory authority and records implementation phases and business
 decisions still needing approval. The prototype is not a real booking system.
 
 **01 / Workbench** in the [three-direction comparison](https://preview.thetruehive.com/prototypes/editor/index.html?design=workbench&mode=edit)
-now uses a screen-height form with section shortcuts, a compact customer/review
-rail that fits the viewport, and a mobile card/product-page preview modal.
+now uses one page scrollbar: the form and customer/review column move together,
+without an independently scrolling form or a pinned product preview. Section
+shortcuts jump within the page; Preview and publication controls stay in reach
+in a bottom dock. Phones retain the card/product-page preview modal.
 Editable prototype text and variants autosave to a versioned, bounded
 `localStorage` draft, separately for Add and Edit. Incomplete drafts restore on
 reload; clear/reset requires confirmation. Save failures, corrupt drafts and

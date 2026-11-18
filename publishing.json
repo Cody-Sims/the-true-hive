@@ -61,7 +61,7 @@
     "public": true,
     "approvedOn": "2026-11-17",
     "scope": "fictional-workbench-local-drafts",
-    "purpose": "Owner-requested improvements to direction01: screen-height Workbench, bounded customer/review rail, mobile preview modal and device-local autosave/restore. Only bounded editable prototype text/variant fields are stored, separately for Add/Edit; no photos, real inventory metadata, credentials or backend writes."
+    "purpose": "Owner-requested direction01 refinement: one page scrolls the form and customer/review column together, retaining the mobile preview modal and device-local autosave/restore. This supersedes the earlier screen-height form-only scrolling layout. Only bounded editable prototype text/variant fields are stored, separately for Add/Edit; no photos, real inventory metadata, credentials or backend writes."
   },
   "teamSprintPreview": {
     "public": true,
