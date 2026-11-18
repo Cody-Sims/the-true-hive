@@ -745,6 +745,14 @@ records are changed by the board migration.
 
 ### Native Workbench and pickup rollout
 
+The authenticated studio's Markdown parser is bundled into the native server.
+It and the artifact verifier's directly imported YAML parser belong in
+production dependencies, not incidental transitive copies. The required `site-checks` job finishes
+by reinstalling production dependencies only, rebuilding the native application
+and inspecting its artifact. This runs after browser tests because the test
+tools are development dependencies. A development-install build alone does not
+prove that the production hosting build can resolve its required assets.
+
 Before deploying the Workbench/pickup integration, verify the intended database
 and TLS target and take a fresh private backup with a readable archive listing.
 Apply **007_catalog_record_actions.sql** and **008_pickup_scheduling.sql** using
