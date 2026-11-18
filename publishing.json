@@ -63,5 +63,11 @@
     "scope": "fictional-workbench-local-drafts",
     "purpose": "Owner-requested improvements to direction01: screen-height Workbench, bounded customer/review rail, mobile preview modal and device-local autosave/restore. Only bounded editable prototype text/variant fields are stored, separately for Add/Edit; no photos, real inventory metadata, credentials or backend writes."
   },
+  "teamSprintPreview": {
+    "public": true,
+    "approvedOn": "2026-11-17",
+    "scope": "sanitized-read-only-sprint",
+    "purpose": "Owner-requested website view for the cofounder. Publish only a general launch-preparation snapshot, with no private backlog, operational details, account data or editing."
+  },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

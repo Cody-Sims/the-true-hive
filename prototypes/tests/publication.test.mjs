@@ -84,3 +84,15 @@ test("Workbench autosave review requires explicit scoped publication approval", 
   assert.throws(() => validatePublicationApproval({ ...approval, workbenchRefinement: undefined }), /Workbench/i);
   assert.throws(() => validatePublicationApproval({ ...approval, workbenchRefinement: { ...approval.workbenchRefinement, public: false } }), /Workbench/i);
 });
+
+test("the public sprint review publishes only an approved, read-only snapshot", () => {
+  const path = "prototypes/team-sprint/index.html";
+  assert.deepEqual(publicationFiles().filter((file) => file.startsWith("prototypes/team-sprint/")), [path]);
+  assert.throws(() => validatePublicationApproval({ ...approval, teamSprintPreview: undefined }), /sprint/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, teamSprintPreview: { ...approval.teamSprintPreview, scope: "private-backlog" } }), /sprint/i);
+
+  const html = readFileSync(new URL("../../" + path, import.meta.url), "utf8");
+  assert.match(html, /name="robots"\s+content="noindex,nofollow"/, "label the public review as non-indexable");
+  assert.match(html, /read-only/i);
+  assert.doesNotMatch(html, /<(?:script|form|iframe)\b/i, "do not ship an editor or load the private queue");
+});

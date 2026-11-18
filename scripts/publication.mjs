@@ -31,6 +31,7 @@ export function publicationFiles() {
     ...guidedFiles.map((file) => `prototypes/guided-next/${file}`),
     ...scrollFiles.map((file) => `prototypes/guided-scroll/${file}`),
     ...workbenchFiles.map((file) => `prototypes/workbench-next/${file}`),
+    "prototypes/team-sprint/index.html",
   ]);
   for (const file of files) {
     if (file.startsWith("/") || file.split("/").includes("..")
@@ -87,5 +88,9 @@ export function validatePublicationApproval(approval) {
   if (!workbench || workbench.public !== true || workbench.scope !== "fictional-workbench-local-drafts"
     || !/^\d{4}-\d{2}-\d{2}$/.test(workbench.approvedOn))
     throw new Error("Workbench local-draft previews require explicit publication approval.");
+  const teamSprint = approval.teamSprintPreview;
+  if (!teamSprint || teamSprint.public !== true || teamSprint.scope !== "sanitized-read-only-sprint"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(teamSprint.approvedOn))
+    throw new Error("The team sprint requires approval for a sanitized read-only preview.");
   return true;
 }
