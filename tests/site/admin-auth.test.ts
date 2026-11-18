@@ -33,7 +33,10 @@ const config: AdminConfig = {
   serviceAccount: null,
 };
 
-function fixture(overrides: Partial<VerifiedIdentity> = {}) {
+function fixture(
+  overrides: Partial<VerifiedIdentity> = {},
+  clock: () => number = () => now,
+) {
   let member = true;
   let active = true;
   let rejected = false;
@@ -81,7 +84,7 @@ function fixture(overrides: Partial<VerifiedIdentity> = {}) {
     },
   };
   return {
-    auth: createAdminAuth(config, deps, () => now),
+    auth: createAdminAuth(config, deps, clock),
     setMember: (value: boolean) => {
       member = value;
     },
@@ -148,14 +151,44 @@ test("login rejects first factor, wrong project, unverified email, stale and fut
   }
 });
 
-test("current membership, SDK revocation, and local revocation all deny independently", async () => {
-  const f = fixture();
+test("MFA sessions persist for seven days without silently renewing their expiry", async () => {
+  let time = now;
+  const f = fixture({}, () => time);
+  let providerLifetime = 0;
+  let issued = 0;
+  let savedExpiry: Date | undefined;
+  f.dependencies.createSessionCookie = async (_token, expiresIn) => {
+    providerLifetime = expiresIn;
+    issued += 1;
+    return "signed-provider-session";
+  };
+  f.dependencies.saveSession = async (_hash, _uid, expiry) => {
+    savedExpiry = expiry;
+  };
+  f.dependencies.isSessionActive = async (_hash, _uid, at) =>
+    savedExpiry !== undefined && at.getTime() < savedExpiry.getTime();
+  const session = await f.auth.login("id-token");
+  assert.equal(providerLifetime, 604800000);
+  assert.equal(session.expiresAt.getTime(), now + 604800000);
+  assert.equal(savedExpiry?.getTime(), session.expiresAt.getTime());
+  time = now + 604800000 - 1;
+  assert.equal((await f.auth.authenticate(session.cookie)).uid, session.uid);
+  assert.equal(issued, 1);
+  assert.equal(savedExpiry?.getTime(), now + 604800000);
+  time += 1;
+  await assert.rejects(f.auth.authenticate(session.cookie), AdminAuthError);
+});
+
+test("current membership, SDK revocation, and local revocation all deny independently after six days", async () => {
+  let time = now;
+  const f = fixture({}, () => time);
   f.setMember(false);
   await assert.rejects(f.auth.login("id-token"), AdminAuthError);
   assert.equal(f.writes(), 0);
   f.setMember(true);
   const session = await f.auth.login("id-token");
   assert.match(session.actorId, /^fb-[a-f0-9]{64}$/);
+  time += 6 * 24 * 60 * 60 * 1000;
   const first = await f.auth.authenticate(session.cookie);
   assert.equal(first.actorId, session.actorId);
   f.setMember(false);
@@ -555,6 +588,53 @@ test("anonymous login HEAD receives the public CSRF shell without a private sess
   assert.equal(f.writes(), 0);
 });
 
+test("returning to sign in reuses an active MFA session without issuing another session", async () => {
+  const f = fixture();
+  const login = await f.auth.login("id-token");
+  const boundary = createAdminBoundary(config, f.auth);
+  for (const [returnTo, destination] of [
+    ["/inventory/orders?offset=20", "/inventory/orders?offset=20"],
+    ["https://untrusted.example/", "/inventory/products"],
+  ] as const) {
+    const url = new URL("/inventory/login", config.origin);
+    url.searchParams.set("returnTo", returnTo);
+    const result = await boundary.gate(
+      new Request(url, {
+        headers: { cookie: `${cookieNames(config).session}=${login.cookie}` },
+      }),
+      {},
+    );
+    assert.equal(result.response?.status, 303);
+    assert.equal(result.response.headers.get("location"), destination);
+    assert.equal(result.response.headers.get("cache-control"), "no-store");
+    assert.equal(result.cookies.length, 0);
+  }
+  assert.equal(f.writes(), 2);
+});
+
+test("revoked sessions can still reach sign in but do not gain authenticated locals", async () => {
+  for (const revoke of [
+    (f: ReturnType<typeof fixture>) => f.setActive(false),
+    (f: ReturnType<typeof fixture>) => f.setMember(false),
+    (f: ReturnType<typeof fixture>) => f.rejectProvider(),
+  ]) {
+    const f = fixture();
+    const login = await f.auth.login("id-token");
+    revoke(f);
+    const locals: AdminLocals = {};
+    const result = await createAdminBoundary(config, f.auth).gate(
+      new Request(`${config.origin}/inventory/login`, {
+        headers: { cookie: `${cookieNames(config).session}=${login.cookie}` },
+      }),
+      locals,
+    );
+    assert.equal(result.response, null);
+    assert.equal(locals.admin, undefined);
+    assert.ok(locals.csrfToken);
+    assert.equal(f.writes(), 2);
+  }
+});
+
 function mutation(
   path: string,
   cookie: string,
@@ -615,6 +695,7 @@ test("session cookie is host-only, secure and HttpOnly; CSRF rotates and binds t
   assert.match(sessionCookie, /; Secure/);
   assert.match(sessionCookie, /; HttpOnly/);
   assert.match(sessionCookie, /; SameSite=Strict/);
+  assert.match(sessionCookie, /; Max-Age=604800(?:;|$)/);
   assert.doesNotMatch(sessionCookie, /Domain=/i);
   const cookie = cookies.map((value) => value.split(";")[0]).join("; ");
   const locals: AdminLocals = {};
