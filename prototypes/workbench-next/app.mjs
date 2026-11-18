@@ -187,7 +187,7 @@ form.addEventListener("click", (event) => {
   if (!button) return;
   if (button.dataset.jump) {
     const section = document.querySelector(`#bench-${button.dataset.jump}`);
-    scroller.scrollTo({ top: section.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    section.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
     section.querySelector("h2").focus({ preventScroll: true });
     for (const tab of form.querySelectorAll("[data-jump]")) { if (tab === button) tab.setAttribute("aria-current", "true"); else tab.removeAttribute("aria-current"); }
   } else if (button.hasAttribute("data-add-variant")) {
@@ -222,7 +222,7 @@ document.querySelector("[data-clear-draft]").addEventListener("click", () => {
   confirmAction("Clear this local draft?", "Remove this mode's draft from this device and reset the example, including any photo selected in this tab. Other drafts and real inventory are untouched.", "Clear local draft", () => {
     try { localStorage.removeItem(key); } catch { state("This browser could not clear the local draft. Your edits are kept."); return; }
     window.clearTimeout(timer); product = exampleProduct(mode); clearPhoto(); blocked = false; paused = false; dirty = false;
-    document.querySelector(".draft-conflict").hidden = true; fillFields(); update(); scroller.scrollTop = 0; state("Local draft cleared. Autosave ready.");
+    document.querySelector(".draft-conflict").hidden = true; fillFields(); update(); window.scrollTo({ top: 0, behavior: "instant" }); state("Local draft cleared. Autosave ready.");
   });
 });
 window.addEventListener("storage", (event) => {
@@ -266,10 +266,6 @@ preview.addEventListener("change", (event) => {
   const v = product.variants.find((item) => item.id === previewVariant);
   preview.querySelector("[data-customer-price]").textContent = v && validPrice(v.price) ? `$${Number(v.price).toFixed(2)}` : "Price to come";
 });
-document.querySelector(".bench-layout").addEventListener("wheel", (event) => {
-  if (event.target.closest(".bench-form-scroll") || document.querySelector("dialog[open]") || event.ctrlKey || event.metaKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-  scroller.scrollBy({ top: event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scroller.clientHeight : 1), behavior: "instant" }); event.preventDefault();
-}, { passive: false });
 export function confirmLeave() {
   const saved = persist();
   return (!dirty && saved && !photoUrl) || window.confirm(photoUrl ? "Text drafts are saved separately. This selected photo will not be restored after leaving. Continue?" : "This draft is not safely saved on this device. Leave and discard these edits?");
