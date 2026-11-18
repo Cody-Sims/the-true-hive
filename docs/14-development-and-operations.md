@@ -745,8 +745,9 @@ records are changed by the board migration.
 
 ### Native Workbench and pickup rollout
 
-The authenticated studio's Markdown parser is bundled into the native server
-and belongs in production dependencies. The required `site-checks` job finishes
+The authenticated studio's Markdown parser is bundled into the native server.
+It and the artifact verifier's directly imported YAML parser belong in
+production dependencies, not incidental transitive copies. The required `site-checks` job finishes
 by reinstalling production dependencies only, rebuilding the native application
 and inspecting its artifact. This runs after browser tests because the test
 tools are development dependencies. A development-install build alone does not
