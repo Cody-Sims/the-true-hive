@@ -31,15 +31,46 @@
     .lede { max-width: 65ch; color: #f7ecd5; }
     main { padding-block: 1.25rem 2.25rem; }
     .cadence { padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .55rem; background: #f4e8cc; }
-    .cadence p { margin: 0; }
+    .cadence p:first-child { margin: 0; }
     .board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; align-items: start; }
     .column { min-width: 0; padding: .75rem; border: 1px solid var(--line); border-radius: .6rem; background: #efebe0; }
     .column h2 { padding-bottom: .6rem; border-bottom: 1px solid var(--line); }
-    ol { list-style: none; margin: .65rem 0 0; padding: 0; display: grid; gap: .65rem; }
-    .card { padding: .72rem; border: 1px solid var(--line); border-radius: .45rem; background: var(--card); }
-    .card p:not(.role), .empty { color: var(--muted); font-size: .87rem; }
-    .card .role { color: #2b543c; margin: 0 0 .35rem; }
-    .card .field { color: #734425; }
+    .column > ol { list-style: none; margin: .65rem 0 0; padding: 0; display: grid; gap: .65rem; }
+    .card button {
+      display: block; width: 100%; padding: .8rem; border: 1px solid var(--line); border-radius: .5rem;
+      background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+    }
+    .card button:hover { border-color: #537359; }
+    .card button:hover .card-action { text-decoration: underline; }
+    .card-title { display: block; font: bold 1.09rem/1.2 Georgia, serif; }
+    .card-summary, .empty { color: var(--muted); font-size: .87rem; }
+    .card-summary { display: block; margin-top: .42rem; }
+    .card-action { display: block; margin-top: .55rem; color: #2b543c; font-size: .82rem; font-weight: 720; }
+    .role { display: inline-block; margin: 0 0 .38rem; color: #2b543c; }
+    .role.field { color: #734425; }
+    dialog {
+      width: min(calc(100% - 1.5rem), 37rem); max-height: calc(100vh - 1.5rem); max-height: calc(100dvh - 1.5rem);
+      padding: 0; border: 1px solid #b6b09e; border-radius: .75rem; background: var(--card); color: var(--ink);
+      box-shadow: 0 1.15rem 3.5rem #18261c45; overflow: auto; overscroll-behavior: contain;
+    }
+    dialog::backdrop { background: #122017ac; }
+    .dialog-head {
+      position: sticky; inset-block-start: 0; z-index: 1; display: flex; justify-content: space-between;
+      align-items: flex-start; gap: .65rem; padding: .85rem 1rem; border-bottom: 1px solid var(--line); background: var(--card);
+    }
+    .dialog-head > div { min-width: 0; }
+    .dialog-head h2 { font-size: clamp(1.23rem, 3.5vw, 1.65rem); overflow-wrap: anywhere; }
+    .dialog-close {
+      flex: none; min-height: 2.75rem; padding: .35rem .7rem; border: 1px solid var(--moss); border-radius: .45rem;
+      background: var(--moss); color: #fff8e9; font: 700 .88rem/1.2 system-ui, sans-serif; cursor: pointer;
+    }
+    .dialog-content { padding: .9rem 1rem 1.1rem; }
+    .dialog-content > p:first-child { margin: 0; color: var(--muted); }
+    .dialog-content h3 { margin-top: .9rem; }
+    .dialog-content ol { padding-left: 1.3rem; margin: .45rem 0 0; }
+    .dialog-content li + li { margin-top: .25rem; }
+    .done-check { margin-top: .95rem; padding: .75rem .85rem; border-left: 3px solid #ae7f34; border-radius: .25rem; background: #f4e8cc; }
+    .done-check h3 { margin: 0; }
     footer { border-top: 1px solid var(--line); padding-block: .9rem; color: var(--muted); font-size: .9rem; }
     a { color: #2b543c; text-underline-offset: .15em; }
     :focus-visible { outline: 3px solid #9d3e1b; outline-offset: 3px; }
@@ -58,30 +89,43 @@
   <main class="wrap">
     <div class="cadence">
       <p><strong>First-week pilot:</strong> take one card at a time per person. Put work into Review when there is something the other person can check.</p>
+      <p>Open any card for its checklist, handoff, and completion criteria.</p>
     </div>
     <div class="board">
       <section class="column" aria-labelledby="ready-title">
         <h2 id="ready-title">Ready</h2>
         <ol role="list">
           <li class="card">
-            <p class="role">Website &amp; office</p>
-            <h3>Make shopping guidance consistent</h3>
-            <p>Review the home, collection and product pages together. Done when they describe the same next step.</p>
+            <button type="button" command="show-modal" commandfor="guidance-detail" aria-haspopup="dialog" aria-labelledby="guidance-card">
+              <span class="role">Website &amp; office</span>
+              <span class="card-title" id="guidance-card">Make shopping guidance consistent</span>
+              <span class="card-summary">Give visitors the same next step from the home page to the collection.</span>
+              <span class="card-action" aria-hidden="true">View details &rarr;</span>
+            </button>
           </li>
           <li class="card">
-            <p class="role field">Hands-on</p>
-            <h3>Verify soap format details</h3>
-            <p>Compare the finished products with their labels. Hand confirmed facts to the website lead.</p>
+            <button type="button" command="show-modal" commandfor="formats-detail" aria-haspopup="dialog" aria-labelledby="formats-card">
+              <span class="role field">Hands-on</span>
+              <span class="card-title" id="formats-card">Verify soap format details</span>
+              <span class="card-summary">Compare the finished products with their labels before changing the listings.</span>
+              <span class="card-action" aria-hidden="true">View details &rarr;</span>
+            </button>
           </li>
           <li class="card">
-            <p class="role field">Hands-on</p>
-            <h3>Check which products are ready for review</h3>
-            <p>Separate finished products from future ideas. Share only confirmed product facts with the website lead.</p>
+            <button type="button" command="show-modal" commandfor="readiness-detail" aria-haspopup="dialog" aria-labelledby="readiness-card">
+              <span class="role field">Hands-on</span>
+              <span class="card-title" id="readiness-card">Check which products are ready for review</span>
+              <span class="card-summary">Separate finished products from future ideas before describing availability.</span>
+              <span class="card-action" aria-hidden="true">View details &rarr;</span>
+            </button>
           </li>
           <li class="card">
-            <p class="role field">Hands-on</p>
-            <h3>Take real product photos</h3>
-            <p>Prepare one labeled, cleared photo for each selected format.</p>
+            <button type="button" command="show-modal" commandfor="photos-detail" aria-haspopup="dialog" aria-labelledby="photos-card">
+              <span class="role field">Hands-on</span>
+              <span class="card-title" id="photos-card">Take real product photos</span>
+              <span class="card-summary">Prepare one labeled, cleared photo for each selected format.</span>
+              <span class="card-action" aria-hidden="true">View details &rarr;</span>
+            </button>
           </li>
         </ol>
       </section>
@@ -93,14 +137,20 @@
         <h2 id="waiting-title">Waiting on a handoff</h2>
         <ol role="list">
           <li class="card">
-            <p class="role">Website &amp; office</p>
-            <h3>Update the soap listings</h3>
-            <p>Use the checked facts and photos. Review the matching format on a phone.</p>
+            <button type="button" command="show-modal" commandfor="listings-detail" aria-haspopup="dialog" aria-labelledby="listings-card">
+              <span class="role">Website &amp; office</span>
+              <span class="card-title" id="listings-card">Update the soap listings</span>
+              <span class="card-summary">Waiting for the confirmed format facts and approved photos.</span>
+              <span class="card-action" aria-hidden="true">View details &rarr;</span>
+            </button>
           </li>
           <li class="card">
-            <p class="role">Website &amp; office</p>
-            <h3>Write simple pickup instructions</h3>
-            <p>After the arrival walkthrough and schedule review, explain when to expect confirmation and whom to contact.</p>
+            <button type="button" command="show-modal" commandfor="pickup-detail" aria-haspopup="dialog" aria-labelledby="pickup-card">
+              <span class="role">Website &amp; office</span>
+              <span class="card-title" id="pickup-card">Write simple pickup instructions</span>
+              <span class="card-summary">After the arrival walkthrough and schedule review, explain when to expect confirmation and whom to contact.</span>
+              <span class="card-action" aria-hidden="true">View details &rarr;</span>
+            </button>
           </li>
         </ol>
       </section>
@@ -113,6 +163,112 @@
         <p class="empty">Nothing is marked complete in this starting snapshot.</p>
       </section>
     </div>
+    <dialog id="guidance-detail" aria-labelledby="guidance-title">
+      <div class="dialog-head">
+        <div><p class="role">Website &amp; office &middot; Ready</p><h2 id="guidance-title">Make shopping guidance consistent</h2></div>
+        <button type="button" class="dialog-close" command="close" commandfor="guidance-detail" autofocus>Close</button>
+      </div>
+      <div class="dialog-content">
+        <p>Help first-time visitors tell what they can do now without having to reach the cart.</p>
+        <h3>Checklist</h3>
+        <ol>
+          <li>Compare the main actions on the home, collection, and product pages.</li>
+          <li>Use one consistent next step that matches current ordering availability.</li>
+          <li>Check the page sequence on a phone and with a keyboard.</li>
+        </ol>
+        <h3>Handoff</h3>
+        <p>Ask the hands-on lead to read the revised copy and confirm it matches what customers can expect.</p>
+        <div class="done-check"><h3>Done when</h3><p>All three pages describe the same next step and none promises an order that cannot be placed.</p></div>
+      </div>
+    </dialog>
+    <dialog id="formats-detail" aria-labelledby="formats-title">
+      <div class="dialog-head">
+        <div><p class="role field">Hands-on &middot; Ready</p><h2 id="formats-title">Verify soap format details</h2></div>
+        <button type="button" class="dialog-close" command="close" commandfor="formats-detail" autofocus>Close</button>
+      </div>
+      <div class="dialog-content">
+        <p>Give the website lead a reliable source for what each finished format is and how it should be described.</p>
+        <h3>Checklist</h3>
+        <ol>
+          <li>Match each finished format to its printed label.</li>
+          <li>Confirm the net weight for each format and flag any mismatch separately.</li>
+          <li>Collect verified format names and label references in one note.</li>
+        </ol>
+        <h3>Handoff</h3>
+        <p>Send the checked facts to the website lead for <strong>Update the soap listings</strong>.</p>
+        <div class="done-check"><h3>Done when</h3><p>Every selected format has verified details or is explicitly flagged for review.</p></div>
+      </div>
+    </dialog>
+    <dialog id="readiness-detail" aria-labelledby="readiness-title">
+      <div class="dialog-head">
+        <div><p class="role field">Hands-on &middot; Ready</p><h2 id="readiness-title">Check which products are ready for review</h2></div>
+        <button type="button" class="dialog-close" command="close" commandfor="readiness-detail" autofocus>Close</button>
+      </div>
+      <div class="dialog-content">
+        <p>Keep the collection clear about what is ready to show and what is still an idea.</p>
+        <h3>Checklist</h3>
+        <ol>
+          <li>Mark each item as a finished sample, a future concept, or not yet confirmed.</li>
+          <li>Flag anything that still needs a label, photo, or approval.</li>
+        </ol>
+        <h3>Handoff</h3>
+        <p>Give the website lead the approved customer-facing product status, not internal counts or commitments.</p>
+        <div class="done-check"><h3>Done when</h3><p>All items reviewed have a clear status, and unconfirmed items are not presented as available.</p></div>
+      </div>
+    </dialog>
+    <dialog id="photos-detail" aria-labelledby="photos-title">
+      <div class="dialog-head">
+        <div><p class="role field">Hands-on &middot; Ready</p><h2 id="photos-title">Take real product photos</h2></div>
+        <button type="button" class="dialog-close" command="close" commandfor="photos-detail" autofocus>Close</button>
+      </div>
+      <div class="dialog-content">
+        <p>Help shoppers recognize the finished item they would pick up.</p>
+        <h3>Checklist</h3>
+        <ol>
+          <li>Take one clear photo per approved sample in consistent light.</li>
+          <li>Name each file by format and check it for private details before sharing.</li>
+        </ol>
+        <h3>Handoff</h3>
+        <p>Send cleared, labeled photos to the website lead for <strong>Update the soap listings</strong>. Leave any format without a usable image flagged.</p>
+        <div class="done-check"><h3>Done when</h3><p>The website lead can match each approved photo to the correct format without guessing.</p></div>
+      </div>
+    </dialog>
+    <dialog id="listings-detail" aria-labelledby="listings-title">
+      <div class="dialog-head">
+        <div><p class="role">Website &amp; office &middot; Waiting</p><h2 id="listings-title">Update the soap listings</h2></div>
+        <button type="button" class="dialog-close" command="close" commandfor="listings-detail" autofocus>Close</button>
+      </div>
+      <div class="dialog-content">
+        <p>Wait for the confirmed soap details and approved photos before editing product facts.</p>
+        <h3>Checklist</h3>
+        <ol>
+          <li>Use the verified weights and format names from the hands-on lead.</li>
+          <li>Pair each format with the matching approved photo.</li>
+          <li>On a phone, switch between the formats and check that all three details agree.</li>
+        </ol>
+        <h3>Handoff</h3>
+        <p>Needs <strong>Verify soap format details</strong> and <strong>Take real product photos</strong>. Ask the hands-on lead to confirm the draft before publishing.</p>
+        <div class="done-check"><h3>Done when</h3><p>The displayed name, weight, and photo all match the selected format.</p></div>
+      </div>
+    </dialog>
+    <dialog id="pickup-detail" aria-labelledby="pickup-title">
+      <div class="dialog-head">
+        <div><p class="role">Website &amp; office &middot; Waiting</p><h2 id="pickup-title">Write simple pickup instructions</h2></div>
+        <button type="button" class="dialog-close" command="close" commandfor="pickup-detail" autofocus>Close</button>
+      </div>
+      <div class="dialog-content">
+        <p>Set expectations before anyone travels, without turning a private location into a public listing.</p>
+        <h3>Checklist</h3>
+        <ol>
+          <li>Confirm the staffed pickup window and when a customer should expect a message.</li>
+          <li>State what to do if the timing changes and who to contact.</li>
+          <li>Keep precise directions out of public copy unless approved.</li>
+        </ol>
+        <h3>Handoff</h3>
+        <p>Wait for the hands-on lead to check the arrival experience and confirm a workable schedule.</p>
+        <div class="done-check"><h3>Done when</h3><p>In a practice walkthrough, a first-time customer knows when to wait, when to travel, and how to reschedule.</p></div>
+      </div>
+    </dialog>
   </main>
   <footer>
     <div class="wrap"><a href="../index.html">Back to The True Hive design review</a></div>
