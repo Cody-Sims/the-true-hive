@@ -1,0 +1,92 @@
+@import "../guided-scroll/styles.css";
+
+.workbench-next { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #f5f4ec; }
+.workbench-next #main { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1rem; width: min(100%, 1320px); margin-inline: auto; padding: 1rem 2rem; }
+.bench-intro { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-shrink: 0; }
+.bench-intro .eyebrow { font-size: .55rem; margin-bottom: .35rem; color: #64705b; }
+.bench-intro h1 { font: 400 2.2rem/1.1 Georgia, serif; letter-spacing: -.04em; margin: 0 0 .45rem; }
+#draft-state { color: #4c6542; font-size: .7rem; margin: 0; max-width: 700px; }
+.bench-draft-actions { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
+.bench-draft-actions button { font-size: .7rem; }
+.bench-layout { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 1.5rem; }
+.bench-pane { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) 2.75rem auto; border: 1px solid var(--line); border-radius: 9px; background: var(--white); overflow: hidden; }
+.bench-section-nav { grid-row: 1; display: flex; gap: .5rem; padding: .5rem .75rem; border-bottom: 1px solid var(--line); }
+.bench-section-nav button { flex: 1; min-width: 0; font-size: .7rem; color: #526647; background: transparent; border-color: transparent; }
+.bench-section-nav [aria-current] { background: #eaf0e1; color: var(--ink); }
+.draft-conflict { grid-row: 2; background: #fff0c9; border-bottom: 1px solid #d5be78; padding: .75rem 1rem; }
+.draft-conflict p { font-size: .72rem; margin-bottom: .5rem; }
+.draft-conflict > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.draft-conflict button { font-size: .68rem; min-height: 38px; }
+.bench-form-scroll { grid-row: 3; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.bench-form-scroll > section { padding: 1.5rem 1.8rem; border-bottom: 1px solid var(--line); }
+.bench-form-scroll .section-heading { align-items: center; margin-bottom: 1.3rem; }
+.bench-form-scroll .section-heading > div { flex: 1; }
+.bench-form-scroll .section-heading h2 { font-size: 1rem; }
+.bench-form-scroll .section-heading > button { font-size: .7rem; }
+.bench-form-scroll > section > label[for] { margin-bottom: .35rem; }
+.bench-form-scroll > section > textarea { margin-block: 0 1.2rem; }
+.bench-form-scroll input, .bench-form-scroll textarea, .bench-form-scroll select { scroll-margin-block: 1rem; }
+.bench-form-scroll .variant-heading > h3 { margin: 0; font-size: .9rem; }
+.bench-form-scroll .product-actions { margin: 1.5rem 0 0; }
+.bench-form-scroll .flow-photo { margin-bottom: 1rem; }
+.bench-pane #flow-feedback { grid-row: 4; font-size: .66rem; padding: .55rem 1rem; }
+.bench-actions { grid-row: 5; display: flex; gap: 1rem; align-items: center; justify-content: space-between; padding: .8rem 1rem calc(.8rem + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+.bench-actions > span { font-size: .62rem; color: #637057; }
+.bench-actions > div { display: flex; gap: .6rem; }
+.bench-actions button { font-size: .73rem; }
+.bench-preview { min-width: 0; align-self: start; overflow: visible; }
+.bench-preview .preview-side-heading { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .7rem; gap: .3rem; }
+.bench-preview .preview-side-heading .eyebrow, .bench-preview .preview-side-heading .live-dot { margin: 0; font-size: .53rem; }
+.bench-preview .customer-card-image img { height: clamp(72px, calc(100dvh - 560px), 145px); }
+.bench-preview .compact-title { font-size: 1.3rem; }
+.bench-preview .expand-preview { margin-top: .7rem; font-size: .7rem; }
+.bench-readiness { padding: .85rem 0 .3rem; margin-top: .75rem; border-top: 1px solid var(--line); }
+.bench-readiness h2 { font-size: .85rem; margin: .55rem 0 .35rem; }
+.bench-readiness p { font-size: .68rem; color: #526647; margin-bottom: .2rem; }
+.bench-readiness .text-button { font-size: .7rem; }
+.bench-privacy { font-size: .61rem; color: #64715b; line-height: 1.6; margin: .5rem 0 0; padding-top: .7rem; border-top: 1px solid var(--line); }
+.photo-reminder { border-left: 3px solid #a47721; padding: .6rem .8rem; background: #faf0d5; font-size: .73rem; }
+#publish-review p, #publish-review li { font-size: .8rem; }
+.workbench-next #customer-view > * { animation: none; }
+@media (max-width: 1000px) {
+  .workbench-next #main { padding-inline: 1.2rem; }
+  .bench-layout { grid-template-columns: minmax(0, 1fr) 235px; gap: 1rem; }
+  .bench-intro h1 { font-size: 2rem; }
+  .bench-draft-actions { gap: .4rem; }
+  .bench-draft-actions button { padding-inline: .65rem; }
+  .bench-form-scroll > section { padding: 1.25rem; }
+}
+@media (max-height: 740px) {
+  .bench-preview .customer-card-image img { height: 85px; }
+  .bench-readiness { padding-top: .6rem; margin-top: .5rem; }
+  .bench-readiness h2 { display: none; }
+  .bench-privacy { margin-top: .1rem; padding-top: .4rem; font-size: .58rem; }
+  .bench-intro .eyebrow { display: none; }
+}
+@media (max-width: 680px) {
+  .workbench-next #main { padding: .8rem .75rem .5rem; gap: .8rem; }
+  .bench-intro { display: block; }
+  .bench-intro h1 { font-size: 1.9rem; }
+  .bench-intro .eyebrow { display: none; }
+  #draft-state { font-size: .64rem; }
+  .bench-draft-actions { margin-top: .5rem; justify-content: space-between; }
+  .bench-draft-actions button { min-height: 34px; padding-block: .35rem; font-size: .64rem; }
+  .bench-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .bench-preview { display: none; }
+  .bench-section-nav { padding: .4rem; gap: .2rem; }
+  .bench-section-nav button { padding-inline: .35rem; font-size: .63rem; min-height: 40px; }
+  .bench-form-scroll > section { padding: 1.2rem 1rem; }
+  .bench-form-scroll input, .bench-form-scroll textarea, .bench-form-scroll select { font-size: 1rem; }
+  .bench-form-scroll .flow-photo { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+  .bench-form-scroll .flow-photo img { width: 110px; height: 110px; }
+  .bench-form-scroll .flow-photo input { font-size: .68rem; }
+  .bench-actions { padding: .65rem .75rem calc(.65rem + env(safe-area-inset-bottom, 0px)); }
+  .bench-actions > span { display: none; }
+  .bench-actions > div { width: 100%; }
+  .bench-actions button { flex: 1; }
+  .bench-pane #flow-feedback { font-size: .6rem; padding-inline: .75rem; }
+}
+@media (max-height: 580px) {
+  .bench-preview { display: none; }
+  .bench-layout { grid-template-columns: minmax(0, 1fr); }
+}

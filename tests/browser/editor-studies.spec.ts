@@ -36,6 +36,14 @@ test("guided gallery slot uses the improved prototype and keeps all three direct
     await expect(
       page.getByRole("combobox", { name: "Editor direction" }),
     ).toHaveValue(design);
+    if (design === "workbench")
+      await expect(page.locator(".bench-pane")).toBeVisible();
+    else if (design === "variant-desk")
+      await expect(page.locator('[data-editor="variant-desk"]')).toBeVisible();
+    else
+      await expect(
+        page.getByRole("button", { name: "01 / Shared page", exact: true }),
+      ).toBeVisible();
   }
   await expect(
     page.getByRole("button", { name: "01 / Shared page", exact: true }),
@@ -61,6 +69,27 @@ test("guided gallery slot uses the improved prototype and keeps all three direct
   await expect(page.getByLabel("Product name", { exact: true })).toHaveValue(
     "Keep this unsaved draft",
   );
+});
+
+test("comparison controls pause before leaving for another direction", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.addEventListener("beforeunload", () => {
+      window.name = String(
+        document.querySelector<HTMLElement>(".flow-header")?.inert,
+      );
+    });
+  });
+  await page.goto(`${root}index.html?design=guided&mode=edit`);
+  await expect(
+    page.getByRole("button", { name: "01 / Shared page", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Editor direction" })
+    .selectOption("workbench");
+  await expect(page.locator(".bench-pane")).toBeVisible();
+  expect(await page.evaluate(() => window.name)).toBe("true");
 });
 
 test("guided gallery slot retains the mobile product-page pop-out", async ({
@@ -227,9 +256,26 @@ for (const design of designs) {
       .getByRole("button", { name: "Keep variant" })
       .click();
     await expect(stocked.locator(".status")).toHaveText("Active");
-    expect(
-      await page.evaluate(() => [localStorage.length, sessionStorage.length]),
-    ).toEqual([0, 0]);
+    if (design === "workbench") {
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const raw = localStorage.getItem(
+              "true-hive:prototype:workbench:v1:edit",
+            );
+            return raw
+              ? JSON.parse(raw).product.variants.some(
+                  (v: { id: string }) => v.id === "demo-2",
+                )
+              : true;
+          }),
+        )
+        .toBe(false);
+    } else {
+      expect(
+        await page.evaluate(() => [localStorage.length, sessionStorage.length]),
+      ).toEqual([0, 0]);
+    }
     expect(unexpected).toEqual([]);
     await page.reload();
     if (design === "guided")
@@ -242,7 +288,8 @@ for (const design of designs) {
         .getByRole("navigation", { name: "Choose a variant" })
         .getByRole("button", { name: /Amber \/ 12 oz/ })
         .click();
-    await expect(unused).toBeVisible();
+    if (design === "workbench") await expect(unused).toHaveCount(0);
+    else await expect(unused).toBeVisible();
   });
 
   test(`${design} adds a product, preserves step edits and reflows accessibly`, async ({
@@ -276,7 +323,7 @@ for (const design of designs) {
         .getByRole("button", { name: /Variants/ })
         .click();
     const variant =
-      design === "guided"
+      design !== "variant-desk"
         ? page.locator('[data-variant="demo-1"]')
         : page.getByRole("group", {
             name: "New variant",
@@ -298,6 +345,11 @@ for (const design of designs) {
         .getByRole("button", { name: /Review/ })
         .click();
     await page.getByRole("button", { name: "Publish demo" }).click();
+    if (design === "workbench")
+      await page
+        .getByRole("dialog", { name: "Review demo publication" })
+        .getByRole("button", { name: "Confirm demo publication", exact: true })
+        .click();
     await expect(page.getByRole("status")).toContainText(
       design === "guided"
         ? "real storefront did not change"

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Workbench, refined | The True Hive</title>
+    <link rel="icon" href="../assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="app.mjs"></script>
+  </head>
+  <body class="workbench-next">
+    <a class="skip" href="#main">Skip to product editor</a>
+    <header class="flow-header">
+      <a class="brand" href="../index.html"><span class="brand-icon" aria-hidden="true">th</span><span>The True Hive<small>WORKBENCH / DEVICE-LOCAL DRAFTS</small></span></a>
+      <nav aria-label="Prototype navigation"><a href="../editor/index.html">All editor designs</a><a href="?mode=new" id="mode-link">Add product</a></nav>
+      <span class="demo-badge">Fictional demo</span>
+    </header>
+    <main id="main" tabindex="-1">
+      <div class="bench-intro"><div><p class="eyebrow">01 / Everything in reach</p><h1 id="editor-title">Edit your product.</h1><p id="draft-state" aria-live="polite" aria-atomic="true">Checking this device for a draft...</p></div><div class="bench-draft-actions"><button type="button" class="quiet" data-clear-draft>Clear local draft</button><button type="button" class="outline" id="save-local">Save changes</button></div></div>
+      <div class="bench-layout">
+        <form id="product-form" class="bench-pane" novalidate>
+          <nav class="bench-section-nav" aria-label="Product sections"><button type="button" data-jump="essentials" aria-current="true">Essentials</button><button type="button" data-jump="photo">Photo & details</button><button type="button" data-jump="variants">Variants</button></nav>
+          <div class="draft-conflict" hidden><p>A draft changed in another tab. Load it to replace this tab's text, or explicitly keep this version.</p><div><button type="button" class="outline" data-load-draft>Load saved draft</button><button type="button" data-keep-draft>Keep this draft</button></div></div>
+          <div class="bench-form-scroll"></div>
+          <p id="flow-feedback" role="status" tabindex="-1">Local autosave is not publication. No real inventory is connected.</p>
+          <footer class="bench-actions"><span>Prototype only / no real writes</span><div><button type="button" class="outline" data-open-preview="card" aria-label="Preview product">Preview</button><button type="button" data-publish>Publish demo</button></div></footer>
+        </form>
+        <aside class="bench-preview" aria-label="Storefront preview">
+          <div class="preview-side-heading"><p class="eyebrow">Customer view</p><span class="live-dot">Live preview</span></div>
+          <div id="desktop-card"></div>
+          <button type="button" class="outline expand-preview" data-open-preview="product">Open full product page <span aria-hidden="true">&nearr;</span></button>
+          <div class="bench-readiness"><span class="status" data-save-state>Draft</span><h2 id="readiness-title">A final look</h2><p id="readiness-summary"></p><button type="button" class="text-button" data-review>Review publication <span aria-hidden="true">&rarr;</span></button></div>
+          <p class="bench-privacy">Text drafts stay in this browser on this device. Photos are never saved or uploaded. Clear your draft on shared devices.</p>
+        </aside>
+      </div>
+    </main>
+    <dialog id="customer-preview" class="customer-preview" aria-labelledby="preview-title">
+      <div class="preview-toolbar"><div><p class="eyebrow">Through your customer's eyes</p><h2 id="preview-title">Customer preview</h2></div><button type="button" class="quiet close-preview" aria-label="Close preview">Close <span aria-hidden="true">&times;</span></button></div>
+      <div class="preview-view-switch" role="group" aria-label="Preview view"><button type="button" class="outline" data-preview-view="card" aria-pressed="true">Collection card</button><button type="button" class="outline" data-preview-view="product" aria-pressed="false">Product page</button></div>
+      <div class="preview-stage" tabindex="0" aria-label="Scrollable customer preview"><div id="customer-view"></div></div>
+      <p class="preview-modal-note">Fictional preview only. No live product, upload, cart or inventory changes.</p>
+    </dialog>
+    <dialog id="record-action" aria-labelledby="action-title" aria-describedby="action-description"><form method="dialog"><p class="eyebrow">Review this action / demo</p><h2 id="action-title"></h2><p id="action-description"></p><div class="dialog-actions"><button value="cancel" class="quiet">Cancel</button><button value="confirm" id="confirm-action">Confirm</button></div></form></dialog>
+    <dialog id="publish-review" aria-labelledby="publish-title"><form method="dialog"><p class="eyebrow">A deliberate decision</p><h2 id="publish-title">Review demo publication</h2><div id="publish-summary"></div><p>Autosave only stores a local draft. Confirming here changes this fictional example, never the real storefront.</p><div class="dialog-actions"><button value="cancel" class="quiet">Cancel</button><button value="confirm" id="confirm-publish">Confirm demo publication</button></div></form></dialog>
+    <noscript><p class="no-script">This fictional prototype needs JavaScript. <a href="../index.html">Return to the design review.</a></p></noscript>
+  </body>
+</html>

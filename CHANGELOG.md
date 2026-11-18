@@ -4,6 +4,7 @@
 
 ### Added
 
+- Improve Workbench with a viewport-fit customer/review rail, mobile preview modal, section shortcuts and device-local draft autosave/restore, with clear/reset and storage/cross-tab warnings; photos and real inventory are never persisted.
 - Two guided-editor scrolling prototypes: a shared page that moves form and product together, and a compact non-scrolling card beside a form-only scroll area; retain full-page modal preview and previous comparisons.
 - Refined direction 02 with anchored mobile step navigation, retained editing context, a mobile preview modal and clickable collection-card-to-product-page preview; preserve the original comparisons and live editor.
 - Three interactive Add / Edit product redesign studies with explicit variant archive/restore/delete actions; prioritize the current review and consolidate older concepts into a linked archive without changing the live editor.

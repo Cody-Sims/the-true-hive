@@ -6,6 +6,7 @@ import { studies, productPageFiles } from "../prototypes/product-pages/manifest.
 import { editorDesigns, editorFiles } from "../prototypes/editor/manifest.mjs";
 import { guidedFiles } from "../prototypes/guided-next/manifest.mjs";
 import { scrollLayouts, scrollFiles } from "../prototypes/guided-scroll/manifest.mjs";
+import { workbenchFiles } from "../prototypes/workbench-next/manifest.mjs";
 
 export function publicationFiles() {
   const pages = ["index.html", "archive.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
@@ -29,6 +30,7 @@ export function publicationFiles() {
     ...editorFiles.map((file) => `prototypes/editor/${file}`),
     ...guidedFiles.map((file) => `prototypes/guided-next/${file}`),
     ...scrollFiles.map((file) => `prototypes/guided-scroll/${file}`),
+    ...workbenchFiles.map((file) => `prototypes/workbench-next/${file}`),
     "prototypes/team-sprint/index.html",
   ]);
   for (const file of files) {
@@ -82,6 +84,10 @@ export function validatePublicationApproval(approval) {
     || !/^\d{4}-\d{2}-\d{2}$/.test(scrolling.approvedOn))
     throw new Error("The guided scrolling studies require explicit fictional-data preview approval.");
   assertAllowlist(scrolling.approvedLayouts, scrollLayouts, "scroll layout");
+  const workbench = approval.workbenchRefinement;
+  if (!workbench || workbench.public !== true || workbench.scope !== "fictional-workbench-local-drafts"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(workbench.approvedOn))
+    throw new Error("Workbench local-draft previews require explicit publication approval.");
   const teamSprint = approval.teamSprintPreview;
   if (!teamSprint || teamSprint.public !== true || teamSprint.scope !== "sanitized-read-only-sprint"
     || !/^\d{4}-\d{2}-\d{2}$/.test(teamSprint.approvedOn))
