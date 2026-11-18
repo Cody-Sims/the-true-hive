@@ -42,7 +42,7 @@
     "approvedOn": "2026-11-16",
     "scope": "fictional-add-edit-product",
     "approvedDesigns": ["workbench", "guided", "variant-desk"],
-    "purpose": "Owner-requested Add / Edit product redesign prototypes with explicit variant archive, restore and delete actions. Fictional, memory-only data; no real admin identity, SKU, stock, upload or mutation API. Consolidate older studies into an archive while preserving review URLs. No live editor design is selected."
+    "purpose": "Owner-requested Add / Edit product redesign prototypes with explicit variant archive, restore and delete actions. Guided and Variant desk remain memory-only; the separately approved Workbench extension stores bounded local text drafts. No real admin identity, SKU, stock, upload or mutation API. Preserve older review URLs. No live editor design is selected."
   },
   "guidedRefinement": {
     "public": true,
@@ -56,6 +56,12 @@
     "scope": "fictional-guided-scroll-comparison",
     "approvedLayouts": ["together", "compact"],
     "purpose": "Owner-requested guided prototypes comparing one page that scrolls both form and product together against a compact, non-scrolling preview with form-only scrolling. Visually verify with Playwright. Preserve previous studies, mobile pop-out detail preview and all live inventory boundaries; fictional memory-only data."
+  },
+  "workbenchRefinement": {
+    "public": true,
+    "approvedOn": "2026-11-17",
+    "scope": "fictional-workbench-local-drafts",
+    "purpose": "Owner-requested improvements to direction01: screen-height Workbench, bounded customer/review rail, mobile preview modal and device-local autosave/restore. Only bounded editable prototype text/variant fields are stored, separately for Add/Edit; no photos, real inventory metadata, credentials or backend writes."
   },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }

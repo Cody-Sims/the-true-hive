@@ -77,3 +77,10 @@ test("scroll comparisons publish only the two approved fictional layouts", () =>
   assert.throws(() => validatePublicationApproval({ ...approval, guidedScrollConcepts: { ...approval.guidedScrollConcepts, public: false } }), /scroll/i);
   assert.throws(() => validatePublicationApproval({ ...approval, guidedScrollConcepts: { ...approval.guidedScrollConcepts, approvedLayouts: ["compact"] } }), /scroll/i);
 });
+
+test("Workbench autosave review requires explicit scoped publication approval", () => {
+  const files = publicationFiles().filter((file) => file.startsWith("prototypes/workbench-next/"));
+  assert.deepEqual(files, ["app.mjs", "drafts.mjs", "index.html", "manifest.mjs", "styles.css"].map((file) => `prototypes/workbench-next/${file}`));
+  assert.throws(() => validatePublicationApproval({ ...approval, workbenchRefinement: undefined }), /Workbench/i);
+  assert.throws(() => validatePublicationApproval({ ...approval, workbenchRefinement: { ...approval.workbenchRefinement, public: false } }), /Workbench/i);
+});
