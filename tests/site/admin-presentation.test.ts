@@ -741,6 +741,20 @@ domTest(
         true,
       );
       assert.equal(await dialog.locator("[data-product-preview]").count(), 1);
+      const scrollBeforePreviewWheel = await page.evaluate(() => scrollY);
+      await page.mouse.move(2, 2);
+      await page.mouse.wheel(0, 400);
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
+      assert.equal(
+        await page.evaluate(() => scrollY),
+        scrollBeforePreviewWheel,
+        "the mobile preview must not scroll the background form",
+      );
       if (screenshots)
         await page.screenshot({
           path: `${screenshots}/workbench-native-mobile-preview.png`,
