@@ -14,7 +14,7 @@
     "decisions", "comparison", "phase0", "phase1", "phase2", "phase3",
     "phase4", "phase5", "design01", "design02", "design03", "design04",
     "design05", "design06", "design07", "design08", "design09", "design10",
-    "changes", "sharing", "foundation", "operations", "inventory-phase"
+    "changes", "sharing", "foundation", "operations", "inventory-phase", "pickup"
   ],
   "storefrontConcepts": {
     "public": true,
@@ -68,6 +68,12 @@
     "approvedOn": "2026-11-17",
     "scope": "sanitized-read-only-sprint",
     "purpose": "Owner-requested website view for the cofounder. Publish only a general launch-preparation snapshot, with no private backlog, operational details, account data or editing."
+  },
+  "pickupScheduling": {
+    "public": true,
+    "approvedOn": "2026-11-17",
+    "scope": "fictional-post-checkout-pickup",
+    "purpose": "Owner-requested draft plan and connected customer/operator pickup prototypes, using only fictional sites, dates, orders and example policies. In-memory hours, date exceptions, booking/conflict/reschedule and impact-review demonstrations; no private conversation, actual directions, customer data, checkout, inventory, notification or booking backend changes."
   },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }
