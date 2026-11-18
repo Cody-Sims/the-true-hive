@@ -42,6 +42,11 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Check built customer journeys and accessibility
         run: npm run test:e2e
+      - name: Verify the production-only application artifact
+        run: |
+          NODE_ENV=production npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+          NODE_ENV=production npm run build:site
+          NODE_ENV=production npm run check:site-artifact
 
   inventory-checks:
     runs-on: ubuntu-24.04
