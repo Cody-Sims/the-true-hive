@@ -57,13 +57,20 @@ storing photos, stock, SKUs or credentials. Archive, restore-to-draft and guarde
 permanent product/variant deletion are distinct audited actions. Products,
 locations, orders, history, store settings and sign-in share the inventory shell.
 
-**Pickup** is part of private inventory at `/inventory/pickups`. Authorized
-operators configure sites, IANA timezones, stock-location mappings, weekly
+**Locations** at `/inventory/locations` combines inventory records with their
+customer pickup details and hours. Choose an inventory location to view its
+linked pickup points or add pickup details with that stock mapping selected.
+The inventory record's detail page keeps both settings together as well.
+Authorized operators configure sites, IANA timezones, stock-location mappings, weekly
 windows, date overrides, notice/horizon, capacity, cutoff and travel policies.
 Scheduling starts **disabled with no sites or hours**. Hours changes require
 review of the exact affected appointments, which remain reserved and marked
 for review. Paid-unscheduled/help queues and operator-assisted arrangements
-remain available; scheduling never changes stock or marks an order collected.
+remain available in **Pickups** at `/inventory/pickups`, which focuses on
+appointments and help rather than a second location manager. Scheduling never
+changes stock or marks an order collected. Mobile inventory navigation uses
+a collapsed hamburger; Orders, History, Store settings and Team board use the
+same workspace cards and hierarchy.
 
 The checkout return page reads server-verified payment and same-browser access
 before offering location/date/time selection, confirmation, rescheduling or a

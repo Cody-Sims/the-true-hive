@@ -1,0 +1,119 @@
+---
+import type { AdminLocation } from "../../domain/admin.ts";
+import LocationForm from "./LocationForm.astro";
+import ReadState from "./ReadState.astro";
+import AdminPickup from "../pickup/AdminPickup.astro";
+import "../../styles/locations.css";
+interface Props {
+  locations: AdminLocation[] | null;
+  selectedKey?: string;
+}
+const { locations, selectedKey = "" } = Astro.props;
+---
+
+<div class="location-workspace">
+  <p class="admin-page-intro">
+    Manage where you keep stock and where customers collect it, together.
+    Customer pickup details and hours are linked to your inventory locations.
+  </p>
+  {locations === null ? (
+    <ReadState unavailable />
+  ) : (
+    <>
+      <dl class="location-overview" aria-label="Location overview">
+        <div>
+          <dt>Inventory locations</dt>
+          <dd>{locations.length}</dd>
+        </div>
+        <div>
+          <dt>Active</dt>
+          <dd>{locations.filter((location) => location.active).length}</dd>
+        </div>
+        <div>
+          <dt>Pickup enabled</dt>
+          <dd>
+            {locations.filter((location) => location.pickupEnabled).length}
+          </dd>
+        </div>
+      </dl>
+      <section aria-labelledby="stock-locations-title">
+        <div class="location-section-heading">
+          <div>
+            <p class="admin-eyebrow">Inventory &amp; collection</p>
+            <h2 id="stock-locations-title">Your locations</h2>
+          </div>
+          <a href="#new-location">Add inventory location</a>
+        </div>
+        {locations.length ? (
+          <div class="location-record-grid">
+            {locations.map((location) => (
+              <article
+                class="location-record-card"
+                data-location-key={location.key}
+              >
+                <div class="location-record-heading">
+                  <h3>{location.name}</h3>
+                  <span
+                    class:list={[
+                      "location-badge",
+                      { "is-active": location.active },
+                    ]}
+                  >
+                    {location.active ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                <p class="location-key">{location.key}</p>
+                <p class="location-label">
+                  {location.publicLabel || "No storefront label set"}
+                </p>
+                <p class="admin-muted">
+                  {location.pickupEnabled
+                    ? "Pickup fulfillment enabled"
+                    : "Stock storage only"}{" "}
+                  &middot; revision {location.revision}
+                </p>
+                <div class="location-record-actions">
+                  <a
+                    href={`/inventory/locations/${encodeURIComponent(location.key)}`}
+                  >
+                    Edit inventory record
+                  </a>
+                  <a
+                    href={`/inventory/locations?stock=${encodeURIComponent(location.key)}#pickup-points`}
+                  >
+                    Pickup details &amp; hours
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div class="admin-panel">
+            <h3>Your first location starts here.</h3>
+            <p>
+              Add a genuine inventory location below, then connect its customer
+              pickup details and collection windows.
+            </p>
+          </div>
+        )}
+      </section>
+      <section id="pickup-points" class="location-pickup-section" tabindex="-1">
+        <AdminPickup view="locations" locationKey={selectedKey} />
+      </section>
+      <section
+        id="new-location"
+        class="location-create admin-record-section"
+        tabindex="-1"
+        aria-labelledby="new-location-title"
+      >
+        <p class="admin-eyebrow">A new place</p>
+        <h2 id="new-location-title">Add an inventory location</h2>
+        <p class="admin-muted">
+          Create its inventory record first, then add approved pickup details
+          and hours. Counts are managed separately in Products.
+        </p>
+        <LocationForm />
+      </section>
+    </>
+  )}
+</div>

@@ -12,13 +12,13 @@ const links = [
   ["/inventory/locations", "Locations"],
   ["/inventory/store", "Store settings"],
   ["/inventory/orders", "Orders"],
-  ["/inventory/pickups", "Pickup scheduling"],
+  ["/inventory/pickups", "Pickups"],
   ["/inventory/history", "History"],
 ] as const;
 const active = (href: string) => path === href || path.startsWith(`${href}/`);
 ---
 
-<header class="admin-header">
+<header class="admin-header" data-inventory-navbar>
   <div class="admin-navbar-inner">
     <a
       class="admin-brand"
@@ -48,7 +48,36 @@ const active = (href: string) => path === href || path.startsWith(`${href}/`);
     </a>
     {!publicShell && admin && (
       <>
-        <nav class="admin-navbar-links" aria-label="Inventory navigation">
+        <button
+          type="button"
+          class="admin-menu-toggle"
+          data-inventory-menu-toggle
+          aria-controls="inventory-navigation"
+          aria-expanded="false"
+          aria-label="Open inventory menu"
+          hidden
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 6h16M4 12h16M4 18h16"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span data-inventory-menu-label>Menu</span>
+        </button>
+        <nav
+          id="inventory-navigation"
+          class="admin-navbar-links"
+          aria-label="Inventory navigation"
+        >
           {links.map(([href, label]) => (
             <a href={href} aria-current={active(href) ? "page" : undefined}>
               {label}
@@ -134,6 +163,24 @@ const active = (href: string) => path === href || path.startsWith(`${href}/`);
     justify-content: center;
     gap: 0.25rem;
     min-width: 0;
+  }
+  .admin-navbar-links[hidden],
+  .admin-menu-toggle[hidden] {
+    display: none;
+  }
+  .admin-menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #c8d2b8;
+    border-radius: 0.4rem;
+    background: #f1f4e9;
+    color: var(--forest);
+    font: inherit;
+    font-size: 0.8rem;
   }
   .admin-navbar-links a {
     display: inline-flex;
@@ -235,24 +282,30 @@ const active = (href: string) => path === href || path.startsWith(`${href}/`);
   }
   @media (max-width: 1180px) {
     .admin-navbar-inner {
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 0.25rem 1rem;
-      padding-top: 0.5rem;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 0.25rem 0.6rem;
+      padding-block: 0.5rem;
+    }
+    .admin-menu-toggle:not([hidden]) {
+      display: inline-flex;
+      grid-column: 2;
+      grid-row: 1;
     }
     .admin-navbar-links {
       grid-column: 1 / -1;
       grid-row: 2;
-      justify-content: flex-start;
-      overflow-x: auto;
-      padding-block: 0.3rem 0.6rem;
-      scrollbar-width: thin;
-      scroll-padding-inline: 0.5rem;
+      flex-direction: column;
+      align-items: stretch;
+      padding-block: 0.5rem;
+      border-top: 1px solid #d3d9c6;
+      margin-top: 0.5rem;
     }
     .admin-navbar-links a {
-      flex-shrink: 0;
+      justify-content: flex-start;
+      white-space: normal;
     }
     .admin-account {
-      grid-column: 2;
+      grid-column: 3;
       grid-row: 1;
     }
     .admin-account-panel {

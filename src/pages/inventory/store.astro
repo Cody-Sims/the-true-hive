@@ -7,6 +7,7 @@ import { getAdminStoreSettings } from "../../server/admin/store.ts";
 import { getAdminPool } from "../../server/admin/pool.ts";
 import { getCheckoutPresentation } from "../../server/commerce/config.ts";
 import type { StoreSettings } from "../../domain/storefront.ts";
+import "../../styles/inventory-pages.css";
 
 if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
@@ -20,32 +21,53 @@ try {
 
 <AdminLayout title="Store settings">
   <a href="/inventory/pickups" slot="page-actions">
-    Pickup scheduling
+    Appointment desk
   </a>
-  <p class="admin-page-intro">
-    One deliberate switch for new checkouts. Existing orders and their stock
-    commitments remain separate.
-  </p>
-  <section class="admin-record-section" aria-label="Checkout availability">
-    <p class="admin-eyebrow">Storefront controls</p>
-    <h2>Checkout availability</h2>
-    {settings ? (
-      <StoreSettingsForm
-        settings={settings}
-        paymentReady={getCheckoutPresentation().enabled}
-      />
-    ) : (
-      <ReadState unavailable />
-    )}
-  </section>
-  <section
-    class="admin-record-section"
-    aria-label="Published pickup information"
-  >
-    <p class="admin-eyebrow">What customers see</p>
-    <PickupLocation />
-    <p>
-      <a href="/inventory/pickups">Review pickup windows and scheduling</a>
+  <div class="inventory-pages">
+    <p class="admin-page-intro">
+      One deliberate switch for new checkouts. Existing orders and their stock
+      commitments remain separate.
     </p>
-  </section>
+    <div class="inventory-store-grid">
+      <section class="inventory-page-card" aria-label="Checkout availability">
+        <header class="inventory-card-heading">
+          <div>
+            <p class="admin-eyebrow">Storefront controls</p>
+            <h2>Checkout availability</h2>
+          </div>
+          <span class="inventory-state">Test checkout only</span>
+        </header>
+        {settings ? (
+          <StoreSettingsForm
+            settings={settings}
+            paymentReady={getCheckoutPresentation().enabled}
+          />
+        ) : (
+          <ReadState unavailable />
+        )}
+      </section>
+      <section
+        class="inventory-page-card inventory-pickup-reference"
+        aria-label="Published pickup information"
+      >
+        <header class="inventory-card-heading">
+          <div>
+            <p class="admin-eyebrow">What customers see</p>
+            <h2>Customer pickup information</h2>
+          </div>
+        </header>
+        <PickupLocation />
+        <nav class="inventory-workspace-links" aria-label="Pickup workspaces">
+          <a href="/inventory/locations">
+            <strong>Locations &amp; pickup hours</strong>
+            <span>Manage stock locations and pickup meeting policies.</span>
+          </a>
+          <a href="/inventory/pickups">
+            <strong>Appointment desk</strong>
+            <span>Review appointments and requests for help.</span>
+          </a>
+        </nav>
+      </section>
+    </div>
+  </div>
 </AdminLayout>

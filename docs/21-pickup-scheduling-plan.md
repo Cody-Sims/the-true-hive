@@ -2,7 +2,7 @@
 
 Status: **implementation scope approved / production policies not approved**
 
-Version: 2
+Version: 3
 
 Date: 2026-11-18
 
@@ -12,6 +12,11 @@ remaining inventory pages on 2026-11-18. The Workbench uses the subsequently
 requested whole-page scrolling, not its earlier independently scrolling form.
 This approves technical integration, not guessed operating hours, private
 directions, refund rules, live payments or new paid providers.
+
+The subsequent owner-requested inventory UI revision combines stock-location
+records and pickup-detail/hour management in the Locations workspace, makes the
+remaining tabs cohesive and uses a mobile hamburger. It changes navigation and
+presentation, not inventory authority or an automatic merge of stored records.
 
 ## Objective
 
@@ -145,7 +150,9 @@ Implementation contract:
   order/booking revisions, storing a durable operator-queue flag. It works for
   eligible paid orders even when self-service is disabled or no time is suitable;
   it does not send an email or promise a response time.
-- Private `/inventory/pickups` and `/api/admin/pickup` dashboard/hours controls reuse existing
+- Private `/inventory/locations` combines stock records and mapped pickup-hour
+  controls. `/inventory/pickups` focuses on appointments/help and self-service
+  enablement. Both reuse `/api/admin/pickup` and existing
   authentication, MFA, membership checks, CSRF, audit and revisions. Mutating
   availability must serialize against booking writers, not merely hide a slot
   in the browser.

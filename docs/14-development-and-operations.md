@@ -786,8 +786,14 @@ last-place contention, help, impact review, lost-response exact retry and physic
 handoff only with isolated test data. Never make a real pickup promise merely
 to test a release. Existing Stripe-test restrictions remain authoritative.
 
-The operator configures `/inventory/pickups` explicitly before enabling
-self-service. All sites initially share one operator; cross-site travel is
+The operator manages inventory records and linked pickup details/hours together
+at `/inventory/locations`; a location's detail page also exposes its linked
+pickup settings. Adding pickup details for a selected inventory location
+preselects only that stock mapping, never hours, notice or other policy values.
+These remain separate protected records internally: a meeting point can serve
+multiple stock locations, and no UI grouping transfers or merges inventory.
+`/inventory/pickups` is the appointment/help desk and explicit self-service
+enablement control, not a second location manager. All sites initially share one operator; cross-site travel is
 reserved as well as site capacity. Site changes recompute the exact impact
 under the same database lock as booking. Acknowledgement retains appointments
 as `needs_review`; reopening hours does not silently reconfirm them.

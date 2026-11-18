@@ -43,6 +43,7 @@
 
 ### Changed
 
+- Unify stock-location records and linked pickup details/hours under Locations, focus Pickups on appointments, redesign the remaining inventory tabs with consistent cards and controls, and replace the mobile tab strip with an accessible hamburger.
 - Integrate the native shared-page Workbench, current-data mobile preview and bounded account/product-scoped editable drafts; give the remaining inventory pages a cohesive shell while preserving explicit save/publication/physical-handoff controls.
 - Replace Guided in the existing three-direction editor comparison with the improved scrolling/modal prototype while preserving gallery URLs, Add/Edit modes and unsaved-draft protection.
 - Share public catalog-notice presentation and retire the legacy inline stock-control branch/client while preserving current storefront states, receiving, corrections and retry protections.

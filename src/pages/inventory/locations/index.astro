@@ -1,7 +1,6 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import LocationForm from "../../../components/admin/LocationForm.astro";
-import ReadState from "../../../components/admin/ReadState.astro";
+import LocationWorkspace from "../../../components/admin/LocationWorkspace.astro";
 import { listAdminLocations } from "../../../server/admin/catalog.ts";
 import { getAdminPool } from "../../../server/admin/pool.ts";
 import type { AdminLocation } from "../../../domain/admin.ts";
@@ -19,58 +18,14 @@ try {
   <a href="#new-location" slot="page-actions">
     Add location
   </a>
-  <p class="admin-page-intro">
-    Keep physical stock locations and pickup eligibility explicit. A public
-    label is not an address or a promise of availability.
-  </p>
-  <p class="admin-actions">
-    <a href="/inventory/pickups">Manage pickup scheduling</a>
-  </p>
-  {!locations ? (
-    <ReadState unavailable />
-  ) : locations.length ? (
-    <table class="admin-table" role="table">
-      <caption>Explicit inventory and pickup locations</caption>
-      <thead>
-        <tr>
-          <th scope="col">Location</th>
-          <th scope="col">Public label</th>
-          <th scope="col">Eligibility</th>
-          <th scope="col">Revision</th>
-        </tr>
-      </thead>
-      <tbody>
-        {locations.map((location) => (
-          <tr>
-            <td data-label="Location">
-              <a
-                href={`/inventory/locations/${encodeURIComponent(location.key)}`}
-              >
-                {location.name}
-              </a>
-              <br />
-              <small>{location.key}</small>
-            </td>
-            <td data-label="Public label">
-              {location.publicLabel ?? "Not published"}
-            </td>
-            <td data-label="Eligibility">
-              {location.active ? "Active" : "Inactive"} ·{" "}
-              {location.pickupEnabled ? "Pickup enabled" : "No pickup"}
-            </td>
-            <td data-label="Revision">{location.revision}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ) : (
-    <ReadState empty="No locations established." />
-  )}
-  <section class="admin-record-section" aria-labelledby="new-location">
-    <p class="admin-eyebrow">A new place to keep things</p>
-    <h2 id="new-location" tabindex="-1">
-      Create location
-    </h2>
-    <LocationForm />
-  </section>
+  <a href="/inventory/pickups" slot="page-actions">
+    Pickup appointments
+  </a>
+  <LocationWorkspace
+    locations={locations}
+    selectedKey={Astro.url.searchParams.get("stock") ?? ""}
+  />
 </AdminLayout>
+<script>
+  import "../../../client/pickup.ts";
+</script>
