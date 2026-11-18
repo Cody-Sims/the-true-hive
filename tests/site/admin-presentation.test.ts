@@ -5471,7 +5471,7 @@ domTest(
       ["/inventory/locations", "Locations", false],
       ["/inventory/locations/fixture-location", "Locations", false],
       ["/inventory/orders", "Orders", false],
-      ["/inventory/pickups", "Pickup scheduling", false],
+      ["/inventory/pickups", "Pickups", false],
       ["/inventory/orders/fixture-order", "Orders", false],
       ["/inventory/history", "History", false],
       ["/inventory/store/", "Store settings", false],
@@ -5510,7 +5510,7 @@ domTest(
               "Locations",
               "Store settings",
               "Orders",
-              "Pickup scheduling",
+              "Pickups",
               "History",
             ],
           );

@@ -10,15 +10,19 @@ import type { CustomerPickupContext } from "../../src/domain/pickup.ts";
 
 const root = new URL("../../", import.meta.url);
 const screenshots = process.env["INVENTORY_UI_SCREENSHOT_DIR"];
+const scopedStyles = new Map<string, string>();
 async function moduleUrl(file: URL): Promise<string> {
   const source = await readFile(file, "utf8");
-  let code = file.pathname.endsWith(".astro")
+  const compiled = file.pathname.endsWith(".astro")
     ? transform(source, {
         filename: file.pathname,
         internalURL: "astro/compiler-runtime",
         resolvePath: (specifier) => specifier,
-      }).code
-    : stripTypeScriptTypes(source, { mode: "transform" });
+      })
+    : null;
+  if (compiled) scopedStyles.set(file.href, compiled.css.join("\n"));
+  let code =
+    compiled?.code ?? stripTypeScriptTypes(source, { mode: "transform" });
   const [imports] = parse(code);
   for (const item of [...imports].reverse()) {
     if (!item.specifier) continue;
@@ -32,12 +36,17 @@ async function moduleUrl(file: URL): Promise<string> {
   }
   return `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
 }
-async function render(name: string, authorized = false) {
+async function render(
+  name: string,
+  authorized = false,
+  props: Record<string, unknown> = {},
+) {
   const component = await import(
     await moduleUrl(new URL(`src/components/pickup/${name}.astro`, root))
   );
   const container = await AstroContainer.create();
   return container.renderToString(component.default, {
+    props,
     locals: authorized
       ? {
           nonce: "pickup-component-test",
@@ -70,6 +79,16 @@ test("operator shell requires verified SSR identity and has no invented operatio
     verified,
     /synthetic-actor|synthetic-uid|09:00|America\/New_York/,
   );
+});
+
+test("location management has a scoped workspace instead of a second appointment desk", async () => {
+  const html = await render("AdminPickup", true, {
+    view: "locations",
+    locationKey: "synthetic-stock",
+  });
+  assert.match(html, /data-pickup-view="locations"/);
+  assert.match(html, /data-pickup-location="synthetic-stock"/);
+  assert.match(html, /aria-label="Pickup details and hours"/);
 });
 
 test("the native pickup page rejects missing session bootstrap and renders the shared CSRF meta only for verified locals", async () => {
@@ -173,19 +192,111 @@ const site = {
   },
   exceptions: {},
 };
+const inventoryLocations = [
+  {
+    key: "synthetic-stock",
+    name: "Existing stock room",
+    publicLabel: "Collection stock",
+    active: true,
+    pickupEnabled: true,
+    revision: 3,
+  },
+  {
+    key: "other-stock",
+    name: "Other stock room",
+    publicLabel: null,
+    active: false,
+    pickupEnabled: false,
+    revision: 1,
+  },
+];
+
+test("the Locations workspace keeps inventory records and linked pickup management together and fails closed on unknown records", async () => {
+  const component = await import(
+    await moduleUrl(
+      new URL("src/components/admin/LocationWorkspace.astro", root),
+    )
+  );
+  const container = await AstroContainer.create();
+  const locals = {
+    nonce: "workspace-test",
+    admin: { uid: "synthetic-uid", actorId: "synthetic-actor" },
+    csrfToken: "synthetic-admin-token",
+  };
+  const html = await container.renderToString(component.default, {
+    props: { locations: inventoryLocations, selectedKey: "synthetic-stock" },
+    locals,
+  });
+  assert.match(html, /data-location-key="synthetic-stock"/);
+  assert.match(html, /Existing stock room/);
+  assert.match(
+    html,
+    /href="\/inventory\/locations\?stock=synthetic-stock#pickup-points"/,
+  );
+  assert.match(html, /data-pickup-view="locations"/);
+  assert.match(html, /data-pickup-location="synthetic-stock"/);
+  const unavailable = await container.renderToString(component.default, {
+    props: { locations: null },
+    locals,
+  });
+  assert.doesNotMatch(
+    unavailable,
+    /location-overview|data-pickup-mode|name="key"/,
+  );
+});
 type Handler = (
   path: string,
   method: string,
   body: string | null,
 ) => Promise<{ status?: number; body?: unknown; abort?: boolean }>;
-async function open(page: Page, mode: "customer" | "admin", handler: Handler) {
+async function open(
+  page: Page,
+  mode: "customer" | "admin",
+  handler: Handler,
+  view: "locations" | "appointments" = "locations",
+  workspace = false,
+) {
   page.setDefaultTimeout(5000);
   await page.clock.setFixedTime(new Date("2026-11-18T12:00:00Z"));
-  const html = await render(
+  let html = await render(
     mode === "admin" ? "AdminPickup" : "CustomerPickup",
     mode === "admin",
+    { view },
   );
-  const css = await readFile(new URL("src/styles/pickup.css", root), "utf8");
+  let css = await readFile(new URL("src/styles/pickup.css", root), "utf8");
+  if (workspace) {
+    const container = await AstroContainer.create();
+    const locals = {
+      nonce: "workspace-test",
+      admin: { uid: "synthetic-uid", actorId: "synthetic-actor" },
+      csrfToken: "synthetic-admin-token",
+    };
+    const locationModule = await import(
+      await moduleUrl(
+        new URL("src/components/admin/LocationWorkspace.astro", root),
+      )
+    );
+    const navModule = await import(
+      await moduleUrl(
+        new URL("src/components/admin/InventoryNavbar.astro", root),
+      )
+    );
+    const headerModule = await import(
+      await moduleUrl(
+        new URL("src/components/admin/AdminPageHeader.astro", root),
+      )
+    );
+    html =
+      (await container.renderToString(navModule.default, {
+        props: { path: "/inventory/locations", admin: locals.admin },
+        locals,
+      })) +
+      `<main class="admin-wrap">${await container.renderToString(headerModule.default, { props: { title: "Locations" }, locals })}${await container.renderToString(locationModule.default, { props: { locations: inventoryLocations, selectedKey: "synthetic-stock" }, locals })}</main>`;
+    css +=
+      (await readFile(new URL("src/styles/admin.css", root), "utf8")) +
+      (await readFile(new URL("src/styles/locations.css", root), "utf8")) +
+      [...scopedStyles.values()].join("\n");
+  }
   await page.route("https://pickup.example.invalid/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -225,7 +336,7 @@ async function open(page: Page, mode: "customer" | "admin", handler: Handler) {
     }
     return route.fulfill({
       contentType: "text/html",
-      body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="synthetic-admin-token"><title>Synthetic pickup component</title><style>body{margin:0;padding:24px;background:#f4f0e2;font-family:Arial,sans-serif}${css}</style></head><body>${html}<script type="module" src="/src/client/pickup.ts"></script></body></html>`,
+      body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="synthetic-admin-token"><title>Synthetic pickup component</title><style>body{margin:0;padding:${workspace ? "0" : "24px"};background:#f4f0e2;font-family:Arial,sans-serif}${css}</style></head><body>${html}<script type="module" src="/src/client/pickup.ts"></script>${workspace ? '<script type="module" src="/src/client/inventory-nav.ts"></script>' : ""}</body></html>`,
     });
   });
   await page.goto("https://pickup.example.invalid/fixture");
@@ -687,41 +798,58 @@ domTest(
     const page = await browser.newPage();
     let revoked = false;
     const writes: unknown[] = [];
-    await open(page, "admin", async (path, method, body) => {
-      if (method === "GET")
+    await open(
+      page,
+      "admin",
+      async (path, method, body) => {
+        if (method === "GET")
+          return {
+            body: {
+              settings: { enabled: false, revision: 2 },
+              sites: [],
+              stockLocations: [],
+              truncated: false,
+              orders: [
+                {
+                  ...paidOrder,
+                  state: "picked_up",
+                  sites: [],
+                  stockLocationKey: "synthetic-stock",
+                  buyerAccessRevoked: revoked,
+                },
+              ],
+            },
+          };
+        assert.equal(path, "/api/admin/pickup/access");
+        const payload = JSON.parse(body!);
+        writes.push(payload);
+        revoked = true;
         return {
           body: {
-            settings: { enabled: false, revision: 2 },
-            sites: [],
-            stockLocations: [],
-            truncated: false,
-            orders: [
-              {
-                ...paidOrder,
-                state: "picked_up",
-                sites: [],
-                stockLocationKey: "synthetic-stock",
-                buyerAccessRevoked: revoked,
-              },
-            ],
+            operationId: payload.operationId,
+            resourceKey: paidOrder.id,
+            revision: 4,
+            replayed: false,
           },
         };
-      assert.equal(path, "/api/admin/pickup/access");
-      const payload = JSON.parse(body!);
-      writes.push(payload);
-      revoked = true;
-      return {
-        body: {
-          operationId: payload.operationId,
-          resourceKey: paidOrder.id,
-          revision: 4,
-          replayed: false,
-        },
-      };
-    });
+      },
+      "appointments",
+    );
     await page
       .getByRole("button", { name: "Revoke buyer browser access" })
       .click();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Add pickup point", exact: true })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Manage locations & hours", exact: true })
+        .getAttribute("href"),
+      "/inventory/locations",
+    );
     assert.equal(writes.length, 0);
     await page
       .getByRole("button", { name: "Confirm access revocation" })
@@ -763,60 +891,65 @@ domTest(
     let release!: () => void;
     const saveResponse = new Promise<void>((resolve) => (release = resolve));
     const writes: Record<string, unknown>[] = [];
-    await open(page, "admin", async (path, method, body) => {
-      if (method === "GET" && path.endsWith("/availability"))
-        return {
-          body: {
-            site: { ...publicSite, revision: 7 },
-            settingsRevision: 5,
-            orderRevision: 6,
-            bookingRevision: 2,
-            slots: [{ ...slot, siteRevision: 7 }],
-          },
-        };
-      if (method === "GET")
-        return {
-          body: {
-            settings: { enabled: false, revision: 5 },
-            sites: [site],
-            stockLocations: [
-              { key: "synthetic-stock", label: "Synthetic stock location" },
-            ],
-            truncated: false,
-            orders: [
-              {
-                ...paidOrder,
-                state: saved ? "picked_up" : "paid",
-                booking: {
-                  ...booking,
-                  status: saved ? "completed" : "scheduled",
+    await open(
+      page,
+      "admin",
+      async (path, method, body) => {
+        if (method === "GET" && path.endsWith("/availability"))
+          return {
+            body: {
+              site: { ...publicSite, revision: 7 },
+              settingsRevision: 5,
+              orderRevision: 6,
+              bookingRevision: 2,
+              slots: [{ ...slot, siteRevision: 7 }],
+            },
+          };
+        if (method === "GET")
+          return {
+            body: {
+              settings: { enabled: false, revision: 5 },
+              sites: [site],
+              stockLocations: [
+                { key: "synthetic-stock", label: "Synthetic stock location" },
+              ],
+              truncated: false,
+              orders: [
+                {
+                  ...paidOrder,
+                  state: saved ? "picked_up" : "paid",
+                  booking: {
+                    ...booking,
+                    status: saved ? "completed" : "scheduled",
+                  },
+                  stockLocationKey: "synthetic-stock",
+                  buyerAccessRevoked: true,
                 },
-                stockLocationKey: "synthetic-stock",
-                buyerAccessRevoked: true,
-              },
-            ],
+              ],
+            },
+          };
+        const payload = JSON.parse(body!) as Record<string, unknown>;
+        writes.push(payload);
+        requested();
+        await saveResponse;
+        saved = true;
+        return {
+          body: {
+            operationId: payload["operationId"],
+            resourceKey: paidOrder.id,
+            revision: 3,
+            replayed: true,
+            booking: {
+              ...booking,
+              startsAt: slot.startsAt,
+              endsAt: slot.endsAt,
+              revision: 3,
+            },
           },
         };
-      const payload = JSON.parse(body!) as Record<string, unknown>;
-      writes.push(payload);
-      requested();
-      await saveResponse;
-      saved = true;
-      return {
-        body: {
-          operationId: payload["operationId"],
-          resourceKey: paidOrder.id,
-          revision: 3,
-          replayed: true,
-          booking: {
-            ...booking,
-            startsAt: slot.startsAt,
-            endsAt: slot.endsAt,
-            revision: 3,
-          },
-        },
-      };
-    });
+      },
+      "appointments",
+    );
     await page.getByLabel("Pickup location").selectOption(site.key);
     await page.getByLabel("Pickup date (location timezone)").fill(slot.date);
     await page.getByRole("button", { name: "Find available times" }).click();
@@ -846,6 +979,137 @@ domTest(
       0,
     );
     await page.close();
+  },
+);
+
+domTest(
+  "the location workspace links pickup details to an existing stock location without guessing hours",
+  async () => {
+    const page = await browser.newPage();
+    await open(page, "admin", async () => ({
+      body: {
+        settings: { enabled: false, revision: 2 },
+        sites: [site],
+        stockLocations: [
+          { key: "synthetic-stock", label: "Existing stock room" },
+          { key: "other-stock", label: "Other stock room" },
+        ],
+        orders: [],
+        truncated: false,
+      },
+    }));
+    try {
+      await page
+        .getByRole("heading", { name: "Pickup details & hours" })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Enable customer scheduling" })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Paid orders, help & appointments" })
+          .count(),
+        0,
+      );
+      await page
+        .getByLabel("Inventory location", { exact: true })
+        .selectOption("other-stock");
+      assert.equal(
+        await page
+          .getByText(`${site.label} · Active · ${site.timezone}`, {
+            exact: true,
+          })
+          .count(),
+        0,
+      );
+      await page.getByRole("button", { name: "Add pickup point" }).click();
+      assert.equal(
+        await page
+          .getByLabel("Other stock room (other-stock)", { exact: true })
+          .isChecked(),
+        true,
+      );
+      assert.equal(
+        await page
+          .getByLabel("Existing stock room (synthetic-stock)", { exact: true })
+          .isChecked(),
+        false,
+      );
+      assert.equal(await page.getByLabel("IANA timezone").inputValue(), "");
+      assert.equal(
+        await page.getByLabel("Minimum notice (hours)").inputValue(),
+        "",
+      );
+    } finally {
+      await page.close();
+    }
+  },
+);
+
+domTest(
+  "unified location cards and pickup hours reflow with the shared mobile menu",
+  async () => {
+    const page = await browser.newPage({
+      viewport: { width: 1440, height: 1000 },
+    });
+    await open(
+      page,
+      "admin",
+      async () => ({
+        body: {
+          settings: { enabled: false, revision: 2 },
+          sites: [site],
+          stockLocations: inventoryLocations.map((location) => ({
+            key: location.key,
+            label: location.name,
+          })),
+          orders: [],
+          truncated: false,
+        },
+      }),
+      "locations",
+      true,
+    );
+    try {
+      await page.getByLabel("Inventory location", { exact: true }).waitFor();
+      assert.equal(await page.locator("[data-location-key]").count(), 2);
+      assert.equal(
+        await page
+          .getByLabel("Inventory location", { exact: true })
+          .inputValue(),
+        "synthetic-stock",
+      );
+      for (const [label, width] of [
+        ["desktop", 1440],
+        ["mobile", 390],
+      ] as const) {
+        await page.setViewportSize({ width, height: 1000 });
+        if (width === 390) {
+          await page
+            .getByRole("button", { name: "Open inventory menu" })
+            .click();
+          await page
+            .getByRole("navigation", { name: "Inventory navigation" })
+            .waitFor();
+        }
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+        if (screenshots)
+          await page.screenshot({
+            path: `${screenshots}/native-locations-${label}.png`,
+            fullPage: true,
+          });
+      }
+    } finally {
+      await page.close();
+    }
   },
 );
 

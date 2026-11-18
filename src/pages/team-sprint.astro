@@ -3,6 +3,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 import TeamBoard from "../components/admin/TeamBoard.astro";
 import { getAdminPool } from "../server/admin/pool.ts";
 import { getTeamTasks } from "../server/admin/team-board.ts";
+import "../styles/inventory-pages.css";
 
 if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
@@ -19,8 +20,12 @@ try {
   {tasks ? (
     <TeamBoard tasks={tasks} />
   ) : (
-    <p role="status">
-      The shared board is temporarily unavailable. Reload to try again.
-    </p>
+    <div class="inventory-pages">
+      <section class="inventory-page-card" role="status">
+        <p class="admin-eyebrow">Shared work</p>
+        <h2>The shared board is temporarily unavailable.</h2>
+        <p>Reload to try again. No substitute tasks have been supplied.</p>
+      </section>
+    </div>
   )}
 </AdminLayout>

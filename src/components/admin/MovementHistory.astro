@@ -1,27 +1,48 @@
 ---
 import type { AdminMovement } from "../../domain/admin.ts";
+import "../../styles/inventory-pages.css";
 interface Props {
   movements: AdminMovement[];
 }
 const { movements } = Astro.props;
 ---
 
-<ol class="admin-history" aria-label="Recorded stock movements">
+<ol
+  class="admin-history inventory-pages inventory-movement-list"
+  aria-label="Recorded stock movements"
+>
   {movements.map((movement) => (
-    <li>
-      <p>
-        <strong>{movement.variantKey}</strong> at {movement.locationKey} ·{" "}
-        {movement.delta > 0 ? "+" : ""}
-        {movement.delta} units
+    <li class="inventory-movement-card">
+      <header class="inventory-movement-heading">
+        <div>
+          <p class="admin-eyebrow">Counted stock / {movement.locationKey}</p>
+          <h3>{movement.variantKey}</h3>
+        </div>
+        <strong class="inventory-movement-delta">
+          {movement.delta > 0 ? "+" : ""}
+          {movement.delta} units
+        </strong>
+      </header>
+      <p class="inventory-movement-balance">
+        Recorded on hand:{" "}
+        <strong>
+          {movement.beforeOnHand} → {movement.onHand}
+        </strong>
       </p>
-      <p>
-        Recorded on hand: {movement.beforeOnHand} → {movement.onHand}.{" "}
+      <p class="inventory-movement-reason">Reason: {movement.reason}</p>
+      <p class="inventory-movement-time">
         <time datetime={movement.createdAt}>{movement.createdAt}</time>
       </p>
-      <p>Reason: {movement.reason}</p>
-      <p class="admin-muted">
-        Actor: {movement.actorId} · operation {movement.operationId}
-      </p>
+      <dl class="inventory-audit-identifiers">
+        <div>
+          <dt>Actor</dt>
+          <dd>{movement.actorId}</dd>
+        </div>
+        <div>
+          <dt>Operation</dt>
+          <dd>{movement.operationId}</dd>
+        </div>
+      </dl>
     </li>
   ))}
 </ol>

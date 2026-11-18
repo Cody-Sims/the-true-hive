@@ -1,6 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
-const componentGates = ["**/inventory-ui.spec.ts", "**/pickup-ui.spec.ts"];
+const componentGates = [
+  "**/inventory-ui.spec.ts",
+  "**/pickup-ui.spec.ts",
+  "**/inventory-navigation-ui.spec.ts",
+  "**/inventory-pages-ui.spec.ts",
+];
 
 export default defineConfig({
   testDir: "./tests/browser",

@@ -1,6 +1,7 @@
 ---
 import FormFeedback from "./FormFeedback.astro";
 import type { StoreSettings } from "../../domain/storefront.ts";
+import "../../styles/inventory-pages.css";
 
 interface Props {
   settings: StoreSettings;
@@ -14,16 +15,17 @@ const { settings, paymentReady = false } = Astro.props;
   data-endpoint="/api/admin/store"
   data-method="PUT"
   data-refresh="/api/admin/store"
-  class="admin-form"
+  class="admin-form inventory-pages inventory-store-form"
 >
-  <p>
-    Current saved setting:{" "}
+  <section class="inventory-saved-setting" aria-label="Saved checkout setting">
+    <p class="admin-eyebrow">Current saved setting</p>
     <strong data-store-status>
       {settings.purchasesEnabled
         ? "New checkouts allowed"
         : "New checkouts paused"}
     </strong>
-  </p>
+    <p>Changes below take effect only after a verified save.</p>
+  </section>
   <p class="admin-notice">
     {paymentReady
       ? "The configured payment flow is Stripe TEST MODE only. No real charges are accepted."
@@ -51,6 +53,8 @@ const { settings, paymentReady = false } = Astro.props;
       Checkouts already admitted before closing may finish.
     </p>
   </fieldset>
-  <button type="submit">Save store setting</button>
+  <div class="inventory-form-actions">
+    <button type="submit">Save store setting</button>
+  </div>
   <FormFeedback />
 </form>

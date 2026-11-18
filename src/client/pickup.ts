@@ -223,6 +223,9 @@ function validImpact(value: unknown): value is PickupSiteImpact {
 export function initPickup(root: HTMLElement) {
   if (root.dataset["pickupReady"]) return;
   const admin = root.dataset["pickupMode"] === "admin";
+  const locationsView = root.dataset["pickupView"] === "locations";
+  const fixedLocation = root.dataset["pickupFixedLocation"] === "true";
+  let selectedStock = root.dataset["pickupLocation"] ?? "";
   if (admin && root.dataset["pickupAuthorized"] !== "true") return;
   root.dataset["pickupReady"] = "true";
   const content = root.querySelector<HTMLElement>("[data-pickup-content]")!;
@@ -918,6 +921,10 @@ export function initPickup(root: HTMLElement) {
   }
 
   function renderDashboard(value: AdminPickupDashboard) {
+    if (locationsView) {
+      renderLocationDetails(value);
+      return;
+    }
     const settings = el("section", "", "pickup-card");
     settings.append(
       el(
@@ -966,17 +973,93 @@ export function initPickup(root: HTMLElement) {
       ),
     );
     content.append(settings);
-    const sites = el("section", "", "pickup-card");
-    sites.append(
-      el("h3", "Pickup points & collection windows"),
+    content.append(
+      link("Edit locations, pickup details & hours", "/inventory/locations"),
+    );
+    const heading = el("section");
+    heading.append(
+      el("h3", "Paid orders, help & appointments"),
       el(
         "p",
-        "No policies, locations or hours are assumed. Changes that affect appointments require explicit review. Scheduling is separate from physical stock locations.",
+        "Paid orders without a time, help requests and appointments needing review appear first. Booking never marks an order collected. Use the order record for physical pickup.",
       ),
     );
-    if (!value.sites.length)
-      sites.append(el("p", "No pickup points configured."));
-    for (const site of value.sites) {
+    if (value.truncated)
+      heading.append(
+        el(
+          "p",
+          "Showing at most 200 priority records. This is not the complete order history; use Orders & physical pickup for other records.",
+          "pickup-notice",
+        ),
+      );
+    if (!value.orders.length)
+      heading.append(el("p", "No pickup orders in this queue."));
+    content.append(heading);
+    for (const order of value.orders)
+      renderOrder(order, value.settings.enabled);
+  }
+  function renderLocationDetails(value: AdminPickupDashboard) {
+    const sites = el("section", "", "pickup-card");
+    const filter = el("select");
+    filter.setAttribute("aria-label", "Inventory location");
+    filter.append(option("", "All inventory locations"));
+    for (const stock of value.stockLocations)
+      filter.append(option(stock.key, stock.label));
+    if (
+      selectedStock &&
+      !value.stockLocations.some((stock) => stock.key === selectedStock)
+    ) {
+      if (fixedLocation) {
+        content.append(
+          el(
+            "p",
+            "This location could not be verified. Refresh the location record before changing pickup details.",
+            "pickup-notice",
+          ),
+        );
+        return;
+      }
+      selectedStock = "";
+    }
+    filter.value = selectedStock;
+    filter.disabled = fixedLocation;
+    filter.addEventListener("change", () => {
+      if (pending || reading || writer.frozen || reviewPanel) return;
+      if (
+        siteEditorForm &&
+        !window.confirm(
+          "Discard this pickup editor and choose another inventory location?",
+        )
+      ) {
+        filter.value = selectedStock;
+        return;
+      }
+      selectedStock = filter.value;
+      resetEditor();
+      content.replaceChildren();
+      renderLocationDetails(value);
+      content
+        .querySelector<HTMLSelectElement>("select")
+        ?.focus({ preventScroll: true });
+    });
+    sites.append(
+      field("Inventory location", filter),
+      el("h3", "Customer pickup points"),
+    );
+    const related = value.sites.filter(
+      (site) =>
+        !selectedStock || site.stockLocationKeys.includes(selectedStock),
+    );
+    if (!related.length)
+      sites.append(
+        el(
+          "p",
+          selectedStock
+            ? "No pickup details added for this inventory location yet."
+            : "No pickup points configured.",
+        ),
+      );
+    for (const site of related) {
       const detail = el("details");
       detail.append(
         el(
@@ -1026,27 +1109,6 @@ export function initPickup(root: HTMLElement) {
     add.disabled = value.sites.length >= 50;
     sites.append(add);
     content.append(sites);
-    const heading = el("section");
-    heading.append(
-      el("h3", "Paid orders, help & appointments"),
-      el(
-        "p",
-        "Paid orders without a time, help requests and appointments needing review appear first. Booking never marks an order collected. Use the order record for physical pickup.",
-      ),
-    );
-    if (value.truncated)
-      heading.append(
-        el(
-          "p",
-          "Showing at most 200 priority records. This is not the complete order history; use Orders & physical pickup for other records.",
-          "pickup-notice",
-        ),
-      );
-    if (!value.orders.length)
-      heading.append(el("p", "No pickup orders in this queue."));
-    content.append(heading);
-    for (const order of value.orders)
-      renderOrder(order, value.settings.enabled);
   }
   function windowLabel(windows: PickupWindow[]) {
     return windows.length
@@ -1149,8 +1211,9 @@ export function initPickup(root: HTMLElement) {
     );
     const locationInputs = dashboard.stockLocations.map((location) => {
       const check = checkbox(`${location.label} (${location.key})`);
-      check.input.checked =
-        site?.stockLocationKeys.includes(location.key) ?? false;
+      check.input.checked = site
+        ? site.stockLocationKeys.includes(location.key)
+        : location.key === selectedStock;
       mappings.append(check.wrapper);
       return { key: location.key, input: check.input };
     });

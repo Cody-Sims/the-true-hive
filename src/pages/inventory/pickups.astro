@@ -5,11 +5,11 @@ if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
 ---
 
-<AdminLayout title="Pickup scheduling">
+<AdminLayout title="Pickups">
   <a slot="page-actions" href="/inventory/orders">
     Orders &amp; physical pickup
   </a>
-  <AdminPickup />
+  <AdminPickup view="appointments" />
 </AdminLayout>
 <script>
   import "../../client/pickup.ts";

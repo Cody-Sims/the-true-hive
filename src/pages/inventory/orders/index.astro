@@ -5,6 +5,7 @@ import Pagination from "../../../components/admin/Pagination.astro";
 import { pageQuery, money } from "../../../components/admin/presentation.ts";
 import { listAdminOrders } from "../../../server/commerce/orders.ts";
 import { getAdminPool } from "../../../server/admin/pool.ts";
+import "../../../styles/inventory-pages.css";
 if (!Astro.locals.admin || !Astro.locals.csrfToken)
   return new Response(null, { status: 403 });
 const { limit, offset } = pageQuery(Astro.url);
@@ -18,46 +19,76 @@ try {
 
 <AdminLayout title="Test orders">
   <a href="/inventory/pickups" slot="page-actions">
-    Pickup scheduling
+    Appointment desk
   </a>
-  <p class="admin-page-intro">
-    Merchandise and inventory state only. No customer or payment credentials are
-    provided.
-  </p>
-  {!result ? (
-    <ReadState unavailable />
-  ) : result.orders.length ? (
-    <table class="admin-table" role="table">
-      <caption>Private test checkout orders</caption>
-      <thead>
-        <tr>
-          <th scope="col">Order</th>
-          <th scope="col">State</th>
-          <th scope="col">Location</th>
-          <th scope="col">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {result.orders.map((order) => (
-          <tr>
-            <td data-label="Order">
-              <a href={`/inventory/orders/${encodeURIComponent(order.id)}`}>
-                {order.id}
-              </a>
-              <br />
-              <time datetime={order.createdAt}>{order.createdAt}</time>
-            </td>
-            <td data-label="State">{order.state}</td>
-            <td data-label="Location">{order.locationKey}</td>
-            <td data-label="Total">{money(order.totalMinor)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ) : (
-    <ReadState empty="No test orders yet." />
-  )}
-  {result && (
-    <Pagination path="/inventory/orders" offset={offset} total={result.total} />
-  )}
+  <div class="inventory-pages">
+    <p class="admin-page-intro">
+      Review a checkout, see its merchandise, and record a physical pickup.
+      Merchandise and inventory state only. No customer or payment credentials
+      are provided.
+    </p>
+    <section class="inventory-page-card" aria-labelledby="order-list-title">
+      <header class="inventory-card-heading">
+        <div>
+          <p class="admin-eyebrow">Test checkout ledger</p>
+          <h2 id="order-list-title">Order records</h2>
+        </div>
+        {result && (
+          <p class="inventory-result-count">
+            {result.orders.length}{" "}
+            {result.orders.length === 1 ? "order" : "orders"} on this page
+          </p>
+        )}
+      </header>
+      {!result ? (
+        <ReadState unavailable />
+      ) : result.orders.length ? (
+        <table class="admin-table inventory-record-table" role="table">
+          <caption>Private test checkout orders</caption>
+          <thead>
+            <tr>
+              <th scope="col">Order</th>
+              <th scope="col">State</th>
+              <th scope="col">Location</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.orders.map((order) => (
+              <tr>
+                <td data-label="Order">
+                  <a
+                    class="inventory-record-link"
+                    href={`/inventory/orders/${encodeURIComponent(order.id)}`}
+                  >
+                    {order.id}
+                  </a>
+                  <time
+                    class="inventory-record-date"
+                    datetime={order.createdAt}
+                  >
+                    {order.createdAt}
+                  </time>
+                </td>
+                <td data-label="State">
+                  <span class="inventory-state">{order.state}</span>
+                </td>
+                <td data-label="Location">{order.locationKey}</td>
+                <td data-label="Total">{money(order.totalMinor)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <ReadState empty="No test orders yet." />
+      )}
+      {result && (
+        <Pagination
+          path="/inventory/orders"
+          offset={offset}
+          total={result.total}
+        />
+      )}
+    </section>
+  </div>
 </AdminLayout>

@@ -1,6 +1,8 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import LocationForm from "../../../components/admin/LocationForm.astro";
+import AdminPickup from "../../../components/pickup/AdminPickup.astro";
+import "../../../styles/locations.css";
 import ReadState from "../../../components/admin/ReadState.astro";
 import { listAdminLocations } from "../../../server/admin/catalog.ts";
 import { getAdminPool } from "../../../server/admin/pool.ts";
@@ -27,16 +29,31 @@ if (!location) Astro.response.status = unavailable ? 503 : 404;
   <a href="/inventory/locations" slot="page-actions">
     Back to locations
   </a>
-  <p class="admin-page-intro">
-    Keep the internal record, public label and pickup eligibility distinct.
-    Changing eligibility does not create pickup windows or move stock.
-  </p>
-  <p class="admin-actions">
-    <a href="/inventory/pickups">Review pickup scheduling</a>
-  </p>
   {location ? (
-    <LocationForm location={location} />
+    <div class="location-workspace">
+      <p class="admin-page-intro">
+        Inventory settings, customer pickup details and collection windows for
+        this location.
+      </p>
+      <section
+        class="admin-record-section"
+        aria-label="Inventory location settings"
+      >
+        <p class="admin-eyebrow">Inventory record</p>
+        <LocationForm location={location} />
+      </section>
+      <section id="pickup-points" class="location-pickup-section">
+        <AdminPickup
+          view="locations"
+          locationKey={location.key}
+          fixedLocation
+        />
+      </section>
+    </div>
   ) : (
     <ReadState unavailable={unavailable} missing={!unavailable} />
   )}
 </AdminLayout>
+<script>
+  import "../../../client/pickup.ts";
+</script>
