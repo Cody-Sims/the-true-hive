@@ -50,6 +50,17 @@ photos take priority. Cards show one product with visible format prices;
 choosing a format opens its preselected image and native product-page controls.
 Product thumbnails and format radios stay synchronized without changing stock.
 
+The new [pickup studio](https://preview.thetruehive.com/prototypes/pickup/)
+connects a fictional post-checkout location/date/time flow with an operator
+workspace for per-location weekly hours, notice/horizon/slot/capacity examples,
+date closures/overrides and impacted appointments. Try booking, rescheduling,
+last-slot conflicts, pending payment and no-availability recovery. Changes
+connect within the same tab and reset on reload; no customer records, directions,
+backend writes, payment, stock or notifications are involved.
+The [draft scheduling plan](docs/21-pickup-scheduling-plan.md) separates appointment
+sites from inventory authority and records implementation phases and business
+decisions still needing approval. The prototype is not a real booking system.
+
 **01 / Workbench** in the [three-direction comparison](https://preview.thetruehive.com/prototypes/editor/index.html?design=workbench&mode=edit)
 now uses a screen-height form with section shortcuts, a compact customer/review
 rail that fits the viewport, and a mobile card/product-page preview modal.

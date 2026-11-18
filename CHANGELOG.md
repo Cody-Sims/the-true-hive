@@ -4,6 +4,8 @@
 
 ### Added
 
+- Connected fictional post-checkout pickup and operator-hours prototypes, with per-location windows, date exceptions, confirmation/rescheduling, conflict recovery and affected-booking review; add an explicitly draft implementation plan without enabling real scheduling.
+
 - Improve Workbench with a viewport-fit customer/review rail, mobile preview modal, section shortcuts and device-local draft autosave/restore, with clear/reset and storage/cross-tab warnings; photos and real inventory are never persisted.
 - Two guided-editor scrolling prototypes: a shared page that moves form and product together, and a compact non-scrolling card beside a form-only scroll area; retain full-page modal preview and previous comparisons.
 - Refined direction 02 with anchored mobile step navigation, retained editing context, a mobile preview modal and clickable collection-card-to-product-page preview; preserve the original comparisons and live editor.
