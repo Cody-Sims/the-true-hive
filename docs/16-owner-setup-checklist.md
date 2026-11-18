@@ -4,6 +4,15 @@ Reviewed **2026-11-14**. The inventory/admin and Stripe test-checkout implementa
 
 Start with account access and approvals. Technical setup and a controlled local/staging rehearsal follow; this is not a requirement to complete sign-in on an unactivated hostname.
 
+**Canonical-access transition:** the inventory-host checks below record the
+earlier rollout. New repository code places inventory, planning and design
+access on `https://thetruehive.com` with one existing administrator session.
+Complete the [canonical rollout](14-development-and-operations.md#canonical-administrator-rollout),
+including Firebase apex authorization, optional obsolete-origin cleanup, one new apex
+sign-in and mandatory replacement/unpublication of old public Pages. Do not mark
+these live steps complete from repository tests. The public GitHub source/history
+remains public unless the owner separately changes repository visibility.
+
 **This repository is public.** Do not put passwords, keys, service-account JSON, database URLs, administrator emails/UIDs, authenticator secrets, recovery codes, private addresses or real stock records in this file, commits, chat or screenshots. Use provider secret settings or an approved private configuration workflow.
 
 **Verified setup:** the separate Firebase project has Google sign-in and

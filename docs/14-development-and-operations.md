@@ -6,17 +6,17 @@ Status: **owner-approved inventory-backed public catalog and private inventory p
 
 | Surface | Source | Build | Hosting |
 |---|---|---|---|
-| Ten-design review and planning hub | `prototypes/` and registered documents | `dist/` | Existing GitHub Pages / `preview.thetruehive.com` |
+| Complete design/planning studio and raw dependencies | `prototypes/` and documents | Server-only `dist-site/` bundle | Canonical apex, same verified administrator session |
+| Legacy Pages URLs | Fixed redirects only | `dist/` | Existing Pages custom/project domains; no private source |
 | Apiary Market application | `src/` and `migrations/` | `dist-site/` | Existing native Render service at `https://thetruehive.com`; Neon PostgreSQL remains the selected database |
-| Private inventory workspace | Same application, `/inventory/` and `/api/admin/` | Same `dist-site/` | `https://inventory.thetruehive.com`; same service and database, Google/TOTP and server-side membership required |
+| Private inventory workspace | Same application, `/inventory/` and `/api/admin/` | Same `dist-site/` | `https://thetruehive.com`; same service/database, Google/TOTP and current membership required |
 
 Production uses original prototype illustrations and first-party brand assets in `src/assets/`, not prototype HTML, scripts, demo prices or browser cart. Application public output excludes planning documents, database code and standalone prototype files.
 
-The [team sprint board](https://thetruehive.com/team-sprint) is a native read-only
-Astro page, reachable by direct link and excluded from indexing and the
-storefront navigation. It contains only the six publication-safe starter cards.
-The editable Team board is under Inventory navigation and requires the existing
-administrator sign-in and MFA. Its two assignee labels do not grant sign-in access.
+The [team sprint board](https://thetruehive.com/team-sprint) uses the same
+administrator sign-in and MFA as inventory. It is editable and also reachable
+via **Team board** in Inventory navigation. The two assignee labels do not grant
+sign-in access. The separate six-card prototype does not contain the private backlog.
 
 ## Run the application
 
@@ -35,13 +35,52 @@ npm run check:site-artifact
 npm run start
 ```
 
-The prototype viewer remains `npm run preview` on port 4173. It builds the curated Pages artifact and serves only `dist/`, not the repository root containing private configuration. After editing review documents or prototypes, run `npm run build:pages` and refresh, or restart the viewer. Do not point it at the production output or ship the repository root as the business site.
+`npm run preview` on port 4173 builds and serves the redirect-only Pages artifact, never private content. Use the canonical native app and real configured administrator sign-in to review the studio. Browser CI uses a separate loopback-only component fixture in `tests/browser/fixtures/`, with built private sources and the production CSP; it is not shipped or imported by the application, and there is no production authentication bypass.
 
 Native deployment retains the checked-out private `src/server/`, `scripts/start-site.mjs`, dependencies and `dist-site/` together. The start wrapper imports source modules for preflight, then starts the built entrypoint in the same process; `dist-site/` alone is not a complete deploy package. Serve only `dist-site/client/` as public static assets.
 
 ## Runtime configuration
 
 Copy `.env.example` to an ignored `.env` **only if needed**. Native start/dev commands load it through Node's env-file option; CI and Render supply environment variables directly.
+
+## Canonical administrator rollout
+
+The canonical `SITE_URL` is the sole session and mutation authorization origin.
+Private routes default closed; `/cart`, `/contact`, the remaining storefront
+pages/APIs and exact process liveness remain public. Authenticated public HTML
+gets administrator navigation and private/no-store/Vary Cookie. Readiness,
+`/team-sprint`, all current studio workspaces, Markdown and binary dependencies
+require Google + TOTP + current database membership and revocation checks.
+
+1. Authorize `thetruehive.com` in the existing Firebase project without changing
+   providers, TOTP or existing authorized domains. Keep runtime secrets private.
+2. Keep `SITE_URL=https://thetruehive.com`. An omitted `INVENTORY_ORIGIN` defaults
+   to it. The exact former `https://inventory.thetruehive.com` setting is accepted
+   **only with the canonical production apex**, but actual authorization always
+   uses `SITE_URL`; removing that variable is optional cleanup, not a deployment
+   prerequisite. All other mismatches fail closed. No Domain cookies are used.
+3. Merge only through `verify-and-build`, `site-checks`, `inventory-checks` and
+   branch protection. The existing Render checks-pass auto-deploy remains in
+   place; verify native startup and required configuration on the new revision.
+4. Publish the redirect-only Pages artifact (or explicitly unpublish Pages).
+   Verify old `/docs/`, prototype HTML/modules/images and project-site URLs no
+   longer return original files. DNS changes alone do not retire old content.
+5. Sign in again on the apex with the existing Google/TOTP administrator.
+   Legacy host-only cookies intentionally do not transfer. Rehearse inventory,
+   studio/gallery/planning/sprint, public administrator navigation, logout and
+   membership removal. Exact old inventory/preview hosts support fixed-canonical
+   GET/HEAD redirects only, never sessions or mutations. Other hosts are denied
+   except the process-only health probe.
+6. Preserve redirect-only Pages during rollback; never restore public private
+   sources. Keep administration disabled if recovery is needed. The public GitHub
+   repository/history and already downloaded copies are a separate boundary.
+
+Local release gates: `npm run format:check`, `npm run check`, `npm test`,
+`npm run check:links`, `npm run build:site`, `npm run check:site-artifact`,
+`npm run build:pages`, `npm run check:pages`, `npm run test:e2e`.
+`npm run test:db` requires a dedicated `true_hive_test` fixture, never real stock.
+
+### Runtime variables
 
 | Variable | Meaning |
 |---|---|
@@ -99,7 +138,7 @@ The initial catalog has a deliberate 100-product bound. A larger published catal
 | `/api/products/:slug` | One published product; genuine missing/invalid responses |
 | `/api/availability?variant=...&location=...` | Selected-location state, never summed pickup stock |
 | `/api/health/live` | Process liveness |
-| `/api/health/ready` | Deliberate mode and actual database/schema readiness in database mode |
+| `/api/health/ready` | Administrator-only deliberate mode and database/schema readiness |
 
 No public stock editing, admin, payment or inquiry submission route exists. The first site's concepts have no real price/quantity or Buy button.
 
@@ -117,7 +156,7 @@ database query.
 
 | Required check | Evidence |
 |---|---|
-| `verify-and-build` | Preserved prototype tests, registered document/link checks and curated Pages export |
+| `verify-and-build` | Preserved prototype tests, private document/link checks and redirect-only Pages artifact |
 | `site-checks` | Format, Astro/TypeScript diagnostics, unit contracts, native build, public-artifact/deploy policy and built-site Playwright/axe |
 | `inventory-checks` | Native PostgreSQL migrations, constraints, last-unit competition, idempotency, audit rollback and public projection |
 
@@ -647,7 +686,7 @@ Inventory-only catalog preparation is now enabled under the separate owner appro
 
 | Setting | Boundary |
 |---|---|
-| `INVENTORY_ORIGIN` | Exact inventory origin; HTTPS in production, explicit HTTP loopback only in development |
+| `INVENTORY_ORIGIN` | Optional compatibility setting; canonical `SITE_URL` remains authoritative. Only the exact old production inventory value is tolerated on the apex; other mismatches fail closed |
 | `ADMIN_DATABASE_URL` | Pooled private inventory/session/order role; never schema-owner or public-read credentials |
 | `ADMIN_CSRF_SECRET` | Canonical base64 of at least 32 random bytes for signed/session-bound CSRF; no public variable or default |
 | `FIREBASE_PROJECT_ID` | Isolated True Hive project, not copied personal-site configuration |

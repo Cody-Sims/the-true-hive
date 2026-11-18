@@ -21,7 +21,7 @@ pickup or recovery gates. See the [catalog activation record](14-development-and
 
 ## Objective
 
-Give an authorized administrator a usable inventory workspace at **`inventory.thetruehive.com`**, connected to the same PostgreSQL catalog and stock that the shop reads. Product management, counted-stock corrections, checkout holds, verified payments and pickup must remain attributable, transactional and retry-safe.
+Give an authorized administrator a usable inventory workspace at **`thetruehive.com/inventory/`**, sharing the existing verified session with the private studio, sprint and planning documents. The old inventory host redirects safe reads only. Product management, counted-stock corrections, checkout holds, verified payments and pickup remain attributable, transactional and retry-safe.
 
 ## Users and use cases
 
@@ -56,7 +56,7 @@ Give an authorized administrator a usable inventory workspace at **`inventory.th
 
 ### Non-functional
 
-One modular Astro/native Node application and existing Render service serve both hosts; no second paid service, Docker, Shopify, monorepo or Firestore stock store. Preserve the ten-design Pages review, native CI checks, TLS policy and explicit showcase/database source selection.
+One modular Astro/native Node application and existing Render service serve the canonical apex; no second paid service, Docker, Shopify, monorepo or Firestore stock store. Preserve all design workspaces behind server authentication and publish only redirects on Pages. Preserve native CI checks, TLS policy and explicit showcase/database source selection.
 
 The Firebase browser SDK is pinned to 12.19.0 for the existing Node 24.2 baseline. Exact overrides retain that release's app/app-compat dependencies; their broad peer ranges otherwise select newer packages requiring Node 24.12. Firebase Admin and Stripe remain separately pinned; this is not approval to copy the personal site's lockfile or credentials.
 
@@ -98,24 +98,24 @@ Checkout holds reduce sellability before payment. Payment makes that allocation 
 
 ### Host and authentication boundary
 
-The inventory hostname's root redirects to `/inventory/products`; private UI lives under `/inventory/` and JSON under `/api/admin/`. Both prefixes return no private content on the storefront/preview/default Render hostname. The inventory host does not expose the public shop as an alternate route around the gate.
+Private UI lives under `/inventory/`, JSON under `/api/admin/`, and studio/planning/sprint on the same canonical `SITE_URL`. All other real routes default private unless explicitly required by the public storefront. Exact legacy inventory/preview hosts redirect GET/HEAD to the fixed apex and deny mutations; unknown hosts do not serve application content.
 
 The sole additional shared-host process endpoint is exact GET/HEAD
 `/api/health/live`, which remains public even with inventory disabled so Render
 can probe any attached hostname. It does not expose database readiness or
 inventory data; `/api/health/ready` is not exempted on the inventory host.
 
-`INVENTORY_ENABLED=false` is the default. `INVENTORY_ORIGIN` identifies the exact allowed origin; production requires HTTPS. Explicit HTTP loopback origins are development-only. Do not trust arbitrary forwarded-host headers or caller-supplied actor fields.
+`INVENTORY_ENABLED=false` is the default. `SITE_URL` is the sole allowed authorization origin; production requires HTTPS. Omit `INVENTORY_ORIGIN` or match `SITE_URL`. Only the exact former `https://inventory.thetruehive.com` value is tolerated when `SITE_URL=https://thetruehive.com`, without authorizing the legacy host; removal is optional cleanup. Explicit HTTP loopback admin origins are development-only. Do not trust arbitrary forwarded-host headers or caller-supplied actor fields.
 
 The auth middleware supplies trusted `Astro.locals.admin` (`uid`, stable hashed `actorId`) and `Astro.locals.csrfToken`. Admin APIs never take actor identity from JSON. Session/login/enrollment/logout exceptions are narrow and documented:
 
 | Route | Contract |
 |---|---|
-| `GET /inventory/login` | Public sign-in shell on the inventory origin only; no business records |
+| `GET /inventory/login` | Public sign-in shell on the canonical origin only; no business records |
 | `POST /api/admin/session` | Fresh verified MFA ID token, pre-auth CSRF/origin check; mint secure host-only HttpOnly session and persist its hash |
 | `POST /api/admin/enrollment` | Fresh first-factor verified identity **and active admin membership**; authorize enrolling that user's TOTP only, not inventory access |
 | `POST /api/admin/logout` | CSRF/origin check; revoke local session and clear cookies |
-| All other `/inventory/*` and `/api/admin/*` | Verified, unrevoked MFA session, active local session and active admin membership |
+| All other private routes, studio and raw dependencies | Verified, unrevoked MFA session, active local session and active admin membership |
 
 Google-account 2FA is not proof of app-enforced MFA. The server checks verified Firebase second-factor evidence, not a browser flag. Use in-memory Firebase browser persistence and clear browser Firebase auth after the server-cookie exchange.
 

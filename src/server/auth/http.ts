@@ -4,6 +4,7 @@ import { AdminAuthError } from "./service.ts";
 import { issueCsrf, verifyCsrf } from "./csrf.ts";
 import { createAttemptLimiter } from "./limiter.ts";
 import { HttpInputError, readJsonBody } from "../http-input.ts";
+import { adminReturnTo, isPublicPath, normalizedPath } from "./paths.ts";
 
 export interface AdminLocals {
   admin?: AdminIdentity;
@@ -25,34 +26,8 @@ export function isInventoryRequest(request: Request, config: AdminConfig) {
   );
 }
 
-function normalizedPath(path: string) {
-  let decoded = path;
-  // Astro repeatedly decodes routes; conservatively include encoded separators too.
-  for (let iteration = 0; iteration <= 10; iteration++) {
-    let next: string;
-    try {
-      next = decodeURIComponent(decoded);
-    } catch {
-      if (iteration === 0) throw new AdminAuthError(400, "INVALID_PATH");
-      break;
-    }
-    if (next === decoded) break;
-    if (iteration === 10) throw new AdminAuthError(400, "INVALID_PATH");
-    decoded = next;
-  }
-  return new URL(
-    decoded.replaceAll("\\", "/").replace(/\/+/g, "/"),
-    "https://route.invalid",
-  ).pathname;
-}
-
 function privatePrefix(path: string) {
-  return (
-    path === "/inventory" ||
-    path.startsWith("/inventory/") ||
-    path === "/api/admin" ||
-    path.startsWith("/api/admin/")
-  );
+  return !isPublicPath(path);
 }
 
 export function isAdminPath(path: string) {
@@ -151,48 +126,85 @@ export function createAdminBoundary(
         cookies: [] as string[],
       };
       const path = new URL(request.url).pathname;
-      const inventoryPage =
-        path === "/inventory" || path.startsWith("/inventory/");
+      const privatePage = !path.startsWith("/api/");
       let canonicalPath: string;
       try {
         canonicalPath = normalizedPath(path);
-      } catch (error) {
-        return { ...result, response: errorResponse(error) };
+      } catch {
+        return {
+          ...result,
+          response: errorResponse(new AdminAuthError(400, "INVALID_PATH")),
+        };
       }
       const privatePath = privatePrefix(canonicalPath);
       const inventory = isInventoryRequest(request, config);
-      if (!inventory && !privatePath) return result;
-      if (!inventory)
-        return {
-          ...result,
-          response: errorResponse(new AdminAuthError(404, "NOT_FOUND")),
-        };
-      // Shared-service probes can use any attached custom hostname.
       if (
         path === "/api/health/live" &&
         ["GET", "HEAD"].includes(request.method)
       )
         return result;
+      const url = new URL(request.url);
+      const host = request.headers.get("host");
+      if (
+        !inventory &&
+        config.origin === "https://thetruehive.com" &&
+        [
+          "https://inventory.thetruehive.com",
+          "https://preview.thetruehive.com",
+        ].includes(url.origin) &&
+        (!host || host.toLowerCase() === url.host) &&
+        ["GET", "HEAD"].includes(request.method) &&
+        canonicalPath === path
+      ) {
+        const destination =
+          path === "/"
+            ? url.hostname.startsWith("inventory.")
+              ? "/inventory/products"
+              : "/prototypes/"
+            : path;
+        return {
+          ...result,
+          response: new Response(null, {
+            status: 308,
+            headers: {
+              location: `${config.origin}${destination}${url.search}`,
+              "cache-control": "no-store",
+            },
+          }),
+        };
+      }
+      if (!inventory)
+        return {
+          ...result,
+          response: errorResponse(new AdminAuthError(404, "NOT_FOUND")),
+        };
       try {
-        requireAvailable();
-        if (privatePath && canonicalPath !== path)
+        if (canonicalPath !== path)
           throw new AdminAuthError(400, "INVALID_PATH");
-        if (path === "/" && ["GET", "HEAD"].includes(request.method))
-          return {
-            ...result,
-            response: new Response(null, {
-              status: 302,
-              headers: { location: "/inventory/products" },
-            }),
-          };
         if (!privatePath) {
           if (
-            request.method === "GET" &&
-            (path.startsWith("/_astro/") || path === "/favicon.svg")
+            !config.enabled ||
+            !["GET", "HEAD"].includes(request.method) ||
+            path.startsWith("/_astro/") ||
+            path.startsWith("/media/")
           )
             return result;
-          throw new AdminAuthError(404, "NOT_FOUND");
+          // Public pages remain available when a stale/revoked cookie is present.
+          try {
+            const { session, nonce } = readCookies(request, config);
+            if (session) {
+              requireAvailable();
+              verifications.consume();
+              locals.admin = await auth.authenticate(session);
+              result.cookies.push(shell(session, locals, nonce));
+            }
+          } catch {
+            delete locals.admin;
+            delete locals.csrfToken;
+          }
+          return result;
         }
+        requireAvailable();
         if (
           path === "/inventory/login" &&
           ["GET", "HEAD"].includes(request.method)
@@ -222,19 +234,21 @@ export function createAdminBoundary(
         const identity = await auth.authenticate(session);
         if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) csrf(request);
         locals.admin = identity;
-        if (["GET", "HEAD"].includes(request.method) && inventoryPage)
+        if (["GET", "HEAD"].includes(request.method) && privatePage)
           result.cookies.push(shell(session, locals, nonce));
         return result;
       } catch (error) {
         if (
           error instanceof AdminAuthError &&
           [401, 403].includes(error.status) &&
-          inventoryPage &&
+          privatePage &&
           ["GET", "HEAD"].includes(request.method)
         )
           result.response = new Response(null, {
             status: 303,
-            headers: { location: "/inventory/login" },
+            headers: {
+              location: `/inventory/login?${new URLSearchParams({ returnTo: adminReturnTo(path + new URL(request.url).search) })}`,
+            },
           });
         else result.response = errorResponse(error);
         return result;
@@ -290,7 +304,11 @@ export function createAdminBoundary(
             headers: { "cache-control": "no-store" },
           });
         const login = await auth.login(body.idToken);
-        const response = Response.json({ redirect: "/inventory/products" });
+        const response = Response.json({
+          redirect: adminReturnTo(
+            new URL(request.url).searchParams.get("returnTo"),
+          ),
+        });
         const names = cookieNames(config);
         response.headers.append(
           "set-cookie",

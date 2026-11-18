@@ -3,6 +3,7 @@ import { defineMiddleware } from "astro:middleware";
 import { readAdminConfig } from "./server/admin/config.ts";
 import { getAdminBoundary } from "./server/auth/runtime.ts";
 import { isAdminPath, isInventoryRequest } from "./server/auth/http.ts";
+import { isStudioPath } from "../scripts/private-studio.mjs";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const nonce = randomBytes(18).toString("base64");
@@ -15,10 +16,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const config = readAdminConfig();
     inventory = isInventoryRequest(context.request, config);
     if (inventory) firebaseProject = config.projectId;
-    const result = await getAdminBoundary().gate(
-      context.request,
-      context.locals,
-    );
+    // Missing fallback URLs contain no private resource; retain the public 404.
+    // Actual new routes still pass through the default-private boundary.
+    const missing =
+      inventory &&
+      context.routePattern === "/[...studio]" &&
+      !isStudioPath(new URL(context.request.url).pathname);
+    const result = missing
+      ? { cookies: [], response: null }
+      : await getAdminBoundary().gate(context.request, context.locals);
     cookies = result.cookies;
     response = result.response ?? (await next());
   } catch {
@@ -27,8 +33,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     });
   }
   for (const cookie of cookies) response.headers.append("Set-Cookie", cookie);
-  if (inventory || isAdminPath(context.url.pathname)) {
-    response.headers.set("Cache-Control", "no-store");
+  if (context.locals.admin || isAdminPath(context.url.pathname)) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.append("Vary", "Cookie");
+  }
+  if (isAdminPath(context.url.pathname)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -39,11 +48,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     "camera=(), microphone=(), geolocation=()",
   );
   if (response.headers.get("Content-Type")?.includes("text/html")) {
-    response.headers.set("Cache-Control", "no-store");
+    response.headers.set("Cache-Control", "private, no-store");
+    if (!response.headers.get("Vary")?.includes("Cookie"))
+      response.headers.append("Vary", "Cookie");
   }
   if (import.meta.env.PROD) {
     const authDomain =
-      inventory && firebaseProject
+      inventory &&
+      firebaseProject &&
+      context.url.pathname === "/inventory/login"
         ? `https://${firebaseProject}.firebaseapp.com`
         : null;
     const authConnections = authDomain
@@ -51,15 +64,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
       : "";
     const photoPreview =
       inventory &&
-      /^\/inventory\/products\/[a-z0-9][a-z0-9-]{0,79}\/photo\/?$/.test(
+      (/^\/inventory\/products\/[a-z0-9][a-z0-9-]{0,79}\/photo\/?$/.test(
         context.url.pathname,
-      );
+      ) ||
+        (isStudioPath(context.url.pathname) &&
+          (context.url.pathname.endsWith("/") ||
+            context.url.pathname.endsWith(".html"))));
     response.headers.set(
       "Content-Security-Policy",
       `default-src 'self'; script-src 'self' 'nonce-${nonce}'${authDomain ? " https://apis.google.com" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data:${photoPreview ? " blob:" : ""}; connect-src 'self'${authConnections}; ${authDomain ? `frame-src ${authDomain}; ` : ""}object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
     );
   }
-  if (inventory && firebaseProject)
+  if (
+    inventory &&
+    firebaseProject &&
+    context.url.pathname === "/inventory/login"
+  )
     response.headers.set(
       "Cross-Origin-Opener-Policy",
       "same-origin-allow-popups",

@@ -38,6 +38,13 @@ const path = Astro.url.pathname;
       <slot />
     </main>
     <footer class="admin-wrap admin-footer">
+      {admin && (
+        <nav aria-label="Administrator workspaces">
+          <a href="/">Public site</a>
+          <a href="/prototypes/">Studio</a>
+          <a href="/prototypes/plan.html">Planning</a>
+        </nav>
+      )}
       Private operational records. Quantities change only after a verified
       server receipt.
     </footer>

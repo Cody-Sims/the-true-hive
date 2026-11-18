@@ -21,6 +21,11 @@ const {
   noIndex = false,
 } = Astro.props;
 const config = readConfig();
+const admin = Astro.locals.admin;
+if (admin) {
+  Astro.response.headers.set("Cache-Control", "private, no-store");
+  Astro.response.headers.set("Vary", "Cookie");
+}
 const cartPage = path === "/cart" || path === "/cart/";
 const storePage =
   path === "/goods" ||
@@ -132,6 +137,13 @@ const schema = JSON.stringify({
             About us
           </a>
         </nav>
+        {admin && (
+          <nav aria-label="Administrator navigation">
+            <a href="/inventory/products">Inventory</a>
+            <a href="/prototypes/">Studio</a>
+            <a href="/prototypes/plan.html">Planning</a>
+          </nav>
+        )}
       </header>
     </div>
     <main id="main" tabindex="-1">

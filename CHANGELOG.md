@@ -2,9 +2,14 @@
 
 ## Unreleased
 
+### Security
+
+- Require the existing Google/TOTP administrator session and current membership for inventory, sprint, every design/planning workspace and direct dependencies on the canonical apex. Preserve public cart/contact/storefront behavior and share verified administrator navigation.
+- Replace public Pages content with canonical redirects only. Preserve current gallery/editor/pickup workspaces and binary images in the private server bundle. The exact old production inventory-origin environment value migrates safely to apex-only authorization; no cookie-domain widening.
+
 ### Added
 
-- Private, shared team sprint board with drag-and-drop status changes, touch and keyboard controls, two assignees, and search and filters. The public snapshot remains read-only.
+- Private, shared team sprint board with drag-and-drop status changes, touch and keyboard controls, two assignees, search, and filters. The separate prototype remains read-only.
 - A direct-link, mobile-friendly team sprint board on the main website, with read-only task details and no private backlog data.
 - Connected fictional post-checkout pickup and operator-hours prototypes, with per-location windows, date exceptions, confirmation/rescheduling, conflict recovery and affected-booking review; add an explicitly draft implementation plan without enabling real scheduling.
 

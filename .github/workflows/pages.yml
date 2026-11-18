@@ -1,4 +1,4 @@
-name: Preview CI and GitHub Pages
+name: Redirect-only legacy Pages
 
 on:
   push:
@@ -31,9 +31,9 @@ jobs:
         run: npm run test:prototypes
       - name: Check source links
         run: npm run check:links
-      - name: Build approved static preview
+      - name: Build redirect-only retirement artifact
         run: npm run build:pages
-      - name: Check published links and module paths
+      - name: Ensure no private sources are published
         run: npm run check:pages
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'

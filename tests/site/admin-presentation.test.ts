@@ -68,6 +68,10 @@ async function productionHeaders(
         "export const getAdminBoundary = () => ({gate: async () => ({cookies: [], response: null})});",
       ),
       "./server/auth/http.ts": new URL("src/server/auth/http.ts", root).href,
+      "../scripts/private-studio.mjs": new URL(
+        "scripts/private-studio.mjs",
+        root,
+      ).href,
     };
     const [imports] = parse(code);
     for (const item of [...imports].reverse()) {
@@ -794,6 +798,32 @@ test("product buying controls stay concise without hiding actual sold-out states
   assert.doesNotMatch(soldOut, /data-add-to-cart/);
 });
 
+test("public layout exposes workspace navigation only for verified administrator locals and never caches it publicly", async () => {
+  const component = await import(
+    await componentModule(new URL("src/layouts/SiteLayout.astro", root))
+  );
+  const container = await AstroContainer.create();
+  for (const admin of [
+    undefined,
+    { uid: "fixture-admin", actorId: "fixture-actor" },
+  ]) {
+    const response = await container.renderToResponse(component.default, {
+      props: { title: "Storefront fixture", description: "Storefront fixture" },
+      locals: { nonce: "component-fixture", ...(admin ? { admin } : {}) },
+    });
+    const html = await response.text();
+    if (admin) {
+      assert.match(html, /aria-label="Administrator navigation"/);
+      assert.match(html, /href="\/inventory\/products"/);
+      assert.match(html, /href="\/prototypes\/"/);
+      assert.match(html, /href="\/prototypes\/plan\.html"/);
+      assert.equal(response.headers.get("cache-control"), "private, no-store");
+      assert.match(response.headers.get("vary")!, /Cookie/);
+    } else
+      assert.doesNotMatch(html, /Administrator navigation|href="\/inventory/);
+  }
+});
+
 test("configured test checkout labels shopping pages as a test store without paused-store prose", async () => {
   const environment = {
     SITE_URL: "https://sandbox.example.test",
@@ -1235,6 +1265,33 @@ async function photoShell(token: string, record = product) {
   )}</body></html>`;
 }
 
+test("authenticated private preview CSP supports device-local photos without opening storefront blob execution", async () => {
+  for (const path of [
+    "/prototypes/editor/",
+    "/prototypes/guided-next/index.html",
+    "/prototypes/workbench-next/",
+  ]) {
+    const policy = (await productionHeaders(path))["content-security-policy"]!;
+    assert.match(policy, /img-src 'self' data: blob:;/, path);
+    assert.doesNotMatch(
+      policy,
+      /script-src[^;]*(?:blob:|'unsafe-inline')/,
+      path,
+    );
+  }
+  for (const path of [
+    "/goods",
+    "/contact",
+    "/prototypes/not-a-real-page.html",
+  ]) {
+    assert.doesNotMatch(
+      (await productionHeaders(path))["content-security-policy"]!,
+      /blob:/,
+      path,
+    );
+  }
+});
+
 test("photo preview CSP permits blob images only on the exact inventory-host saved-product editor", async () => {
   const headers = await productionHeaders(
     "/inventory/products/fixture-product/photo",
@@ -1243,7 +1300,20 @@ test("photo preview CSP permits blob images only on the exact inventory-host sav
     headers["content-security-policy"]!,
     /(?:^|; )img-src 'self' data: blob:;/,
   );
-  const login = await productionHeaders("/inventory/login");
+  const login = await productionHeaders("/inventory/products");
+  const loginShell = await productionHeaders("/inventory/login");
+  assert.match(
+    loginShell["content-security-policy"]!,
+    /identitytoolkit\.googleapis\.com/,
+  );
+  assert.equal(
+    loginShell["cross-origin-opener-policy"],
+    "same-origin-allow-popups",
+  );
+  assert.doesNotMatch(
+    headers["content-security-policy"]!,
+    /firebaseapp\.com|identitytoolkit|apis\.google\.com/,
+  );
   const normalize = (value: string) =>
     value
       .replace(/'nonce-[^']+'/g, "'nonce-test'")
@@ -4530,7 +4600,7 @@ domTest(
       ["/inventory/products/fixture-product", "Products", false],
       ["/inventory/products/fixture-product/photo", "Products", false],
       ["/inventory/products/fixture-product/labels", "Products", false],
-      ["/inventory/team-sprint", "Team board", false],
+      ["/team-sprint", "Team board", false],
       ["/inventory/locations", "Locations", false],
       ["/inventory/locations/fixture-location", "Locations", false],
       ["/inventory/orders", "Orders", false],

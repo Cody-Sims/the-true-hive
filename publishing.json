@@ -1,9 +1,11 @@
 {
   "repository": "Cody-Sims/the-true-hive",
   "public": true,
-  "scope": "full-current-planning-hub",
+  "scope": "redirect-only",
+  "destination": "https://thetruehive.com/prototypes/",
+  "studioAccess": "authenticated-administrator",
   "approvedOn": "2026-10-28",
-  "purpose": "Public static design and planning review only; no live orders or payments.",
+  "purpose": "Pages publishes canonical redirects only. Earlier source-review approvals below are historical scope constraints for the authenticated studio, not public publication authority.",
   "approvedDesigns": [
     "meadow", "fieldwork", "hearth", "market", "honeyhouse",
     "ridge", "golden", "quiet", "bloom", "journal"
