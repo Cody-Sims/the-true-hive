@@ -4,7 +4,7 @@ import { pickupLocations, pickupInstructions } from "../content/pickup.ts";
 
 <aside class="pickup-location" aria-label="Pickup locations">
   <p class="eyebrow">Pickup meetup points</p>
-  <ul class="pickup-meetup-list">
+  <ul class="pickup-meetup-list" role="list">
     {pickupLocations.map((location) => (
       <li>
         <strong>{location.name}</strong>
