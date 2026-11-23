@@ -26,7 +26,7 @@ const endpoint = location
     <legend>
       {location
         ? `Edit location · revision ${location.revision}`
-        : "Establish a genuine location"}
+        : "Establish inventory storage"}
     </legend>
     <div class="admin-grid">
       <label>
@@ -71,13 +71,14 @@ const endpoint = location
           type="checkbox"
           checked={location?.pickupEnabled ?? false}
         />{" "}
-        Eligible for pickup
+        Can fulfill pickup orders
       </label>
     </div>
     <p class="admin-muted">
       New locations are inactive and non-pickup unless explicitly selected. No
-      stock or address is assumed. Customer pickup details and collection
-      windows are managed in this workspace.
+      stock or address is assumed. This record tracks stored goods, not a
+      customer meetup address. One inventory location can supply multiple pickup
+      points, managed separately.
     </p>
   </fieldset>
   <button type="submit">

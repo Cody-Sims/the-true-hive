@@ -1070,7 +1070,7 @@ export function initPickup(root: HTMLElement) {
       detail.append(
         el(
           "p",
-          `Public area: ${site.area || "Not set"}. Stock mappings: ${site.stockLocationKeys.join(", ")}.`,
+          `Pickup address or area: ${site.area || "Not set"}. Supplied from inventory: ${site.stockLocationKeys.map((key) => value.stockLocations.find((location) => location.key === key)?.label ?? key).join(", ")}.`,
         ),
         el(
           "p",

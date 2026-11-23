@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Distinguish main inventory storage and Stripe Sandbox test inventory from customer meetup points; replace the old pickup address with Weigel's, Dunkin' and Pizza Hut and confirmed-time/2018 Nissan Altima instructions. Preserve stock and order history; meetup drafts have no available pickup times.
 - Keep new MFA-verified administrator logins signed in for up to seven days instead of eight hours, and reuse active sessions when revisiting sign-in. Logout, revocation and one-hour CSRF protections remain unchanged.
 - Unify stock-location records and linked pickup details/hours under Locations, focus Pickups on appointments, redesign the remaining inventory tabs with consistent cards and controls, and replace the mobile tab strip with an accessible hamburger.
 - Integrate the native shared-page Workbench, current-data mobile preview and bounded account/product-scoped editable drafts; give the remaining inventory pages a cohesive shell while preserving explicit save/publication/physical-handoff controls.

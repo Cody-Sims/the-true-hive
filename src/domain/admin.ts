@@ -1,5 +1,7 @@
 import type { ProductCategory, ProductPhoto } from "./catalog.ts";
 
+export const TEST_INVENTORY_LOCATION_KEY = "stripe-sandbox-pickup";
+
 export interface AdminActor {
   uid: string;
   actorId: string;

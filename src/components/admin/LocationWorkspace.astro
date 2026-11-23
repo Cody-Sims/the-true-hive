@@ -1,5 +1,8 @@
 ---
-import type { AdminLocation } from "../../domain/admin.ts";
+import {
+  TEST_INVENTORY_LOCATION_KEY,
+  type AdminLocation,
+} from "../../domain/admin.ts";
 import LocationForm from "./LocationForm.astro";
 import ReadState from "./ReadState.astro";
 import AdminPickup from "../pickup/AdminPickup.astro";
@@ -13,8 +16,9 @@ const { locations, selectedKey = "" } = Astro.props;
 
 <div class="location-workspace">
   <p class="admin-page-intro">
-    Manage where you keep stock and where customers collect it, together.
-    Customer pickup details and hours are linked to your inventory locations.
+    Inventory storage is where you keep and count goods. Customer pickup
+    locations are separate meetup points supplied from that inventory. Meetup
+    points do not hold their own stock.
   </p>
   {locations === null ? (
     <ReadState unavailable />
@@ -22,25 +26,35 @@ const { locations, selectedKey = "" } = Astro.props;
     <>
       <dl class="location-overview" aria-label="Location overview">
         <div>
-          <dt>Inventory locations</dt>
-          <dd>{locations.length}</dd>
-        </div>
-        <div>
-          <dt>Active</dt>
-          <dd>{locations.filter((location) => location.active).length}</dd>
-        </div>
-        <div>
-          <dt>Pickup enabled</dt>
+          <dt>Inventory storage</dt>
           <dd>
-            {locations.filter((location) => location.pickupEnabled).length}
+            {
+              locations.filter(
+                (location) => location.key !== TEST_INVENTORY_LOCATION_KEY,
+              ).length
+            }
           </dd>
+        </div>
+        <div>
+          <dt>Test inventory</dt>
+          <dd>
+            {
+              locations.filter(
+                (location) => location.key === TEST_INVENTORY_LOCATION_KEY,
+              ).length
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Active stock records</dt>
+          <dd>{locations.filter((location) => location.active).length}</dd>
         </div>
       </dl>
       <section aria-labelledby="stock-locations-title">
         <div class="location-section-heading">
           <div>
-            <p class="admin-eyebrow">Inventory &amp; collection</p>
-            <h2 id="stock-locations-title">Your locations</h2>
+            <p class="admin-eyebrow">Stock records / Not meetup addresses</p>
+            <h2 id="stock-locations-title">Inventory storage</h2>
           </div>
           <a href="#new-location">Add inventory location</a>
         </div>
@@ -63,12 +77,17 @@ const { locations, selectedKey = "" } = Astro.props;
                   </span>
                 </div>
                 <p class="location-key">{location.key}</p>
+                <p class="admin-muted">
+                  {location.key === TEST_INVENTORY_LOCATION_KEY
+                    ? "Test inventory only. Sandbox balances are not real goods."
+                    : "Inventory storage. This is not a customer pickup address."}
+                </p>
                 <p class="location-label">
                   {location.publicLabel || "No storefront label set"}
                 </p>
                 <p class="admin-muted">
                   {location.pickupEnabled
-                    ? "Pickup fulfillment enabled"
+                    ? "Order fulfillment enabled"
                     : "Stock storage only"}{" "}
                   &middot; revision {location.revision}
                 </p>
@@ -81,7 +100,7 @@ const { locations, selectedKey = "" } = Astro.props;
                   <a
                     href={`/inventory/locations?stock=${encodeURIComponent(location.key)}#pickup-points`}
                   >
-                    Pickup details &amp; hours
+                    View supplied pickup points
                   </a>
                 </div>
               </article>
@@ -91,8 +110,8 @@ const { locations, selectedKey = "" } = Astro.props;
           <div class="admin-panel">
             <h3>Your first location starts here.</h3>
             <p>
-              Add a genuine inventory location below, then connect its customer
-              pickup details and collection windows.
+              Add inventory storage below. Customer meetup points are managed
+              separately and can share the same stock.
             </p>
           </div>
         )}
@@ -109,8 +128,9 @@ const { locations, selectedKey = "" } = Astro.props;
         <p class="admin-eyebrow">A new place</p>
         <h2 id="new-location-title">Add an inventory location</h2>
         <p class="admin-muted">
-          Create its inventory record first, then add approved pickup details
-          and hours. Counts are managed separately in Products.
+          Add a record only for a place where goods are stored. Do not create a
+          separate inventory record for each pickup meetup point. Counts are
+          managed in Products.
         </p>
         <LocationForm />
       </section>

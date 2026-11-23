@@ -1,18 +1,22 @@
 ---
-import { pickupLocation } from "../content/pickup.ts";
+import { pickupLocations, pickupInstructions } from "../content/pickup.ts";
 ---
 
-<aside class="pickup-location" aria-label="Pickup location">
-  <p class="eyebrow">Pickup in Madisonville</p>
-  <address>
-    {pickupLocation.street}
-    <br />
-    {`${pickupLocation.city}, ${pickupLocation.region} ${pickupLocation.postalCode}`}
-  </address>
-  <p>
-    Arrange a pickup time and wait for confirmation before visiting. This is not
-    a walk-in shop. Shipping is not currently offered.
-  </p>
+<aside class="pickup-location" aria-label="Pickup locations">
+  <p class="eyebrow">Pickup meetup points</p>
+  <ul class="pickup-meetup-list">
+    {pickupLocations.map((location) => (
+      <li>
+        <strong>{location.name}</strong>
+        <address>
+          {location.street}
+          <br />
+          {`${location.city}, ${location.region} ${location.postalCode}`}
+        </address>
+      </li>
+    ))}
+  </ul>
+  <p>{pickupInstructions}</p>
 </aside>
 
 <style>
@@ -27,6 +31,13 @@ import { pickupLocation } from "../content/pickup.ts";
     font-size: 1.1rem;
     font-style: normal;
     line-height: 1.7;
+  }
+  .pickup-meetup-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1rem;
+    padding: 0;
+    list-style: none;
   }
   .pickup-location > p:last-child {
     max-width: 40rem;
