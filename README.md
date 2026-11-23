@@ -57,6 +57,12 @@ storing photos, stock, SKUs or credentials. Archive, restore-to-draft and guarde
 permanent product/variant deletion are distinct audited actions. Products,
 locations, orders, history, store settings and sign-in share the inventory shell.
 
+Archive removes a product from the public shelf without deleting its stock or
+history. A confirmed archive, restore or deletion keeps the old form locked;
+use **Open the authoritative record** to continue with current controls.
+Only an in-flight request shows the waiting cursor. The variant identifier
+suggestion button and its guidance use separate rows, including on phones.
+
 **Locations** at `/inventory/locations` separates inventory storage from customer
 pickup meetup points. Main inventory in Madisonville is the real stock location;
 Stripe Sandbox is explicitly test inventory, not a second real storage location.

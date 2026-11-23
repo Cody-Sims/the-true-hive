@@ -5134,6 +5134,102 @@ domTest(
 );
 
 domTest(
+  "confirmed product archival stops the waiting cursor without unlocking stale controls",
+  async () => {
+    const page = await fixturePage("src/components/admin/ProductForm.astro", {
+      product,
+    });
+    let finish!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    await page.route("**/api/admin/products/fixture-product", async (route) => {
+      await waiting;
+      await route.fulfill({
+        json: { product: { ...product, status: "archived", revision: 8 } },
+      });
+    });
+    try {
+      const archive = page.getByRole("button", {
+        name: "Archive product",
+        exact: true,
+      });
+      await archive.click();
+      await waitPhase(page, "pending");
+      assert.equal(
+        await archive.evaluate((node) => getComputedStyle(node).cursor),
+        "wait",
+      );
+      finish();
+      await waitPhase(page, "confirmed");
+      assert.equal(
+        await page.locator("[data-admin-form]").getAttribute("aria-busy"),
+        "false",
+      );
+      assert.equal(await archive.isDisabled(), true);
+      assert.equal(
+        await archive.evaluate((node) => getComputedStyle(node).cursor),
+        "not-allowed",
+      );
+      assert.match(
+        await page.locator("[data-admin-receipt]").innerText(),
+        /archived/,
+      );
+      assert.match(
+        await page.locator("[data-admin-status]").innerText(),
+        /Record state receipt verified/,
+      );
+    } finally {
+      finish();
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
+  "new variant suggestions remain readable above their guidance at phone and desktop widths",
+  async () => {
+    const page = await fixturePage(
+      "src/components/admin/ProductForm.astro",
+      {},
+    );
+    try {
+      for (const width of [320, 880, 1440]) {
+        await page.setViewportSize({ width, height: 1000 });
+        const suggestion = page.locator("[data-suggest-sku]");
+        const layout = await suggestion.evaluate((button) => {
+          const paragraph = button.parentElement!.querySelector("p")!;
+          const box = button.getBoundingClientRect();
+          const guidance = paragraph.getBoundingClientRect();
+          const style = getComputedStyle(button);
+          return {
+            bottom: box.bottom,
+            guidanceTop: guidance.top,
+            height: box.height,
+            maximumHeight:
+              parseFloat(style.lineHeight) * 3 +
+              parseFloat(style.paddingTop) +
+              parseFloat(style.paddingBottom) +
+              parseFloat(style.borderTopWidth) +
+              parseFloat(style.borderBottomWidth),
+          };
+        });
+        assert(
+          layout.bottom <= layout.guidanceTop,
+          `guidance must follow the button at ${width}px`,
+        );
+        assert(
+          layout.height <= layout.maximumHeight,
+          `suggestion text must not collapse into a narrow column at ${width}px`,
+        );
+      }
+    } finally {
+      await page.context().close();
+    }
+  },
+);
+
+domTest(
   "archiving is a revisioned intent, not an accidental save of unsaved merchandise",
   async () => {
     const page = await fixturePage("src/components/admin/ProductForm.astro", {
