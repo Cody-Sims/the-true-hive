@@ -47,7 +47,9 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
         </a>
       </div>
     </div>
-    <PickupLocation />
+    <div id="pickup" tabindex="-1">
+      <PickupLocation />
+    </div>
     {paymentReady ? (
       <section class="cart-checkout" aria-labelledby="cart-checkout-title">
         <h2 id="cart-checkout-title">Stripe test checkout</h2>
