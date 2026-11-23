@@ -92,6 +92,9 @@ button {
 }
 button:disabled {
   opacity: 0.65;
+  cursor: not-allowed;
+}
+[aria-busy="true"] button:disabled {
   cursor: wait;
 }
 [hidden] {
@@ -244,6 +247,12 @@ button:disabled {
 .admin-field > textarea {
   grid-column: 1 / -1;
   margin-top: 0.25rem;
+}
+.admin-variant-suggestions {
+  margin-bottom: 1rem;
+}
+.admin-variant-suggestions > button {
+  max-width: 100%;
 }
 .admin-field-help {
   grid-area: 1 / 2;

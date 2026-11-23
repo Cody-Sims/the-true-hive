@@ -2,6 +2,12 @@
 
 Status: **implementation merged; private inventory preparation and the inventory-backed public catalog enabled on 2026-11-14; checkout and live sales disabled**. The code remains disabled by default for an unconfigured deployment. Hosted setup does not complete the remaining operating/payment/recovery rehearsals.
 
+The dated activation statements below preserve their original approval scope.
+Later released interfaces include the canonical site-wide administrator session,
+bounded Workbench recovery, guarded record deletion, the editable sprint board
+and separate inventory/meetup records. The current deployment and payment gates
+are maintained in the [operations runbook](14-development-and-operations.md).
+
 The original 2026-10-31 approval selected an **isolated True Hive Firebase project**, **app-enforced MFA before deployment**, and **Stripe Checkout in card-only test mode**. Physical on-hand, checkout holds and paid commitments remain separate; an authorized **Record pickup** action records physical departure. That initial authorization did not include a Firebase billing upgrade, live payment, new paid service, production-domain cutover or email setup. Later hostname approvals are recorded separately.
 
 **2026-11-14 inventory-only authorization:** the owner separately approved
@@ -42,7 +48,7 @@ Give an authorized administrator a usable inventory workspace at **`thetruehive.
 | IM2 | Use a separate True Hive Firebase project, Google sign-in and Firebase TOTP MFA. Reject first-factor-only sessions. |
 | IM3 | Keep private admin membership in PostgreSQL. Provision/revoke through an operator-only CLI with direct owner credentials; never inherit personal-site owner-email fallbacks or claims. |
 | IM4 | Use revocation-checked Firebase session cookies plus locally revocable session records. Sign-out invalidates the local session, not merely the visible UI. |
-| IM5 | Create/update products and stable variants/SKUs; publish only validated real records; archive rather than destructively delete. Do not import prototypes. |
+| IM5 | Create/update products and stable variants/SKUs; publish only validated real records. Prefer archive/restore; permit only explicitly confirmed, audited deletion that passes inventory, reference, photo and publication guards. Do not import prototypes. |
 | IM6 | Establish genuine locations explicitly. New stock records start at a disclosed zero administrative balance; counted/received units enter through an audited adjustment. |
 | IM7 | Show physical on-hand, held, committed, unavailable and sellable quantities separately. Unknown records/outages are not zero. |
 | IM8 | Apply positive integer increase/reduce operations with an authenticated actor, reason, expected revision and UUID idempotency key. No absolute-count overwrite or unlogged override. |
@@ -62,7 +68,7 @@ The Firebase browser SDK is pinned to 12.19.0 for the existing Node 24.2 baselin
 
 Bound request bodies, keys, pagination, quantities and provider timeouts. Use parameterized SQL and one checked-out client per transaction. Lock order/idempotency identities and inventory pairs in a consistent order. Private responses are no-store and non-indexable.
 
-Use the Apiary Market paper/forest/tomato/ochre palette with compact operational forms. Labels, focus/error summaries, status announcements, mobile reflow and keyboard actions cover the admin journey. Do not use optimistic stock success or persist private drafts/tokens/counts in local storage.
+Use the Apiary Market paper/forest/tomato/ochre palette with compact operational forms. Labels, focus/error summaries, status announcements, mobile reflow and keyboard actions cover the admin journey. Do not use optimistic stock success or persist tokens, stock, photos, variant keys or SKUs in local storage. Workbench may recover bounded account/record-scoped editable text and retain unresolved-operation safety markers under the runbook's explicit limits.
 
 ## Non-goals
 
@@ -128,9 +134,11 @@ Use the types in `src/domain/admin.ts`. JSON success envelopes name their resour
 | `GET /api/admin/products` | Bounded limit/offset, search, optional `locationKey`, `category` (`all/soap/honey/candles/gifts`) and `stock` (`all/in/out/untracked`); `{ products, total, locations, locationKey }` |
 | `GET /api/admin/products/:key` | `{ product }`, including private variant/location balances and revision |
 | `POST /api/admin/products` | UUID `operationId`, `product` fields and `variants`; atomic unpublished product creation and zero stock records |
-| `PUT /api/admin/products/:key` | UUID operation, `expectedRevision`, action `save/publish/archive`, product/variant fields; preserve stable referenced keys |
+| `PUT /api/admin/products/:key` | UUID operation, `expectedRevision`, action `save/publish/archive/restore`; save/publish includes product/variant fields, while archive/restore changes state only |
+| `DELETE /api/admin/products/:key` | Explicit confirmed UUID operation and `expectedRevision`; return an audited deletion receipt only after all product deletion guards pass |
+| `DELETE /api/admin/products/:key/variants/:variantKey` | Same revisioned deletion contract; retain required published variants and reject nonzero balances or historical references |
 | `GET/PUT /api/admin/store` | Authorized settings read; revision-controlled `{ operationId, expectedRevision, purchasesEnabled }` update with immutable audit; defaults closed and never overrides payment configuration |
-| `GET /api/admin/variants/:key/barcode.svg` | Authenticated internal Code 128 image from the exact stored SKU; inventory-host only, no-store/noindex; no caller-supplied barcode text or retail identifier issuance |
+| `GET /api/admin/variants/:key/barcode.svg` | Authenticated internal Code 128 image from the exact stored SKU on the canonical administrator origin; no-store/noindex; no caller-supplied barcode text or retail identifier issuance |
 | `GET/POST /api/admin/locations` | List or create `{ operationId, location: { key, name, publicLabel, active, pickupEnabled } }`; new locations default inactive/non-pickup |
 | `PUT /api/admin/locations/:key` | `{ operationId, expectedRevision, location: { key, name, publicLabel, active, pickupEnabled } }` |
 | `POST /api/admin/adjustments` | UUID operation, variant/location keys, signed integer delta, reason and expected stock revision; actor is server-derived |
@@ -138,10 +146,19 @@ Use the types in `src/domain/admin.ts`. JSON success envelopes name their resour
 | `GET /api/admin/orders` | Bounded private order summaries, no customer/payment credentials |
 | `GET /api/admin/orders/:id` | Immutable merchandise/quantity/price snapshots and payment/inventory state |
 | `POST /api/admin/orders/:id/pickup` | UUID operation and expected order revision; only paid orders; atomic ledger/count/commitment/order transition |
+| `GET/POST /api/admin/team-tasks` | List shared tasks, including archive state; create a validated task with a retry-stable generated ID and editable fields |
+| `PUT /api/admin/team-tasks/:id` | `expectedRevision` plus changed core fields, notes or `archived`; preserve untouched notes and reject stale edits; no permanent task deletion |
 
-Product fields are bounded existing keys/slug/title/summary/details/category/image choice. A draft still needs the existing minimum title/summary/category; it may lack a price. Publication requires an active real product, at least one active positive-price USD variant and valid content. Publication does not enable checkout. Archive unpublishes without removing stock, held orders or history. No destructive delete endpoint.
+Product fields are bounded existing keys/slug/title/summary/details/ingredients/category/image choice. A draft still needs the existing minimum title/summary/category; it may lack a price. Publication requires an active real product, at least one active positive-price USD variant and valid content. Publication does not enable checkout. Archive unpublishes without removing stock, held orders or history; restore returns the product to draft rather than republishing it. Permanent deletion is a separate audited action: missing/nonzero balances, allocations, movement/order references, product photo history or required publication variants can block it.
 
-`product.kind` is explicit on edits (`draft/concept/active`), with `draft` as the creation default. Each variant supplies stable key/SKU/label, integer-or-null `priceMinor`, `currency: "USD"` and explicit `active`. Existing keys and SKUs are retained; deactivate rather than delete. Private services take numeric pagination; HTTP/page adapters validate and convert query strings. USD prices are explicitly labeled cents in the admin, not silently rounded dollar amounts.
+`product.kind` is explicit on edits (`draft/concept/active`), with `draft` as the creation default. Each variant supplies stable key/SKU/label, integer-or-null `priceMinor`, `currency: "USD"` and explicit `active`. Existing referenced keys and SKUs are retained; deactivate rather than reuse their identities. Private services take numeric pagination; HTTP/page adapters validate and convert query strings. USD prices are explicitly labeled cents in the admin, not silently rounded dollar amounts.
+
+After a verified archive, restore or deletion receipt, the old form remains
+locked until the operator opens the authoritative record/list. This is a
+completed action, not a request still loading; only pending requests have the
+waiting cursor. State-only actions never save unrelated unsaved product edits.
+New-variant identifier suggestions remain separate from their explanatory text
+and do not overwrite manually entered or saved identifiers.
 
 Stock receipts distinguish the original adjustment's before/after result from refreshed current balances. Identical retries return the recorded operation; changed payload/actor under the same ID is a conflict. Stale revisions require a new reviewed intent, not a force-save.
 
@@ -149,7 +166,7 @@ The Products workspace groups matching variants into collapsible category shelve
 
 The inspector supports receiving and reductions using the existing adjustment endpoint, revision, signed session and audited reason. A balance preview is not a receipt. Uncertain, conflicting or not-yet-refreshed operations prevent changing variants/filters; unsubmitted values require confirmation before discarding. Confirmed/current balances update shelf quantities without optimistic writes, and filter results/page totals remain a disclosed snapshot until filters are reapplied. New-product creation, internal labels and location-management entry points remain available.
 
-Shared inventory UI lives in `src/components/admin/`: `InventoryNavbar.astro` owns the navigation links, nested-route active state, responsive shell and account disclosure; `AdminPageHeader.astro` owns page titles and the layout's `page-actions` slot; `AdminSelect.astro` owns native select presentation. Pages consume these through `AdminLayout.astro` rather than overriding navbar geometry. Account dismissal is handled by `src/client/inventory-nav.ts`; sign-out still requires the existing signed server request. Native selects retain their names, values, validation, disabled behavior and platform picker, with a decorative chevron and high-contrast fallback. The public sign-in shell renders no private navigation or identity, and barcode printing hides both shared headers.
+Shared inventory UI lives in `src/components/admin/`: `InventoryNavbar.astro` owns the navigation links, nested-route active state and responsive hamburger; `AdminPageHeader.astro` owns page titles and the layout's `page-actions` slot; `AdminSelect.astro` owns native select presentation. Pages consume these through `AdminLayout.astro` rather than overriding navbar geometry. Mobile menu dismissal is handled by `src/client/inventory-nav.ts`; sign-out still requires the existing signed server request. Native selects retain their names, values, validation, disabled behavior and platform picker, with a decorative chevron and high-contrast fallback. The public sign-in shell renders no private navigation or identity, and barcode printing hides both shared headers.
 
 ### Checkout and order contract
 
