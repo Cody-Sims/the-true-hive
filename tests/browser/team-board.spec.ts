@@ -19,7 +19,12 @@ test("the private board moves cards, assigns a person, and exposes the same cont
     epic: "Fictional example",
     rank: 1,
     revision: 1,
-    detail: { scope: "Review the example.", acceptance: "The format agrees." },
+    detail: {
+      scope: "Review the example and check the original task notes. ".repeat(
+        30,
+      ),
+      acceptance: "The format agrees.",
+    },
   };
   await page.route("**/api/admin/team-tasks/TH-01", async (route) => {
     const request = route.request();
@@ -29,6 +34,7 @@ test("the private board moves cards, assigns a person, and exposes the same cont
     expect(change.expectedRevision).toBe(task.revision);
     task = {
       ...task,
+      title: change.title ?? task.title,
       assignee: change.assignee,
       status: change.status,
       revision: task.revision + 1,
@@ -66,7 +72,13 @@ test("the private board moves cards, assigns a person, and exposes the same cont
   const trigger = card.locator("[data-team-open]");
   await trigger.press("Enter");
   const dialog = page.getByRole("dialog", { name: "Check a sample label" });
-  await expect(dialog.getByText("The format agrees.")).toBeVisible();
+  const titleInput = dialog.getByLabel("Title", { exact: true });
+  await expect(titleInput).toBeEditable();
+  await expect(titleInput).toBeInViewport();
+  await expect(titleInput).toBeFocused();
+  await expect(dialog.getByLabel("Done when", { exact: true })).toHaveValue(
+    "The format agrees.",
+  );
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320);
@@ -74,11 +86,13 @@ test("the private board moves cards, assigns a person, and exposes the same cont
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
   await trigger.click();
+  await titleInput.fill("Reviewed sample label");
   await dialog.getByLabel("Assignee").selectOption("cody");
   await dialog.getByLabel("Status").selectOption("review");
   await dialog.getByRole("button", { name: "Save changes" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(page.locator('[data-team-lane="review"]')).toContainText("Cody");
+  await expect(card).toContainText("Reviewed sample label");
   await openFixture();
   await page.locator("[data-team-owner]").selectOption("logan");
   await expect(card).not.toBeVisible();
@@ -316,6 +330,9 @@ test("sprint board supports backlog capping, list triage view, interactive check
   // Interactive checklist inside task detail updates progress badge
   await page.locator('[data-team-card="TH-01"] [data-team-open]').click();
   const dialog = page.getByRole("dialog");
+  await dialog
+    .getByText("Checklist progress & imported notes", { exact: true })
+    .click();
   await dialog.locator('[data-team-check-index="0"]').check();
   await expect(
     page.locator('[data-team-card="TH-01"] [data-team-check-progress]'),

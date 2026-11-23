@@ -17,6 +17,10 @@ Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and
 
 **Host boundary:** the public storefront and private inventory/studio share **https://thetruehive.com/**. Inventory, `/team-sprint`, all prototypes, planning documents and their dependencies require the existing Google + TOTP + active administrator membership. A single host-only session enables navigation across these workspaces; revocation applies everywhere. Exact legacy inventory/preview hosts only redirect safe reads; other hosts are denied except process liveness. Pages publishes redirects only, not private files. Follow the [canonical rollout](docs/14-development-and-operations.md#canonical-administrator-rollout). `CATALOG_SOURCE=database`, existing Neon authority, Stripe test-only restrictions and Render's **After CI Checks Pass** deployment remain unchanged; no new paid service is introduced.
 
+Signed-in administrators get a separate, responsive **Private workspace** bar
+for Inventory, Team board, Studio and Planning. The public header stays focused
+on Store, Services and About us; anonymous visitors never see workspace links.
+
 The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
 Contact inquiries open an email draft that visitors must send themselves; no

@@ -813,7 +813,6 @@ function formatShortDate(iso?: string) {
         </button>
       </form>
     </div>
-    <div data-team-detail></div>
     <form class="team-edit" method="dialog" data-team-edit>
       <label class="team-wide">
         <span class="team-field-label">Title</span>
@@ -1001,6 +1000,10 @@ function formatShortDate(iso?: string) {
       </div>
       <p class="team-edit-status" role="status" data-team-edit-feedback></p>
     </form>
+    <details class="team-extra-details" data-team-extra-details>
+      <summary>Checklist progress &amp; imported notes</summary>
+      <div data-team-detail></div>
+    </details>
     <datalist id="team-epics-datalist" data-team-epics-datalist>
       {uniqueEpics.map((epic) => (
         <option value={epic}></option>
@@ -2217,6 +2220,18 @@ function formatShortDate(iso?: string) {
     background: #f9faf4;
     border-bottom: 1px solid #dce3d0;
     overflow-wrap: anywhere;
+  }
+
+  .inventory-team-workspace .team-extra-details {
+    border-top: 1px solid #dce3d0;
+  }
+
+  .inventory-team-workspace .team-extra-details > summary {
+    padding: 1rem 1.35rem;
+    color: var(--team-muted);
+    font-size: 0.88rem;
+    font-weight: 640;
+    cursor: pointer;
   }
 
   .inventory-team-workspace .team-details:empty {

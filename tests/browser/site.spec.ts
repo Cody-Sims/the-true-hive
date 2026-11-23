@@ -1,6 +1,69 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { spawnSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { render, root } from "../site/barcode-test-helper.ts";
+
+test("verified workspace navigation stays separate from the public header and remains usable on phones", async ({
+  page,
+}) => {
+  const css = await readFile(new URL("src/styles/site.css", root), "utf8");
+  for (const signedIn of [false, true]) {
+    const html = await render(
+      "src/layouts/SiteLayout.astro",
+      { title: "Navigation fixture", description: "Navigation fixture" },
+      {
+        request: new Request("http://127.0.0.1:4325/"),
+        locals: {
+          nonce: "navigation-fixture",
+          ...(signedIn
+            ? { admin: { uid: "fixture", actorId: "fixture" } }
+            : {}),
+        },
+      },
+    );
+    await page.route("**/navigation-fixture", (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body: html.replace("</head>", `<style>${css}</style></head>`),
+      }),
+    );
+    for (const width of [320, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/navigation-fixture");
+      await expect(
+        page
+          .getByRole("navigation", { name: "Main navigation" })
+          .getByRole("link"),
+      ).toHaveText(["Store", "Services", "About us"]);
+      const workspace = page.getByRole("navigation", {
+        name: "Administrator navigation",
+      });
+      if (signedIn) {
+        await expect(workspace).toBeVisible();
+        await expect(workspace.locator("xpath=ancestor::header")).toHaveCount(
+          0,
+        );
+        await expect(workspace.getByRole("link")).toHaveText([
+          "Inventory",
+          "Team board",
+          "Studio",
+          "Planning",
+        ]);
+        for (const link of await workspace.getByRole("link").all()) {
+          const box = await link.boundingBox();
+          expect(box?.height).toBeGreaterThanOrEqual(44);
+        }
+      } else {
+        await expect(workspace).toHaveCount(0);
+      }
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+    }
+    await page.unroute("**/navigation-fixture");
+  }
+});
 
 test("packaged startup refuses an unconfigured database before serving", () => {
   const result = spawnSync(

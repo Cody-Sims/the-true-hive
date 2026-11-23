@@ -156,6 +156,50 @@ a {
 .site-nav a[aria-current] {
   text-decoration: underline;
 }
+.workspace-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding-block: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+.workspace-nav-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.workspace-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.workspace-nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.workspace-nav-links a:hover {
+  background: var(--surface);
+}
+.workspace-nav-links .workspace-nav-primary {
+  border-color: var(--forest);
+  color: var(--paper);
+  background: var(--forest);
+}
+.workspace-nav-links .workspace-nav-primary:hover {
+  background: #1b302a;
+}
 .store-nav {
   display: flex;
   flex-wrap: wrap;

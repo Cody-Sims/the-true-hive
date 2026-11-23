@@ -137,14 +137,20 @@ const schema = JSON.stringify({
             About us
           </a>
         </nav>
-        {admin && (
-          <nav aria-label="Administrator navigation">
-            <a href="/inventory/products">Inventory</a>
+      </header>
+      {admin && (
+        <nav class="workspace-nav wrap" aria-label="Administrator navigation">
+          <span class="workspace-nav-label">Private workspace</span>
+          <div class="workspace-nav-links">
+            <a class="workspace-nav-primary" href="/inventory/products">
+              Inventory
+            </a>
+            <a href="/team-sprint">Team board</a>
             <a href="/prototypes/">Studio</a>
             <a href="/prototypes/plan.html">Planning</a>
-          </nav>
-        )}
-      </header>
+          </div>
+        </nav>
+      )}
     </div>
     <main id="main" tabindex="-1">
       {storePage && (
