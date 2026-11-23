@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Redesign the shared team sprint board with self-contained task cards, custom dropdown controls, Sprint Pulse operational metrics, Board and List triage views with grouping/sorting, capped/collapsible Backlog and mobile stage tabs, interactive subtasks, target dates, blocker/size badges, per-column task creation and drag rank reordering without requiring a schema migration.
 - Distinguish main inventory storage and Stripe Sandbox test inventory from customer meetup points; replace the old pickup address with Weigel's, Dunkin' and Pizza Hut and confirmed-time/2018 Nissan Altima instructions. Preserve stock and order history; meetup drafts have no available pickup times.
 - Stop showing a waiting cursor on confirmed, locked product actions; reserve it for pending requests. Keep new-variant identifier suggestions readable above their guidance instead of collapsing into the field-help grid.
 - Keep new MFA-verified administrator logins signed in for up to seven days instead of eight hours, and reuse active sessions when revisiting sign-in. Logout, revocation and one-hour CSRF protections remain unchanged.

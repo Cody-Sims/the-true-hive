@@ -1,6 +1,11 @@
 ---
 import {
+  checklistProgress,
+  dueDateStatus,
+  formatTaskDisplayId,
+  isTaskBlocked,
   taskAssignees,
+  taskSizes,
   taskStatuses,
   type TeamTask,
 } from "../../domain/team-board.ts";
@@ -11,195 +16,797 @@ interface Props {
 }
 const { tasks } = Astro.props;
 const assigneeLabels = Object.fromEntries(taskAssignees);
+const activeTasks = tasks.filter((task) => !task.archived);
+const sprintActiveCount = activeTasks.filter(
+  (task) => task.status !== "backlog" && task.status !== "done",
+).length;
+const doingCount = activeTasks.filter((task) => task.status === "doing").length;
+const urgentCount = activeTasks.filter((task) => task.priority === "P0").length;
+const blockedCount = activeTasks.filter((task) => isTaskBlocked(task)).length;
+const doneCount = activeTasks.filter((task) => task.status === "done").length;
+const sprintDenominator = sprintActiveCount + doneCount;
+const sprintPercent = sprintDenominator
+  ? Math.round((doneCount / sprintDenominator) * 100)
+  : 0;
+const uniqueEpics = [
+  ...new Set(tasks.map((task) => task.epic).filter(Boolean)),
+].sort((a, b) => a.localeCompare(b));
+const todayIso = new Date().toISOString().slice(0, 10);
+
+function ownerInitial(assignee: TeamTask["assignee"]) {
+  if (!assignee) return "–";
+  return (assigneeLabels[assignee] ?? assignee).slice(0, 1).toUpperCase();
+}
+function formatShortDate(iso?: string) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
 ---
 
 <div data-team-board class="inventory-pages inventory-team-workspace">
-  <section class="inventory-page-card" aria-label="Task filters">
-    <header class="inventory-card-heading">
+  <section
+    class="inventory-page-card team-control-deck"
+    aria-label="Task filters"
+  >
+    <header class="inventory-card-heading team-deck-head">
       <div>
         <p class="admin-eyebrow">Shared work / Team sprint</p>
         <h2>Make room for the next good thing.</h2>
+        <p class="team-intro">
+          Focus active work from Ready to Done, keep future ideas tidy in
+          Backlog, and tap any card for checklists, handoffs, and details.
+        </p>
       </div>
       <div class="team-actions">
-        <button type="button" data-team-new>
+        <button type="button" class="team-btn-primary" data-team-new>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M8 3v10M3 8h10"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
           New task
         </button>
-        <button type="button" data-team-refresh>
+        <button type="button" class="team-btn-secondary" data-team-refresh>
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M13.5 8a5.5 5.5 0 1 1-1.4-3.65M13.5 2.5v2.6h-2.6"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
           Refresh board
         </button>
       </div>
     </header>
-    <p class="team-intro">
-      Drag a card to move it. On a phone or with a keyboard, open the card and
-      choose its status. Create and edit your own tasks. Discarded tasks can
-      always be restored from Archived. Saved changes are shared.
-    </p>
+
+    <div class="team-pulse" data-team-pulse aria-label="Sprint pulse">
+      <button
+        type="button"
+        class="team-pulse-card"
+        data-team-pulse-filter="sprint"
+        aria-pressed="false"
+      >
+        <span class="team-pulse-label">In flight</span>
+        <strong class="team-pulse-value" data-pulse-active>
+          {sprintActiveCount}
+        </strong>
+        <span class="team-pulse-sub">Ready → Review</span>
+      </button>
+      <button
+        type="button"
+        class:list={["team-pulse-card", { "is-wip-high": doingCount > 4 }]}
+        data-team-pulse-filter="doing"
+        aria-pressed="false"
+      >
+        <span class="team-pulse-label">Doing now</span>
+        <strong class="team-pulse-value" data-pulse-doing>
+          {doingCount}
+        </strong>
+        <span class="team-pulse-sub" data-pulse-wip>
+          {doingCount > 4 ? "Above 4-card WIP target" : "Target ≤ 4 active"}
+        </span>
+      </button>
+      <button
+        type="button"
+        class="team-pulse-card"
+        data-team-pulse-filter="urgent"
+        aria-pressed="false"
+      >
+        <span class="team-pulse-label">Urgent P0</span>
+        <strong class="team-pulse-value is-urgent" data-pulse-urgent>
+          {urgentCount}
+        </strong>
+        <span class="team-pulse-sub">Top priority</span>
+      </button>
+      <button
+        type="button"
+        class="team-pulse-card"
+        data-team-pulse-filter="blocked"
+        aria-pressed="false"
+      >
+        <span class="team-pulse-label">Waiting / Blocked</span>
+        <strong class="team-pulse-value is-blocked" data-pulse-blocked>
+          {blockedCount}
+        </strong>
+        <span class="team-pulse-sub">Needs handoff</span>
+      </button>
+      <div class="team-pulse-card team-pulse-progress">
+        <div class="team-pulse-progress-top">
+          <span class="team-pulse-label">Sprint done</span>
+          <strong class="team-pulse-value" data-pulse-done>
+            {doneCount} <small>({sprintPercent}%)</small>
+          </strong>
+        </div>
+        <div class="team-progress-track" aria-hidden="true">
+          <span
+            class="team-progress-fill"
+            data-pulse-bar
+            style={`width: ${sprintPercent}%`}
+          ></span>
+        </div>
+        <span class="team-pulse-sub" data-pulse-summary>
+          {doneCount} done of {sprintDenominator} sprint tasks
+        </span>
+      </div>
+    </div>
+
+    <div class="team-quick-bar">
+      <div
+        class="team-owner-pills"
+        data-team-owner-pills
+        role="group"
+        aria-label="Quick filter by person"
+      >
+        <button
+          type="button"
+          class="team-pill-btn"
+          data-owner-pill=""
+          aria-pressed="true"
+        >
+          Everyone
+        </button>
+        {taskAssignees.map(([key, name]) => (
+          <button
+            type="button"
+            class="team-pill-btn"
+            data-owner-pill={key}
+            aria-pressed="false"
+          >
+            <span class="team-avatar" data-owner={key} aria-hidden="true">
+              {name.slice(0, 1)}
+            </span>
+            {name}
+          </button>
+        ))}
+        <button
+          type="button"
+          class="team-pill-btn"
+          data-owner-pill="unassigned"
+          aria-pressed="false"
+        >
+          <span class="team-avatar" data-owner="unassigned" aria-hidden="true">
+            –
+          </span>
+          Unassigned
+        </button>
+      </div>
+
+      <div
+        class="team-layout-switch"
+        role="group"
+        aria-label="Workspace layout"
+      >
+        <button
+          type="button"
+          class="team-pill-btn"
+          data-team-layout="board"
+          aria-pressed="true"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <rect
+              x="2"
+              y="2.5"
+              width="3.3"
+              height="11"
+              rx="0.8"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+            <rect
+              x="6.35"
+              y="2.5"
+              width="3.3"
+              height="7.5"
+              rx="0.8"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+            <rect
+              x="10.7"
+              y="2.5"
+              width="3.3"
+              height="9.5"
+              rx="0.8"
+              stroke="currentColor"
+              stroke-width="1.4"
+            />
+          </svg>
+          Board
+        </button>
+        <button
+          type="button"
+          class="team-pill-btn"
+          data-team-layout="list"
+          aria-pressed="false"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M2.5 4h11M2.5 8h11M2.5 12h11"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          List
+        </button>
+        <button
+          type="button"
+          class="team-pill-btn team-collapse-backlog-pill"
+          data-team-lane-collapse="backlog"
+          aria-expanded="true"
+          aria-pressed="false"
+          title="Collapse Backlog rail to give active sprint columns more room"
+        >
+          Collapse Backlog
+        </button>
+      </div>
+    </div>
+
     <div class="team-toolbar">
-      <label>
-        Find a task
-        <input
-          data-team-search
-          type="search"
-          placeholder="Title, ID, or epic"
-          maxlength="160"
-        />
+      <label class="team-field team-search-field">
+        <span class="team-field-label">Find a task</span>
+        <span class="team-search-wrap">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="7"
+              cy="7"
+              r="4.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path
+              d="m10.5 10.5 3 3"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <input
+            data-team-search
+            type="search"
+            placeholder="Title, ID, epic, or note"
+            maxlength="160"
+          />
+        </span>
       </label>
-      <label>
-        Assignee
-        <select data-team-owner>
-          <option value="">Everyone</option>
-          {taskAssignees.map(([key, name]) => (
-            <option value={key}>{name}</option>
-          ))}
-          <option value="unassigned">Unassigned</option>
-        </select>
+      <label class="team-field">
+        <span class="team-field-label">Assignee</span>
+        <span class="team-select">
+          <select data-team-owner>
+            <option value="">Everyone</option>
+            {taskAssignees.map(([key, name]) => (
+              <option value={key}>{name}</option>
+            ))}
+            <option value="unassigned">Unassigned</option>
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </label>
-      <label>
-        View
-        <select data-team-view>
-          <option value="active">Active tasks</option>
-          <option value="archived">Archived</option>
-        </select>
+      <label class="team-field">
+        <span class="team-field-label">Epic</span>
+        <span class="team-select">
+          <select data-team-epic>
+            <option value="">All epics</option>
+            {uniqueEpics.map((epic) => (
+              <option value={epic}>{epic}</option>
+            ))}
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </label>
-      <label>
-        Priority
-        <select data-team-priority>
-          <option value="">All priorities</option>
-          <option value="P0">P0 / Urgent</option>
-          <option value="P1">P1 / Next</option>
-          <option value="P2">P2 / Later</option>
-        </select>
+      <label class="team-field">
+        <span class="team-field-label">Priority</span>
+        <span class="team-select">
+          <select data-team-priority>
+            <option value="">All priorities</option>
+            <option value="P0">P0 · Urgent</option>
+            <option value="P1">P1 · Next</option>
+            <option value="P2">P2 · Later</option>
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </label>
-      <label>
-        Status
-        <select data-team-status>
-          <option value="">All statuses</option>
-          {taskStatuses.map(([key, name]) => (
-            <option value={key}>{name}</option>
-          ))}
-        </select>
+      <label class="team-field">
+        <span class="team-field-label">Status</span>
+        <span class="team-select">
+          <select data-team-status>
+            <option value="">All statuses</option>
+            {taskStatuses.map(([key, name]) => (
+              <option value={key}>{name}</option>
+            ))}
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+      </label>
+      <label class="team-field">
+        <span class="team-field-label">Sort</span>
+        <span class="team-select">
+          <select data-team-sort>
+            <option value="rank">Board order</option>
+            <option value="priority">Priority (P0 first)</option>
+            <option value="due">Target date</option>
+            <option value="title">Title (A–Z)</option>
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+      </label>
+      <label class="team-field">
+        <span class="team-field-label">View</span>
+        <span class="team-select">
+          <select data-team-view>
+            <option value="active">Active tasks</option>
+            <option value="archived">Archived</option>
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </label>
     </div>
-    <button type="button" data-team-reset>
-      Clear filters
-    </button>
-    <p class="team-feedback" role="status" data-team-feedback tabindex="-1">
-      {tasks.length
-        ? `${tasks.length} ${tasks.length === 1 ? "task" : "tasks"} on the board.`
-        : "No tasks yet. Create your first task."}
-    </p>
-    <p data-team-empty hidden>
+
+    <div class="team-status-bar">
+      <p class="team-feedback" role="status" data-team-feedback tabindex="-1">
+        {tasks.length
+          ? `${activeTasks.length} ${activeTasks.length === 1 ? "task" : "tasks"} on the board.`
+          : "No tasks yet. Create your first task."}
+      </p>
+      <button type="button" class="team-btn-ghost" data-team-reset>
+        Clear filters
+      </button>
+    </div>
+    <p class="team-empty-banner" data-team-empty hidden>
       No tasks match these filters.
     </p>
   </section>
-  <div class="team-lanes">
+
+  <nav
+    class="team-mobile-tabs"
+    data-team-mobile-tabs
+    aria-label="Mobile stage switcher"
+  >
+    <button
+      type="button"
+      class="team-mobile-tab"
+      data-team-mobile-tab="all"
+      aria-pressed="true"
+    >
+      All stages
+    </button>
     {taskStatuses.map(([status, name]) => (
-      <section
-        class="team-lane"
-        data-team-lane={status}
-        aria-labelledby={`team-${status}`}
+      <button
+        type="button"
+        class="team-mobile-tab"
+        data-team-mobile-tab={status}
+        aria-pressed="false"
       >
-        <h2 id={`team-${status}`}>
-          {name}{" "}
-          <span data-team-count>
-            {
-              tasks.filter((task) => task.status === status && !task.archived)
-                .length
-            }
-          </span>
-        </h2>
-        <ul data-team-list role="list">
-          {tasks
-            .filter((task) => task.status === status)
-            .map((task) => (
-              <li
-                draggable="true"
-                data-team-card={task.id}
-                data-status={task.status}
-                data-assignee={task.assignee ?? ""}
-                data-revision={task.revision}
-                data-rank={task.rank}
-                data-search={`${task.id} ${task.title} ${task.epic}`.toLowerCase()}
-                data-task={JSON.stringify(task)}
-                hidden={task.archived}
-              >
-                <button
-                  type="button"
-                  class="team-card-button"
-                  data-team-open
-                  aria-haspopup="dialog"
-                >
-                  <span class="team-card-meta">
-                    {task.id} · {task.priority}
-                  </span>
-                  <strong data-team-title>{task.title}</strong>
-                  <span class="team-card-meta" data-team-assignee>
-                    {task.assignee
-                      ? assigneeLabels[task.assignee]
-                      : "Unassigned"}
-                  </span>
-                </button>
-                <div class="team-card-actions">
-                  <label>
-                    <span class="team-card-meta">Move</span>
-                    <select
-                      data-team-move
-                      aria-label={`Move ${task.id}`}
-                      disabled={task.archived}
-                    >
-                      {taskStatuses.map(([key, label]) => (
-                        <option value={key} selected={key === task.status}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button type="button" data-team-discard>
-                    {task.archived ? "Restore" : "Discard"}
-                  </button>
-                </div>
-                <template>
-                  <div class="team-details">
-                    <p class="team-card-meta">
-                      {task.id} · {task.priority} · {task.epic}{" "}
-                      {task.detail.size && `· Size ${task.detail.size}`}
-                    </p>
-                    {task.detail.scope && <p>{task.detail.scope}</p>}
-                    {task.detail.acceptance && (
-                      <section>
-                        <h3>Done when</h3>
-                        <p>{task.detail.acceptance}</p>
-                      </section>
-                    )}
-                    {task.detail.prerequisites && (
-                      <section>
-                        <h3>Prerequisites</h3>
-                        <p>{task.detail.prerequisites}</p>
-                      </section>
-                    )}
-                    {task.detail.iteration && (
-                      <section>
-                        <h3>{task.detail.iteration}</h3>
-                        {task.detail.pilot && <p>{task.detail.pilot}</p>}
-                        {task.detail.timebox && <p>{task.detail.timebox}</p>}
-                        {task.detail.checklist && (
-                          <p>{task.detail.checklist}</p>
-                        )}
-                      </section>
-                    )}
-                  </div>
-                </template>
-              </li>
-            ))}
-        </ul>
-        <p class="team-drop-note">Drop a card here to move it to {name}.</p>
-      </section>
+        <span>{name}</span>
+        <small data-mobile-count={status}>
+          {
+            tasks.filter((task) => task.status === status && !task.archived)
+              .length
+          }
+        </small>
+      </button>
     ))}
+  </nav>
+
+  <div class="team-lanes" data-team-lanes>
+    {taskStatuses.map(([status, name]) => {
+      const laneTasks = tasks.filter((task) => task.status === status);
+      const activeLaneCount = laneTasks.filter((task) => !task.archived).length;
+      return (
+        <section
+          class="team-lane"
+          data-team-lane={status}
+          aria-labelledby={`team-${status}`}
+        >
+          <header class="team-lane-head">
+            <h2 id={`team-${status}`}>
+              <span class="team-lane-dot" aria-hidden="true"></span>
+              <span class="team-lane-title">{name}</span>
+              <span class="team-lane-count" data-team-count>
+                {activeLaneCount}
+              </span>
+            </h2>
+            <div class="team-lane-tools">
+              <button
+                type="button"
+                class="team-lane-icon-btn"
+                data-team-lane-add={status}
+                aria-label={`Add task to ${name}`}
+                title={`Add task to ${name}`}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 3.5v9M3.5 8h9"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <ul class="team-card-list" data-team-list role="list">
+            {laneTasks.map((task) => {
+              const check = checklistProgress(task.detail.checklist);
+              const dueState = dueDateStatus(
+                task.detail.dueDate,
+                task.status,
+                todayIso,
+              );
+              const blocked = isTaskBlocked(task);
+              const ownerLabel = task.assignee
+                ? assigneeLabels[task.assignee]
+                : "Unassigned";
+              return (
+                <li
+                  class="team-card"
+                  draggable="true"
+                  data-team-card={task.id}
+                  data-status={task.status}
+                  data-priority={task.priority}
+                  data-assignee={task.assignee ?? ""}
+                  data-revision={task.revision}
+                  data-rank={task.rank}
+                  data-search={`${task.id} ${task.title} ${task.epic}`.toLowerCase()}
+                  data-task={JSON.stringify(task)}
+                  hidden={task.archived}
+                >
+                  <button
+                    type="button"
+                    class="team-card-button"
+                    data-team-open
+                    aria-haspopup="dialog"
+                  >
+                    <span class="team-card-top">
+                      <span class="team-id-pill" data-team-id title={task.id}>
+                        {formatTaskDisplayId(task.id)}
+                      </span>
+                      <span
+                        class="team-priority-badge"
+                        data-priority={task.priority}
+                        data-team-priority-badge
+                      >
+                        {task.priority}
+                      </span>
+                      {task.detail.size && (
+                        <span class="team-size-badge" data-team-size>
+                          {task.detail.size}
+                        </span>
+                      )}
+                    </span>
+                    <strong class="team-card-title" data-team-title>
+                      {task.title}
+                    </strong>
+                    <span class="team-card-signals" data-team-signals>
+                      <span class="team-epic-pill" data-team-epic-pill>
+                        {task.epic}
+                      </span>
+                      {blocked && (
+                        <span class="team-signal-badge is-blocked">
+                          {task.detail.blocker?.trim() ? "Blocked" : "Waiting"}
+                        </span>
+                      )}
+                      {dueState && (
+                        <span
+                          class="team-signal-badge"
+                          data-due-state={dueState}
+                        >
+                          {dueState === "overdue"
+                            ? `Overdue · ${formatShortDate(task.detail.dueDate)}`
+                            : `Due ${formatShortDate(task.detail.dueDate)}`}
+                        </span>
+                      )}
+                      {check.total > 0 && (
+                        <span
+                          class="team-signal-badge team-check-pill"
+                          data-team-check-progress
+                        >
+                          {check.done}/{check.total}
+                        </span>
+                      )}
+                    </span>
+                    <span class="team-card-owner-row">
+                      <span
+                        class="team-owner-chip"
+                        data-owner={task.assignee ?? "unassigned"}
+                      >
+                        <span class="team-avatar" aria-hidden="true">
+                          {ownerInitial(task.assignee)}
+                        </span>
+                        <span data-team-assignee>{ownerLabel}</span>
+                      </span>
+                      <span class="team-open-hint" aria-hidden="true">
+                        Details
+                      </span>
+                    </span>
+                  </button>
+                  <div class="team-card-actions">
+                    <span class="team-select team-select-compact">
+                      <select
+                        data-team-move
+                        aria-label={`Move ${task.id}`}
+                        disabled={task.archived}
+                      >
+                        {taskStatuses.map(([key, label]) => (
+                          <option value={key} selected={key === task.status}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="m4 6 4 4 4-4"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                    <button
+                      type="button"
+                      class="team-card-discard"
+                      data-team-discard
+                    >
+                      {task.archived ? "Restore" : "Discard"}
+                    </button>
+                  </div>
+                  <template>
+                    <div class="team-details">
+                      <p class="team-card-meta">
+                        {task.id} · {task.priority} · {task.epic}{" "}
+                        {task.detail.size && `· Size ${task.detail.size}`}
+                      </p>
+                      {task.detail.scope && <p>{task.detail.scope}</p>}
+                      {task.detail.acceptance && (
+                        <section>
+                          <h3>Done when</h3>
+                          <p>{task.detail.acceptance}</p>
+                        </section>
+                      )}
+                      {task.detail.prerequisites && (
+                        <section>
+                          <h3>Prerequisites</h3>
+                          <p>{task.detail.prerequisites}</p>
+                        </section>
+                      )}
+                      {task.detail.iteration && (
+                        <section>
+                          <h3>{task.detail.iteration}</h3>
+                          {task.detail.pilot && <p>{task.detail.pilot}</p>}
+                          {task.detail.timebox && <p>{task.detail.timebox}</p>}
+                          {task.detail.checklist && (
+                            <p>{task.detail.checklist}</p>
+                          )}
+                        </section>
+                      )}
+                    </div>
+                  </template>
+                </li>
+              );
+            })}
+          </ul>
+
+          {status === "backlog" && (
+            <button
+              type="button"
+              class="team-backlog-more"
+              data-team-backlog-more
+              hidden
+            >
+              Show all backlog tasks
+            </button>
+          )}
+          <p class="team-drop-note">Drop here to move to {name}.</p>
+        </section>
+      );
+    })}
   </div>
+
+  <section
+    class="inventory-page-card team-list-section"
+    data-team-list-view
+    aria-label="Task list view"
+    hidden
+  >
+    <header class="team-list-toolbar">
+      <div>
+        <p class="admin-eyebrow">Triage &amp; batch review</p>
+        <h3>Task list</h3>
+      </div>
+      <label class="team-field team-group-field">
+        <span class="team-field-label">Group by</span>
+        <span class="team-select">
+          <select data-team-group>
+            <option value="status">Status stage</option>
+            <option value="epic">Epic / workstream</option>
+            <option value="priority">Priority</option>
+            <option value="assignee">Assignee</option>
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+      </label>
+    </header>
+    <div class="team-list-groups" data-team-list-groups></div>
+  </section>
 
   <dialog class="team-modal" aria-labelledby="team-task-title">
     <div class="team-modal-head">
-      <h2 id="team-task-title" data-team-modal-title></h2>
+      <div class="team-modal-title-group">
+        <div class="team-modal-kicker" data-team-modal-kicker hidden></div>
+        <h2 id="team-task-title" data-team-modal-title></h2>
+      </div>
       <form method="dialog">
         <button class="team-close" autofocus>
           Close
@@ -209,77 +816,1586 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
     <div data-team-detail></div>
     <form class="team-edit" method="dialog" data-team-edit>
       <label class="team-wide">
-        Title
-        <input name="title" required maxlength="160" />
+        <span class="team-field-label">Title</span>
+        <input
+          name="title"
+          required
+          maxlength="160"
+          placeholder="Clear, actionable task summary"
+        />
       </label>
       <label>
-        Priority
-        <select name="priority">
-          <option value="P0">P0 / Urgent</option>
-          <option value="P1">P1 / Next</option>
-          <option value="P2">P2 / Later</option>
-        </select>
+        <span class="team-field-label">Epic</span>
+        <input
+          name="epic"
+          list="team-epics-datalist"
+          required
+          maxlength="120"
+          placeholder="e.g. Soap shelf"
+        />
       </label>
       <label>
-        Epic
-        <input name="epic" required maxlength="120" />
+        <span class="team-field-label">Priority</span>
+        <span class="team-select">
+          <select name="priority">
+            <option value="P0">P0 · Urgent</option>
+            <option value="P1">P1 · Next</option>
+            <option value="P2">P2 · Later</option>
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </label>
       <label>
-        Assignee
-        <select name="assignee">
-          <option value="">Unassigned</option>
-          {taskAssignees.map(([key, name]) => (
-            <option value={key}>{name}</option>
-          ))}
-        </select>
+        <span class="team-field-label">Status</span>
+        <span class="team-select">
+          <select name="status">
+            {taskStatuses.map(([key, name]) => (
+              <option value={key}>{name}</option>
+            ))}
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
       </label>
       <label>
-        Status
-        <select name="status">
-          {taskStatuses.map(([key, name]) => (
-            <option value={key}>{name}</option>
-          ))}
-        </select>
+        <span class="team-field-label">Assignee</span>
+        <span class="team-select">
+          <select name="assignee">
+            <option value="">Unassigned</option>
+            {taskAssignees.map(([key, name]) => (
+              <option value={key}>{name}</option>
+            ))}
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+      </label>
+      <label>
+        <span class="team-field-label">Size</span>
+        <span class="team-select">
+          <select name="size">
+            <option value="">Unspecified</option>
+            {taskSizes.map((size) => (
+              <option value={size}>{size}</option>
+            ))}
+          </select>
+          <svg
+            viewBox="0 0 16 16"
+            width="15"
+            height="15"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 6 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+      </label>
+      <label>
+        <span class="team-field-label">Target date</span>
+        <input type="date" name="dueDate" />
       </label>
       <label class="team-wide">
-        Description
+        <span class="team-field-label">Blocked / waiting on</span>
+        <input
+          name="blocker"
+          maxlength="2000"
+          placeholder="Optional: what or whom this task is waiting on"
+        />
+      </label>
+      <label class="team-wide">
+        <span class="team-field-label">Description</span>
         <textarea name="scope" rows="3" maxlength="2000"></textarea>
       </label>
       <label class="team-wide">
-        Checklist
-        <textarea name="checklist" rows="3" maxlength="2000"></textarea>
+        <span class="team-field-label">Checklist</span>
+        <textarea
+          name="checklist"
+          rows="3"
+          maxlength="2000"
+          placeholder="One step per line"
+        ></textarea>
       </label>
       <label class="team-wide">
-        Done when
+        <span class="team-field-label">Done when</span>
         <textarea name="acceptance" rows="3" maxlength="2000"></textarea>
       </label>
       <label class="team-wide">
-        Prerequisites
+        <span class="team-field-label">Prerequisites</span>
         <textarea name="prerequisites" rows="2" maxlength="2000"></textarea>
       </label>
-      <button type="submit" data-team-submit>
-        Save changes
-      </button>
-      <button type="button" data-team-archive>
-        Discard task
-      </button>
-      <p class="team-wide" data-team-confirm hidden>
-        Discard removes this task from the active board, not the database. You
-        can restore it from Archived.
-        <button type="button" data-team-confirm-discard>
-          Confirm discard
+      <div class="team-modal-footer team-wide">
+        <button type="submit" class="team-btn-primary" data-team-submit>
+          Save changes
         </button>
-        <button type="button" data-team-cancel-discard>
-          Keep task
+        <button type="button" class="team-btn-danger-ghost" data-team-archive>
+          Discard task
         </button>
-      </p>
-      <p role="status" data-team-edit-feedback></p>
+      </div>
+      <div class="team-wide team-confirm-box" data-team-confirm hidden>
+        <p>
+          Discard moves this task to <strong>Archived</strong> without deleting
+          its notes. You can restore it anytime.
+        </p>
+        <div class="team-confirm-actions">
+          <button
+            type="button"
+            class="team-btn-danger"
+            data-team-confirm-discard
+          >
+            Confirm discard
+          </button>
+          <button
+            type="button"
+            class="team-btn-secondary"
+            data-team-cancel-discard
+          >
+            Keep task
+          </button>
+        </div>
+      </div>
+      <p class="team-edit-status" role="status" data-team-edit-feedback></p>
     </form>
+    <datalist id="team-epics-datalist" data-team-epics-datalist>
+      {uniqueEpics.map((epic) => (
+        <option value={epic}></option>
+      ))}
+    </datalist>
   </dialog>
   <noscript>
     <p>JavaScript is required to open task details and save changes.</p>
   </noscript>
 </div>
+
+<style is:global>
+  .inventory-team-workspace {
+    --team-ink: #1d3329;
+    --team-muted: #465742;
+    --team-line: #d4dcc6;
+    --team-card-border: #ccd6bc;
+    --team-surface: #fffefb;
+    --team-well: #edf0e5;
+    --team-forest: #233b30;
+    --team-ochre: #b97d18;
+    --team-terracotta: #9e2a1c;
+    color: var(--team-ink);
+  }
+
+  .inventory-team-workspace [hidden] {
+    display: none !important;
+  }
+
+  .inventory-team-workspace
+    :is(button, select, input:not([type="checkbox"]):not([type="hidden"])) {
+    min-height: 2.75rem;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .inventory-team-workspace .team-control-deck {
+    background: linear-gradient(180deg, #fffefb 0%, #faf8f0 100%);
+    border-color: #d3dcc4;
+    box-shadow: 0 8px 26px rgba(35, 59, 48, 0.045);
+  }
+
+  .inventory-team-workspace .team-deck-head {
+    margin-bottom: 1.1rem;
+  }
+
+  .inventory-team-workspace .team-intro {
+    margin: 0.45rem 0 0;
+    max-width: 66ch;
+    color: var(--team-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .inventory-team-workspace .team-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: center;
+  }
+
+  .inventory-team-workspace .team-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--team-forest);
+    border-radius: 0.6rem;
+    background: var(--team-forest);
+    color: #fffefb;
+    font-size: 0.85rem;
+    font-weight: 650;
+    box-shadow: 0 2px 6px rgba(35, 59, 48, 0.16);
+    transition:
+      background-color 0.15s ease,
+      transform 0.12s ease;
+  }
+
+  .inventory-team-workspace .team-btn-primary:hover:not(:disabled) {
+    background: #182b22;
+  }
+
+  .inventory-team-workspace .team-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.95rem;
+    border: 1px solid #bdcab0;
+    border-radius: 0.6rem;
+    background: #fffefb;
+    color: var(--team-ink);
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+
+  .inventory-team-workspace .team-btn-secondary:hover:not(:disabled) {
+    background: #eff3e7;
+    border-color: #8fa17e;
+  }
+
+  .inventory-team-workspace .team-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid #cad4bc;
+    border-radius: 0.55rem;
+    background: #f5f7ee;
+    color: var(--team-muted);
+    font-size: 0.8rem;
+    font-weight: 620;
+  }
+
+  .inventory-team-workspace .team-btn-ghost:hover:not(:disabled),
+  .inventory-team-workspace .team-btn-ghost[data-has-filters="true"] {
+    background: #e9efe0;
+    border-color: #7c906b;
+    color: var(--team-ink);
+  }
+
+  /* Sprint Pulse KPI Strip */
+  .inventory-team-workspace .team-pulse {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+  }
+
+  .inventory-team-workspace .team-pulse-progress {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 359px) {
+    .inventory-team-workspace .team-pulse {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .inventory-team-workspace .team-pulse {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+    .inventory-team-workspace .team-pulse-progress {
+      grid-column: auto;
+    }
+  }
+
+  .inventory-team-workspace .team-pulse-card {
+    display: grid;
+    align-content: space-between;
+    gap: 0.2rem;
+    min-height: 4.5rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #d7e0c9;
+    border-radius: 0.75rem;
+    background: #fffefb;
+    color: var(--team-ink);
+    text-align: left;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .inventory-team-workspace
+    button.team-pulse-card:hover:not(:disabled):not([aria-pressed="true"]) {
+    border-color: #7e926d;
+    background: #f6f9f0;
+  }
+
+  .inventory-team-workspace button.team-pulse-card[aria-pressed="true"] {
+    border-color: var(--team-forest);
+    background: #eaf0df;
+    box-shadow: inset 0 0 0 1px var(--team-forest);
+  }
+
+  .inventory-team-workspace .team-pulse-card.is-wip-high {
+    border-color: #d4a03d;
+    background: #fef9eb;
+  }
+
+  .inventory-team-workspace .team-pulse-label {
+    color: var(--team-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .inventory-team-workspace .team-pulse-value {
+    font-size: 1.35rem;
+    font-weight: 760;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .inventory-team-workspace .team-pulse-value small {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--team-muted);
+  }
+
+  .inventory-team-workspace .team-pulse-value.is-urgent {
+    color: var(--team-terracotta);
+  }
+
+  .inventory-team-workspace .team-pulse-value.is-blocked {
+    color: #824b08;
+  }
+
+  .inventory-team-workspace .team-pulse-sub {
+    color: var(--team-muted);
+    font-size: 0.73rem;
+  }
+
+  .inventory-team-workspace .team-pulse-progress-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .inventory-team-workspace .team-progress-track {
+    height: 0.42rem;
+    width: 100%;
+    border-radius: 999px;
+    background: #e4ead9;
+    overflow: hidden;
+  }
+
+  .inventory-team-workspace .team-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3c694a 0%, #233b30 100%);
+    transition: width 0.25s ease;
+  }
+
+  /* Quick Bar: Owner Pills + Board/List Toggle */
+  .inventory-team-workspace .team-quick-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
+    padding-block: 0.75rem;
+    border-block: 1px solid #e3e9d8;
+  }
+
+  .inventory-team-workspace .team-owner-pills,
+  .inventory-team-workspace .team-layout-switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .inventory-team-workspace .team-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid #cbd5bc;
+    border-radius: 999px;
+    background: #fffefb;
+    color: var(--team-ink);
+    font-size: 0.8rem;
+    font-weight: 620;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .inventory-team-workspace
+    .team-pill-btn:hover:not(:disabled):not([aria-pressed="true"]) {
+    background: #eef3e5;
+    border-color: #879a76;
+  }
+
+  .inventory-team-workspace .team-pill-btn[aria-pressed="true"] {
+    background: var(--team-forest);
+    border-color: var(--team-forest);
+    color: #fffefb;
+  }
+
+  @media (max-width: 74.99rem) {
+    .inventory-team-workspace .team-collapse-backlog-pill {
+      display: none;
+    }
+  }
+
+  /* Custom Select & Filter Toolbar */
+  .inventory-team-workspace .team-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: end;
+    margin-top: 0.85rem;
+  }
+
+  @media (min-width: 22.5rem) and (max-width: 71.99rem) {
+    .inventory-team-workspace .team-toolbar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .inventory-team-workspace .team-search-field {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 48rem) and (max-width: 71.99rem) {
+    .inventory-team-workspace .team-toolbar {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .inventory-team-workspace .team-search-field {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 72rem) {
+    .inventory-team-workspace .team-toolbar {
+      grid-template-columns:
+        minmax(13rem, 1.5fr)
+        repeat(6, minmax(0, 1fr));
+    }
+  }
+
+  .inventory-team-workspace .team-field,
+  .inventory-team-workspace .team-edit label {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .inventory-team-workspace .team-field-label {
+    color: var(--team-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .inventory-team-workspace .team-search-wrap {
+    position: relative;
+    display: block;
+    min-width: 0;
+  }
+
+  .inventory-team-workspace .team-search-wrap > svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--team-muted);
+    pointer-events: none;
+  }
+
+  .inventory-team-workspace .team-search-wrap input {
+    width: 100%;
+    padding: 0.55rem 0.75rem 0.55rem 2.2rem;
+    border: 1px solid #b8c5a6;
+    border-radius: 0.55rem;
+    background: #fffefb;
+    font-size: 0.85rem;
+  }
+
+  .inventory-team-workspace .team-search-wrap input:hover {
+    border-color: #778b66;
+  }
+
+  .inventory-team-workspace .team-select {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .inventory-team-workspace .team-select select {
+    display: block;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    margin: 0;
+    padding: 0.55rem 2.15rem 0.55rem 0.75rem;
+    border: 1px solid #b8c5a6;
+    border-radius: 0.55rem;
+    background: #fffefb;
+    color: var(--team-ink);
+    font-size: 0.84rem;
+    font-weight: 540;
+    line-height: 1.35;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .inventory-team-workspace .team-select select:hover:not(:disabled) {
+    border-color: #6e835d;
+    background: #f9fbf4;
+  }
+
+  .inventory-team-workspace .team-select select:disabled {
+    background: #ecefe4;
+    color: #5d6c57;
+    border-color: #d2dac4;
+    cursor: not-allowed;
+  }
+
+  .inventory-team-workspace .team-select > svg {
+    position: absolute;
+    right: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--team-muted);
+    pointer-events: none;
+  }
+
+  @media (forced-colors: active) {
+    .inventory-team-workspace .team-select select {
+      appearance: auto;
+    }
+    .inventory-team-workspace .team-select > svg {
+      display: none;
+    }
+  }
+
+  .inventory-team-workspace .team-status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem 1rem;
+    margin-top: 0.85rem;
+  }
+
+  .inventory-team-workspace .team-feedback {
+    margin: 0;
+    color: var(--team-muted);
+    font-size: 0.8rem;
+    font-weight: 560;
+  }
+
+  .inventory-team-workspace .team-empty-banner {
+    margin: 0.85rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px dashed #bcc8aa;
+    border-radius: 0.65rem;
+    background: #f6f8ef;
+    color: var(--team-muted);
+    font-size: 0.86rem;
+    text-align: center;
+  }
+
+  /* Mobile Stage Switcher */
+  .inventory-team-workspace .team-mobile-tabs {
+    position: sticky;
+    top: 0.35rem;
+    z-index: 6;
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    max-width: 100%;
+    margin-top: 1rem;
+    padding: 0.45rem;
+    border: 1px solid #cfd9bf;
+    border-radius: 0.8rem;
+    background: rgba(255, 254, 251, 0.96);
+    box-shadow: 0 4px 14px rgba(35, 59, 48, 0.08);
+    scrollbar-width: none;
+  }
+
+  .inventory-team-workspace .team-mobile-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .inventory-team-workspace .team-mobile-tab {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid #ced7bf;
+    border-radius: 999px;
+    background: #f6f8f0;
+    color: var(--team-ink);
+    font-size: 0.78rem;
+    font-weight: 640;
+    white-space: nowrap;
+  }
+
+  .inventory-team-workspace .team-mobile-tab small {
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    background: #e5ecda;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .inventory-team-workspace .team-mobile-tab[aria-pressed="true"] {
+    background: var(--team-forest);
+    border-color: var(--team-forest);
+    color: #fffefb;
+  }
+
+  .inventory-team-workspace .team-mobile-tab[aria-pressed="true"] small {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fffefb;
+  }
+
+  @media (min-width: 48rem) {
+    .inventory-team-workspace .team-mobile-tabs {
+      display: none;
+    }
+  }
+
+  /* Board Columns / Lanes */
+  .inventory-team-workspace .team-lanes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.85rem;
+    margin-top: 1.15rem;
+  }
+
+  @media (min-width: 48rem) and (max-width: 74.99rem) {
+    .inventory-team-workspace .team-lanes {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .inventory-team-workspace .team-lanes {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+    }
+    .inventory-team-workspace .team-lane {
+      flex: 1 1 0%;
+    }
+    .inventory-team-workspace .team-lane[data-collapsed="true"] {
+      flex: 0 0 3.25rem;
+      padding: 0.7rem 0.35rem;
+      cursor: pointer;
+    }
+    .inventory-team-workspace
+      .team-lane[data-collapsed="true"]
+      :is(
+        .team-card-list,
+        .team-drop-note,
+        .team-backlog-more,
+        .team-lane-tools
+      ) {
+      display: none;
+    }
+    .inventory-team-workspace
+      .team-lane[data-collapsed="true"]
+      .team-lane-head {
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 0;
+    }
+    .inventory-team-workspace .team-lane[data-collapsed="true"] h2 {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding-block: 0.25rem;
+    }
+  }
+
+  .inventory-team-workspace .team-lane {
+    --lane-accent: #8c9883;
+    min-width: 0;
+    padding: 0.65rem;
+    border: 1px solid #d5dec7;
+    border-top: 4px solid var(--lane-accent);
+    border-radius: 0.9rem;
+    background: var(--team-well);
+    transition:
+      background-color 0.15s ease,
+      outline-color 0.15s ease;
+  }
+
+  .inventory-team-workspace .team-lane[data-team-lane="ready"] {
+    --lane-accent: #567a58;
+  }
+  .inventory-team-workspace .team-lane[data-team-lane="doing"] {
+    --lane-accent: #c98a24;
+    background: #eff1e4;
+  }
+  .inventory-team-workspace .team-lane[data-team-lane="waiting"] {
+    --lane-accent: #b85c2b;
+  }
+  .inventory-team-workspace .team-lane[data-team-lane="review"] {
+    --lane-accent: #2f6b62;
+  }
+  .inventory-team-workspace .team-lane[data-team-lane="done"] {
+    --lane-accent: #2d5a3c;
+  }
+
+  .inventory-team-workspace .team-lane[data-over] {
+    outline: 2px solid var(--team-forest);
+    outline-offset: -2px;
+    background: #e2ebd9;
+  }
+
+  .inventory-team-workspace .team-lane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .inventory-team-workspace .team-lane h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    margin: 0;
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 740;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .inventory-team-workspace .team-lane-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .inventory-team-workspace .team-lane-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--lane-accent);
+    flex-shrink: 0;
+  }
+
+  .inventory-team-workspace .team-lane-count {
+    min-width: 1.65rem;
+    padding: 0.15rem 0.42rem;
+    border: 1px solid #ced7bf;
+    border-radius: 999px;
+    background: #fffefb;
+    color: var(--team-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .inventory-team-workspace .team-lane-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .inventory-team-workspace .team-lane-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--team-muted);
+  }
+
+  .inventory-team-workspace .team-lane-icon-btn:hover:not(:disabled) {
+    background: #fffefb;
+    border-color: #c5d0b4;
+    color: var(--team-ink);
+  }
+
+  @media (max-width: 74.99rem) {
+    .inventory-team-workspace [data-team-lane-collapse] {
+      display: none;
+    }
+  }
+
+  /* Self-Contained Task Cards — Zero Bleed */
+  .inventory-team-workspace .team-card-list {
+    display: grid;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .inventory-team-workspace .team-card {
+    --card-accent: #7d9070;
+    position: relative;
+    display: grid;
+    min-width: 0;
+    border: 1px solid var(--team-card-border);
+    border-left: 4px solid var(--card-accent);
+    border-radius: 0.75rem;
+    background: #ffffff;
+    box-shadow:
+      0 2px 6px rgba(27, 46, 37, 0.06),
+      0 1px 2px rgba(27, 46, 37, 0.04);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.12s ease;
+  }
+
+  .inventory-team-workspace .team-card[data-priority="P0"] {
+    --card-accent: #b63a2a;
+  }
+  .inventory-team-workspace .team-card[data-priority="P1"] {
+    --card-accent: #c98a24;
+  }
+
+  .inventory-team-workspace .team-card:hover {
+    border-color: #8da179;
+    box-shadow: 0 7px 18px rgba(27, 46, 37, 0.1);
+  }
+
+  .inventory-team-workspace .team-card[data-dragging="true"] {
+    opacity: 0.5;
+  }
+
+  .inventory-team-workspace .team-card[data-drop-pos="before"]::before,
+  .inventory-team-workspace .team-card[data-drop-pos="after"]::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--team-forest);
+    pointer-events: none;
+  }
+
+  .inventory-team-workspace .team-card[data-drop-pos="before"]::before {
+    top: -0.48rem;
+  }
+  .inventory-team-workspace .team-card[data-drop-pos="after"]::after {
+    bottom: -0.48rem;
+  }
+
+  .inventory-team-workspace .team-card-button {
+    display: grid;
+    width: 100%;
+    gap: 0.48rem;
+    padding: 0.75rem 0.78rem 0.65rem;
+    border: 0;
+    border-radius: 0.65rem 0.65rem 0 0;
+    background: transparent;
+    color: var(--team-ink);
+    text-align: left;
+    line-height: 1.36;
+    overflow-wrap: break-word;
+  }
+
+  .inventory-team-workspace .team-card-button:hover {
+    background: #fcfdf9;
+  }
+
+  .inventory-team-workspace .team-card-button:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .inventory-team-workspace .team-card-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .inventory-team-workspace .team-id-pill {
+    font:
+      650 0.69rem/1.2 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      monospace;
+    color: var(--team-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .inventory-team-workspace .team-priority-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.42rem;
+    border-radius: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 760;
+    letter-spacing: 0.03em;
+    border: 1px solid #c7d3b8;
+    background: #ebf0e4;
+    color: #364930;
+  }
+
+  .inventory-team-workspace .team-priority-badge[data-priority="P0"] {
+    border-color: #e6b3ad;
+    background: #fdecea;
+    color: #8a1f14;
+  }
+
+  .inventory-team-workspace .team-priority-badge[data-priority="P1"] {
+    border-color: #e3c483;
+    background: #fdf2d6;
+    color: #6e4506;
+  }
+
+  .inventory-team-workspace .team-size-badge {
+    margin-left: auto;
+    padding: 0.1rem 0.38rem;
+    border: 1px solid #d4dcc6;
+    border-radius: 0.35rem;
+    background: #f7f8f2;
+    color: var(--team-muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+  }
+
+  .inventory-team-workspace .team-card-title {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 680;
+    color: #192e24;
+    line-height: 1.36;
+  }
+
+  .inventory-team-workspace .team-card-signals {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.32rem;
+  }
+
+  .inventory-team-workspace .team-epic-pill {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 100%;
+    padding: 0.16rem 0.46rem;
+    border: 1px solid #dce3cf;
+    border-radius: 0.4rem;
+    background: #f2f5eb;
+    color: #2d4235;
+    font-size: 0.7rem;
+    font-weight: 580;
+    line-height: 1.3;
+  }
+
+  .inventory-team-workspace .team-signal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.14rem 0.44rem;
+    border-radius: 0.4rem;
+    border: 1px solid #d3dcc4;
+    background: #eef2e6;
+    color: #2d4235;
+    font-size: 0.68rem;
+    font-weight: 660;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .inventory-team-workspace .team-signal-badge.is-blocked,
+  .inventory-team-workspace .team-signal-badge[data-due-state="overdue"] {
+    border-color: #e6b3ad;
+    background: #fdecea;
+    color: #8a1f14;
+  }
+
+  .inventory-team-workspace .team-signal-badge[data-due-state="soon"] {
+    border-color: #e3c483;
+    background: #fdf2d6;
+    color: #6e4506;
+  }
+
+  .inventory-team-workspace .team-check-bar {
+    display: inline-block;
+    width: 1.3rem;
+    height: 0.3rem;
+    border-radius: 999px;
+    background: #d5dec7;
+    overflow: hidden;
+  }
+
+  .inventory-team-workspace .team-check-bar > span {
+    display: block;
+    height: 100%;
+    background: #2d5a3c;
+  }
+
+  .inventory-team-workspace .team-card-owner-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    margin-top: 0.1rem;
+  }
+
+  .inventory-team-workspace .team-owner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    min-width: 0;
+    color: var(--team-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .inventory-team-workspace .team-avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 50%;
+    background: #e5eadc;
+    color: #364930;
+    font-size: 0.64rem;
+    font-weight: 760;
+    flex-shrink: 0;
+  }
+
+  .inventory-team-workspace [data-owner="cody"] .team-avatar,
+  .inventory-team-workspace .team-avatar[data-owner="cody"] {
+    background: #233b30;
+    color: #fffefb;
+  }
+
+  .inventory-team-workspace [data-owner="logan"] .team-avatar,
+  .inventory-team-workspace .team-avatar[data-owner="logan"] {
+    background: #7a4d0b;
+    color: #fffefb;
+  }
+
+  .inventory-team-workspace .team-open-hint {
+    color: var(--team-muted);
+    font-size: 0.69rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+
+  .inventory-team-workspace .team-card-button:hover .team-open-hint {
+    text-decoration: underline;
+    opacity: 1;
+  }
+
+  /* Integrated Card Footer — Subtle & Contained */
+  .inventory-team-workspace .team-card-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.38rem 0.48rem;
+    border-top: 1px solid #e7ecdd;
+    border-radius: 0 0 0.7rem 0.7rem;
+    background: #f8f9f3;
+  }
+
+  .inventory-team-workspace .team-select-compact {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+
+  .inventory-team-workspace .team-select-compact select {
+    padding: 0.4rem 1.45rem 0.4rem 0.48rem;
+    border-color: #cbd5bb;
+    border-radius: 0.45rem;
+    background: #fffefb;
+    font-size: 0.74rem;
+    font-weight: 600;
+  }
+
+  .inventory-team-workspace .team-select-compact > svg {
+    right: 0.36rem;
+  }
+
+  .inventory-team-workspace .team-card-discard {
+    flex: 0 0 auto;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid #d5dec7;
+    border-radius: 0.45rem;
+    background: transparent;
+    color: var(--team-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .inventory-team-workspace .team-card-discard:hover:not(:disabled) {
+    border-color: #d69d96;
+    background: #fdecea;
+    color: #8a1f14;
+  }
+
+  .inventory-team-workspace .team-backlog-more {
+    width: 100%;
+    margin-top: 0.7rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px dashed #9fb08d;
+    border-radius: 0.6rem;
+    background: #f8faf3;
+    color: var(--team-ink);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .inventory-team-workspace .team-backlog-more:hover:not(:disabled) {
+    background: #fffefb;
+    border-style: solid;
+    border-color: var(--team-forest);
+  }
+
+  .inventory-team-workspace .team-drop-note {
+    margin: 0.65rem 0 0;
+    padding: 0.45rem;
+    border: 1px dashed #ced8bf;
+    border-radius: 0.5rem;
+    color: var(--team-muted);
+    font-size: 0.71rem;
+    text-align: center;
+  }
+
+  /* List / Triage View */
+  .inventory-team-workspace .team-list-section {
+    margin-top: 1.15rem;
+  }
+
+  .inventory-team-workspace .team-list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .inventory-team-workspace .team-list-toolbar h3 {
+    margin: 0.25rem 0 0;
+    font:
+      400 1.4rem/1.2 Georgia,
+      "Times New Roman",
+      serif;
+  }
+
+  .inventory-team-workspace .team-group-field {
+    min-width: 12rem;
+  }
+
+  .inventory-team-workspace .team-list-groups {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .inventory-team-workspace .team-list-group {
+    border: 1px solid #d5dec7;
+    border-radius: 0.75rem;
+    background: #fbfcf7;
+    overflow: clip;
+  }
+
+  .inventory-team-workspace .team-list-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.65rem 0.9rem;
+    background: #eef2e5;
+    border-bottom: 1px solid #d5dec7;
+    font-size: 0.83rem;
+    font-weight: 720;
+  }
+
+  .inventory-team-workspace .team-list-rows {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .inventory-team-workspace .team-list-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem 1rem;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid #e6ecdc;
+    background: #ffffff;
+  }
+
+  .inventory-team-workspace .team-list-row:last-child {
+    border-bottom: 0;
+  }
+
+  .inventory-team-workspace .team-list-open {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    width: 100%;
+    padding: 0.35rem 0;
+    border: 0;
+    background: transparent;
+    color: var(--team-ink);
+    text-align: left;
+  }
+
+  .inventory-team-workspace .team-list-open:hover strong {
+    text-decoration: underline;
+  }
+
+  .inventory-team-workspace .team-list-row-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  @media (max-width: 44rem) {
+    .inventory-team-workspace .team-list-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Task Detail & Authoring Modal */
+  .inventory-team-workspace .team-modal {
+    width: min(100% - 1rem, 42rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 0;
+    border: 1px solid #cbd5bc;
+    border-radius: 1rem;
+    background: #fffefb;
+    color: var(--team-ink);
+    box-shadow: 0 24px 60px rgba(20, 36, 28, 0.28);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .inventory-team-workspace .team-modal::backdrop {
+    background: rgba(19, 34, 27, 0.64);
+  }
+
+  .inventory-team-workspace .team-modal-head {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1.15rem 1.35rem;
+    border-bottom: 1px solid #dce3d0;
+    background: #fffefb;
+  }
+
+  .inventory-team-workspace .team-modal-title-group {
+    min-width: 0;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .inventory-team-workspace .team-modal-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .inventory-team-workspace .team-copy-id {
+    min-height: 2.75rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #cbd5bc;
+    border-radius: 0.45rem;
+    background: #f5f8ef;
+    color: var(--team-muted);
+    font-size: 0.73rem;
+    font-weight: 640;
+  }
+
+  .inventory-team-workspace .team-modal-head h2 {
+    margin: 0;
+    font:
+      400 clamp(1.25rem, 3.6vw, 1.65rem) / 1.2 Georgia,
+      "Times New Roman",
+      serif;
+    overflow-wrap: anywhere;
+  }
+
+  .inventory-team-workspace .team-close {
+    border: 1px solid #c5d0b5;
+    border-radius: 0.55rem;
+    background: #f2f5eb;
+    color: var(--team-ink);
+    font-size: 0.82rem;
+    font-weight: 640;
+  }
+
+  .inventory-team-workspace .team-details {
+    padding: 1.1rem 1.35rem;
+    background: #f9faf4;
+    border-bottom: 1px solid #dce3d0;
+    overflow-wrap: anywhere;
+  }
+
+  .inventory-team-workspace .team-details:empty {
+    display: none;
+  }
+
+  .inventory-team-workspace .team-details p {
+    margin: 0.45rem 0 0;
+    white-space: pre-wrap;
+    font-size: 0.88rem;
+  }
+
+  .inventory-team-workspace .team-details > p:first-child {
+    margin-top: 0;
+  }
+
+  .inventory-team-workspace .team-details section {
+    margin-top: 1rem;
+  }
+
+  .inventory-team-workspace .team-details h3 {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 740;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--team-muted);
+  }
+
+  .inventory-team-workspace .team-blocker-callout {
+    margin-top: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border-left: 3px solid var(--team-terracotta);
+    border-radius: 0.45rem;
+    background: #fdecea;
+    color: #7c1c12;
+    font-size: 0.84rem;
+  }
+
+  .inventory-team-workspace .team-live-checklist {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0.55rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .inventory-team-workspace .team-live-check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid #d7e0c9;
+    border-radius: 0.5rem;
+    background: #fffefb;
+    cursor: pointer;
+    font-size: 0.86rem;
+  }
+
+  .inventory-team-workspace .team-live-check input[type="checkbox"] {
+    width: 1.15rem;
+    height: 1.15rem;
+    min-height: 0;
+    margin: 0;
+    accent-color: var(--team-forest);
+    flex-shrink: 0;
+  }
+
+  .inventory-team-workspace .team-live-check.is-done span {
+    text-decoration: line-through;
+    color: var(--team-muted);
+  }
+
+  .inventory-team-workspace .team-edit {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+    margin: 0;
+    padding: 1.25rem 1.35rem;
+  }
+
+  .inventory-team-workspace .team-edit .team-wide {
+    grid-column: 1 / -1;
+  }
+
+  .inventory-team-workspace
+    .team-edit
+    :is(input:not([type="checkbox"]), textarea) {
+    width: 100%;
+    padding: 0.58rem 0.75rem;
+    border: 1px solid #b8c5a6;
+    border-radius: 0.55rem;
+    background: #fffefb;
+    font-size: 0.88rem;
+  }
+
+  .inventory-team-workspace .team-edit textarea {
+    resize: vertical;
+  }
+
+  .inventory-team-workspace .team-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding-top: 0.4rem;
+  }
+
+  .inventory-team-workspace .team-btn-danger-ghost {
+    padding: 0.5rem 0.9rem;
+    border: 1px solid #dfb6b0;
+    border-radius: 0.55rem;
+    background: #fff8f7;
+    color: #8a1f14;
+    font-size: 0.83rem;
+    font-weight: 620;
+  }
+
+  .inventory-team-workspace .team-btn-danger-ghost:hover:not(:disabled) {
+    background: #fdecea;
+    border-color: #c25b4e;
+  }
+
+  .inventory-team-workspace .team-btn-danger {
+    padding: 0.5rem 0.95rem;
+    border: 1px solid #9e2a1c;
+    border-radius: 0.55rem;
+    background: #9e2a1c;
+    color: #fffefb;
+    font-size: 0.83rem;
+    font-weight: 650;
+  }
+
+  .inventory-team-workspace .team-confirm-box {
+    padding: 0.95rem 1rem;
+    border: 1px solid #d4a03d;
+    border-radius: 0.65rem;
+    background: #fdf6e4;
+  }
+
+  .inventory-team-workspace .team-confirm-box p {
+    margin: 0 0 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  .inventory-team-workspace .team-confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .inventory-team-workspace .team-edit-status {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--team-terracotta);
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+
+  .inventory-team-workspace .team-edit-status:empty {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .inventory-team-workspace .team-control-deck {
+      padding: 0.95rem;
+    }
+    .inventory-team-workspace .team-edit {
+      grid-template-columns: minmax(0, 1fr);
+      padding: 1rem;
+    }
+    .inventory-team-workspace .team-modal-head,
+    .inventory-team-workspace .team-details {
+      padding: 1rem;
+    }
+  }
+</style>
 
 <script>
   import { mountTeamBoard } from "../../client/team-board.ts";
