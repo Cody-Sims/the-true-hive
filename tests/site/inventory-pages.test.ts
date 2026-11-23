@@ -261,7 +261,7 @@ test("the shared board groups its filters and keeps saved task details and empty
   const empty = await (
     await render("pages/team-sprint", {}, { tasks: [] })
   ).text();
-  assert.match(empty, /No tasks have been imported yet/);
+  assert.match(empty, /No tasks yet\. Create your first task\./);
   assert.doesNotMatch(empty, /data-team-card=/);
 });
 

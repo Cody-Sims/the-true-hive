@@ -21,8 +21,8 @@ The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
 Contact inquiries open an email draft that visitors must send themselves; no
 email provider or submission backend is required. Contact channels and the form
-live together at `/contact`; pickup information is a compact notice on the
-collection and cart, not a separate homepage section. The global header is
+live together at `/contact`; the collection says **Local Pickup Only** near
+the top, with detailed pickup information in the cart. The global header is
 **Store / Services / About us**. Cart and pickup navigation appear only in the
 store; contact is available through Services and the footer, alongside Privacy
 and Accessibility. Apply migration 004 before

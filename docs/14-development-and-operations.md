@@ -16,7 +16,21 @@ Production uses original prototype illustrations and first-party brand assets in
 The [team sprint board](https://thetruehive.com/team-sprint) uses the same
 administrator sign-in and MFA as inventory. It is editable and also reachable
 via **Team board** in Inventory navigation. The two assignee labels do not grant
-sign-in access. The separate six-card prototype does not contain the private backlog.
+sign-in access. Use **New task** to add work, open cards to edit their title,
+priority, epic and notes, or use the card's Move control. **Discard** requires
+confirmation and moves a task to **Archived**; **Restore** returns it to its
+previous status with notes intact. Search, owner/status/priority filters and
+**Refresh board** help focus shared work. Concurrent edits return a conflict
+rather than overwriting another person's changes. The separate six-card
+prototype does not contain the private backlog.
+
+Apply additive migration `009_team_board_editing.sql` with the existing
+`npm run db:migrate` owner workflow before deploying this board version.
+It preserves imported task IDs and notes, adds archive state, and removes
+the original 100-task/rank ceiling. The administrator writer needs
+`SELECT, INSERT, UPDATE` on `team_tasks`; no `DELETE` or sequence permission
+is needed. Roll back application code without removing the new column or
+discarding created/archived records.
 
 ## Run the application
 

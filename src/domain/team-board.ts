@@ -24,6 +24,7 @@ export interface TeamTask {
   epic: string;
   rank: number;
   revision: number;
+  archived?: boolean;
   detail: {
     scope?: string;
     acceptance?: string;
