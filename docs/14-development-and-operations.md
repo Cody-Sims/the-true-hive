@@ -19,8 +19,11 @@ via **Team board** in Inventory navigation. The two assignee labels do not grant
 sign-in access. Cards are self-contained with priority badges, owner avatars,
 epic tags, checklist progress, target-date status and blocker signals, plus
 custom-styled stage selectors and secondary archive actions. Use **New task** or
-a column's **+** button to add work, open cards to check off interactive
-subtasks or edit title, priority, epic, size, target date, blocker and notes,
+a column's **+** button to add work. Opening an active task goes directly to
+editable fields and focuses its title; update priority, epic, size, target date,
+blocker and notes, then save explicitly. **Checklist progress & imported notes**
+is a collapsed section below the editor for interactive subtasks and retained
+source details. Archived tasks remain read-only until restored. You can
 drag between or within columns to update status and rank, switch between
 **Board** and **List** views (grouped by status, epic, priority or assignee),
 collapse or expand long **Backlog** queues, and jump directly to a stage on

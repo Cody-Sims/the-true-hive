@@ -107,6 +107,9 @@ export function mountTeamBoard(root: HTMLElement, token: string): void {
     "[data-team-edit-feedback]",
   )!;
   const detail = root.querySelector<HTMLElement>("[data-team-detail]")!;
+  const extraDetails = root.querySelector<HTMLDetailsElement>(
+    "[data-team-extra-details]",
+  )!;
   const title = root.querySelector<HTMLElement>("[data-team-modal-title]")!;
   const kicker = root.querySelector<HTMLElement>("[data-team-modal-kicker]");
   const submit = root.querySelector<HTMLButtonElement>("[data-team-submit]")!;
@@ -837,6 +840,8 @@ export function mountTeamBoard(root: HTMLElement, token: string): void {
     title.textContent = task?.title ?? "New task";
     renderModalKicker(task);
     detail.replaceChildren(...(task ? [notes(task)] : []));
+    extraDetails.hidden = !task;
+    extraDetails.open = false;
     field("title")!.value = task?.title ?? "";
     field("epic")!.value = task?.epic ?? "General";
     field("priority")!.value = task?.priority ?? "P1";
@@ -858,9 +863,9 @@ export function mountTeamBoard(root: HTMLElement, token: string): void {
     editFeedback.textContent = "";
     modal.showModal();
     modal.scrollTop = 0;
-    if (!task) field("title")!.focus();
-    else if (discard)
-      confirm.querySelector<HTMLButtonElement>("button")!.focus();
+    if (discard) confirm.querySelector<HTMLButtonElement>("button")!.focus();
+    else if (task?.archived) archive.focus();
+    else field("title")!.focus();
   }
 
   function setBusy(value: boolean) {

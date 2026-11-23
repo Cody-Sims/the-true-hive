@@ -487,7 +487,7 @@ domTest(
       await page.keyboard.press("Enter");
       await page.getByRole("dialog").waitFor();
       assert.match(
-        await page.locator("[data-team-detail]").innerText(),
+        await page.getByLabel("Description", { exact: true }).inputValue(),
         /Synthetic task details/,
       );
       await page
