@@ -255,6 +255,12 @@ test("the shared board groups its filters and keeps saved task details and empty
   assert.match(html, /data-team-search/);
   assert.match(html, /data-team-owner/);
   assert.match(html, /data-team-status/);
+  assert.match(html, /data-team-epic/);
+  assert.match(html, /data-team-sort/);
+  assert.match(html, /data-team-pulse/);
+  assert.match(html, /data-team-layout="board"/);
+  assert.match(html, /data-team-mobile-tabs/);
+  assert.match(html, /class="team-select"/);
   assert.match(html, /draggable="true"/);
   assert.match(html, /data-team-card="FIXTURE-1"/);
   assert.match(html, /Synthetic task details/);

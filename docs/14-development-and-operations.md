@@ -16,12 +16,19 @@ Production uses original prototype illustrations and first-party brand assets in
 The [team sprint board](https://thetruehive.com/team-sprint) uses the same
 administrator sign-in and MFA as inventory. It is editable and also reachable
 via **Team board** in Inventory navigation. The two assignee labels do not grant
-sign-in access. Use **New task** to add work, open cards to edit their title,
-priority, epic and notes, or use the card's Move control. **Discard** requires
-confirmation and moves a task to **Archived**; **Restore** returns it to its
-previous status with notes intact. Search, owner/status/priority filters and
-**Refresh board** help focus shared work. Concurrent edits return a conflict
-rather than overwriting another person's changes. The separate six-card
+sign-in access. Cards are self-contained with priority badges, owner avatars,
+epic tags, checklist progress, target-date status and blocker signals, plus
+custom-styled stage selectors and secondary archive actions. Use **New task** or
+a column's **+** button to add work, open cards to check off interactive
+subtasks or edit title, priority, epic, size, target date, blocker and notes,
+drag between or within columns to update status and rank, switch between
+**Board** and **List** views (grouped by status, epic, priority or assignee),
+collapse or expand long **Backlog** queues, and jump directly to a stage on
+phones via the mobile stage bar. **Discard** requires confirmation and moves a
+task to **Archived**; **Restore** returns it to its previous status with notes
+intact. Sprint Pulse metrics, person pills, search, epic/sort/priority/status
+filters and **Refresh board** help focus shared work. Concurrent edits return a
+conflict rather than overwriting another person's changes. The separate six-card
 prototype does not contain the private backlog.
 
 Apply additive migration `009_team_board_editing.sql` with the existing

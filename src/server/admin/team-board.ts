@@ -1,6 +1,7 @@
 import type { Pool } from "pg";
 import { isDeepStrictEqual } from "node:util";
 import {
+  isValidIsoDate,
   taskAssignees,
   taskStatuses,
   type TeamTask,
@@ -16,6 +17,7 @@ const editable = [
   "status",
   "priority",
   "epic",
+  "rank",
   "detail",
   "archived",
 ];
@@ -29,6 +31,8 @@ const detailKeys = [
   "checklist",
   "phase",
   "size",
+  "dueDate",
+  "blocker",
 ];
 
 function invalid(message = "Review the task fields and try again."): never {
@@ -64,6 +68,15 @@ function changes(input: Record<string, unknown>): Record<string, unknown> {
     } else if (key === "priority") {
       if (!["P0", "P1", "P2"].includes(value as string)) invalid();
       output[key] = value;
+    } else if (key === "rank") {
+      if (
+        typeof value !== "number" ||
+        !Number.isInteger(value) ||
+        value < 1 ||
+        value > 1_000_000
+      )
+        invalid("Enter a valid board rank.");
+      output[key] = value;
     } else if (key === "archived") {
       if (typeof value !== "boolean") invalid();
       output[key] = value;
@@ -74,7 +87,9 @@ function changes(input: Record<string, unknown>): Record<string, unknown> {
           ([name, text]) =>
             !detailKeys.includes(name) ||
             typeof text !== "string" ||
-            text.length > 2000,
+            text.length > 2000 ||
+            (name === "dueDate" && text !== "" && !isValidIsoDate(text)) ||
+            (name === "size" && text.length > 32),
         ) ||
         Buffer.byteLength(JSON.stringify(detail), "utf8") > 7000
       )
@@ -178,9 +193,10 @@ export async function updateTeamTask(
   const parameters: unknown[] = [id, revision, actorId];
   const setters = Object.entries(change).map(([key, value]) => {
     parameters.push(value);
-    return key === "detail"
-      ? `detail = detail || $${parameters.length}::jsonb`
-      : `${key} = $${parameters.length}`;
+    if (key === "detail")
+      return `detail = detail || $${parameters.length}::jsonb`;
+    if (key === "rank") return `board_rank = $${parameters.length}`;
+    return `${key} = $${parameters.length}`;
   });
   let result;
   try {

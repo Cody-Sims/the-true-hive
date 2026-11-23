@@ -209,3 +209,137 @@ test("users can create, edit, discard and restore shared tasks without losing no
     "Print labels",
   );
 });
+
+test("sprint board supports backlog capping, list triage view, interactive checklists, column quick-add, and rank reordering", async ({
+  page,
+}) => {
+  const tasks: TeamTask[] = Array.from({ length: 10 }, (_, idx) => ({
+    id: `TH-${String(idx + 1).padStart(2, "0")}`,
+    title: `Backlog soap task ${idx + 1}`,
+    assignee: idx % 2 === 0 ? "cody" : "logan",
+    status: "backlog",
+    priority: idx === 0 ? "P0" : "P1",
+    epic: idx < 5 ? "Soap shelf" : "Pickup logistics",
+    rank: idx + 1,
+    revision: 1,
+    archived: false,
+    detail:
+      idx === 0
+        ? {
+            scope: "Verify bars before launch.",
+            checklist: "Weigh sample\nCheck cure date",
+            dueDate: "2026-11-25",
+            blocker: "Waiting on scale",
+            size: "M",
+          }
+        : {},
+  }));
+  tasks.push(
+    {
+      id: "TH-20",
+      title: "First ready card",
+      assignee: "cody",
+      status: "ready",
+      priority: "P1",
+      epic: "Soap shelf",
+      rank: 1,
+      revision: 1,
+      archived: false,
+      detail: {},
+    },
+    {
+      id: "TH-21",
+      title: "Second ready card",
+      assignee: "logan",
+      status: "ready",
+      priority: "P0",
+      epic: "Pickup logistics",
+      rank: 5,
+      revision: 1,
+      archived: false,
+      detail: {},
+    },
+  );
+
+  await page.route("**/api/admin/team-tasks{,/*}", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST") {
+      const created = {
+        ...request.postDataJSON(),
+        rank: 99,
+        revision: 1,
+        archived: false,
+      } as TeamTask;
+      tasks.push(created);
+      await route.fulfill({ json: { task: created } });
+      return;
+    }
+    const id = request.url().split("/").pop()!;
+    const current = tasks.find((item) => item.id === id)!;
+    const change = request.postDataJSON();
+    const updated: TeamTask = {
+      ...current,
+      ...change,
+      detail: { ...current.detail, ...(change.detail ?? {}) },
+      revision: current.revision + 1,
+    };
+    tasks[tasks.indexOf(current)] = updated;
+    await route.fulfill({ json: { task: updated } });
+  });
+
+  await page.route("**/test-team-board-rich", async (route) => {
+    const component = "src/components/admin/TeamBoard.astro";
+    const html = await render(component, { tasks });
+    const css = styles.get(new URL(component, root).href)?.join("\n");
+    await route.fulfill({
+      contentType: "text/html",
+      body: `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css ?? ""}</style>${html}`,
+    });
+  });
+  const module = await moduleUrl(new URL("src/client/team-board.ts", root));
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/test-team-board-rich");
+  await page.addScriptTag({
+    type: "module",
+    content: `import { mountTeamBoard } from ${JSON.stringify(module)}; mountTeamBoard(document.querySelector("[data-team-board]"), "test-token");`,
+  });
+
+  // Backlog caps > 8 items until expanded
+  await expect(
+    page.locator('[data-team-lane="backlog"] [data-team-card]:visible'),
+  ).toHaveCount(8);
+  await page.locator("[data-team-backlog-more]").click();
+  await expect(
+    page.locator('[data-team-lane="backlog"] [data-team-card]:visible'),
+  ).toHaveCount(10);
+
+  // Interactive checklist inside task detail updates progress badge
+  await page.locator('[data-team-card="TH-01"] [data-team-open]').click();
+  const dialog = page.getByRole("dialog");
+  await dialog.locator('[data-team-check-index="0"]').check();
+  await expect(
+    page.locator('[data-team-card="TH-01"] [data-team-check-progress]'),
+  ).toContainText("1/2");
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+
+  // Per-column quick-add preselects that lane's status
+  await page.locator('[data-team-lane-add="doing"]').click();
+  await expect(dialog.getByLabel("Status")).toHaveValue("doing");
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+
+  // Switch to List view and filter by Epic
+  await page.locator('[data-team-layout="list"]').click();
+  await expect(page.locator("[data-team-list-view]")).toBeVisible();
+  await page.locator("[data-team-epic]").selectOption("Pickup logistics");
+  await expect(
+    page.locator("[data-team-list-view] [data-list-task]"),
+  ).toHaveCount(6);
+  await page.locator('[data-team-layout="board"]').click();
+  await page.getByRole("button", { name: "Clear filters" }).click();
+
+  // Mobile stage tab isolates a single column without scrolling past Backlog
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('[data-team-mobile-tab="ready"]').click();
+  await expect(page.locator('[data-team-lane="backlog"]')).not.toBeVisible();
+  await expect(page.locator('[data-team-lane="ready"]')).toBeVisible();
+});

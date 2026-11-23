@@ -176,6 +176,43 @@ test("the private board persists assignments and moves without overwriting newer
     );
     assert.equal(unchanged?.revision, 4);
     assert.equal(unchanged?.detail.pilot?.length, 6500);
+
+    const ranked = await updateTeamTask(
+      board,
+      "TH-01",
+      {
+        expectedRevision: 2,
+        rank: 5,
+        detail: {
+          dueDate: "2026-11-30",
+          blocker: "Awaiting label proof",
+          size: "M",
+        },
+      },
+      "operator:board",
+    );
+    assert.equal(ranked.rank, 5);
+    assert.equal(ranked.detail.dueDate, "2026-11-30");
+    assert.equal(ranked.detail.blocker, "Awaiting label proof");
+    assert.equal(ranked.detail.size, "M");
+    await assert.rejects(
+      updateTeamTask(
+        board,
+        "TH-01",
+        { expectedRevision: 3, rank: 0 },
+        "operator:board",
+      ),
+      { status: 400 },
+    );
+    await assert.rejects(
+      updateTeamTask(
+        board,
+        "TH-01",
+        { expectedRevision: 3, detail: { dueDate: "2026-02-31" } },
+        "operator:board",
+      ),
+      { status: 400 },
+    );
   } finally {
     await board.end();
     await owner.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
