@@ -292,7 +292,7 @@ for (const page of [
       } else {
         assert.doesNotMatch(html, /class="result-count"/);
         assert.match(html, /Local Pickup Only/);
-        assert.doesNotMatch(html, /id="pickup"|aria-label="Pickup location"/);
+        assert.doesNotMatch(html, /id="pickup"|aria-label="Pickup locations"/);
       }
     }
   });

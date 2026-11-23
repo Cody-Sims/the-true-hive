@@ -440,12 +440,27 @@ require separate implementation and approval.
 
 ### Store purchase switch and confirmed pickup
 
-The owner approved publishing the pickup address at **7031 New Highway 68,
-Madisonville, TN 37354**, with pickup by arrangement rather than invented shop
-hours. Maintain a genuine pickup location in inventory, select it with
-`STOREFRONT_LOCATION_KEY`, and enter actual opening quantities through audited
-adjustments. A new location creates disclosed zero balances, not an assumed
-physical count.
+The approved customer meetup points are **Weigel's, 2031 US-411, Vonore,
+TN 37885**; **Dunkin', 4529 US-411, Madisonville, TN 37354**; and **Pizza Hut,
+4629 US-411 Ste 12, Madisonville, TN 37354**. Dunkin' replaces Walmart; its
+[official location page](https://www.dunkindonuts.com/locations/us/tn/madisonville/4529-u-s--411/store-364063/)
+confirms the street address. Instructions require a confirmed time and identify
+the 2018 Nissan Altima; no walk-in or store-hours promise is made.
+
+Inventory storage is separate: retain the stable `madisonville-pickup` key as
+**Main inventory (Madisonville)**, and `stripe-sandbox-pickup` as **Stripe Sandbox
+(TEST INVENTORY ONLY)**. The reserved sandbox record is classified as test
+inventory in the Locations overview. Existing stock, allocations and order
+history remain untouched. The three meetup points are supplied only by the main
+inventory record, not by sandbox stock.
+
+The owner approved inactive draft meetup records with empty weekly hours and
+date exceptions, provisional 15-minute slots, capacity 1, 24-hour notice,
+14-day horizon, 24-hour reschedule cutoff and 30-minute travel buffer. These
+values do not create available pickup times or enable self-service. Review
+policies and supply confirmed hours before activation. `STOREFRONT_LOCATION_KEY`
+still selects inventory storage for availability; creating a meetup point
+neither creates stock nor changes that runtime setting.
 
 Authorized administrators use **Inventory -> Store settings**
 (`/inventory/store`) and **Allow new checkouts**, then save. The setting is
@@ -800,8 +815,8 @@ last-place contention, help, impact review, lost-response exact retry and physic
 handoff only with isolated test data. Never make a real pickup promise merely
 to test a release. Existing Stripe-test restrictions remain authoritative.
 
-The operator manages inventory records and linked pickup details/hours together
-at `/inventory/locations`; a location's detail page also exposes its linked
+The operator manages separate inventory-storage and pickup-meetup sections
+at `/inventory/locations`; an inventory record's detail page also exposes its supplied
 pickup settings. Adding pickup details for a selected inventory location
 preselects only that stock mapping, never hours, notice or other policy values.
 These remain separate protected records internally: a meeting point can serve

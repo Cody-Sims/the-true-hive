@@ -205,16 +205,57 @@ const product: AdminProduct = {
   ],
 };
 
-test("the cart publishes the confirmed pickup address without promising walk-in hours", async () => {
+test("the cart lists confirmed meetup points and the vehicle without exposing inventory storage", async () => {
   const html = await render(
     "src/pages/cart.astro",
     {},
     { request: new Request("https://thetruehive.com/cart") },
   );
-  assert.match(html, /7031 New Highway 68/);
+  assert.match(html, /Weigel/);
+  assert.match(html, /2031 US-411/);
+  assert.match(html, /Vonore, TN 37885/);
+  assert.match(html, /Dunkin/);
+  assert.match(html, /4529 US-411/);
+  assert.match(html, /Pizza Hut/);
+  assert.match(html, /4629 US-411 Ste 12/);
+  assert.match(html, /2018 Nissan Altima/);
   assert.match(html, /Madisonville, TN 37354/);
   assert.match(html, /Arrange a pickup time/);
-  assert.doesNotMatch(html, /Open daily|Walk-ins welcome/i);
+  assert.doesNotMatch(
+    html,
+    /Open daily|Walk-ins welcome|7031 New Highway 68|Stripe sandbox/i,
+  );
+});
+
+test("Locations distinguishes real inventory storage, test inventory and customer pickup points", async () => {
+  const html = await render("src/components/admin/LocationWorkspace.astro", {
+    locations: [
+      {
+        key: "madisonville-pickup",
+        name: "Main inventory (Madisonville)",
+        publicLabel: null,
+        active: true,
+        pickupEnabled: true,
+        revision: 1,
+      },
+      {
+        key: "stripe-sandbox-pickup",
+        name: "Stripe Sandbox",
+        publicLabel: null,
+        active: true,
+        pickupEnabled: true,
+        revision: 1,
+      },
+    ],
+  });
+  assert.match(html, /<dt>Inventory storage<\/dt>\s*<dd>\s*1\s*<\/dd>/);
+  assert.match(html, /<dt>Test inventory<\/dt>\s*<dd>\s*1\s*<\/dd>/);
+  assert.match(html, /Meetup\s+points do not hold their own stock/);
+  assert.match(html, /Test inventory only/);
+  assert.doesNotMatch(
+    html,
+    /<dt>Pickup enabled<\/dt>|Your locations|Create its inventory record first/,
+  );
 });
 
 test("verified inventory navigation includes store purchase controls", async () => {
@@ -4392,7 +4433,7 @@ domTest(
     try {
       assert.equal(await page.getByLabel("Active location").isChecked(), false);
       assert.equal(
-        await page.getByLabel("Eligible for pickup").isChecked(),
+        await page.getByLabel("Can fulfill pickup orders").isChecked(),
         false,
       );
       await page.getByLabel("Stable location key").fill("fixture-place");

@@ -137,7 +137,7 @@ test("the store shows pickup-only fulfillment while pickup details stay in the c
         .getByText("Local Pickup Only", { exact: true }),
     ).toBeInViewport();
     await expect(
-      page.getByRole("complementary", { name: "Pickup location" }),
+      page.getByRole("complementary", { name: "Pickup locations" }),
     ).toHaveCount(0);
     await expect(
       page.getByRole("link", { name: "Local pickup information" }),
@@ -149,9 +149,14 @@ test("the store shows pickup-only fulfillment while pickup details stay in the c
   await expect(page.locator("#pickup")).toBeVisible();
   for (const path of ["/cart"]) {
     await page.goto(path);
-    const pickup = page.getByRole("complementary", { name: "Pickup location" });
+    const pickup = page.getByRole("complementary", {
+      name: "Pickup locations",
+    });
     await expect(pickup).toHaveCount(1);
-    await expect(pickup).toContainText("7031 New Highway 68");
+    await expect(pickup).toContainText("2031 US-411");
+    await expect(pickup).toContainText("4529 US-411");
+    await expect(pickup).toContainText("4629 US-411 Ste 12");
+    await expect(pickup).toContainText("2018 Nissan Altima");
     await expect(pickup).toContainText("Madisonville, TN 37354");
     await expect(pickup).toContainText("wait for confirmation before visiting");
     await expect(pickup).toContainText("not a walk-in shop");

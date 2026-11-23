@@ -57,13 +57,17 @@ storing photos, stock, SKUs or credentials. Archive, restore-to-draft and guarde
 permanent product/variant deletion are distinct audited actions. Products,
 locations, orders, history, store settings and sign-in share the inventory shell.
 
-**Locations** at `/inventory/locations` combines inventory records with their
-customer pickup details and hours. Choose an inventory location to view its
-linked pickup points or add pickup details with that stock mapping selected.
-The inventory record's detail page keeps both settings together as well.
+**Locations** at `/inventory/locations` separates inventory storage from customer
+pickup meetup points. Main inventory in Madisonville is the real stock location;
+Stripe Sandbox is explicitly test inventory, not a second real storage location.
+Choose inventory to view the pickup points it supplies. Meetup points do not
+get independent stock counts or require duplicate inventory records.
 Authorized operators configure sites, IANA timezones, stock-location mappings, weekly
 windows, date overrides, notice/horizon, capacity, cutoff and travel policies.
-Scheduling starts **disabled with no sites or hours**. Hours changes require
+New databases start with scheduling disabled. The approved Weigel's (Vonore),
+Dunkin' (Madisonville) and Pizza Hut (Madisonville) meetup points are configured
+as inactive drafts with no hours; provisional policies must be reviewed before
+activation. Hours changes require
 review of the exact affected appointments, which remain reserved and marked
 for review. Paid-unscheduled/help queues and operator-assisted arrangements
 remain available in **Pickups** at `/inventory/pickups`, which focuses on
