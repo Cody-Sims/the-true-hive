@@ -112,7 +112,7 @@ test("contact navigation opens its own page with a no-JavaScript email fallback"
   }
 });
 
-test("pickup details stay with the store and cart rather than a homepage section", async ({
+test("the store shows pickup-only fulfillment while pickup details stay in the cart", async ({
   page,
 }) => {
   await page.goto("/");
@@ -129,11 +129,25 @@ test("pickup details stay with the store and cart rather than a homepage section
   const pickupLink = page
     .getByRole("navigation", { name: "Store navigation" })
     .getByRole("link", { name: "Pickup", exact: true });
-  await expect(pickupLink).toHaveAttribute("href", "/goods#pickup");
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect(
+      page
+        .locator(".collection-intro")
+        .getByText("Local Pickup Only", { exact: true }),
+    ).toBeInViewport();
+    await expect(
+      page.getByRole("complementary", { name: "Pickup location" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Local pickup information" }),
+    ).toHaveCount(0);
+  }
+  await expect(pickupLink).toHaveAttribute("href", "/cart#pickup");
   await pickupLink.click();
-  await expect(page).toHaveURL(/\/goods#pickup$/);
+  await expect(page).toHaveURL(/\/cart#pickup$/);
   await expect(page.locator("#pickup")).toBeVisible();
-  for (const path of ["/goods", "/cart"]) {
+  for (const path of ["/cart"]) {
     await page.goto(path);
     const pickup = page.getByRole("complementary", { name: "Pickup location" });
     await expect(pickup).toHaveCount(1);
