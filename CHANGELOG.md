@@ -9,6 +9,7 @@
 
 ### Added
 
+- Create and fully edit shared sprint tasks, use quick status/discard controls, restore archived work, and filter by priority or archive view. Preserve task notes and reject conflicting edits; apply additive migration 009 before deployment.
 - Private, shared team sprint board with drag-and-drop status changes, touch and keyboard controls, two assignees, search, and filters. The separate prototype remains read-only.
 - Native post-checkout pickup selection and private inventory scheduling, with explicit site policies, dated hours, atomic capacity, retained appointments/impact review, paid-unscheduled/help queues and operator assistance; start disabled with no seeded sites or hours.
 - Distinct audited archive/restore-to-draft and guarded permanent product/variant deletion; preserve stock, order, movement, photo and identity history.

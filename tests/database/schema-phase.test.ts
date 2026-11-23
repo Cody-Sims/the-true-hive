@@ -109,6 +109,7 @@ test("002 preserves applied 001 checksums, stable keys and append-only legacy re
       "006_team_board.sql",
       "007_catalog_record_actions.sql",
       "008_pickup_scheduling.sql",
+      "009_team_board_editing.sql",
     ]);
     assert.deepEqual(await migrateDatabase(pool), []);
     assert.equal(
@@ -184,6 +185,7 @@ test("new allocation and archive constraints reject invalid counts with overflow
     "006_team_board.sql",
     "007_catalog_record_actions.sql",
     "008_pickup_scheduling.sql",
+    "009_team_board_editing.sql",
   ]);
   await fixture();
   for (const sql of [

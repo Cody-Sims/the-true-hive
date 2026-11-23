@@ -406,6 +406,67 @@
   font-size: 0.9rem;
 }
 
+.inventory-team-workspace :is(.team-actions, .team-card-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.inventory-team-workspace [data-team-new] {
+  background: #233b30;
+  color: #fffefb;
+}
+
+.inventory-team-workspace .team-card-actions {
+  padding: 0.5rem;
+}
+
+.inventory-team-workspace .team-card-actions label {
+  flex: 1 1 5rem;
+}
+
+.inventory-team-workspace :is(input, select, textarea, button) {
+  max-width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+}
+
+.inventory-team-workspace :is(input, select, textarea) {
+  width: 100%;
+}
+
+.inventory-team-workspace textarea {
+  resize: vertical;
+  padding: 0.65rem;
+  border: 1px solid #aeb99b;
+  border-radius: 0.45rem;
+  font: inherit;
+}
+
+.inventory-team-workspace .team-wide {
+  flex: 1 1 100%;
+}
+
+.inventory-team-workspace .team-details p {
+  white-space: pre-wrap;
+}
+
+.inventory-team-workspace [data-team-confirm] {
+  padding: 1rem;
+  border: 1px solid #b39342;
+  border-radius: 0.65rem;
+  background: #f8f1df;
+}
+
+.inventory-team-workspace [data-team-confirm] button {
+  margin-top: 0.65rem;
+}
+
+.inventory-team-workspace [hidden] {
+  display: none;
+}
+
 .inventory-team-workspace :is(.team-toolbar, .team-edit) {
   display: flex;
   flex-wrap: wrap;

@@ -17,13 +17,22 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
   <section class="inventory-page-card" aria-label="Task filters">
     <header class="inventory-card-heading">
       <div>
-        <p class="admin-eyebrow">Shared work / Board controls</p>
-        <h2>Focus the board</h2>
+        <p class="admin-eyebrow">Shared work / Team sprint</p>
+        <h2>Make room for the next good thing.</h2>
+      </div>
+      <div class="team-actions">
+        <button type="button" data-team-new>
+          New task
+        </button>
+        <button type="button" data-team-refresh>
+          Refresh board
+        </button>
       </div>
     </header>
     <p class="team-intro">
       Drag a card to move it. On a phone or with a keyboard, open the card and
-      choose its status. Saved changes are shared.
+      choose its status. Create and edit your own tasks. Discarded tasks can
+      always be restored from Archived. Saved changes are shared.
     </p>
     <div class="team-toolbar">
       <label>
@@ -46,6 +55,22 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
         </select>
       </label>
       <label>
+        View
+        <select data-team-view>
+          <option value="active">Active tasks</option>
+          <option value="archived">Archived</option>
+        </select>
+      </label>
+      <label>
+        Priority
+        <select data-team-priority>
+          <option value="">All priorities</option>
+          <option value="P0">P0 / Urgent</option>
+          <option value="P1">P1 / Next</option>
+          <option value="P2">P2 / Later</option>
+        </select>
+      </label>
+      <label>
         Status
         <select data-team-status>
           <option value="">All statuses</option>
@@ -55,10 +80,16 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
         </select>
       </label>
     </div>
+    <button type="button" data-team-reset>
+      Clear filters
+    </button>
     <p class="team-feedback" role="status" data-team-feedback tabindex="-1">
       {tasks.length
         ? `${tasks.length} ${tasks.length === 1 ? "task" : "tasks"} on the board.`
-        : "No tasks have been imported yet."}
+        : "No tasks yet. Create your first task."}
+    </p>
+    <p data-team-empty hidden>
+      No tasks match these filters.
     </p>
   </section>
   <div class="team-lanes">
@@ -71,7 +102,10 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
         <h2 id={`team-${status}`}>
           {name}{" "}
           <span data-team-count>
-            {tasks.filter((task) => task.status === status).length}
+            {
+              tasks.filter((task) => task.status === status && !task.archived)
+                .length
+            }
           </span>
         </h2>
         <ul data-team-list role="list">
@@ -86,6 +120,8 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
                 data-revision={task.revision}
                 data-rank={task.rank}
                 data-search={`${task.id} ${task.title} ${task.epic}`.toLowerCase()}
+                data-task={JSON.stringify(task)}
+                hidden={task.archived}
               >
                 <button
                   type="button"
@@ -103,6 +139,25 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
                       : "Unassigned"}
                   </span>
                 </button>
+                <div class="team-card-actions">
+                  <label>
+                    <span class="team-card-meta">Move</span>
+                    <select
+                      data-team-move
+                      aria-label={`Move ${task.id}`}
+                      disabled={task.archived}
+                    >
+                      {taskStatuses.map(([key, label]) => (
+                        <option value={key} selected={key === task.status}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="button" data-team-discard>
+                    {task.archived ? "Restore" : "Discard"}
+                  </button>
+                </div>
                 <template>
                   <div class="team-details">
                     <p class="team-card-meta">
@@ -153,6 +208,22 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
     </div>
     <div data-team-detail></div>
     <form class="team-edit" method="dialog" data-team-edit>
+      <label class="team-wide">
+        Title
+        <input name="title" required maxlength="160" />
+      </label>
+      <label>
+        Priority
+        <select name="priority">
+          <option value="P0">P0 / Urgent</option>
+          <option value="P1">P1 / Next</option>
+          <option value="P2">P2 / Later</option>
+        </select>
+      </label>
+      <label>
+        Epic
+        <input name="epic" required maxlength="120" />
+      </label>
       <label>
         Assignee
         <select name="assignee">
@@ -170,7 +241,38 @@ const assigneeLabels = Object.fromEntries(taskAssignees);
           ))}
         </select>
       </label>
-      <button type="submit">Save changes</button>
+      <label class="team-wide">
+        Description
+        <textarea name="scope" rows="3" maxlength="2000"></textarea>
+      </label>
+      <label class="team-wide">
+        Checklist
+        <textarea name="checklist" rows="3" maxlength="2000"></textarea>
+      </label>
+      <label class="team-wide">
+        Done when
+        <textarea name="acceptance" rows="3" maxlength="2000"></textarea>
+      </label>
+      <label class="team-wide">
+        Prerequisites
+        <textarea name="prerequisites" rows="2" maxlength="2000"></textarea>
+      </label>
+      <button type="submit" data-team-submit>
+        Save changes
+      </button>
+      <button type="button" data-team-archive>
+        Discard task
+      </button>
+      <p class="team-wide" data-team-confirm hidden>
+        Discard removes this task from the active board, not the database. You
+        can restore it from Archived.
+        <button type="button" data-team-confirm-discard>
+          Confirm discard
+        </button>
+        <button type="button" data-team-cancel-discard>
+          Keep task
+        </button>
+      </p>
       <p role="status" data-team-edit-feedback></p>
     </form>
   </dialog>
