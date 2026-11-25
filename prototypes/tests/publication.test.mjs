@@ -112,3 +112,13 @@ test("pickup studies publish only scoped fictional sources and their draft plan"
   assert.throws(() => validateStudioApproval({ ...approval, pickupScheduling: undefined }), /pickup/i);
   assert.throws(() => validateStudioApproval({ ...approval, pickupScheduling: { ...approval.pickupScheduling, scope: "real-customer-bookings" } }), /pickup/i);
 });
+
+test("customer website redesign prototypes publish only approved multi-page review sources and plan", () => {
+  assert.deepEqual(
+    privateStudioFiles().filter((file) => file.startsWith("prototypes/redesign-2026/")),
+    ["app.mjs", "data.mjs", "hub.mjs", "index.html", "manifest.mjs", "prototype.html", "seo-schema.mjs", "themes.css"].map((file) => `prototypes/redesign-2026/${file}`),
+  );
+  assert.ok(privateStudioFiles().includes("docs/22-customer-website-redesign-plan.md"));
+  assert.throws(() => validateStudioApproval({ ...approval, redesign2026: undefined }), /redesign/i);
+  assert.throws(() => validateStudioApproval({ ...approval, redesign2026: { ...approval.redesign2026, approvedPrototypes: ["golden-apothecary"] } }), /redesign prototype/i);
+});

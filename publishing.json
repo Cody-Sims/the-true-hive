@@ -16,7 +16,7 @@
     "decisions", "comparison", "phase0", "phase1", "phase2", "phase3",
     "phase4", "phase5", "design01", "design02", "design03", "design04",
     "design05", "design06", "design07", "design08", "design09", "design10",
-    "changes", "sharing", "foundation", "operations", "inventory-phase", "pickup"
+    "changes", "sharing", "foundation", "operations", "inventory-phase", "pickup", "redesign-2026"
   ],
   "storefrontConcepts": {
     "public": true,
@@ -76,6 +76,19 @@
     "approvedOn": "2026-11-17",
     "scope": "fictional-post-checkout-pickup",
     "purpose": "Owner-requested draft plan and connected customer/operator pickup prototypes, using only fictional sites, dates, orders and example policies. In-memory hours, date exceptions, booking/conflict/reschedule and impact-review demonstrations; no private conversation, actual directions, customer data, checkout, inventory, notification or booking backend changes."
+  },
+  "redesign2026": {
+    "public": true,
+    "approvedOn": "2026-11-24",
+    "scope": "customer-website-redesign-prototypes",
+    "approvedPrototypes": [
+      "golden-apothecary",
+      "story-flagship",
+      "modern-dtc",
+      "local-hearth",
+      "gallery-minimal"
+    ],
+    "purpose": "Owner-requested full customer-facing website redesign plan and five distinct multi-page prototypes (with adaptive Light/Dark mode, distinct Shop and Product Detail pages, conversion psychology, and Google SEO / AI Overview guidance) reusing approved public products and reference images. No live payments, stock mutations, or automatic production theme changes."
   },
   "futureChanges": "Review every public commit. This approval does not authorize secrets, customer data, buyer identity, confidential terms or private financial information."
 }
