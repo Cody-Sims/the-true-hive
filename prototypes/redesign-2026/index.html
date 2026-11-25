@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" data-color-mode="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>The True Hive — Golden Apothecary + 4 Distinct Redesign Prototypes</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <script type="module" src="hub.mjs"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fffbf4; --surface: #ffffff; --subtle: #f8eed9;
+        --ink: #1f1711; --muted: #5b4c3f; --accent: #c46806; --accent-ink: #ffffff;
+        --border: rgba(31, 23, 17, 0.14); --border-strong: rgba(31, 23, 17, 0.34);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root[data-color-mode="system"] {
+          --bg: #111210; --surface: #1b1d19; --subtle: #242721;
+          --ink: #f5efe4; --muted: #bcb4a6; --accent: #e8ae42; --accent-ink: #14120c;
+          --border: rgba(245, 239, 228, 0.15); --border-strong: rgba(232, 174, 66, 0.55);
+        }
+      }
+      :root[data-color-mode="dark"] {
+        color-scheme: dark;
+        --bg: #111210; --surface: #1b1d19; --subtle: #242721;
+        --ink: #f5efe4; --muted: #bcb4a6; --accent: #e8ae42; --accent-ink: #14120c;
+        --border: rgba(245, 239, 228, 0.15); --border-strong: rgba(232, 174, 66, 0.55);
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6; }
+      .wrap { width: min(1200px, calc(100% - 2rem)); margin-inline: auto; }
+      header { padding: 2.3rem 0 1.8rem; border-bottom: 1px solid var(--border); }
+      .top-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
+      .eyebrow { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0; }
+      h1 { font-family: Georgia, serif; font-size: clamp(2rem, 4.3vw, 3.2rem); line-height: 1.08; margin: 0 0 0.7rem; font-weight: 400; }
+      .lede { color: var(--muted); max-width: 72ch; margin: 0 0 1.25rem; }
+      .mode-pills { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 999px; overflow: hidden; }
+      .mode-pills button { border: 0; background: transparent; color: var(--ink); padding: 0.42rem 0.85rem; font-weight: 700; font-size: 0.8rem; cursor: pointer; }
+      .mode-pills button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+      .header-links { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+      .header-links a { font-size: 0.86rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+      .header-links a:hover { text-decoration: underline; }
+      main { padding: 2rem 0 4rem; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.35rem; }
+      .card {
+        background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+        padding: 1.45rem; display: flex; flex-direction: column; gap: 0.8rem;
+      }
+      .card.featured { border: 2px solid var(--accent); }
+      .swatch-row { display: flex; gap: 0.3rem; align-items: center; }
+      .swatch { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border-strong); }
+      .card h2 { font-family: Georgia, serif; font-size: 1.5rem; font-weight: 400; margin: 0; }
+      .card ul { margin: 0; padding-left: 1.15rem; font-size: 0.84rem; color: var(--muted); display: grid; gap: 0.3rem; }
+      .sub-links { display: flex; flex-wrap: wrap; gap: 0.35rem; padding-top: 0.55rem; border-top: 1px solid var(--border); }
+      .sub-links a { font-size: 0.74rem; padding: 0.28rem 0.56rem; border-radius: 6px; background: var(--subtle); color: var(--ink); text-decoration: none; font-weight: 600; }
+      .sub-links a:hover { background: var(--accent); color: var(--accent-ink); }
+      .launch {
+        display: inline-flex; justify-content: center; align-items: center; min-height: 44px;
+        border-radius: 10px; background: var(--accent); color: var(--accent-ink);
+        font-weight: 800; text-decoration: none; margin-top: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="top-row">
+          <div class="header-links">
+            <a href="../index.html">&larr; Back to Design Studio</a>
+            <span aria-hidden="true">&middot;</span>
+            <a href="../plan.html?doc=redesign-2026">Read Full Research &amp; SEO Plan &rarr;</a>
+          </div>
+          <div class="mode-pills" role="group" aria-label="Color mode">
+            <button type="button" data-hub-mode="system" aria-pressed="true">◐ Auto (OS)</button>
+            <button type="button" data-hub-mode="light" aria-pressed="false">☀ Light</button>
+            <button type="button" data-hub-mode="dark" aria-pressed="false">☾ Dark</button>
+          </div>
+        </div>
+        <p class="eyebrow">The True Hive &middot; Madisonville, Tennessee &middot; November 2026</p>
+        <h1>Golden Apothecary (Light/Dark) + 4 Distinct Brand Prototypes</h1>
+        <p class="lede">
+          <strong>Prototype 01</strong> unites <strong>Golden Direct (Light) &amp; Apothecary Noir (Dark)</strong> with automatic OS switching. <strong>Prototypes 02–05</strong> explore four genuinely distinct consumer DTC brand directions — each with bespoke Home, Shop, and Product Detail pages, conversion psychology, Google SEO / AI Overview planning, and adaptive Light/Dark modes.
+        </p>
+      </div>
+    </header>
+    <main class="wrap"><div id="grid" class="grid"></div></main>
+  </body>
+</html>

@@ -1,0 +1,596 @@
+/* The True Hive — 2026 Redesign Studio
+   5 Genuinely Distinct Real-World Consumer Brand Prototypes — Every prototype supports automatic OS Light/Dark + manual toggle.
+   Prototype 01 = Golden Apothecary (Golden Direct Light <-> Apothecary Noir Dark) — Cody's liked round-1 layout & aesthetic.
+   Prototypes 02–05 = 4 completely different, polished DTC / brand experiences with distinct visual craft, typography, and conversion psychology. */
+
+/* === GLOBAL RESET & ACCESSIBLE BASE === */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.wrap { width: min(1180px, calc(100% - 2rem)); margin-inline: auto; }
+.skip-link {
+  position: absolute; left: -9999px; top: 0; padding: 0.75rem 1.25rem;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700; z-index: 9999;
+}
+.skip-link:focus { left: 1rem; top: 1rem; }
+
+/* ============================================================================
+   COLOR SYSTEMS (Each Prototype has bespoke Light + Dark modes honoring OS prefers-color-scheme)
+   ============================================================================ */
+
+/* 01 — GOLDEN APOTHECARY (Light = Golden Direct / Dark = Apothecary Noir) */
+:root[data-proto="golden-apothecary"] {
+  --bg: #fffbf4; --surface: #ffffff; --surface-alt: #f8eed9;
+  --ink: #1f1711; --muted: #5b4c3f; --accent: #c46806; --accent-ink: #ffffff;
+  --accent-2: #24573b; --accent-2-ink: #ffffff; --alert: #b7391d;
+  --border: rgba(31, 23, 17, 0.14); --border-strong: rgba(31, 23, 17, 0.34);
+  --radius: 16px; --radius-sm: 10px;
+  --shadow: 0 14px 36px rgba(140, 82, 16, 0.1);
+  --hero-bg: radial-gradient(circle at 85% 20%, #fae3b2 0%, #fffbf4 58%);
+  --banner-bg: #231811; --banner-ink: #fff6e5;
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+:root[data-proto="golden-apothecary"][data-color-mode="dark"] {
+  --bg: #111210; --surface: #1b1d19; --surface-alt: #242721;
+  --ink: #f5efe4; --muted: #bcb4a6; --accent: #e8ae42; --accent-ink: #14120c;
+  --accent-2: #f5efe4; --accent-2-ink: #111210; --alert: #ef7754;
+  --border: rgba(245, 239, 228, 0.16); --border-strong: rgba(232, 174, 66, 0.65);
+  --shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+  --hero-bg: radial-gradient(circle at 78% 25%, rgba(232, 174, 66, 0.18) 0%, #111210 60%);
+  --banner-bg: #e8ae42; --banner-ink: #14120c;
+  --font-display: Didot, "Bodoni MT", Georgia, serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-proto="golden-apothecary"][data-color-mode="system"] {
+    --bg: #111210; --surface: #1b1d19; --surface-alt: #242721;
+    --ink: #f5efe4; --muted: #bcb4a6; --accent: #e8ae42; --accent-ink: #14120c;
+    --accent-2: #f5efe4; --accent-2-ink: #111210; --alert: #ef7754;
+    --border: rgba(245, 239, 228, 0.16); --border-strong: rgba(232, 174, 66, 0.65);
+    --shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+    --hero-bg: radial-gradient(circle at 78% 25%, rgba(232, 174, 66, 0.18) 0%, #111210 60%);
+    --banner-bg: #e8ae42; --banner-ink: #14120c;
+    --font-display: Didot, "Bodoni MT", Georgia, serif;
+  }
+}
+
+/* 02 — CINEMATIC CRAFT (Story-Led Artisan Luxury — Flamingo Estate / Aesop feel) */
+:root[data-proto="story-flagship"] {
+  --bg: #f8f4ec; --surface: #fffdf9; --surface-alt: #ede6d8;
+  --ink: #1f2620; --muted: #566057; --accent: #b86c19; --accent-ink: #ffffff;
+  --accent-2: #2c4637; --accent-2-ink: #f8f4ec; --alert: #b4432a;
+  --border: rgba(31, 38, 32, 0.14); --border-strong: rgba(31, 38, 32, 0.34);
+  --radius: 20px; --radius-sm: 12px;
+  --shadow: 0 18px 44px rgba(31, 38, 32, 0.08);
+  --banner-bg: #24382c; --banner-ink: #f8f4ec;
+  --font-display: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+:root[data-proto="story-flagship"][data-color-mode="dark"] {
+  --bg: #111613; --surface: #19211c; --surface-alt: #212c25;
+  --ink: #f1ece2; --muted: #aeb8ae; --accent: #dfa549; --accent-ink: #141815;
+  --accent-2: #365944; --accent-2-ink: #f1ece2; --alert: #e8775a;
+  --border: rgba(241, 236, 226, 0.14); --border-strong: rgba(223, 165, 73, 0.5);
+  --shadow: 0 22px 54px rgba(0, 0, 0, 0.45);
+  --banner-bg: #1f3327; --banner-ink: #f1ece2;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-proto="story-flagship"][data-color-mode="system"] {
+    --bg: #111613; --surface: #19211c; --surface-alt: #212c25;
+    --ink: #f1ece2; --muted: #aeb8ae; --accent: #dfa549; --accent-ink: #141815;
+    --accent-2: #365944; --accent-2-ink: #f1ece2; --alert: #e8775a;
+    --border: rgba(241, 236, 226, 0.14); --border-strong: rgba(223, 165, 73, 0.5);
+    --shadow: 0 22px 54px rgba(0, 0, 0, 0.45);
+    --banner-bg: #1f3327; --banner-ink: #f1ece2;
+  }
+}
+
+/* 03 — MODERN DTC (High-Velocity Conversion & Bundle Pair — Dr. Squatch / Allbirds feel) */
+:root[data-proto="modern-dtc"] {
+  --bg: #ffffff; --surface: #f7f7f5; --surface-alt: #fff4df;
+  --ink: #141414; --muted: #4f4f4b; --accent: #d96b08; --accent-ink: #ffffff;
+  --accent-2: #16653f; --accent-2-ink: #ffffff; --alert: #c53418;
+  --border: rgba(20, 20, 20, 0.12); --border-strong: #141414;
+  --radius: 14px; --radius-sm: 8px;
+  --shadow: 0 12px 30px rgba(20, 20, 20, 0.08);
+  --banner-bg: #141414; --banner-ink: #ffd166;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+:root[data-proto="modern-dtc"][data-color-mode="dark"] {
+  --bg: #0e0f11; --surface: #17191c; --surface-alt: #22252a;
+  --ink: #f7f7f5; --muted: #b0b3b8; --accent: #f5a623; --accent-ink: #121212;
+  --accent-2: #289b63; --accent-2-ink: #ffffff; --alert: #f2684b;
+  --border: rgba(255, 255, 255, 0.13); --border-strong: rgba(245, 166, 35, 0.6);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --banner-bg: #f5a623; --banner-ink: #121212;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-proto="modern-dtc"][data-color-mode="system"] {
+    --bg: #0e0f11; --surface: #17191c; --surface-alt: #22252a;
+    --ink: #f7f7f5; --muted: #b0b3b8; --accent: #f5a623; --accent-ink: #121212;
+    --accent-2: #289b63; --accent-2-ink: #ffffff; --alert: #f2684b;
+    --border: rgba(255, 255, 255, 0.13); --border-strong: rgba(245, 166, 35, 0.6);
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --banner-bg: #f5a623; --banner-ink: #121212;
+  }
+}
+
+/* 04 — EAST TN HEARTH (Warm Neighborhood Apiary & Visual US-411 Corridor) */
+:root[data-proto="local-hearth"] {
+  --bg: #faf6ee; --surface: #ffffff; --surface-alt: #ece6d7;
+  --ink: #182e24; --muted: #4b5f55; --accent: #1e4d38; --accent-ink: #faf6ee;
+  --accent-2: #c98118; --accent-2-ink: #ffffff; --alert: #ba4324;
+  --border: rgba(24, 46, 36, 0.15); --border-strong: #1e4d38;
+  --radius: 14px; --radius-sm: 10px;
+  --shadow: 0 10px 28px rgba(24, 46, 36, 0.08);
+  --banner-bg: #1e4d38; --banner-ink: #faf6ee;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+:root[data-proto="local-hearth"][data-color-mode="dark"] {
+  --bg: #111815; --surface: #19241f; --surface-alt: #213029;
+  --ink: #f3ede2; --muted: #adbab2; --accent: #e5a948; --accent-ink: #111815;
+  --accent-2: #3b7d5d; --accent-2-ink: #f3ede2; --alert: #e56d4f;
+  --border: rgba(243, 237, 226, 0.14); --border-strong: rgba(229, 169, 72, 0.55);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+  --banner-bg: #1f3d2f; --banner-ink: #f3ede2;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-proto="local-hearth"][data-color-mode="system"] {
+    --bg: #111815; --surface: #19241f; --surface-alt: #213029;
+    --ink: #f3ede2; --muted: #adbab2; --accent: #e5a948; --accent-ink: #111815;
+    --accent-2: #3b7d5d; --accent-2-ink: #f3ede2; --alert: #e56d4f;
+    --border: rgba(243, 237, 226, 0.14); --border-strong: rgba(229, 169, 72, 0.55);
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+    --banner-bg: #1f3d2f; --banner-ink: #f3ede2;
+  }
+}
+
+/* 05 — STUDIO MINIMAL (Le Labo / Apple Calm Precision & Sculptural Stage) */
+:root[data-proto="gallery-minimal"] {
+  --bg: #fcfcfa; --surface: #ffffff; --surface-alt: #f2f1eb;
+  --ink: #181816; --muted: #5c5b55; --accent: #181816; --accent-ink: #fcfcfa;
+  --accent-2: #a8640c; --accent-2-ink: #ffffff; --alert: #b23b20;
+  --border: rgba(24, 24, 22, 0.12); --border-strong: #181816;
+  --radius: 4px; --radius-sm: 3px;
+  --shadow: none;
+  --banner-bg: #f2f1eb; --banner-ink: #181816;
+  --font-display: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+}
+:root[data-proto="gallery-minimal"][data-color-mode="dark"] {
+  --bg: #111110; --surface: #191917; --surface-alt: #22221f;
+  --ink: #f3f2ec; --muted: #a6a59c; --accent: #f3f2ec; --accent-ink: #111110;
+  --accent-2: #e5af4f; --accent-2-ink: #111110; --alert: #eb7658;
+  --border: rgba(243, 242, 236, 0.14); --border-strong: rgba(243, 242, 236, 0.5);
+  --banner-bg: #1c1c19; --banner-ink: #f3f2ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-proto="gallery-minimal"][data-color-mode="system"] {
+    --bg: #111110; --surface: #191917; --surface-alt: #22221f;
+    --ink: #f3f2ec; --muted: #a6a59c; --accent: #f3f2ec; --accent-ink: #111110;
+    --accent-2: #e5af4f; --accent-2-ink: #111110; --alert: #eb7658;
+    --border: rgba(243, 242, 236, 0.14); --border-strong: rgba(243, 242, 236, 0.5);
+    --banner-bg: #1c1c19; --banner-ink: #f3f2ec;
+  }
+}
+
+/* ============================================================================
+   STUDIO SWITCHER BAR
+   ============================================================================ */
+.studio-bar {
+  position: sticky; top: 0; z-index: 950;
+  background: #0d1115; color: #f1f5f9;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13); font-size: 0.78rem;
+}
+.studio-bar-inner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 0.45rem 0.85rem; padding: 0.45rem 0;
+}
+.studio-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.studio-back { color: #f2be59; text-decoration: none; font-weight: 800; margin-right: 0.35rem; }
+.studio-back:hover { text-decoration: underline; }
+.studio-pill {
+  padding: 0.3rem 0.62rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent; color: #d6dfe8; font-size: 0.73rem; font-weight: 600; min-height: 30px;
+}
+.studio-pill:hover { background: rgba(255, 255, 255, 0.12); }
+.studio-pill[aria-pressed="true"] { background: #e8ae42; color: #14120c; border-color: #e8ae42; }
+.mode-toggle-group { display: inline-flex; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px; overflow: hidden; }
+.mode-btn { padding: 0.28rem 0.58rem; border: 0; background: transparent; color: #d6dfe8; font-size: 0.72rem; font-weight: 700; min-height: 30px; }
+.mode-btn[aria-pressed="true"] { background: #ffffff; color: #111; }
+.studio-xray-btn {
+  padding: 0.3rem 0.72rem; border-radius: 999px; border: 1px solid #6be5a4;
+  background: rgba(107, 229, 164, 0.14); color: #a6f7cb; font-size: 0.73rem; font-weight: 700; min-height: 30px;
+}
+
+/* ============================================================================
+   SHARED PRIMITIVES
+   ============================================================================ */
+.promo-strip { background: var(--banner-bg); color: var(--banner-ink); font-size: 0.82rem; padding: 0.5rem 0; }
+.promo-strip-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.4rem 1.25rem; }
+.promo-strip a { font-weight: 700; text-decoration: underline; text-underline-offset: 0.18em; }
+
+.site-header { background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 44px; z-index: 800; }
+.header-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.25rem; padding: 0.85rem 0; }
+.brand-link { display: inline-flex; align-items: center; gap: 0.65rem; text-decoration: none; }
+.brand-mark {
+  width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+  font-family: var(--font-display); font-weight: 700; font-size: 0.95rem;
+}
+.brand-text strong { display: block; font-family: var(--font-display); font-size: 1.08rem; letter-spacing: 0.03em; line-height: 1.1; }
+.brand-text small { display: block; font-size: 0.72rem; color: var(--muted); }
+.main-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.9rem; }
+.main-nav a {
+  text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm); min-height: 42px; display: inline-flex; align-items: center;
+}
+.main-nav a:hover { background: var(--surface-alt); }
+.main-nav a[aria-current="page"] { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.header-actions { display: flex; align-items: center; gap: 0.5rem; }
+.mode-chip {
+  display: inline-flex; align-items: center; padding: 0.42rem 0.72rem; border-radius: 999px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+  font-size: 0.76rem; font-weight: 700; min-height: 40px;
+}
+.call-chip {
+  display: inline-flex; align-items: center; padding: 0.42rem 0.8rem; border-radius: 999px;
+  border: 1px solid var(--border-strong); text-decoration: none; font-size: 0.8rem; font-weight: 700; min-height: 40px;
+}
+.cart-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); text-decoration: none; font-size: 0.82rem; font-weight: 700; min-height: 40px;
+}
+.cart-badge { background: rgba(0, 0, 0, 0.2); padding: 0.08rem 0.44rem; border-radius: 999px; font-size: 0.74rem; }
+
+.eyebrow { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.55rem; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+  min-height: 46px; padding: 0.68rem 1.3rem; border-radius: var(--radius-sm);
+  font-weight: 700; font-size: 0.92rem; text-decoration: none; border: 1.5px solid transparent;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover { filter: brightness(1.07); }
+.btn-secondary { background: transparent; color: var(--ink); border-color: var(--border-strong); }
+.btn-secondary:hover { background: var(--surface-alt); }
+.btn-accent2 { background: var(--accent-2); color: var(--accent-2-ink); border-color: var(--accent-2); }
+.btn-sm { min-height: 38px; padding: 0.45rem 0.9rem; font-size: 0.82rem; }
+
+.pill-tag {
+  display: inline-flex; align-items: center; padding: 0.24rem 0.64rem; border-radius: 999px;
+  font-size: 0.73rem; font-weight: 700; background: var(--surface-alt); color: var(--ink); border: 1px solid var(--border);
+}
+.pill-free { background: var(--alert); color: #ffffff; border-color: transparent; }
+.pill-stock { background: rgba(24, 102, 66, 0.15); color: #165e3d; border-color: rgba(24, 102, 66, 0.32); }
+:root[data-color-mode="dark"] .pill-stock { background: rgba(105, 224, 158, 0.16); color: #9bf0c1; border-color: rgba(105, 224, 158, 0.35); }
+@media (prefers-color-scheme: dark) {
+  :root[data-color-mode="system"] .pill-stock { background: rgba(105, 224, 158, 0.16); color: #9bf0c1; border-color: rgba(105, 224, 158, 0.35); }
+}
+
+.section { padding: clamp(2.6rem, 5vw, 4.4rem) 0; }
+.section-alt { background: var(--surface-alt); border-block: 1px solid var(--border); }
+.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem 2rem; margin-bottom: 2rem; }
+.section-head h2 { font-family: var(--font-display); font-size: clamp(1.75rem, 3.2vw, 2.55rem); line-height: 1.12; margin: 0; }
+.section-head p { color: var(--muted); max-width: 46ch; margin: 0; }
+
+.variant-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+.variant-btn {
+  text-align: left; padding: 0.6rem 0.72rem; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border); background: var(--bg); color: var(--ink); min-height: 54px;
+}
+.variant-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-alt); box-shadow: inset 0 0 0 1px var(--accent); }
+.variant-btn strong { display: block; font-size: 0.84rem; }
+.variant-btn span { display: block; font-size: 0.74rem; color: var(--muted); }
+
+.ai-ref-note {
+  position: absolute; right: 0.65rem; bottom: 0.65rem; background: rgba(17, 18, 16, 0.76);
+  color: #f4f1ea; font-size: 0.68rem; padding: 0.22rem 0.5rem; border-radius: 4px; pointer-events: none;
+}
+
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.card-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.4rem; box-shadow: var(--shadow); }
+.breadcrumbs { display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.82rem; color: var(--muted); margin-bottom: 1.25rem; }
+.checklist { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; font-size: 0.88rem; }
+.safety-banner { margin-top: 1.25rem; padding: 0.85rem 1rem; border-left: 4px solid var(--alert); background: var(--surface); border-radius: var(--radius-sm); font-size: 0.86rem; }
+
+/* Standard Product Card (Prototype 01 + Subpages) */
+.product-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column;
+}
+.product-media { position: relative; aspect-ratio: 4 / 3; background: var(--surface-alt); overflow: hidden; }
+.product-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s ease; }
+.product-card:hover .product-media img { transform: scale(1.03); }
+.media-top-badges { position: absolute; top: 0.75rem; left: 0.75rem; right: 0.75rem; display: flex; justify-content: space-between; gap: 0.5rem; pointer-events: none; }
+.product-body { padding: 1.35rem; display: flex; flex-direction: column; gap: 0.85rem; flex: 1; }
+.product-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
+.product-title-row h3 { font-family: var(--font-display); font-size: 1.45rem; margin: 0; }
+.product-title-row h3 a { text-decoration: none; }
+.price-display { font-size: 1.2rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.scent-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.scent-chip { font-size: 0.74rem; padding: 0.22rem 0.55rem; border-radius: 999px; background: var(--surface-alt); color: var(--ink); border: 1px solid var(--border); }
+
+/* ============================================================================
+   PROTOTYPE 01 — GOLDEN APOTHECARY (Round 1 Liked Hero + Collage + Trust Bar)
+   ============================================================================ */
+.ga-hero { background: var(--hero-bg); padding: clamp(2.5rem, 5vw, 4.5rem) 0 clamp(2.5rem, 4.5vw, 4rem); border-bottom: 1px solid var(--border); }
+.ga-hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr); gap: clamp(1.75rem, 4vw, 3.5rem); align-items: center; }
+.ga-hero h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 4.6vw, 3.7rem); line-height: 1.07; letter-spacing: -0.025em; margin: 0 0 1.1rem; font-weight: 700; }
+:root[data-proto="golden-apothecary"][data-color-mode="dark"] .ga-hero h1 { font-weight: 400; }
+.ga-collage { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 0.85rem; }
+.ga-visual { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); }
+.ga-visual img { width: 100%; height: 100%; object-fit: cover; }
+.ga-visual-main { grid-row: span 2; min-height: 310px; }
+.ga-visual-mini { min-height: 150px; }
+.ga-caption-pill {
+  position: absolute; left: 0.65rem; bottom: 0.65rem; right: 0.65rem; padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm); background: rgba(17, 18, 16, 0.82); color: #fff; font-size: 0.75rem;
+  display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; pointer-events: none;
+}
+.ga-caption-pill strong { color: #ffd479; }
+.trust-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.15rem 0; }
+.trust-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.trust-item strong { display: block; font-size: 0.92rem; }
+.trust-item span { color: var(--muted); font-size: 0.8rem; }
+
+/* ============================================================================
+   PROTOTYPE 02 — CINEMATIC CRAFT (Full-Bleed Hero + Arched Botanicals + Scent Meters)
+   ============================================================================ */
+.sf-cine-hero {
+  position: relative; min-height: 74vh; display: flex; align-items: flex-end;
+  overflow: hidden; background: #18211b; color: #f9f5ec;
+}
+.sf-cine-bg {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  filter: brightness(0.56) saturate(1.08);
+}
+.sf-cine-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(16, 22, 18, 0.25) 0%, rgba(16, 22, 18, 0.82) 100%);
+}
+.sf-cine-content { position: relative; z-index: 2; padding: 4.5rem 0 3.2rem; width: 100%; }
+.sf-cine-content h1 {
+  font-family: var(--font-display); font-size: clamp(2.5rem, 5.2vw, 4.4rem);
+  font-weight: 400; line-height: 1.04; max-width: 16ch; margin: 0 0 1rem;
+}
+.sf-proof-strip {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem;
+  margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid rgba(249, 245, 236, 0.24);
+}
+.sf-arch-card {
+  display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); gap: 2rem; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: clamp(1.4rem, 3vw, 2.4rem); box-shadow: var(--shadow); margin-bottom: 1.65rem;
+}
+.sf-arch-frame { position: relative; border-radius: 180px 180px 18px 18px; overflow: hidden; aspect-ratio: 4 / 4.3; background: var(--surface-alt); }
+.sf-arch-frame img { width: 100%; height: 100%; object-fit: cover; }
+.sf-meters { display: grid; gap: 0.45rem; margin: 0.75rem 0 1rem; }
+.sf-meter-row { display: grid; grid-template-columns: 95px 1fr; align-items: center; gap: 0.75rem; font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+.sf-meter-track { height: 7px; border-radius: 999px; background: var(--surface-alt); overflow: hidden; }
+.sf-meter-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+
+/* ============================================================================
+   PROTOTYPE 03 — MODERN DTC (Punchy Hook + Build Your $20 Pair + Inside/Never Strip)
+   ============================================================================ */
+.dtc-hero { padding: clamp(2.4rem, 4.5vw, 3.8rem) 0; border-bottom: 1px solid var(--border); }
+.dtc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 2.2rem; align-items: center; }
+.dtc-hero h1 { font-size: clamp(2.3rem, 5vw, 4rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1.02; margin: 0 0 1rem; }
+.dtc-bundle-box {
+  background: var(--surface); border: 2px solid var(--accent); border-radius: 18px;
+  padding: 1.45rem; box-shadow: var(--shadow);
+}
+.dtc-bundle-thumbs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.75rem; margin: 0.9rem 0; }
+.dtc-bundle-thumb { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 0.65rem; text-align: center; }
+.dtc-bundle-thumb img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; margin-bottom: 0.45rem; }
+.dtc-contrast-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.dtc-yes { border: 2px solid var(--accent-2); background: var(--surface); border-radius: 16px; padding: 1.5rem; }
+.dtc-no { border: 1.5px solid var(--border); background: var(--bg); border-radius: 16px; padding: 1.5rem; }
+
+/* ============================================================================
+   PROTOTYPE 04 — EAST TN HEARTH (Dual Neighbor Doorway + Visual US-411 Corridor)
+   ============================================================================ */
+.lh-hero { padding: clamp(2.2rem, 4vw, 3.5rem) 0; border-bottom: 1px solid var(--border); }
+.lh-doorways { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 1.4rem; margin-top: 1.75rem; }
+.lh-door {
+  background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: 18px;
+  padding: 1.6rem; display: flex; flex-direction: column; gap: 0.85rem; box-shadow: var(--shadow);
+}
+.lh-door-rescue { border-color: var(--alert); }
+.lh-corridor {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem;
+  position: relative; margin-top: 1.5rem;
+}
+.lh-stop {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 1.2rem; position: relative;
+}
+.lh-stop-badge {
+  display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); font-size: 0.72rem; font-weight: 800; margin-bottom: 0.55rem;
+}
+
+/* ============================================================================
+   PROTOTYPE 05 — STUDIO MINIMAL (Gallery Whitespace + Interactive Sculptural Stage)
+   ============================================================================ */
+.gm-hero { padding: clamp(3.5rem, 7vw, 6.2rem) 0 clamp(2.5rem, 5vw, 4.5rem); text-align: center; border-bottom: 1px solid var(--border); }
+.gm-hero h1 {
+  font-size: clamp(2.4rem, 5.2vw, 4.4rem); font-weight: 500; letter-spacing: -0.04em;
+  line-height: 1.05; max-width: 17ch; margin: 0 auto 1.1rem;
+}
+.gm-stage-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: 2.5rem; align-items: center; padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+.gm-stage-photo { position: relative; background: var(--surface-alt); aspect-ratio: 4/3; overflow: hidden; }
+.gm-stage-photo img { width: 100%; height: 100%; object-fit: cover; }
+.gm-tabs { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.gm-tab {
+  border: 0; background: transparent; color: var(--muted); padding: 0.85rem 0.25rem;
+  font-size: 0.95rem; font-weight: 600; border-bottom: 2px solid transparent;
+}
+.gm-tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+
+/* ============================================================================
+   PER-PROTOTYPE DISTINCT SHOP & PDP STYLES
+   ============================================================================ */
+
+/* 01 Golden Apothecary PDP Thumbnails */
+.ga-thumbs { display: flex; gap: 0.65rem; padding: 0.8rem 1rem; border-top: 1px solid var(--border); background: var(--surface); }
+.ga-thumb {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.65rem 0.35rem 0.35rem;
+  border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--ink);
+  font-size: 0.78rem; font-weight: 700;
+}
+.ga-thumb img { width: 42px; height: 42px; object-fit: cover; border-radius: 6px; }
+.ga-thumb[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-alt); }
+
+/* 02 Cinematic Craft Shop Lookbook Banner */
+.sf-shop-banner {
+  position: relative; padding: clamp(2.5rem, 5vw, 4.2rem) 0;
+  background: var(--surface-alt); border-bottom: 1px solid var(--border);
+}
+.sf-dossier-strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.9rem; margin-top: 1.25rem;
+}
+.sf-dossier-item {
+  padding: 1rem; border-radius: var(--radius-sm); background: var(--surface);
+  border: 1px solid var(--border); border-top: 3px solid var(--accent);
+}
+
+/* 03 Modern DTC Shop Pack Builder & Comparison */
+.dtc-pack-bar {
+  background: var(--surface); border: 2px solid var(--accent); border-radius: 18px;
+  padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow);
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 1.4rem; align-items: center;
+}
+.dtc-pack-btns { display: grid; gap: 0.65rem; }
+.dtc-compare-table {
+  width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-top: 2rem;
+}
+.dtc-compare-table th, .dtc-compare-table td {
+  padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.88rem;
+}
+.dtc-compare-table th { background: var(--surface-alt); font-weight: 800; }
+.dtc-upsell-box {
+  margin-top: 1rem; padding: 1rem 1.15rem; border-radius: 12px;
+  background: var(--surface-alt); border: 1.5px dashed var(--accent);
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem;
+}
+
+/* 04 East TN Hearth Shop Farmstand & Chalkboard */
+.lh-market-strip {
+  display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center;
+  padding: 0.9rem 1.15rem; border-radius: 14px; background: var(--surface-alt);
+  border: 1px solid var(--border); margin-bottom: 1.75rem; font-size: 0.86rem;
+}
+.lh-chalkboard {
+  margin-top: 2.25rem; padding: 1.6rem; border-radius: 16px;
+  background: var(--banner-bg); color: var(--banner-ink);
+}
+.lh-chalk-row {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem;
+  padding: 0.85rem 0; border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* 05 Studio Minimal Shop Plinths & Index Table */
+.gm-shop-bar {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;
+  padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 2.25rem;
+}
+.gm-plinth-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5rem; }
+.gm-plinth { display: flex; flex-direction: column; gap: 1rem; }
+.gm-plinth-media { position: relative; aspect-ratio: 4/3; background: var(--surface-alt); overflow: hidden; }
+.gm-plinth-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s ease; }
+.gm-plinth:hover .gm-plinth-media img { transform: scale(1.025); }
+.gm-index-table { width: 100%; border-collapse: collapse; margin-top: 3rem; font-size: 0.88rem; }
+.gm-index-table th, .gm-index-table td {
+  padding: 0.9rem 0.5rem; border-bottom: 1px solid var(--border); text-align: left;
+}
+.gm-index-table th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.gm-pdp-split { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr); gap: 3rem; align-items: start; }
+
+/* ============================================================================
+   SERVICES, BEE HELPER, FAQ, CART, FOOTER, X-RAY & TOAST
+   ============================================================================ */
+.service-panel {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 1.65rem; display: flex; flex-direction: column; gap: 0.9rem; box-shadow: var(--shadow);
+}
+.service-panel.rescue-panel { border-color: var(--alert); }
+.stat-callout { display: flex; align-items: center; gap: 1rem; padding: 0.95rem 1.1rem; border-radius: var(--radius-sm); background: var(--surface-alt); border-left: 4px solid var(--accent); }
+.stat-callout .big-num { font-family: var(--font-display); font-size: 2rem; font-weight: 800; line-height: 1; color: var(--accent); flex-shrink: 0; }
+.stat-callout p { margin: 0; font-size: 0.84rem; }
+
+.bee-helper { background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius); padding: 1.5rem; margin-top: 2rem; }
+.bee-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.bee-opt-btn { padding: 0.85rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border-strong); background: var(--bg); color: var(--ink); text-align: left; font-size: 0.86rem; font-weight: 600; min-height: 60px; }
+.bee-opt-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.bee-result { margin-top: 1rem; padding: 1rem 1.15rem; border-radius: var(--radius-sm); background: var(--surface-alt); border-left: 4px solid var(--accent-2); }
+
+.faq-list { display: grid; gap: 0.8rem; }
+.faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem 1.2rem; }
+.faq-item summary { font-weight: 700; cursor: pointer; }
+.faq-item p { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.9rem; }
+
+.cart-line { display: flex; gap: 1rem; align-items: center; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.8rem; }
+.cart-line img { width: 76px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; }
+.qty-btn { width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--bg); color: var(--ink); font-weight: 800; }
+.pickup-radio { display: flex; gap: 0.65rem; align-items: start; padding: 0.7rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 0.86rem; margin-bottom: 0.55rem; }
+.field { margin-bottom: 0.9rem; }
+.field label { display: block; font-weight: 700; font-size: 0.86rem; margin-bottom: 0.35rem; }
+.field input, .field select, .field textarea { width: 100%; padding: 0.7rem 0.85rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border-strong); background: var(--bg); color: var(--ink); min-height: 44px; }
+
+.site-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 2.6rem 0 1.9rem; margin-top: 2rem; }
+.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 1.65rem; }
+.footer-grid h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 0.7rem; color: var(--muted); }
+.footer-grid ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.42rem; font-size: 0.88rem; }
+.footer-grid a { text-decoration: none; }
+.footer-grid a:hover { text-decoration: underline; }
+.footer-bottom { margin-top: 1.8rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; font-size: 0.78rem; color: var(--muted); }
+
+.toast { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 980; background: #14221a; color: #fff; padding: 0.85rem 1.15rem; border-radius: 10px; box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3); font-size: 0.86rem; font-weight: 600; display: flex; align-items: center; gap: 0.85rem; }
+.toast a { color: #ffd479; font-weight: 800; }
+
+.xray-dialog {
+  margin: 0 0 0 auto; padding: 0; border: 0; background: transparent;
+  max-width: min(560px, 100vw); max-height: 100vh; width: min(560px, 100vw); height: 100vh;
+}
+.xray-dialog::backdrop { background: rgba(8, 12, 16, 0.68); }
+.xray-drawer { width: 100%; height: 100%; overflow-y: auto; background: #0f1419; color: #eef3f7; padding: 1.5rem; border-left: 1px solid rgba(255, 255, 255, 0.16); }
+.xray-block { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; font-size: 0.84rem; }
+.xray-code { background: #080b0e; color: #9be8ba; padding: 0.85rem; border-radius: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; overflow-x: auto; white-space: pre-wrap; }
+
+@media (max-width: 940px) {
+  .ga-hero-grid, .sf-arch-card, .dtc-hero-grid, .dtc-contrast-grid, .dtc-pack-bar, .lh-doorways, .lh-corridor, .gm-stage-grid, .gm-plinth-grid, .gm-pdp-split,
+  .grid-2, .grid-3, .bee-options, .footer-grid, .sf-proof-strip { grid-template-columns: minmax(0, 1fr); }
+  .trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-header { position: static; }
+}
+@media (max-width: 600px) {
+  .ga-collage, .trust-grid, .variant-row { grid-template-columns: minmax(0, 1fr); }
+  .ga-visual-main { grid-row: auto; min-height: 230px; }
+}

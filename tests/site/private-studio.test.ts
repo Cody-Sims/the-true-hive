@@ -40,8 +40,12 @@ test("latest preview pages, modules and binary images render only for authentica
     "prototypes/guided-scroll/index.html",
     "prototypes/workbench-next/drafts.mjs",
     "prototypes/pickup/index.html",
+    "prototypes/redesign-2026/index.html",
+    "prototypes/redesign-2026/prototype.html",
+    "prototypes/redesign-2026/app.mjs",
     "prototypes/team-sprint/index.html",
     "docs/21-pickup-scheduling-plan.md",
+    "docs/22-customer-website-redesign-plan.md",
     "prototypes/next/assets/soap-true-bar.webp",
   ];
   for (const path of paths) {

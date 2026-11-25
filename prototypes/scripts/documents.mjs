@@ -34,6 +34,7 @@ export const documents = [
   { id: "operations", group: "Application delivery", title: "Development, CI and Render", path: "docs/14-development-and-operations.md" },
   { id: "inventory-phase", group: "Application delivery", title: "Secure inventory admin and connected checkout", path: "docs/15-inventory-admin-and-commerce.md" },
   { id: "pickup", group: "Application delivery", title: "Draft pickup scheduling plan", path: "docs/21-pickup-scheduling-plan.md" },
+  { id: "redesign-2026", group: "Application delivery", title: "Customer website redesign & SEO/AI plan", path: "docs/22-customer-website-redesign-plan.md" },
 ];
 
 export function getDocument(id) {

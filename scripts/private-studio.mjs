@@ -8,6 +8,7 @@ import { guidedFiles } from "../prototypes/guided-next/manifest.mjs";
 import { scrollLayouts, scrollFiles } from "../prototypes/guided-scroll/manifest.mjs";
 import { workbenchFiles } from "../prototypes/workbench-next/manifest.mjs";
 import { pickupFiles } from "../prototypes/pickup/manifest.mjs";
+import { redesignPrototypes, redesignFiles } from "../prototypes/redesign-2026/manifest.mjs";
 
 export function privateStudioFiles() {
   const pages = ["index.html", "archive.html", "store.html", "product.html", "cart.html", "checkout.html", "inventory.html", "plan.html"];
@@ -33,6 +34,7 @@ export function privateStudioFiles() {
     ...scrollFiles.map((file) => `prototypes/guided-scroll/${file}`),
     ...workbenchFiles.map((file) => `prototypes/workbench-next/${file}`),
     ...pickupFiles.map((file) => `prototypes/pickup/${file}`),
+    ...redesignFiles.map((file) => `prototypes/redesign-2026/${file}`),
     "prototypes/team-sprint/index.html",
   ]);
   for (const file of files) {
@@ -98,6 +100,11 @@ export function validateStudioApproval(approval) {
   if (!pickup || pickup.public !== true || pickup.scope !== "fictional-post-checkout-pickup"
     || !/^\d{4}-\d{2}-\d{2}$/.test(pickup.approvedOn))
     throw new Error("Pickup scheduling studies require explicit fictional-data preview approval.");
+  const redesign = approval.redesign2026;
+  if (!redesign || redesign.public !== true || redesign.scope !== "customer-website-redesign-prototypes"
+    || !/^\d{4}-\d{2}-\d{2}$/.test(redesign.approvedOn))
+    throw new Error("Customer website redesign prototypes require explicit preview approval.");
+  assertAllowlist(redesign.approvedPrototypes, redesignPrototypes, "redesign prototype");
   return true;
 }
 
