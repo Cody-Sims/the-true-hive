@@ -54,7 +54,7 @@ function readParams() {
   if (sl && products.some((x) => x.slug === sl)) state.slug = sl;
 }
 
-function syncUrl() {
+function syncUrl(push = false) {
   const url = new URL(window.location.href);
   url.searchParams.delete("arch");
   url.searchParams.delete("theme");
@@ -63,29 +63,77 @@ function syncUrl() {
   url.searchParams.set("page", state.page);
   if (state.page === "product") url.searchParams.set("slug", state.slug);
   else url.searchParams.delete("slug");
-  window.history.replaceState({}, "", url.toString());
+  const next = url.toString();
+  if (push && next !== window.location.href) {
+    window.history.pushState({}, "", next);
+  } else {
+    window.history.replaceState({}, "", next);
+  }
 }
 
 function cartKey() { return "truehive-redesign-cart-v3"; }
+
+function normalizeCart(raw) {
+  if (!Array.isArray(raw)) return [];
+  const merged = new Map();
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const qty = Number(entry.qty);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 99) continue;
+    const variantKey = typeof entry.variantKey === "string" ? entry.variantKey : "";
+    let matchedProduct = null;
+    let matchedVariant = null;
+    for (const p of products) {
+      const v = p.variants.find((item) => item.key === variantKey);
+      if (v) { matchedProduct = p; matchedVariant = v; break; }
+    }
+    if (!matchedProduct || !matchedVariant) continue;
+    const existing = merged.get(matchedVariant.key);
+    if (existing) existing.qty = Math.min(99, existing.qty + qty);
+    else {
+      merged.set(matchedVariant.key, {
+        productSlug: matchedProduct.slug,
+        productTitle: matchedProduct.title,
+        variantKey: matchedVariant.key,
+        variantLabel: matchedVariant.label,
+        priceMinor: matchedVariant.priceMinor,
+        image: matchedVariant.small,
+        qty,
+      });
+    }
+  }
+  return [...merged.values()];
+}
+
 function getCart() {
   try {
     const raw = window.localStorage.getItem(cartKey());
-    if (raw) return JSON.parse(raw);
+    if (raw) return normalizeCart(JSON.parse(raw));
   } catch { /* fallback */ }
-  return memoryCart[cartKey()] || [];
+  return normalizeCart(memoryCart[cartKey()]);
 }
+
 function saveCart(items) {
-  memoryCart[cartKey()] = items;
-  try { window.localStorage.setItem(cartKey(), JSON.stringify(items)); } catch { /* ignore */ }
+  const clean = normalizeCart(items);
+  memoryCart[cartKey()] = clean;
+  try { window.localStorage.setItem(cartKey(), JSON.stringify(clean)); } catch { /* ignore */ }
 }
 function getCartCount() { return getCart().reduce((s, i) => s + i.qty, 0); }
 function getCartSubtotal() { return getCart().reduce((s, i) => s + i.priceMinor * i.qty, 0); }
 
+function renderToast() {
+  const region = document.getElementById("toast-region");
+  if (!region) return;
+  region.innerHTML = state.toast
+    ? `<div class="toast" role="status"><span>${esc(state.toast)}</span><a href="${navHref("cart")}" data-nav="cart">View Cart &rarr;</a></div>`
+    : "";
+}
+
 function showToast(msg) {
   state.toast = msg;
-  render();
+  renderToast();
   window.clearTimeout(window.__toastTimer);
-  window.__toastTimer = window.setTimeout(() => { state.toast = null; render(); }, 4500);
+  window.__toastTimer = window.setTimeout(() => { state.toast = null; renderToast(); }, 4500);
 }
 
 function addItemsToCart(entries, toastText) {
@@ -95,7 +143,7 @@ function addItemsToCart(entries, toastText) {
     if (!product) continue;
     const variant = product.variants.find((v) => v.key === variantKey) || product.variants[0];
     const existing = items.find((i) => i.variantKey === variant.key);
-    if (existing) existing.qty += qty;
+    if (existing) existing.qty = Math.min(99, existing.qty + qty);
     else {
       items.push({
         productSlug: product.slug,
@@ -109,6 +157,7 @@ function addItemsToCart(entries, toastText) {
     }
   }
   saveCart(items);
+  render();
   showToast(toastText);
 }
 
@@ -536,7 +585,7 @@ function renderHomeModernDtc() {
         <!-- Honest Bundle Convenience Anchor ($20 Both-Scents Pair) -->
         <aside class="dtc-bundle-box" aria-label="One-tap pickup pair">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem">
-            <span class="eyebrow" style="margin:0">Most Popular First Pickup</span>
+            <span class="eyebrow" style="margin:0">Convenient Two-Scent Pickup</span>
             <span class="pill-tag">$0 Shipping</span>
           </div>
           <h2 style="font-size:1.45rem;margin:0.35rem 0 0.2rem;font-weight:900">Try Both Scents in One Trip — $20.00</h2>
@@ -792,7 +841,7 @@ function renderGoodsPage() {
 
         <aside class="dtc-pack-bar" aria-label="One-tap pickup bundles">
           <div>
-            <span class="pill-tag pill-stock" style="margin-bottom:0.5rem">MOST POPULAR WAY TO BUY</span>
+            <span class="pill-tag pill-stock" style="margin-bottom:0.5rem">CONVENIENT TWO-SCENT PICKUP</span>
             <h2 style="font-size:1.55rem;font-weight:900;margin:0 0 0.35rem">One trip along US-411, both signature scents.</h2>
             <p style="margin:0;color:var(--muted);font-size:0.9rem">Grab 1× Coconut Milk Delight + 1× The True Soap in a single click — exact honest pricing, zero shipping fees, zero fake discounts.</p>
           </div>
@@ -1187,7 +1236,7 @@ function renderContactPage() {
           <div class="field"><label for="inq-email">Reply-To Email</label><input id="inq-email" type="email" value="${esc(state.inquiry.replyTo)}" data-inq="replyTo" /></div>
           <div class="field"><label for="inq-topic">Topic</label><select id="inq-topic" data-inq="topic">${["No-cost Honeybee Colony Rescue", "Farm Pollination Assessment", "Soap Order or Pickup", "Seasonal Honey / Candle Radar"].map((o) => `<option value="${esc(o)}" ${state.inquiry.topic === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>
           <div class="field"><label for="inq-msg">Message</label><textarea id="inq-msg" rows="4" data-inq="message">${esc(state.inquiry.message)}</textarea></div>
-          <a class="btn btn-primary" href="${mailtoUrl}">Open Draft in Email App &rarr;</a>
+          <a class="btn btn-primary" data-draft-mailto href="${mailtoUrl}">Open Draft in Email App &rarr;</a>
         </div>
       </div>
     </div></section>
@@ -1208,14 +1257,16 @@ function renderFooter() {
   `;
 }
 
+let lastXrayTrigger = null;
+
 function renderXrayDrawer() {
   if (!state.xrayOpen) return "";
   const active = prototypes.find((p) => p.id === state.proto) || prototypes[0];
   const seo = getPageSeoAudit(state.page);
   const schema = JSON.stringify(buildJsonLd(state.page, state.slug), null, 2);
   return `
-    <div class="xray-backdrop" data-xray-backdrop>
-      <aside class="xray-drawer" role="dialog" aria-modal="true" aria-label="SEO, AI Overview and Psychology Inspector">
+    <dialog id="xray-dialog" class="xray-dialog" aria-label="SEO, AI Overview and Psychology Inspector">
+      <div class="xray-drawer">
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.14);padding-bottom:0.9rem;margin-bottom:1rem">
           <div><div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#f2be59;font-weight:800">Prototype ${active.number} &middot; ${esc(active.name)}</div><h2 style="margin:0.15rem 0 0;font-size:1.15rem">SEO, AI Overview &amp; Psychology X-Ray</h2></div>
           <button type="button" class="studio-pill" data-close-xray>Close &times;</button>
@@ -1223,12 +1274,32 @@ function renderXrayDrawer() {
         <div class="xray-block"><strong style="color:#f2be59">Conversion Psychology Active Here:</strong><ul style="margin:0.45rem 0 0;padding-left:1.15rem">${active.psychology.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
         <div class="xray-block"><strong style="color:#6be5a4">Page SEO &amp; AI Overview (/${esc(state.page)}):</strong><p style="margin:0.35rem 0"><strong>Title:</strong> ${esc(seo.titleTag)}</p><p style="margin:0.35rem 0"><strong>Robots:</strong> ${esc(seo.robots)}</p></div>
         <div class="xray-block"><strong style="color:#9be8ba">Planned Production JSON-LD Preview (omitted from noindex prototype DOM):</strong><pre class="xray-code">${esc(schema)}</pre></div>
-      </aside>
-    </div>
+      </div>
+    </dialog>
   `;
 }
 
-function render() {
+function captureFocusDescriptor() {
+  const el = document.activeElement;
+  if (!el || el === document.body || el === document.documentElement) return null;
+  if (el.id) return { selector: `#${CSS.escape(el.id)}`, start: el.selectionStart, end: el.selectionEnd };
+  const attrs = [
+    "data-switch-proto", "data-set-mode", "data-cycle-mode", "data-toggle-xray",
+    "data-select-variant", "data-add-cart", "data-qty-delta", "data-store-filter",
+    "data-minimal-format", "data-gallery-slug", "data-bee-choice", "data-pickup-select",
+    "data-add-pair", "data-add-wolf-pair", "data-clear-cart",
+  ];
+  for (const attr of attrs) {
+    if (el.hasAttribute(attr)) {
+      const val = el.getAttribute(attr);
+      return { selector: val ? `[${attr}="${CSS.escape(val)}"]` : `[${attr}]` };
+    }
+  }
+  return null;
+}
+
+function render(options = {}) {
+  const focusDesc = options.focusMain ? null : captureFocusDescriptor();
   document.documentElement.setAttribute("data-proto", state.proto);
   document.documentElement.setAttribute("data-color-mode", state.colorMode);
   const active = prototypes.find((p) => p.id === state.proto) || prototypes[0];
@@ -1255,22 +1326,56 @@ function render() {
     ${renderSiteHeader()}
     <main id="main" tabindex="-1">${mainHtml}</main>
     ${renderFooter()}
-    ${state.toast ? `<div class="toast" role="status" aria-live="polite"><span>${esc(state.toast)}</span><a href="${navHref("cart")}" data-nav="cart">View Cart &rarr;</a></div>` : ""}
     ${renderXrayDrawer()}
   `;
+
+  if (state.xrayOpen) {
+    const dialog = document.getElementById("xray-dialog");
+    if (dialog && typeof dialog.showModal === "function" && !dialog.open) {
+      dialog.showModal();
+      dialog.addEventListener("close", () => {
+        if (state.xrayOpen) {
+          state.xrayOpen = false;
+          render({ restoreSelector: lastXrayTrigger });
+        }
+      });
+      dialog.addEventListener("click", (evt) => {
+        if (evt.target === dialog) dialog.close();
+      });
+      const closeBtn = dialog.querySelector("[data-close-xray]");
+      if (closeBtn) closeBtn.focus();
+    }
+    return;
+  }
+
+  if (options.focusMain) {
+    document.getElementById("main")?.focus({ preventScroll: true });
+    return;
+  }
+
+  const restoreTarget = options.restoreSelector || focusDesc?.selector;
+  if (restoreTarget) {
+    const target = document.querySelector(restoreTarget);
+    if (target && typeof target.focus === "function") {
+      target.focus({ preventScroll: true });
+      if (typeof focusDesc?.start === "number" && typeof target.setSelectionRange === "function") {
+        try { target.setSelectionRange(focusDesc.start, focusDesc.end); } catch { /* ignore */ }
+      }
+    }
+  }
 }
 
 document.addEventListener("click", (e) => {
   const protoBtn = e.target.closest("[data-switch-proto]");
-  if (protoBtn) { state.proto = protoBtn.dataset.switchProto; syncUrl(); render(); window.scrollTo({ top: 0, behavior: "instant" }); return; }
+  if (protoBtn) { state.proto = protoBtn.dataset.switchProto; syncUrl(true); render(); window.scrollTo({ top: 0, behavior: "instant" }); return; }
 
   const modeBtn = e.target.closest("[data-set-mode]");
-  if (modeBtn) { state.colorMode = modeBtn.dataset.setMode; syncUrl(); render(); return; }
+  if (modeBtn) { state.colorMode = modeBtn.dataset.setMode; syncUrl(false); render(); return; }
 
   if (e.target.closest("[data-cycle-mode]")) {
     const order = ["system", "light", "dark"];
     state.colorMode = order[(order.indexOf(state.colorMode) + 1) % order.length];
-    syncUrl(); render(); return;
+    syncUrl(false); render(); return;
   }
 
   const navEl = e.target.closest("[data-nav]");
@@ -1278,7 +1383,7 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     state.page = navEl.dataset.nav;
     if (navEl.dataset.slug) state.slug = navEl.dataset.slug;
-    syncUrl(); render(); window.scrollTo({ top: 0, behavior: "instant" }); return;
+    syncUrl(true); render({ focusMain: true }); window.scrollTo({ top: 0, behavior: "instant" }); return;
   }
 
   const varBtn = e.target.closest("[data-select-variant]");
@@ -1332,8 +1437,18 @@ document.addEventListener("click", (e) => {
   const beeBtn = e.target.closest("[data-bee-choice]");
   if (beeBtn) { state.beeChoice = beeBtn.dataset.beeChoice; render(); return; }
 
-  if (e.target.closest("[data-toggle-xray]")) { state.xrayOpen = !state.xrayOpen; render(); return; }
-  if (e.target.closest("[data-close-xray]") || e.target.matches("[data-xray-backdrop]")) { state.xrayOpen = false; render(); return; }
+  if (e.target.closest("[data-toggle-xray]")) {
+    lastXrayTrigger = "[data-toggle-xray]";
+    state.xrayOpen = !state.xrayOpen;
+    render();
+    return;
+  }
+  if (e.target.closest("[data-close-xray]")) {
+    const dialog = document.getElementById("xray-dialog");
+    if (dialog?.open) dialog.close();
+    else { state.xrayOpen = false; render({ restoreSelector: lastXrayTrigger }); }
+    return;
+  }
 
   if (e.target.closest("[data-demo-checkout]")) {
     const chosen = pickupLocations.find((l) => l.key === state.pickupKey);
@@ -1350,7 +1465,7 @@ document.addEventListener("input", (e) => {
   const f = e.target.closest("[data-inq]");
   if (f) {
     state.inquiry[f.dataset.inq] = f.value;
-    const link = document.querySelector('a[href^="mailto:"]');
+    const link = document.querySelector("[data-draft-mailto]");
     if (link) {
       const subj = encodeURIComponent(`[The True Hive] ${state.inquiry.topic}`);
       const body = encodeURIComponent(`Name: ${state.inquiry.name}\nReply-to: ${state.inquiry.replyTo}\nTopic: ${state.inquiry.topic}\n\n${state.inquiry.message}`);
@@ -1359,10 +1474,12 @@ document.addEventListener("input", (e) => {
   }
 });
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && state.xrayOpen) { state.xrayOpen = false; render(); }
+window.addEventListener("popstate", () => {
+  state.xrayOpen = false;
+  readParams();
+  render({ focusMain: true });
 });
 
 readParams();
-syncUrl();
+syncUrl(false);
 render();
