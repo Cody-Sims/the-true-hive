@@ -2,186 +2,80 @@
 import SiteLayout from "../layouts/SiteLayout.astro";
 import ServiceCards from "../components/ServiceCards.astro";
 import FaqSection from "../components/FaqSection.astro";
-import hivePhoto from "../assets/honeybees-on-comb.webp?url";
+import BeeHelper from "../components/BeeHelper.astro";
 import { readConfig } from "../server/config.ts";
 const { contact } = readConfig();
 ---
 
 <SiteLayout
   title="Beekeeping services for home and farm"
-  description="No-cost honeybee colony rescue in Monroe, Blount, and Knox counties, plus farm pollination services from The True Hive."
+  description="No-cost honeybee colony rescue in Monroe, Blount, and Knox counties, plus research-backed farm pollination services from The True Hive."
 >
-  <section
-    class="wrap services-page-intro"
-    aria-labelledby="services-page-title"
-  >
-    <div>
-      <p class="eyebrow">Beekeeping services</p>
-      <h1 id="services-page-title">
-        For the bees.
-        <br />
-        <em>And the neighbors.</em>
-      </h1>
-      <p class="services-page-lede">
-        Give honeybees a new home. Bring pollination support to your farm.
-      </p>
-      <a class="text-link" href="#service-paths">
-        Explore our services <span aria-hidden="true">&darr;</span>
+  <section class="wrap services-page" aria-labelledby="services-page-title">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Beekeeping Services</span>
+    </nav>
+    <div class="services-heading">
+      <div>
+        <p class="eyebrow">Monroe, Blount &amp; Knox Counties</p>
+        <h1 id="services-page-title">
+          Free honeybee rescue. Research-backed farm pollination.
+        </h1>
+        <p>
+          Call us directly or check whether it may be a honeybee below. Have
+          your location and service details ready.
+        </p>
+      </div>
+      <a class="button button-primary" href={contact.phoneHref}>
+        Call {contact.phone}
       </a>
     </div>
-    <img
-      src={hivePhoto}
-      class="services-page-photo"
-      alt="Honeybees tending golden honeycomb."
-      width="1600"
-      height="2133"
-      loading="eager"
-      decoding="async"
-      fetchpriority="high"
-    />
-  </section>
-  <section
-    id="service-paths"
-    class="services-page-paths"
-    aria-labelledby="services-page-paths-title"
-  >
-    <div class="wrap">
-      <div class="services-page-heading">
-        <h2 id="services-page-paths-title">How we can help.</h2>
-      </div>
+    <section id="service-paths" aria-labelledby="services-options-title">
+      <h2 id="services-options-title">Beekeeping services</h2>
       <ServiceCards detailed />
-    </div>
-  </section>
-  <section
-    class="wrap services-page-ending"
-    aria-labelledby="services-page-ending-title"
-  >
-    <div class="services-page-ending-panel">
-      <div>
-        <h2 id="services-page-ending-title">
-          Tell us what
-          <br />
-          <em>you have in mind.</em>
-        </h2>
-      </div>
-      <div class="services-page-ending-copy">
-        <p>
-          Call us about a colony rescue or farm pollination. Have your location
-          and the details above ready so we can talk through your needs.
-        </p>
-        <a class="button button-primary" href={contact.phoneHref}>
-          Call {contact.phone} <span aria-hidden="true">&rarr;</span>
-        </a>
-        <p>
-          Prefer email?{" "}
-          <a class="text-link" href="/contact#inquiry">
-            Prepare a service inquiry
-          </a>
-          in your own email app. Review and send the draft there.
-        </p>
-      </div>
-    </div>
+    </section>
+    <p>
+      Prefer email?{" "}
+      <a class="text-link" href="/contact#inquiry">
+        Prepare a service inquiry
+      </a>{" "}
+      in your own email app. Review and send the draft there.
+    </p>
+    <BeeHelper />
   </section>
   <FaqSection topic="services" />
 </SiteLayout>
 
 <style>
-  .services-page-intro {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  .services-page {
+    padding-block: 2rem 3rem;
+  }
+  #services-options-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .breadcrumbs {
+    margin-bottom: 1.5rem;
+  }
+  .services-heading {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 2rem;
-    padding-block: clamp(3rem, 6vw, 5.5rem);
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
   }
-  .services-page-intro h1 {
-    margin-block: 1.5rem;
-    font-family: var(--font-display);
-    font-size: clamp(3rem, 5.8vw, 5.75rem);
-    font-weight: 400;
-    letter-spacing: -0.06em;
-    line-height: 1.08;
+  .services-heading > div {
+    flex: 1 1 32rem;
   }
-  .services-page-intro h1 em {
-    letter-spacing: inherit;
-  }
-  .services-page-lede {
-    max-width: 32rem;
-    font-size: 1.05rem;
-    line-height: 1.9;
-  }
-  .services-page-intro .text-link {
-    margin-top: 1.5rem;
-  }
-  .services-page-paths {
-    padding-block: 4.5rem;
-    border-block: 1px solid var(--line);
-    background: var(--surface);
-  }
-  .services-page-heading {
-    margin-bottom: 2.5rem;
-  }
-  .services-page-heading h2 {
-    margin-top: 0;
-    font-size: clamp(2.3rem, 4vw, 3.75rem);
-    line-height: 1.12;
-  }
-  .services-page-ending {
-    padding-block: 4.5rem 5rem;
-  }
-  .services-page-ending-panel {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 2rem 4rem;
-    align-items: center;
-    padding: clamp(1.5rem, 4vw, 3.5rem);
-    border: 1px solid var(--forest);
-  }
-  .services-page-ending h2 {
-    margin-top: 1.25rem;
-    font-size: clamp(2.5rem, 4vw, 3.75rem);
+  h1 {
+    margin-block: 0.5rem 0.75rem;
+    font-size: clamp(2rem, 4vw, 3.2rem);
     line-height: 1.1;
-  }
-  .services-page-ending h2 em {
-    color: var(--tomato);
-  }
-  .services-page-ending-copy > p {
-    max-width: 31rem;
-    font-size: 0.9rem;
-    line-height: 1.9;
-  }
-  .services-page-ending-copy .button {
-    margin-top: 1.5rem;
-  }
-  @media (max-width: 56rem) {
-    .services-page-intro > div {
-      max-width: 42rem;
-    }
-    .services-page-ending-panel {
-      gap: 2rem;
-    }
-  }
-  @media (max-width: 42rem) {
-    .services-page-intro {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .services-page-intro,
-    .services-page-paths {
-      padding-block: 3rem;
-    }
-    .services-page-intro h1 {
-      font-size: clamp(2.75rem, 9.5vw, 4rem);
-    }
-    .services-page-ending-panel {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .services-page-ending {
-      padding-block: 3rem;
-    }
-  }
-  .services-page-photo {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 1rem;
-    object-fit: cover;
   }
 </style>

@@ -114,12 +114,12 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "About us", exact: true })
+    .getByRole("link", { name: "Our Story", exact: true })
     .click();
   await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Store", exact: true })
+    .getByRole("link", { name: "Shop Soaps", exact: true })
     .click();
   await expect(page.locator("[data-cart-count]")).toHaveText([" (4)", " (4)"]);
   await page

@@ -1342,10 +1342,8 @@ test("active product cards show canonical prices and cart options without enabli
   );
   assert.match(browseOnly, /\$4\.50/);
   assert.match(browseOnly, /Test format/);
-  assert.doesNotMatch(
-    browseOnly,
-    /Test checkout|data-add-to-cart|\/api\/checkout/,
-  );
+  assert.match(browseOnly, /data-add-to-cart data-quick-add/);
+  assert.doesNotMatch(browseOnly, /Test checkout|\/api\/checkout/);
   assert.doesNotMatch(
     await render("src/components/ProductCard.astro", {
       product: { ...product, kind: "concept" },

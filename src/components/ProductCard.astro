@@ -4,6 +4,7 @@ import ProductArt from "./ProductArt.astro";
 import ProductPrices from "./ProductPrices.astro";
 import StockNotice from "./StockNotice.astro";
 import ProductProfile from "./ProductProfile.astro";
+import AddToCart from "./AddToCart.astro";
 import { getSoapReference } from "../content/soap-references.ts";
 import { money, pricedVariants, projectedStock } from "../domain/cart.ts";
 
@@ -31,9 +32,26 @@ const categories = {
   candles: "Candles",
   gifts: "Gifts",
 };
+const offered = variants.filter(
+  (variant) =>
+    !["out_of_stock", "not_offered"].includes(
+      projectedStock(variant)?.state ?? "",
+    ),
+);
+const selected = offered[0] ?? variants[0];
+const selectedStock = selected && projectedStock(selected);
+const cardStockLabel = ["available", "low_stock"].includes(
+  selectedStock?.state ?? "",
+)
+  ? "In Stock / Local Pickup"
+  : ["out_of_stock", "not_offered"].includes(selectedStock?.state ?? "")
+    ? "Currently unavailable"
+    : "Availability unverified";
+const productHref = `/goods/${encodeURIComponent(product.slug)}${offered[0] ? `?variant=${encodeURIComponent(offered[0].key)}` : ""}`;
 ---
 
 <article
+  data-catalog-card={preview ? undefined : ""}
   class:list={[
     "shelf-product",
     { "shelf-reference": !!reference, "golden-product": !preview },
@@ -41,17 +59,22 @@ const categories = {
 >
   <ArtLink
     class:list={["shelf-art", `${product.imageKey}-art`]}
-    href={preview ? undefined : `/goods/${product.slug}`}
+    href={preview ? undefined : productHref}
+    data-card-link={preview ? undefined : ""}
   >
     {!preview && <span class="card-link-label">Explore {product.title}</span>}
     {preview && <span class="shelf-ticket">{labels[product.category]}</span>}
-    <ProductArt
-      image={product.imageKey}
-      photo={product.photo ?? null}
-      photoSrc={photoSrc}
-      alt={`${categories[product.category]} illustration.`}
-      referenceKey={preview ? undefined : product.key}
-    />
+    <div class="card-image" data-card-image-display={preview ? undefined : ""}>
+      <ProductArt
+        image={product.imageKey}
+        photo={product.photo ?? null}
+        photoSrc={photoSrc}
+        alt={`${categories[product.category]} illustration.`}
+        referenceKey={preview ? undefined : product.key}
+        referenceVariantKey={selected?.key}
+      />
+    </div>
+    {selected && !preview && <span class="card-stock">{cardStockLabel}</span>}
     {reference && <span class="reference-caption">AI styling reference</span>}
     {preview && (
       <span class="art-caption">
@@ -61,20 +84,28 @@ const categories = {
   </ArtLink>
   <div class="shelf-copy">
     <p class="eyebrow">{categories[product.category]}</p>
-    <h3>
-      <TitleLink
-        href={preview ? undefined : `/goods/${product.slug}`}
-        data-preview-title={preview ? "" : undefined}
-      >
-        {preview ? (
-          <span data-preview-title-text>{product.title}</span>
-        ) : (
-          product.title
-        )}
-        <span aria-hidden="true">&nearr;</span>
-      </TitleLink>
-    </h3>
-    {!preview && (
+    <div class="card-title-row">
+      <h3>
+        <TitleLink
+          href={preview ? undefined : productHref}
+          data-card-link={preview ? undefined : ""}
+          data-preview-title={preview ? "" : undefined}
+        >
+          {preview ? (
+            <span data-preview-title-text>{product.title}</span>
+          ) : (
+            product.title
+          )}
+          <span aria-hidden="true">&nearr;</span>
+        </TitleLink>
+      </h3>
+      {!preview && selected && (
+        <strong class="card-price" data-card-price>
+          {money(selected.priceMinor!)}
+        </strong>
+      )}
+    </div>
+    {!preview && !selected && (
       <ProductPrices product={product} compact showStock={!variants.length} />
     )}
     <p class="shelf-description">{product.summary}</p>
@@ -88,52 +119,74 @@ const categories = {
         </span>
       </div>
     )}
+    {!preview && product.kind === "active" && (
+      <AddToCart
+        product={product}
+        preferredVariantKey={selected?.key}
+        compact
+      />
+    )}
     {variants.length > 0 && (
-      <div class="shelf-formats" aria-label={`Formats for ${product.title}`}>
-        {variants.map((variant) => {
-          const stock = projectedStock(variant);
-          const available =
-            !stock || !["out_of_stock", "not_offered"].includes(stock.state);
-          const Choice = available ? "a" : "span";
-          return (
-            <Choice
-              class:list={[
-                "shelf-format",
-                { "format-unavailable": !available },
-              ]}
-              href={
-                available
-                  ? `/goods/${encodeURIComponent(product.slug)}?variant=${encodeURIComponent(variant.key)}#add-to-cart`
-                  : undefined
-              }
-            >
-              <span class="format-thumb">
-                <ProductArt
-                  image={product.imageKey}
-                  photo={product.photo ?? null}
-                  referenceKey={product.key}
-                  referenceVariantKey={variant.key}
-                  sizes="3rem"
-                />
-              </span>
-              <span>
-                <span class="format-name">{variant.label}</span>
-                {stock && stock.state !== "available" && (
-                  <StockNotice variant={variant} />
-                )}
-              </span>
-              <strong>{money(variant.priceMinor!)}</strong>
-              {available && (
-                <span class="format-arrow" aria-hidden="true">
-                  &rarr;
+      <noscript>
+        <div class="shelf-formats" aria-label={`Formats for ${product.title}`}>
+          {variants.map((variant) => {
+            const stock = projectedStock(variant);
+            const available =
+              !stock || !["out_of_stock", "not_offered"].includes(stock.state);
+            const Choice = available ? "a" : "span";
+            return (
+              <Choice
+                class:list={[
+                  "shelf-format",
+                  { "format-unavailable": !available },
+                ]}
+                href={
+                  available
+                    ? `/goods/${encodeURIComponent(product.slug)}?variant=${encodeURIComponent(variant.key)}#add-to-cart`
+                    : undefined
+                }
+              >
+                <span class="format-thumb">
+                  <ProductArt
+                    image={product.imageKey}
+                    photo={product.photo ?? null}
+                    referenceKey={product.key}
+                    referenceVariantKey={variant.key}
+                    sizes="3rem"
+                  />
                 </span>
-              )}
-            </Choice>
-          );
-        })}
-      </div>
+                <span>
+                  <span class="format-name">{variant.label}</span>
+                  {stock && stock.state !== "available" && (
+                    <StockNotice variant={variant} />
+                  )}
+                </span>
+                <strong>{money(variant.priceMinor!)}</strong>
+                {available && (
+                  <span class="format-arrow" aria-hidden="true">
+                    &rarr;
+                  </span>
+                )}
+              </Choice>
+            );
+          })}
+        </div>
+      </noscript>
     )}
   </div>
+  {!preview &&
+    variants.map((variant) => (
+      <template data-card-image={variant.key}>
+        <ProductArt
+          image={product.imageKey}
+          photo={product.photo ?? null}
+          referenceKey={product.key}
+          referenceVariantKey={variant.key}
+          alt={`${product.title}, ${variant.label}`}
+          eager
+        />
+      </template>
+    ))}
 </article>
 
 <style>
@@ -150,6 +203,32 @@ const categories = {
   }
   .golden-product .shelf-copy {
     padding: 1.35rem;
+  }
+  .card-image {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+  .card-stock {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 2rem;
+    background: var(--white);
+    color: var(--forest);
+    font-size: 0.75rem;
+  }
+  .card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+  .card-price {
+    flex-shrink: 0;
+    color: var(--tomato);
+    font-size: 1.2rem;
   }
   .card-link-label {
     position: absolute;

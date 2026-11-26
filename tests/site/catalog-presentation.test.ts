@@ -138,6 +138,7 @@ test("public bar profiles render current catalog facts without changing the priv
   const card = await render("src/components/ProductCard.astro", {
     product: soap,
   });
+
   assert.match(card, /data-product-profile/);
   assert.match(card, /2 listed/);
   assert.match(card, /\$7\.25/);
@@ -147,4 +148,50 @@ test("public bar profiles render current catalog facts without changing the priv
     preview: true,
   });
   assert.doesNotMatch(editor, /data-product-profile/);
+});
+
+test("public cards expose canonical one-item format selection and quick add without enabling unavailable choices", async () => {
+  const soap = product("quick-soap", [
+    variant("quick-bar", "available"),
+    { ...variant("quick-wolf", "available"), priceMinor: 1250 },
+    variant("quick-sold", "out_of_stock"),
+  ]);
+  const card = await render("src/components/ProductCard.astro", {
+    product: soap,
+  });
+
+  assert.match(card, /data-catalog-card/);
+  assert.match(card, /data-quick-add/);
+  assert.match(card, /type="hidden" name="quantity" value="1"/);
+  assert.match(card, /data-card-image="quick-wolf"/);
+  assert.match(card, /value="quick-sold"[^>]*disabled/);
+  assert.doesNotMatch(card, /href="[^"]*#ingredients"/);
+  const editor = await render("src/components/ProductCard.astro", {
+    product: soap,
+    preview: true,
+  });
+  assert.doesNotMatch(editor, /data-add-to-cart|data-quick-add/);
+});
+
+test("product ingredients offer a separate full-width grid without changing plain ordered ingredient rendering", async () => {
+  const html = await render("src/components/ProductIngredients.astro", {
+    ingredients: ["Coconut Oil", "Lye", "<b>Owner supplied ingredient</b>"],
+    grid: true,
+    soapRecipe: true,
+  });
+  assert.match(html, /id="ingredients"/);
+  assert.match(html, /class="ingredient-grid/);
+  assert.match(html, /&lt;b&gt;Owner supplied ingredient&lt;\/b&gt;/);
+  assert.doesNotMatch(html, /<b>/);
+  assert.match(html, /saponification/);
+  assert.doesNotMatch(html, /zero lye|lab-tested/);
+});
+
+test("non-soap ingredient grids do not infer a soap recipe from a shared ingredient name", async () => {
+  const html = await render("src/components/ProductIngredients.astro", {
+    ingredients: ["Beeswax"],
+    grid: true,
+  });
+  assert.match(html, /<strong>Beeswax<\/strong>/);
+  assert.doesNotMatch(html, /soap recipe/);
 });

@@ -4,10 +4,21 @@ import {
   INQUIRY_LIMITS,
   INQUIRY_TYPES,
 } from "../client/inquiry-draft.ts";
+interface Props {
+  compact?: boolean;
+  headingLevel?: "h2" | "h3";
+}
+const { compact = false, headingLevel: Heading = "h3" } = Astro.props;
 ---
 
-<section id="inquiry" class="inquiry" aria-labelledby="inquiry-title">
-  <h3 id="inquiry-title">Start an email conversation.</h3>
+<section
+  id="inquiry"
+  class:list={["inquiry", { "inquiry-compact": compact }]}
+  aria-labelledby="inquiry-title"
+>
+  <Heading class="inquiry-title" id="inquiry-title">
+    {compact ? "Prepare an Email Draft" : "Start an email conversation."}
+  </Heading>
   <p id="inquiry-explanation">
     Nothing is sent by this website. The form only prepares a draft in your own
     email app; you must review and send it there. No inbox or email provider
@@ -111,6 +122,22 @@ import {
     color: var(--forest);
     background: var(--paper);
     overflow-wrap: anywhere;
+  }
+  .inquiry-compact {
+    margin-top: 0;
+    padding: 1.4rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--white);
+    box-shadow: var(--golden-shadow);
+  }
+  .inquiry-compact .inquiry-title {
+    margin: 0 0 0.65rem;
+    font-size: 1.45rem;
+  }
+  .inquiry-compact .inquiry-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
   h3 {
     margin: 0 0 1rem;

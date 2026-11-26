@@ -9,8 +9,15 @@ import {
 interface Props {
   product: Product;
   preferredVariantKey?: string | undefined;
+  compact?: boolean;
+  showPrice?: boolean;
 }
-const { product, preferredVariantKey } = Astro.props;
+const {
+  product,
+  preferredVariantKey,
+  compact = false,
+  showPrice = false,
+} = Astro.props;
 const variants = pricedVariants(product);
 const unavailable = (variant: (typeof variants)[number]) =>
   ["out_of_stock", "not_offered"].includes(
@@ -22,19 +29,27 @@ const selected =
 const soldOut = variants.every(
   (variant) => projectedStock(variant)?.state === "out_of_stock",
 );
+const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
 ---
 
 {product.kind === "active" && variants.length > 0 && (
   <section
-    id="add-to-cart"
-    class="cart-controls"
-    aria-labelledby="add-cart-title"
+    id={compact ? undefined : "add-to-cart"}
+    class:list={[
+      "cart-controls",
+      { "cart-controls-compact": compact, "cart-controls-detail": showPrice },
+    ]}
+    aria-labelledby={titleId}
   >
-    <h2 id="add-cart-title">
+    <h2 id={titleId}>
       {offered.length ? "Choose your format." : "Availability"}
     </h2>
     {offered.length ? (
-      <form data-add-to-cart>
+      <form
+        data-add-to-cart
+        data-quick-add={compact ? "" : undefined}
+        hidden={compact}
+      >
         <fieldset class="format-options">
           <legend>Format</legend>
           {variants.map((variant) => (
@@ -43,6 +58,20 @@ const soldOut = variants.every(
                 type="radio"
                 name="variantKey"
                 value={variant.key}
+                data-variant-price={money(variant.priceMinor!)}
+                data-variant-label={variant.label}
+                data-variant-href={
+                  unavailable(variant)
+                    ? undefined
+                    : `/goods/${encodeURIComponent(product.slug)}?variant=${encodeURIComponent(variant.key)}`
+                }
+                data-variant-stock-label={
+                  ["available", "low_stock"].includes(
+                    projectedStock(variant)?.state ?? "",
+                  )
+                    ? "In Stock / Local Pickup"
+                    : stockLabel(variant)
+                }
                 checked={variant.key === selected?.key}
                 disabled={unavailable(variant)}
                 required
@@ -58,21 +87,42 @@ const soldOut = variants.every(
             </label>
           ))}
         </fieldset>
-        <label>
-          Quantity
-          <input
-            name="quantity"
-            type="number"
-            min="1"
-            max="100"
-            step="1"
-            value="1"
-            required
-          />
-        </label>
+        {compact ? (
+          <input type="hidden" name="quantity" value="1" />
+        ) : (
+          <label>
+            Quantity
+            <input
+              name="quantity"
+              type="number"
+              min="1"
+              max="100"
+              step="1"
+              value="1"
+              required
+            />
+          </label>
+        )}
         <button type="submit" class="button button-primary">
-          Add to cart
+          {compact || showPrice ? (
+            <>
+              Add to Cart —{" "}
+              <span data-selected-price>
+                {selected ? money(selected.priceMinor!) : ""}
+              </span>
+            </>
+          ) : (
+            "Add to cart"
+          )}
         </button>
+        {compact && (
+          <a
+            class="button quick-ingredients"
+            href={`/goods/${encodeURIComponent(product.slug)}${product.ingredients?.length ? "#ingredients" : ""}`}
+          >
+            {product.ingredients?.length ? "Ingredients" : "Details"}
+          </a>
+        )}
         <p data-add-status role="status"></p>
       </form>
     ) : (
@@ -80,9 +130,11 @@ const soldOut = variants.every(
         <p class="sold-out">{soldOut ? "Sold out" : "Currently unavailable"}</p>
       </>
     )}
-    <a class="text-link" href="/cart">
-      View your cart &rarr;
-    </a>
+    {!compact && (
+      <a class="text-link" href="/cart">
+        View your cart &rarr;
+      </a>
+    )}
     <noscript>
       Enable JavaScript to use the cart, or contact us for help.
     </noscript>
@@ -189,5 +241,54 @@ const soldOut = variants.every(
   .cart-controls :focus-visible {
     outline: 3px solid var(--tomato);
     outline-offset: 3px;
+  }
+  .cart-controls-compact {
+    margin: 0;
+  }
+  .cart-controls-compact h2,
+  .cart-controls-detail h2,
+  .cart-controls-compact legend,
+  .cart-controls-compact input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .cart-controls-compact form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-block: 0.75rem 0;
+  }
+  .cart-controls-compact form[hidden] {
+    display: none;
+  }
+  .cart-controls-compact .format-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .cart-controls-compact .format-option {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+    padding: 0.65rem;
+    border-radius: 0.65rem;
+    font-size: 0.8rem;
+  }
+  .quick-ingredients {
+    border-color: var(--line);
+    background: var(--white);
+    color: var(--forest);
+  }
+  .cart-controls-detail .format-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .cart-controls-detail .format-option {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.65rem;
+  }
+  .cart-controls-detail .format-option strong {
+    grid-column: 2;
   }
 </style>

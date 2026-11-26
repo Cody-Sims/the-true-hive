@@ -1,0 +1,122 @@
+---
+import { readConfig } from "../server/config.ts";
+const { contact } = readConfig();
+const choices = [
+  {
+    key: "honeybee",
+    label: "Fuzzy, golden-brown, plump body",
+    title: "Likely Honeybees — Call About No-Cost Rescue",
+    detail:
+      "Appearance alone cannot confirm identification. Do not spray or disturb the colony. Call us about safe honeybee relocation in Monroe, Blount, or Knox County.",
+  },
+  {
+    key: "wasp",
+    label: "Smooth, bright yellow and black, narrow waist",
+    title: "Likely Wasps, Yellowjackets, or Hornets",
+    detail:
+      "Smooth bodies, narrow waists, or paper nests may indicate wasps rather than honeybees. Give them wide space; our honeybee rescue service only relocates honeybees. Identification is not confirmed by this guide.",
+  },
+  {
+    key: "unsure",
+    label: "Not sure — buzzing or insects entering a wall",
+    title: "Play It Safe — Give Us a Call",
+    detail:
+      "Stay back and do not approach for a close-up photo. Describe their location and behavior by phone so we can discuss the safest next step.",
+  },
+];
+---
+
+<section class="bee-helper" data-bee-helper aria-labelledby="bee-helper-title">
+  <p class="eyebrow">Safe ID Helper / Not a confirmed identification</p>
+  <h2 id="bee-helper-title">Is it a Honeybee or a Wasp?</h2>
+  <p>
+    Look only from a safe distance. Do not approach, spray, or disturb insects.
+    What do they look like?
+  </p>
+  <div
+    class="bee-options"
+    data-bee-options
+    hidden
+    role="group"
+    aria-label="Insect appearance choices"
+  >
+    {choices.map((choice) => (
+      <button type="button" data-bee-choice={choice.key} aria-pressed="false">
+        {choice.label}
+      </button>
+    ))}
+  </div>
+  <div
+    class="bee-result"
+    data-bee-result
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+  {choices.map((choice) => (
+    <template data-bee-answer={choice.key}>
+      <h3>{choice.title}</h3>
+      <p>{choice.detail}</p>
+      <a class="button button-primary" href={contact.phoneHref}>
+        Call {contact.phone}
+      </a>
+    </template>
+  ))}
+  <noscript>
+    {choices.map((choice) => (
+      <details>
+        <summary>{choice.label}</summary>
+        <h3>{choice.title}</h3>
+        <p>{choice.detail}</p>
+        <a href={contact.phoneHref}>Call {contact.phone}</a>
+      </details>
+    ))}
+  </noscript>
+</section>
+
+<style>
+  .bee-helper {
+    padding: 1.5rem;
+    margin-top: 2rem;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+    margin-block: 0.5rem;
+  }
+  .bee-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .bee-options[hidden] {
+    display: none;
+  }
+  button {
+    padding: 0.75rem;
+    min-height: 2.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    background: var(--paper);
+    color: var(--forest);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  button[aria-pressed="true"] {
+    border-color: var(--tomato);
+    box-shadow: 0 0 0 1px var(--tomato);
+  }
+  button:focus-visible {
+    outline: 3px solid var(--tomato);
+    outline-offset: 3px;
+  }
+  .bee-result:not(:empty) {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+</style>

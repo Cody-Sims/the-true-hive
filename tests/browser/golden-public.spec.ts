@@ -191,13 +191,13 @@ test("production mobile navigation keeps cart access and keyboard focus without 
     await menu.press("Enter");
     await menu.press("Tab");
     await expect(
-      panel.getByRole("link", { name: "Store", exact: true }),
+      panel.getByRole("link", { name: "Home", exact: true }),
     ).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(menu).toBeFocused();
     await expect(panel).toBeHidden();
     await menu.click();
-    await panel.getByRole("link", { name: "Store", exact: true }).click();
+    await panel.getByRole("link", { name: "Shop Soaps", exact: true }).click();
     await expect(page).toHaveURL(/\/goods$/);
     await expect(panel).toBeHidden();
     await menu.click();

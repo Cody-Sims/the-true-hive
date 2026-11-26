@@ -5,7 +5,14 @@ import AddToCart from "../../components/AddToCart.astro";
 import ProductPrices from "../../components/ProductPrices.astro";
 import ProductIngredients from "../../components/ProductIngredients.astro";
 import ProductProfile from "../../components/ProductProfile.astro";
-import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
+import {
+  getProduct,
+  getCatalog,
+  CatalogUnavailableError,
+} from "../../server/catalog.ts";
+import { money, pricedVariants, projectedStock } from "../../domain/cart.ts";
+import ProductCard from "../../components/ProductCard.astro";
+import { prioritizeProducts } from "../../domain/catalog-presentation.ts";
 import { readConfig } from "../../server/config.ts";
 import { isRecordKey } from "../../server/inventory/rules.ts";
 
@@ -31,6 +38,27 @@ const preferredVariantKey =
   Astro.url.searchParams.getAll("variant").length === 1
     ? (Astro.url.searchParams.get("variant") ?? undefined)
     : undefined;
+const offered = product
+  ? pricedVariants(product).filter(
+      (variant) =>
+        !["out_of_stock", "not_offered"].includes(
+          projectedStock(variant)?.state ?? "",
+        ),
+    )
+  : [];
+const selected =
+  offered.find((variant) => variant.key === preferredVariantKey) ?? offered[0];
+let related = null;
+if (product?.category === "soap") {
+  try {
+    related =
+      prioritizeProducts((await getCatalog(config)).products).find(
+        (entry) => entry.category === "soap" && entry.key !== product.key,
+      ) ?? null;
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+  }
+}
 ---
 
 <SiteLayout
@@ -57,7 +85,7 @@ const preferredVariantKey =
       )}
     </nav>
     {product ? (
-      <div class="detail-layout">
+      <div class="detail-layout" data-product-detail>
         <ProductGallery
           product={product}
           preferredVariantKey={preferredVariantKey}
@@ -79,12 +107,20 @@ const preferredVariantKey =
               <span class="pill">Concept product</span>
             </div>
           )}
+          {selected ? (
+            <p class="selected-detail-price">
+              <strong data-detail-price>{money(selected.priceMinor!)}</strong>{" "}
+              <span data-detail-format>{selected.label}</span>
+            </p>
+          ) : (
+            <ProductPrices product={product} compact showStock={false} />
+          )}
           <p class="detail-summary">{product.summary}</p>
-          <ProductPrices product={product} compact showStock={false} />
           <ProductProfile product={product} />
           <AddToCart
             product={product}
             preferredVariantKey={preferredVariantKey}
+            showPrice
           />
           <p>
             <a class="text-link" href="/cart#pickup">
@@ -104,7 +140,6 @@ const preferredVariantKey =
               </ul>
             </section>
           )}
-          <ProductIngredients ingredients={product.ingredients ?? []} />
           <div class="detail-links">
             <a class="text-link" href="/goods">
               Back to all goods <span aria-hidden="true">&nearr;</span>
@@ -130,6 +165,20 @@ const preferredVariantKey =
         </a>
       </section>
     )}
+    {product && (
+      <ProductIngredients
+        ingredients={product.ingredients ?? []}
+        grid
+        productTitle={product.title}
+        soapRecipe={product.category === "soap"}
+      />
+    )}
+    {related && (
+      <section class="related-soap" aria-label="Pair your pickup">
+        <p class="eyebrow">Pair Your Pickup</p>
+        <ProductCard product={related} />
+      </section>
+    )}
   </div>
 </SiteLayout>
 
@@ -148,7 +197,7 @@ const preferredVariantKey =
   }
   .detail-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: clamp(2rem, 6vw, 6rem);
+    gap: 1.5rem;
   }
   .detail-copy {
     min-width: 0;
@@ -169,11 +218,26 @@ const preferredVariantKey =
   }
   .detail-copy h1 {
     margin-top: 0.8rem;
-    font-size: clamp(2.6rem, 4.5vw, 4.5rem);
+    font-size: clamp(2rem, 4vw, 3rem);
     line-height: 1.04;
   }
   .product-status {
     margin-top: 1.1rem;
+  }
+  .selected-detail-price {
+    margin-block: 0.5rem 1rem;
+  }
+  .selected-detail-price strong {
+    font-size: 1.55rem;
+    color: var(--tomato);
+  }
+  .selected-detail-price span {
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .related-soap {
+    max-width: 35rem;
+    margin-top: 2.6rem;
   }
   .product-status .pill {
     margin: 0;

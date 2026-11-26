@@ -161,9 +161,13 @@
 }
 
 .golden-shell .market-mark {
-  width: 2.5rem;
-  height: 2.5rem;
-  flex-basis: 2.5rem;
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  font-family: var(--font-display);
+  font-weight: 700;
 }
 
 .golden-shell .brand-name {
@@ -228,6 +232,51 @@
   cursor: pointer;
 }
 
+.appearance-icon {
+  flex: 0 0 18px;
+}
+.site-appearance [data-appearance-icon="moon"] {
+  display: none;
+}
+.site-appearance[data-icon-mode="dark"] [data-appearance-icon="sun"] {
+  display: none;
+}
+.site-appearance[data-icon-mode="dark"] [data-appearance-icon="moon"] {
+  display: block;
+}
+
+:root[data-site-design="golden-apothecary"] .footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+.footer-group {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.footer-group h2 {
+  margin-bottom: 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.footer-group p strong {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.footer-group p small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.footer-policies {
+  padding-top: 2rem;
+}
+
 .site-menu-toggle,
 .site-appearance[hidden] {
   display: none;
@@ -263,8 +312,17 @@
 }
 
 @media (max-width: 940px) {
+  :root[data-site-design="golden-apothecary"] .footer-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   :root[data-site-design="golden-apothecary"] .product-shelf {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    :root[data-site-design="golden-apothecary"] .footer-inner {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   .golden-shell {
     max-height: 100dvh;
