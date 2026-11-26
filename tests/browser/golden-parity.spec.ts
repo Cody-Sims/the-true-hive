@@ -64,9 +64,18 @@ test("quick formats update each real card independently and preserve PDP selecti
       },
     ],
   }));
-  await page.route("**/api/catalog", (route) =>
-    route.fulfill({ json: { source: "database", products } }),
-  );
+  let holdNextCatalog = false;
+  let releaseCatalog!: () => void;
+  const heldCatalog = new Promise<void>((resolve) => {
+    releaseCatalog = resolve;
+  });
+  await page.route("**/api/catalog", async (route) => {
+    if (holdNextCatalog) {
+      holdNextCatalog = false;
+      await heldCatalog;
+    }
+    await route.fulfill({ json: { source: "database", products } });
+  });
   let mutations = 0;
   page.on("request", (request) => {
     if (request.method() !== "GET") mutations++;
@@ -156,7 +165,28 @@ test("quick formats update each real card independently and preserve PDP selecti
     "src",
     /soap-delight-wolf/,
   );
+  holdNextCatalog = true;
   await first.getByRole("button", { name: /Add to Cart/ }).click();
+  await expect(first.locator("[data-quick-add]")).toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
+  try {
+    await first
+      .locator(".format-option")
+      .filter({ hasText: "Single 4oz bar" })
+      .click();
+    await expect(first.locator("[data-card-price]")).toHaveText("$10.00");
+    await expect(
+      first.locator("[data-card-image-display] img"),
+    ).toHaveAttribute("src", /soap-delight-bar/);
+    await expect(first.locator("[data-card-link]").first()).toHaveAttribute(
+      "href",
+      /variant=coconut-milk-delight-4oz-single/,
+    );
+  } finally {
+    releaseCatalog();
+  }
   await expect(first.locator("[data-add-status]")).toContainText(
     "Added to your cart",
   );
@@ -167,6 +197,22 @@ test("quick formats update each real card independently and preserve PDP selecti
   ).toEqual({
     version: 1,
     lines: [{ variantKey: "coconut-milk-delight-4oz-wolf", quantity: 1 }],
+  });
+  await first.getByRole("button", { name: /Add to Cart/ }).click();
+  await expect(first.locator("[data-quick-add]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("true-hive-cart")!),
+    ),
+  ).toEqual({
+    version: 1,
+    lines: [
+      { variantKey: "coconut-milk-delight-4oz-wolf", quantity: 1 },
+      { variantKey: "coconut-milk-delight-4oz-single", quantity: 1 },
+    ],
   });
   expect(mutations).toBe(0);
   await detail.evaluate((node) => node.remove());

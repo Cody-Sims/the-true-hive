@@ -16,8 +16,7 @@ for (const card of document.querySelectorAll<HTMLElement>(
       radio.type !== "radio" ||
       !radio.checked ||
       radio.disabled ||
-      radio.form !== form ||
-      form.getAttribute("aria-busy") === "true"
+      radio.form !== form
     )
       return;
     const template = templates.get(radio.value);

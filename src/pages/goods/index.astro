@@ -68,6 +68,25 @@ const isRadar = (product: Catalog["products"][number]) =>
         projectedStock(variant)?.state ?? "",
       ),
   );
+function radarAvailability(product: Catalog["products"][number]): string {
+  const variants = pricedVariants(product);
+  if (
+    variants.some((variant) =>
+      ["available", "low_stock"].includes(projectedStock(variant)?.state ?? ""),
+    )
+  )
+    return "In Stock / Local Pickup";
+  if (
+    variants.length &&
+    variants.every((variant) =>
+      ["out_of_stock", "not_offered"].includes(
+        projectedStock(variant)?.state ?? "",
+      ),
+    )
+  )
+    return "Currently unavailable";
+  return "Availability unverified";
+}
 const matching = filtersInvalid
   ? []
   : prioritizeProducts(catalog?.products ?? []).filter((product) => {
@@ -287,6 +306,11 @@ const collectionHref = (nextView: string) => {
                     </a>
                   </h3>
                   <p>{product.summary}</p>
+                  {product.kind === "active" && (
+                    <p class="radar-availability">
+                      {radarAvailability(product)}
+                    </p>
+                  )}
                   <ProductPrices product={product} compact />
                   <a
                     class="text-link"
