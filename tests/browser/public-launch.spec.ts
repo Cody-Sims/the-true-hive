@@ -19,15 +19,17 @@ test("global navigation keeps cart access while pickup links stay in the store",
     await page.goto(path);
     const header = page.getByRole("navigation", { name: "Main navigation" });
     await expect(header.getByRole("link")).toHaveText([
-      "Store",
-      "Services",
-      "About us",
+      "Home",
+      "Shop Soaps",
+      "Bee Services",
+      "Our Story",
+      "Contact",
     ]);
     expect(
       await header
         .getByRole("link")
         .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href"))),
-    ).toEqual(["/goods", "/services", "/about"]);
+    ).toEqual(["/", "/goods", "/services", "/about", "/contact"]);
     const footer = page.getByRole("navigation", { name: "Footer navigation" });
     await expect(footer.getByRole("link")).toHaveText([
       "Contact us",
@@ -46,7 +48,7 @@ test("global navigation keeps cart access while pickup links stay in the store",
         "/cart",
       );
       await expect(
-        header.getByRole("link", { name: "Store", exact: true }),
+        header.getByRole("link", { name: "Shop Soaps", exact: true }),
       ).toHaveAttribute("aria-current", "page");
       const contact = page.getByRole("main").locator('a[href="/contact"]');
       if (path === "/checkout/return")
@@ -127,7 +129,7 @@ test("the store shows pickup-only fulfillment while pickup details stay in the c
   ).toHaveCount(0);
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Store", exact: true })
+    .getByRole("link", { name: "Shop Soaps", exact: true })
     .click();
   const pickupLink = page
     .getByRole("navigation", { name: "Store navigation" })

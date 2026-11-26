@@ -29,13 +29,21 @@ low-stock notices, published variant prices and a device-local shopping cart.
 Contact inquiries open an email draft that visitors must send themselves; no
 email provider or submission backend is required. Contact channels and the form
 live together at `/contact`; the collection says **Local Pickup Only** near
-the top, with detailed pickup information in the cart. The global header is
-**Store / Services / About us**. The cart is reachable from every public page;
-pickup details remain in the cart. Golden Apothecary follows the OS appearance
-and supports a device-local Auto/Light/Dark choice. Stocked products lead the
-homepage, bar profiles use published catalog facts rather than illustrative
-sensory scores, and bee services and common questions sit below shopping.
-Contact, Privacy and Accessibility remain in the footer. Apply migration 004 before
+the top, with full pickup instructions in the cart. The global header is
+**Home / Shop Soaps / Bee Services / Our Story / Contact**, with a mobile
+hamburger and cart access on every public page. Golden Apothecary follows the
+OS appearance and supports a device-local Auto/Light/Dark choice with sun/moon
+icons. Stocked products lead the homepage, followed by pickup steps, bee
+services and common questions. The store has All Goods / In-Stock Soaps /
+Seasonal Radar views and canonical format-aware quick add; soap details have
+coordinated thumbnails, price/format selection and ingredient cards. Contact
+pairs phone information with the real email-draft form, About uses a compact
+intro/photo layout, and Services includes a safety-first identification helper.
+Cart items and pickup/checkout occupy coordinated columns. Bar profiles remain
+published catalog facts, not illustrative sensory scores; no demo booking,
+restock promise or payment activation is implied. Grouped footer links include
+pickup spots; Contact, Privacy and Accessibility remain separately accessible.
+Apply migration 004 before
 deploying ingredient-aware code, and migration 005 before store controls.
 Authorized inventory administrators can allow or pause new checkouts under
 **Store settings**, while the catalog and cart remain visible. The switch

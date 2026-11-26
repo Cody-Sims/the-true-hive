@@ -40,7 +40,13 @@ test("verified workspace navigation stays separate from the public header and re
         page
           .getByRole("navigation", { name: "Main navigation" })
           .getByRole("link"),
-      ).toHaveText(["Store", "Services", "About us"]);
+      ).toHaveText([
+        "Home",
+        "Shop Soaps",
+        "Bee Services",
+        "Our Story",
+        "Contact",
+      ]);
       const workspace = page.getByRole("navigation", {
         name: "Administrator navigation",
       });
@@ -230,7 +236,7 @@ test("keyboard entry, confirmed phone contact and local email drafts remain inta
   await expect(page).toHaveURL(/#main$/);
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Services", exact: true })
+    .getByRole("link", { name: "Bee Services", exact: true })
     .click();
   await page.getByRole("link", { name: "Prepare a service inquiry" }).click();
   await expect(page).toHaveURL(/\/contact#inquiry$/);

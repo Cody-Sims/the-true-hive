@@ -6,6 +6,8 @@ import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import type { Catalog, ProductCategory } from "../../domain/catalog.ts";
 import { prioritizeProducts } from "../../domain/catalog-presentation.ts";
+import { pricedVariants, projectedStock } from "../../domain/cart.ts";
+import PickupSteps from "../../components/PickupSteps.astro";
 
 const collections: { value: ProductCategory | "all"; label: string }[] = [
   { value: "all", label: "All goods" },
@@ -17,6 +19,10 @@ const collections: { value: ProductCategory | "all"; label: string }[] = [
 const params = Astro.url.searchParams;
 const requestedCategory = params.get("category") ?? "all";
 const requestedQuery = params.get("q") ?? "";
+const view = params.get("view") ?? "all";
+const viewInvalid =
+  params.getAll("view").length > 1 ||
+  !["all", "in-stock", "seasonal"].includes(view);
 const categoryInvalid =
   params.getAll("category").length > 1 ||
   !collections.some((collection) => collection.value === requestedCategory);
@@ -25,7 +31,7 @@ const queryInvalid =
   params.getAll("q").length > 1 ||
   queryTooLong ||
   /[\u0000-\u001f\u007f]/u.test(requestedQuery);
-const filtersInvalid = categoryInvalid || queryInvalid;
+const filtersInvalid = categoryInvalid || queryInvalid || viewInvalid;
 const selectedCollection = collections.find(
   (collection) => collection.value === requestedCategory,
 );
@@ -34,7 +40,7 @@ const query = requestedQuery
   .slice(0, 80)
   .replace(/[\u0000-\u001f\u007f]/gu, "");
 const search = query.trim().toLowerCase();
-const filtersActive = category !== "all" || search.length > 0;
+const filtersActive = category !== "all" || search.length > 0 || view !== "all";
 
 const config = readConfig();
 let catalog: Catalog | undefined;
@@ -47,7 +53,21 @@ try {
   Astro.response.status = 503;
 }
 if (filtersInvalid && !unavailable) Astro.response.status = 400;
-const products = filtersInvalid
+const isStockedSoap = (product: Catalog["products"][number]) =>
+  product.category === "soap" &&
+  pricedVariants(product).some((variant) =>
+    ["available", "low_stock"].includes(projectedStock(variant)?.state ?? ""),
+  );
+const isRadar = (product: Catalog["products"][number]) =>
+  product.category !== "soap" ||
+  product.kind !== "active" ||
+  !pricedVariants(product).some(
+    (variant) =>
+      !["out_of_stock", "not_offered"].includes(
+        projectedStock(variant)?.state ?? "",
+      ),
+  );
+const matching = filtersInvalid
   ? []
   : prioritizeProducts(catalog?.products ?? []).filter((product) => {
       if (category !== "all" && product.category !== category) return false;
@@ -61,6 +81,21 @@ const products = filtersInvalid
         .toLowerCase();
       return !search || searchable.includes(search);
     });
+const products = matching.filter((product) =>
+  view === "in-stock"
+    ? isStockedSoap(product)
+    : view === "seasonal"
+      ? false
+      : !isRadar(product),
+);
+const radar = view === "in-stock" ? [] : matching.filter(isRadar);
+const collectionHref = (nextView: string) => {
+  const next = new URLSearchParams();
+  if (nextView !== "all") next.set("view", nextView);
+  if (category !== "all") next.set("category", category);
+  if (query) next.set("q", query);
+  return `/goods${next.size ? `?${next}` : ""}`;
+};
 ---
 
 <SiteLayout
@@ -69,16 +104,51 @@ const products = filtersInvalid
 >
   <section class="page-intro collection-intro wrap">
     <div>
-      <p class="eyebrow">The True Hive / Everyday goods</p>
-      <h1>
-        The daily <em>collection.</em>
-      </h1>
-      <p class="eyebrow">Local Pickup Only</p>
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Store</span>
+      </nav>
+      <p class="eyebrow">
+        The True Hive Apothecary / <span>Local Pickup Only</span>
+      </p>
+      <h1>Small-batch soaps, ready along US-411.</h1>
+      <p>
+        Everyday bars and sculpted gift molds, with full ingredient transparency
+        and current catalog availability.
+      </p>
     </div>
+    <nav class="collection-pills" aria-label="Apothecary collections">
+      {[
+        ["all", "All Goods", catalog?.products.length],
+        [
+          "in-stock",
+          "In-Stock Soaps",
+          catalog?.products.filter(isStockedSoap).length,
+        ],
+        [
+          "seasonal",
+          "Seasonal Radar",
+          catalog?.products.filter(isRadar).length,
+        ],
+      ].map(([key, label, count]) => (
+        <a
+          class:list={["button", { "button-primary": view === key }]}
+          href={collectionHref(String(key))}
+          aria-current={view === key ? "page" : undefined}
+        >
+          {label}
+          {count !== undefined ? ` (${count})` : ""}
+        </a>
+      ))}
+    </nav>
   </section>
 
   <div class="wrap">
     <form class="collection-filters" action="/goods" method="get" role="search">
+      {!viewInvalid && view !== "all" && (
+        <input type="hidden" name="view" value={view} />
+      )}
       <div class="filter-field">
         <label for="collection-category">Collection</label>
         <select
@@ -134,7 +204,8 @@ const products = filtersInvalid
       </div>
       {!unavailable && !filtersInvalid && !!catalog?.products.length && (
         <p class="result-count">
-          {products.length} {products.length === 1 ? "product" : "products"}
+          {products.length + radar.length}{" "}
+          {products.length + radar.length === 1 ? "product" : "products"}
           {filtersActive ? " found" : ""}
         </p>
       )}
@@ -147,6 +218,12 @@ const products = filtersInvalid
     {filtersInvalid && (
       <NoticePanel id="filter-error" class="filter-error" role="status">
         <h3>Let's try those filters again.</h3>
+        {viewInvalid && (
+          <p>
+            Choose All Goods, In-Stock Soaps, or Seasonal Radar. Repeated or
+            unknown collection views cannot be applied.
+          </p>
+        )}
         {categoryInvalid && (
           <p>
             Choose one collection from the list. The collection in this link
@@ -176,12 +253,33 @@ const products = filtersInvalid
         <h3>No products available.</h3>
         <p>Please check back soon.</p>
       </NoticePanel>
-    ) : filtersInvalid ? null : products.length ? (
-      <div class="product-shelf">
-        {products.map((product) => (
-          <ProductCard product={product} />
-        ))}
-      </div>
+    ) : filtersInvalid ? null : products.length || radar.length ? (
+      <>
+        <div class="product-shelf">
+          {products.map((product) => (
+            <ProductCard product={product} />
+          ))}
+        </div>
+        {radar.length > 0 && (
+          <section
+            class="seasonal-radar"
+            data-seasonal-radar
+            aria-labelledby="radar-title"
+          >
+            <p class="eyebrow">Seasonal &amp; next-batch radar</p>
+            <h2 id="radar-title">Beyond the everyday bars.</h2>
+            <p>
+              Read each listing for current availability. A future batch or
+              restock is not guaranteed.
+            </p>
+            <div class="product-shelf">
+              {radar.map((product) => (
+                <ProductCard product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+      </>
     ) : (
       <NoticePanel class="no-matches" role="status">
         <p class="eyebrow">Room to look again</p>
@@ -198,18 +296,33 @@ const products = filtersInvalid
       </NoticePanel>
     )}
   </section>
+  <PickupSteps />
 </SiteLayout>
 
 <style>
   .collection-intro {
     padding-block: clamp(2rem, 4vw, 3.5rem) 1.25rem;
   }
+  .collection-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+  .collection-pills .button:not(.button-primary) {
+    background: var(--white);
+    border-color: var(--line);
+    color: var(--forest);
+  }
+  .seasonal-radar {
+    margin-top: 2.5rem;
+  }
   .collection-intro h1 {
     margin-block: 0.75rem 1rem;
     font-family: var(--font-display);
-    font-size: clamp(2.7rem, 5vw, 4.5rem);
-    font-weight: 400;
-    letter-spacing: -0.065em;
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
     line-height: 1.02;
   }
   .collection-filters {

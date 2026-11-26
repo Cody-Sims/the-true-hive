@@ -1,11 +1,26 @@
 const gallery = document.querySelector<HTMLElement>("[data-product-gallery]");
 if (gallery) {
+  const scope = gallery.closest("[data-product-detail]") ?? document;
+  const form = () =>
+    scope.querySelector<HTMLFormElement>(
+      "[data-add-to-cart]:not([data-quick-add])",
+    );
   const radios = () => [
-    ...document.querySelectorAll<HTMLInputElement>(
-      '[data-add-to-cart] input[type="radio"][name="variantKey"]',
-    ),
+    ...(form()?.querySelectorAll<HTMLInputElement>(
+      'input[type="radio"][name="variantKey"]',
+    ) ?? []),
   ];
   const show = (key: string) => {
+    const radio = radios().find((entry) => entry.value === key);
+    if (radio) {
+      const price = scope.querySelector("[data-detail-price]");
+      const format = scope.querySelector("[data-detail-format]");
+      if (price) price.textContent = radio.dataset["variantPrice"] ?? "";
+      if (format) format.textContent = radio.dataset["variantLabel"] ?? "";
+      const buttonPrice = form()?.querySelector("[data-selected-price]");
+      if (buttonPrice)
+        buttonPrice.textContent = radio.dataset["variantPrice"] ?? "";
+    }
     const template = [
       ...gallery.querySelectorAll<HTMLTemplateElement>(
         "[data-gallery-template]",
@@ -17,11 +32,16 @@ if (gallery) {
       ?.replaceChildren(template.content.cloneNode(true));
     for (const button of gallery.querySelectorAll<HTMLButtonElement>(
       "[data-variant-image]",
-    ))
+    )) {
       button.setAttribute(
         "aria-pressed",
         String(button.dataset.variantImage === key),
       );
+      if (button.dataset.variantImage === key) {
+        const note = gallery.querySelector("[data-gallery-note]");
+        if (note) note.textContent = button.dataset["variantNote"] ?? "";
+      }
+    }
   };
   gallery.addEventListener("click", (event) => {
     const button =

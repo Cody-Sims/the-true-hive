@@ -14,6 +14,7 @@ const appearance = document.querySelector<HTMLButtonElement>(
   "[data-site-appearance]",
 );
 const mobile = window.matchMedia("(max-width: 940px)");
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 let lastHeaderFocus: HTMLElement | null = null;
 
 function updateHeaderOffset() {
@@ -43,8 +44,15 @@ function currentAppearance(): Appearance {
 }
 
 function updateAppearance() {
-  if (appearance)
-    appearance.textContent = `Appearance: ${appearanceLabels[currentAppearance()]}`;
+  if (appearance) {
+    const mode = currentAppearance();
+    const label = appearance.querySelector<HTMLElement>(
+      "[data-appearance-label]",
+    );
+    if (label) label.textContent = `Appearance: ${appearanceLabels[mode]}`;
+    appearance.dataset["iconMode"] =
+      mode === "system" ? (prefersDark.matches ? "dark" : "light") : mode;
+  }
   updateHeaderOffset();
 }
 
@@ -124,6 +132,9 @@ if (frame && toggle && panel) {
 if (appearance) {
   appearance.hidden = false;
   updateAppearance();
+  prefersDark.addEventListener("change", () => {
+    if (currentAppearance() === "system") updateAppearance();
+  });
   appearance.addEventListener("click", () => {
     const next =
       appearances[

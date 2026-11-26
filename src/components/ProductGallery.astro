@@ -1,6 +1,6 @@
 ---
 import type { Product } from "../domain/catalog.ts";
-import { pricedVariants, projectedStock } from "../domain/cart.ts";
+import { money, pricedVariants, projectedStock } from "../domain/cart.ts";
 import { getSoapReference } from "../content/soap-references.ts";
 import ProductArt from "./ProductArt.astro";
 interface Props {
@@ -34,13 +34,17 @@ const reference = !product.photo
       eager
     />
   </div>
-  {reference && <figcaption>AI styling reference</figcaption>}
   <div class="gallery-choices" aria-label="Product images">
     {product.variants.map((variant) => (
       <>
         <button
           type="button"
           data-variant-image={variant.key}
+          data-variant-note={
+            !product.photo
+              ? getSoapReference(product.key, variant.key)?.alt
+              : undefined
+          }
           aria-label={`View ${variant.label}`}
           aria-pressed={variant.key === selected?.key}
           disabled={!offered.some((entry) => entry.key === variant.key)}
@@ -52,7 +56,12 @@ const reference = !product.photo
             referenceVariantKey={variant.key}
             sizes="5rem"
           />
-          <span>{variant.label}</span>
+          <span>
+            {variant.label}
+            {variant.priceMinor !== null
+              ? ` · ${money(variant.priceMinor)}`
+              : ""}
+          </span>
         </button>
         <template data-gallery-template={variant.key}>
           <ProductArt
@@ -67,6 +76,12 @@ const reference = !product.photo
       </>
     ))}
   </div>
+  {reference && (
+    <figcaption>
+      <strong>Transparent Visual Note:</strong>{" "}
+      <span data-gallery-note>{reference.alt}</span>
+    </figcaption>
+  )}
 </figure>
 
 <style>
@@ -75,9 +90,13 @@ const reference = !product.photo
     min-width: 0;
     margin: 0;
     align-self: start;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    overflow: hidden;
+    background: var(--white);
   }
   .gallery-art {
-    aspect-ratio: 1;
+    aspect-ratio: 4 / 3;
     background: var(--surface);
     overflow: hidden;
   }
@@ -88,20 +107,16 @@ const reference = !product.photo
     object-fit: cover;
   }
   figcaption {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border: 0;
-    background: var(--paper);
-    color: var(--forest);
-    font-size: 0.65rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.78rem;
   }
   .gallery-choices {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
-    margin-top: 0.75rem;
+    padding: 1rem;
   }
   button {
     display: grid;
@@ -117,6 +132,7 @@ const reference = !product.photo
     font: inherit;
     font-size: 0.75rem;
     text-align: left;
+    border-radius: 0.65rem;
   }
   button[aria-pressed="true"] {
     border-color: var(--forest);

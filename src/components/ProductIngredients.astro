@@ -1,17 +1,110 @@
 ---
 interface Props {
   ingredients?: readonly string[];
+  grid?: boolean;
+  productTitle?: string;
+  soapRecipe?: boolean;
 }
-const { ingredients = [] } = Astro.props;
+const {
+  ingredients = [],
+  grid = false,
+  productTitle,
+  soapRecipe = false,
+} = Astro.props;
+const notes = new Map([
+  ["avocado oil", "An avocado-derived oil used as part of the soap recipe."],
+  ["coconut oil", "An oil used to make soap and contribute to its lather."],
+  [
+    "distilled water",
+    "Water used to prepare the soap mixture and dissolve lye.",
+  ],
+  ["coconut milk", "Coconut-derived milk included in the maker's soap recipe."],
+  [
+    "lye",
+    "Reacts with oils during saponification to make soap. This ingredient list describes recipe inputs, not a test of the finished bar.",
+  ],
+  ["shea butter", "A plant butter used as part of the soap's oil blend."],
+  [
+    "mango butter",
+    "Mango-derived plant butter included in the soap's oil blend.",
+  ],
+  ["castor oil", "An oil used in soap-making to support lather."],
+  [
+    "sweet almond oil",
+    "An almond-derived oil. Consider the complete ingredient list before choosing this recipe.",
+  ],
+  ["palm oil", "A plant oil used to contribute structure to a soap bar."],
+  [
+    "beeswax",
+    "Wax produced by honeybees, included as part of the soap recipe.",
+  ],
+  [
+    "beeswax ;)",
+    "Wax produced by honeybees, included as part of the soap recipe.",
+  ],
+  [
+    "local beeswax",
+    "Wax produced by honeybees, included as part of the soap recipe.",
+  ],
+]);
 ---
 
 {ingredients.length > 0 && (
-  <section aria-label="Ingredients">
-    <h2>Ingredients</h2>
-    <ul>
-      {ingredients.map((ingredient) => (
-        <li>{ingredient}</li>
-      ))}
+  <section
+    id="ingredients"
+    aria-label="Ingredients"
+    class={grid ? "ingredient-section" : undefined}
+  >
+    {grid && <p class="eyebrow">Every Ingredient Explained</p>}
+    <h2>
+      {grid && productTitle ? `What's inside ${productTitle}` : "Ingredients"}
+    </h2>
+    <ul class={grid ? "ingredient-grid" : undefined}>
+      {ingredients.map((ingredient) =>
+        grid ? (
+          <li>
+            <strong>{ingredient}</strong>
+            {soapRecipe && notes.has(ingredient.toLowerCase().trim()) && (
+              <p>{notes.get(ingredient.toLowerCase().trim())}</p>
+            )}
+          </li>
+        ) : (
+          <li>{ingredient}</li>
+        ),
+      )}
     </ul>
   </section>
 )}
+<style is:global>
+  .ingredient-section {
+    margin-block: 2.8rem;
+  }
+  .ingredient-section h2 {
+    font-size: 1.8rem;
+    margin-block: 0.5rem 1rem;
+  }
+  .ingredient-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+  }
+  .ingredient-grid > li {
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--white);
+    overflow-wrap: anywhere;
+  }
+  .ingredient-grid p {
+    margin-block: 0.5rem 0;
+    font-size: 0.84rem;
+    color: var(--muted);
+  }
+  @media (max-width: 700px) {
+    .ingredient-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
