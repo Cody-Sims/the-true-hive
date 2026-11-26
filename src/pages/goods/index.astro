@@ -1,6 +1,7 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
 import ProductCard from "../../components/ProductCard.astro";
+import ProductPrices from "../../components/ProductPrices.astro";
 import NoticePanel from "../../components/NoticePanel.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
@@ -274,7 +275,26 @@ const collectionHref = (nextView: string) => {
             </p>
             <div class="product-shelf">
               {radar.map((product) => (
-                <ProductCard product={product} />
+                <article class="shelf-product radar-card">
+                  <p class="eyebrow">
+                    {product.kind === "concept"
+                      ? "Concept product"
+                      : "Seasonal listing"}
+                  </p>
+                  <h3>
+                    <a href={`/goods/${encodeURIComponent(product.slug)}`}>
+                      {product.title}
+                    </a>
+                  </h3>
+                  <p>{product.summary}</p>
+                  <ProductPrices product={product} compact />
+                  <a
+                    class="text-link"
+                    href={`/goods/${encodeURIComponent(product.slug)}`}
+                  >
+                    View product details &rarr;
+                  </a>
+                </article>
               ))}
             </div>
           </section>
@@ -302,12 +322,19 @@ const collectionHref = (nextView: string) => {
 <style>
   .collection-intro {
     padding-block: clamp(2rem, 4vw, 3.5rem) 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .collection-intro > div {
+    flex: 1 1 34rem;
+    min-width: 0;
   }
   .collection-pills {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 1.25rem;
   }
   .collection-pills .button:not(.button-primary) {
     background: var(--white);
@@ -316,6 +343,22 @@ const collectionHref = (nextView: string) => {
   }
   .seasonal-radar {
     margin-top: 2.5rem;
+  }
+  .shelf-product.radar-card {
+    display: block;
+    padding: 1.25rem;
+    border: 1px dashed var(--line);
+    border-radius: 1rem;
+    background: var(--white);
+  }
+  .radar-card h3 {
+    margin-block: 0.5rem;
+    font-size: 1.35rem;
+    overflow-wrap: anywhere;
+  }
+  .radar-card p {
+    font-size: 0.86rem;
+    margin-block: 0.5rem;
   }
   .collection-intro h1 {
     margin-block: 0.75rem 1rem;
