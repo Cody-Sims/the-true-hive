@@ -1,5 +1,126 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+
+async function contrast(
+  page: Page,
+  selector: string,
+  property = "color",
+  pseudo: string | null = null,
+) {
+  return page.locator(selector).evaluate(
+    (element, options) => {
+      const luminance = (color: string) => {
+        const channels = color
+          .match(/[\d.]+/g)
+          ?.slice(0, 3)
+          .map(Number);
+        if (!channels || channels.length !== 3)
+          throw new Error(`Expected RGB color: ${color}`);
+        const values = channels.map((channel) => {
+          const value = channel / 255;
+          return value <= 0.04045
+            ? value / 12.92
+            : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return values[0]! * 0.2126 + values[1]! * 0.7152 + values[2]! * 0.0722;
+      };
+      const foreground = luminance(
+        getComputedStyle(element, options.pseudo).getPropertyValue(
+          options.property,
+        ),
+      );
+      const background = luminance(
+        getComputedStyle(document.body).backgroundColor,
+      );
+      return (
+        (Math.max(foreground, background) + 0.05) /
+        (Math.min(foreground, background) + 0.05)
+      );
+    },
+    { property, pseudo },
+  );
+}
+
+test("dark search placeholders and inquiry validation remain readable", async ({
+  page,
+}) => {
+  await page.goto("/goods");
+  await page.getByRole("button", { name: /^Appearance:/ }).click();
+  await page.getByRole("button", { name: /^Appearance:/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
+  expect(
+    await contrast(page, "#collection-query", "color", "::placeholder"),
+  ).toBeGreaterThanOrEqual(4.5);
+  await page.goto("/contact");
+  await page
+    .getByRole("button", { name: "Open email draft", exact: true })
+    .click();
+  await expect(page.locator("#inquiry-name-error")).toBeVisible();
+  expect(await contrast(page, "#inquiry-name-error")).toBeGreaterThanOrEqual(
+    4.5,
+  );
+  expect(
+    await contrast(page, "#inquiry-name", "border-top-color"),
+  ).toBeGreaterThanOrEqual(3);
+});
+
+test("fragment destinations clear the rendered sticky header at mobile, desktop and enlarged text", async ({
+  page,
+}) => {
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const path of ["/contact#inquiry", "/services#farm-pollination"]) {
+      await page.goto(path);
+      const target = page.locator(path.slice(path.indexOf("#")));
+      const header = page.locator(".site-header-frame");
+      await expect
+        .poll(
+          async () =>
+            (await target.boundingBox())!.y -
+            ((await header.boundingBox())!.y +
+              (await header.boundingBox())!.height),
+        )
+        .toBeGreaterThanOrEqual(0);
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+      });
+      await page.waitForFunction(
+        () =>
+          parseFloat(
+            getComputedStyle(document.documentElement).scrollPaddingTop,
+          ) >=
+          document.querySelector(".site-header-frame")!.getBoundingClientRect()
+            .height,
+      );
+      await target.evaluate((element) =>
+        element.scrollIntoView({ block: "start" }),
+      );
+      expect((await target.boundingBox())!.y).toBeGreaterThanOrEqual(
+        (await header.boundingBox())!.y + (await header.boundingBox())!.height,
+      );
+    }
+  }
+});
+
+test("fragment destinations remain visible without JavaScript enhancement", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 1000 },
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto("http://127.0.0.1:4325/contact#inquiry");
+    const target = (await page.locator("#inquiry").boundingBox())!;
+    const header = (await page.locator(".site-header-frame").boundingBox())!;
+    expect(target.y).toBeGreaterThanOrEqual(
+      Math.max(0, header.y + header.height),
+    );
+  } finally {
+    await context.close();
+  }
+});
 
 test("the production theme follows the OS and preserves explicit appearance across public pages", async ({
   page,

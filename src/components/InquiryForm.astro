@@ -171,14 +171,14 @@ import {
   }
   .inquiry-error {
     margin-block: 0.35rem 0.75rem;
-    color: #8c241b;
+    color: var(--form-error, #8c241b);
     font-weight: 700;
   }
   .inquiry-error:empty {
     display: none;
   }
   [aria-invalid="true"] {
-    border: 2px solid #8c241b;
+    border: 2px solid var(--form-error, #8c241b);
   }
   .inquiry-fallback {
     margin-bottom: 0;

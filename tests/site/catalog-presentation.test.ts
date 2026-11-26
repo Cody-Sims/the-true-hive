@@ -111,6 +111,24 @@ test("an empty catalog stays empty rather than substituting demo products or pri
   });
 });
 
+test("unavailable and unpriced formats produce generic product tiles, not selectable-format promises", () => {
+  for (const variants of [
+    [variant("sold-bar", "out_of_stock"), variant("sold-wolf", "out_of_stock")],
+    [
+      {
+        ...variant("hidden-bar", "available"),
+        stock: { state: "not_offered" } as const,
+      },
+    ],
+    [{ ...variant("unpriced-bar", "available"), priceMinor: null }],
+  ]) {
+    const selection = homeSelection([product("unavailable", variants)]);
+    assert.equal(selection.stocked, false);
+    assert.equal(selection.hero.length, 1);
+    assert.equal(selection.hero[0]?.variant, undefined);
+  }
+});
+
 test("public bar profiles render current catalog facts without changing the private editor preview", async () => {
   const soap = product("facts-soap", [
     { ...variant("facts-bar", "available"), priceMinor: 725 },

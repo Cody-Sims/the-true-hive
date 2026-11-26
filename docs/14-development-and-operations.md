@@ -276,6 +276,9 @@ authorize live payments, new paid resources or fabricated product facts.
   All products / Pickup / Cart navigation with the persisted cart count.
   The footer retains only Contact us, Privacy and Accessibility. Pickup details
   stay with the collection and cart; neither requires a large homepage section.
+  The enhanced header measures its rendered height for fragment scroll padding,
+  including wrapped text and workspace links. Without JavaScript the header
+  remains non-sticky, so native fragment navigation does not hide its target.
 
 ### Storefront photography references and format choices
 
