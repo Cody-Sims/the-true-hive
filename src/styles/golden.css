@@ -1,5 +1,6 @@
 :root[data-site-design="golden-apothecary"] {
   color-scheme: light;
+  scroll-padding-top: calc(var(--header-offset, 0px) + 1.5rem);
   --paper: #fffbf4;
   --forest: #1f1711;
   --tomato: #af5705;
@@ -15,6 +16,7 @@
   --inverse-surface: #231811;
   --inverse-ink: #fff6e5;
   --highlight-ink: #fae3b2;
+  --form-error: #a63226;
   --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
 }
 
@@ -35,6 +37,7 @@
   --inverse-surface: #1b1d19;
   --inverse-ink: #f5efe4;
   --highlight-ink: #e8ae42;
+  --form-error: #f0a08c;
   --font-display: Didot, "Bodoni MT", Georgia, serif;
 }
 
@@ -56,6 +59,7 @@
     --inverse-surface: #1b1d19;
     --inverse-ink: #f5efe4;
     --highlight-ink: #e8ae42;
+    --form-error: #f0a08c;
     --font-display: Didot, "Bodoni MT", Georgia, serif;
   }
 }
@@ -133,10 +137,18 @@
 }
 
 .golden-shell {
-  position: sticky;
+  position: static;
   top: 0;
   z-index: 50;
   background: var(--paper);
+}
+
+.golden-shell[data-nav-enhanced] {
+  position: sticky;
+}
+
+.golden-shell .workspace-nav-primary:hover {
+  background: var(--forest);
 }
 
 .golden-shell .site-header {

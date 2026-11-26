@@ -16,6 +16,25 @@ const appearance = document.querySelector<HTMLButtonElement>(
 const mobile = window.matchMedia("(max-width: 940px)");
 let lastHeaderFocus: HTMLElement | null = null;
 
+function updateHeaderOffset() {
+  if (frame)
+    document.documentElement.style.setProperty(
+      "--header-offset",
+      `${Math.ceil(frame.getBoundingClientRect().height)}px`,
+    );
+}
+
+function revealFragment() {
+  if (!window.location.hash) return;
+  try {
+    document
+      .getElementById(decodeURIComponent(window.location.hash.slice(1)))
+      ?.scrollIntoView({ block: "start", behavior: "instant" });
+  } catch {
+    // Malformed fragments must not disable navigation or appearance controls.
+  }
+}
+
 function currentAppearance(): Appearance {
   const mode = document.documentElement.dataset["colorMode"];
   return appearances.includes(mode as Appearance)
@@ -26,12 +45,14 @@ function currentAppearance(): Appearance {
 function updateAppearance() {
   if (appearance)
     appearance.textContent = `Appearance: ${appearanceLabels[currentAppearance()]}`;
+  updateHeaderOffset();
 }
 
 function setMenu(open: boolean) {
   const focused = document.activeElement;
   panel?.classList.toggle("is-open", open);
   toggle?.setAttribute("aria-expanded", String(open));
+  updateHeaderOffset();
   if (
     focused instanceof HTMLElement &&
     panel?.contains(focused) &&
@@ -46,6 +67,18 @@ function setMenu(open: boolean) {
 if (frame && toggle && panel) {
   toggle.hidden = false;
   frame.dataset["navEnhanced"] = "true";
+  updateHeaderOffset();
+  if (typeof ResizeObserver !== "undefined")
+    new ResizeObserver(updateHeaderOffset).observe(frame);
+  window.addEventListener("resize", updateHeaderOffset);
+  window.addEventListener("hashchange", () => {
+    updateHeaderOffset();
+    revealFragment();
+  });
+  requestAnimationFrame(() => {
+    updateHeaderOffset();
+    revealFragment();
+  });
   toggle.addEventListener("click", () => {
     setMenu(toggle.getAttribute("aria-expanded") !== "true");
   });

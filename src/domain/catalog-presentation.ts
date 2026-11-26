@@ -40,7 +40,7 @@ function displayVariants(product: Product): ProductVariant[] {
         projectedStock(variant)?.state ?? "",
       ),
   );
-  return offered.length ? offered : priced.length ? priced : product.variants;
+  return offered;
 }
 
 export function homeSelection(products: readonly Product[]): {

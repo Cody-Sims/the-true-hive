@@ -59,6 +59,16 @@ test("verified workspace navigation stays separate from the public header and re
           const box = await link.boundingBox();
           expect(box?.height).toBeGreaterThanOrEqual(44);
         }
+        await page.evaluate(() => {
+          document.documentElement.dataset["colorMode"] = "dark";
+        });
+        await workspace
+          .getByRole("link", { name: "Inventory", exact: true })
+          .hover();
+        expect(
+          (await new AxeBuilder({ page }).include(".workspace-nav").analyze())
+            .violations,
+        ).toEqual([]);
       } else {
         await expect(workspace).toHaveCount(0);
       }
