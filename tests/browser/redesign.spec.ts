@@ -57,6 +57,76 @@ test("Golden Apothecary leads with stocked soap and keeps bees in a separate low
   await expect(hero).toBeVisible();
 });
 
+test("hero tiles preserve the advertised soap format through navigation, reload and cart", async ({
+  page,
+}) => {
+  await page.goto(`${root}prototype.html?proto=golden-apothecary&page=home`);
+  for (const [index, slug, image, price, format] of [
+    [2, "the-true-soap", "soap-true-wolf.webp", "$12.50", "wolf"],
+    [1, "the-true-soap", "soap-true-bar.webp", "$10.00", "single"],
+    [0, "coconut-milk-delight", "soap-delight-bar.webp", "$10.00", "single"],
+  ] as const) {
+    const variant = `${slug}-4oz-${format}`;
+    const tile = page.locator(".ga-collage a").nth(index);
+    await expect(tile).toHaveAttribute(
+      "href",
+      new RegExp(`variant=${variant}`),
+    );
+    await tile.click();
+    await expect(page).toHaveURL(new RegExp(`variant=${variant}`));
+    const productImage = page.locator("#main figure > img");
+    const add = page.locator(`[data-add-cart="${slug}|${variant}"]`);
+    await expect(productImage).toHaveAttribute(
+      "src",
+      `../next/assets/${image}`,
+    );
+    await expect(add).toContainText(price);
+    await page.reload();
+    await expect(productImage).toHaveAttribute(
+      "src",
+      `../next/assets/${image}`,
+    );
+    await expect(add).toContainText(price);
+    await page
+      .getByRole("navigation", { name: "Primary navigation" })
+      .getByRole("link", { name: "Home", exact: true })
+      .click();
+  }
+
+  await page.locator(".ga-collage a").nth(2).click();
+  await page
+    .locator('[data-add-cart="the-true-soap|the-true-soap-4oz-wolf"]')
+    .click();
+  await page
+    .getByRole("link", { name: "Cart with 1 items", exact: true })
+    .click();
+  await expect(page.locator(".cart-line")).toHaveCount(1);
+  await expect(page.locator(".cart-line")).toContainText("Sculpted Wolf Mold");
+  await expect(page.locator(".cart-line")).toContainText("$12.50");
+  await page.goBack();
+  await expect(page.locator("#main figure > img")).toHaveAttribute(
+    "src",
+    "../next/assets/soap-true-wolf.webp",
+  );
+  await page
+    .getByRole("group", { name: "Choose format for The True Soap" })
+    .getByRole("button", { name: /4oz Everyday Bar/ })
+    .click();
+  await expect(page).toHaveURL(/variant=the-true-soap-4oz-single/);
+  await page.reload();
+  await expect(page.locator("#main figure > img")).toHaveAttribute(
+    "src",
+    "../next/assets/soap-true-bar.webp",
+  );
+  await page.goto(
+    `${root}prototype.html?proto=golden-apothecary&page=product&slug=coconut-milk-delight&variant=the-true-soap-4oz-wolf`,
+  );
+  await expect(page.locator("#main figure > img")).toHaveAttribute(
+    "src",
+    "../next/assets/soap-delight-bar.webp",
+  );
+});
+
 test("Golden Apothecary shows each recipe's sensory stats on home, shop and product pages", async ({
   page,
 }) => {

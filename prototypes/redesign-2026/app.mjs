@@ -46,12 +46,17 @@ function readParams() {
   const m = p.get("mode");
   const pg = p.get("page");
   const sl = p.get("slug");
+  const variantKey = p.get("variant");
   if (pr && prototypes.some((x) => x.id === pr)) state.proto = pr;
   if (m && ["system", "light", "dark"].includes(m)) state.colorMode = m;
   if (pg && ["home", "goods", "product", "services", "about", "cart", "contact"].includes(pg)) {
     state.page = pg;
   }
   if (sl && products.some((x) => x.slug === sl)) state.slug = sl;
+  const product = products.find((x) => x.slug === state.slug);
+  if (state.page === "product" && product?.variants.some((v) => v.key === variantKey)) {
+    selectedVariants[product.slug] = variantKey;
+  }
 }
 
 function syncUrl(push = false) {
@@ -61,8 +66,14 @@ function syncUrl(push = false) {
   url.searchParams.set("proto", state.proto);
   url.searchParams.set("mode", state.colorMode);
   url.searchParams.set("page", state.page);
-  if (state.page === "product") url.searchParams.set("slug", state.slug);
-  else url.searchParams.delete("slug");
+  if (state.page === "product") {
+    url.searchParams.set("slug", state.slug);
+    const product = products.find((p) => p.slug === state.slug) || products[0];
+    url.searchParams.set("variant", activeVariantFor(product).key);
+  } else {
+    url.searchParams.delete("slug");
+    url.searchParams.delete("variant");
+  }
   const next = url.toString();
   if (push && next !== window.location.href) {
     window.history.pushState({}, "", next);
@@ -177,9 +188,14 @@ function esc(str) {
     .replaceAll('"', "&quot;");
 }
 
-function navHref(page, slug) {
+function navHref(page, slug, variantKey) {
   const params = new URLSearchParams({ proto: state.proto, mode: state.colorMode, page });
   if (slug) params.set("slug", slug);
+  if (page === "product" && slug) {
+    const product = products.find((p) => p.slug === slug);
+    const key = variantKey || selectedVariants[slug];
+    if (product?.variants.some((v) => v.key === key)) params.set("variant", key);
+  }
   return `prototype.html?${params.toString()}`;
 }
 
@@ -500,7 +516,7 @@ function renderHomeGoldenApothecary() {
         </div>
         <div class="ga-collage">
           ${heroProducts.map(({ product, variant }, index) => `
-            <a class="ga-visual ${index === 0 ? "ga-visual-main" : "ga-visual-mini"}" href="${navHref("product", product.slug)}" data-nav="product" data-slug="${product.slug}">
+            <a class="ga-visual ${index === 0 ? "ga-visual-main" : "ga-visual-mini"}" href="${navHref("product", product.slug, variant.key)}" data-nav="product" data-slug="${product.slug}">
               <img src="${variant.image}" alt="${esc(variant.alt)}" ${index === 0 ? 'fetchpriority="high"' : ""} />
               <span class="ai-ref-note">AI styling reference</span>
               <div class="ga-caption-pill"><span>${index === 2 ? esc(variant.shortLabel) : esc(product.title)}</span><strong>${formatMoney(variant.priceMinor)}</strong></div>
@@ -1423,12 +1439,17 @@ document.addEventListener("click", (e) => {
   if (navEl && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
     e.preventDefault();
     state.page = navEl.dataset.nav;
-    if (navEl.dataset.slug) state.slug = navEl.dataset.slug;
+    if (navEl.dataset.slug) {
+      state.slug = navEl.dataset.slug;
+      const product = products.find((p) => p.slug === state.slug);
+      const variantKey = new URL(navEl.href, window.location.href).searchParams.get("variant");
+      if (product?.variants.some((v) => v.key === variantKey)) selectedVariants[product.slug] = variantKey;
+    }
     syncUrl(true); render({ focusMain: true }); window.scrollTo({ top: 0, behavior: "instant" }); return;
   }
 
   const varBtn = e.target.closest("[data-select-variant]");
-  if (varBtn) { const [s, k] = varBtn.dataset.selectVariant.split("|"); selectedVariants[s] = k; render(); return; }
+  if (varBtn) { const [s, k] = varBtn.dataset.selectVariant.split("|"); selectedVariants[s] = k; syncUrl(false); render(); return; }
 
   const addBtn = e.target.closest("[data-add-cart]");
   if (addBtn) {
