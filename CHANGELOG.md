@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Compact the selected Golden Apothecary mobile preview with a sticky wordmark/cart header, accessible hamburger navigation, 44px touch controls, and collapsible preview tools. Keep appearance and call actions inside the mobile menu, wrap enlarged text without overlapping controls, restore focus on dismissal and concept changes, and preserve desktop navigation and other comparison designs.
 - Refine the selected Golden Apothecary review with stocked-soap-first imagery, per-recipe sensory profiles, a separate lower bee-rescue and farm-pollination section, and complete bottom FAQs. Preserve adaptive light/dark mode and the public storefront; label sensory scores as illustrative preview guides. Product tile links retain the pictured format and price through navigation, reload, and the preview cart.
 - Open active sprint tasks directly in the focused editor, with checklist progress and imported notes in an expandable section. Separate signed-in workspace links from the public header with responsive Inventory and Team board shortcuts.
 - Redesign the shared team sprint board with self-contained task cards, custom dropdown controls, Sprint Pulse operational metrics, Board and List triage views with grouping/sorting, capped/collapsible Backlog and mobile stage tabs, interactive subtasks, target dates, blocker/size badges, per-column task creation and drag rank reordering without requiring a schema migration.
