@@ -31,6 +31,8 @@ let state = {
   pickupKey: pickupLocations[1].key, // Dunkin' Madisonville default
   beeChoice: null,
   xrayOpen: false,
+  mobileMenuOpen: false,
+  studioToolsOpen: false,
   toast: null,
   inquiry: {
     name: "",
@@ -39,6 +41,9 @@ let state = {
     message: "",
   },
 };
+
+const mobileViewport = window.matchMedia("(max-width: 940px)");
+let lastPreviewFocus = null;
 
 function readParams() {
   const p = new URLSearchParams(window.location.search);
@@ -231,6 +236,12 @@ function renderStudioBar() {
   return `
     <div class="studio-bar" role="region" aria-label="Prototype comparison bar">
       <div class="wrap studio-bar-inner">
+        ${state.proto === "golden-apothecary" ? `
+          <button type="button" id="studio-tools-toggle" class="studio-tools-toggle" data-toggle-studio-tools aria-controls="studio-controls" aria-expanded="${state.studioToolsOpen}">
+            <span>Golden Apothecary</span><span>Preview tools <span aria-hidden="true">&darr;</span></span>
+          </button>
+        ` : ""}
+        <div id="studio-controls" class="studio-controls ${state.studioToolsOpen ? "is-open" : ""}">
         <div class="studio-group">
           <a class="studio-back" href="index.html">&larr; Hub &amp; Plan</a>
           ${protoBtns}
@@ -238,6 +249,7 @@ function renderStudioBar() {
         <div class="studio-group">
           <div class="mode-toggle-group" role="group" aria-label="Color appearance mode">${modeBtns}</div>
           <button type="button" class="studio-xray-btn" data-toggle-xray aria-expanded="${state.xrayOpen}">SEO / AI X-Ray</button>
+        </div>
         </div>
       </div>
     </div>
@@ -247,6 +259,7 @@ function renderStudioBar() {
 function renderSiteHeader() {
   const count = getCartCount();
   const isMinimal = state.proto === "gallery-minimal";
+  const isGolden = state.proto === "golden-apothecary";
   const banner =
     state.proto === "local-hearth"
       ? `<span><strong>$0 Free Honeybee Colony Rescue</strong> in Monroe, Blount &amp; Knox counties — <a href="${siteMeta.phoneHref}">Call ${siteMeta.phone}</a></span><span>Free US-411 Pickup in Madisonville &amp; Vonore</span>`
@@ -269,7 +282,7 @@ function renderSiteHeader() {
 
   return `
     ${isMinimal ? "" : `<div class="promo-strip"><div class="wrap promo-strip-inner">${banner}</div></div>`}
-    <header class="site-header">
+    <header class="site-header ${isGolden ? "ga-header" : ""}">
       <div class="wrap header-inner">
         <a class="brand-link" href="${navHref("home")}" data-nav="home">
           ${isMinimal ? "" : `<span class="brand-mark" aria-hidden="true">TH</span>`}
@@ -278,11 +291,24 @@ function renderSiteHeader() {
             <small>Madisonville, Tennessee</small>
           </span>
         </a>
-        <nav class="main-nav" aria-label="Primary navigation">${navLinks}</nav>
+        ${isGolden ? `
+          <button type="button" id="mobile-menu-toggle" class="mobile-menu-toggle" data-toggle-mobile-menu aria-label="Menu" aria-controls="primary-nav" aria-expanded="${state.mobileMenuOpen}">
+            <span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          </button>
+        ` : ""}
+        <nav ${isGolden ? 'id="primary-nav"' : ""} class="main-nav ${state.mobileMenuOpen ? "is-open" : ""}" aria-label="Primary navigation">
+          ${navLinks}
+          ${isGolden ? `
+            <div class="mobile-menu-extras">
+              <button type="button" id="mobile-color-mode" class="mode-chip" data-cycle-mode title="Change color appearance">Appearance: ${modeChipLabel()}</button>
+              <a class="call-chip" href="${siteMeta.phoneHref}">Call ${siteMeta.phone}</a>
+            </div>
+          ` : ""}
+        </nav>
         <div class="header-actions">
           <button type="button" class="mode-chip" data-cycle-mode title="Toggle Light / Dark / System mode">${modeChipLabel()}</button>
           ${isMinimal ? "" : `<a class="call-chip" href="${siteMeta.phoneHref}">Call ${siteMeta.phone}</a>`}
-          <a class="cart-chip" href="${navHref("cart")}" data-nav="cart" aria-label="Cart with ${count} items">
+          <a class="cart-chip" href="${navHref("cart")}" data-nav="cart" aria-label="Cart ${count} ${count === 1 ? "item" : "items"}">
             Cart <span class="cart-badge">${count}</span>
           </a>
         </div>
@@ -1422,9 +1448,40 @@ function render(options = {}) {
   }
 }
 
+function setMobileMenuOpen(open) {
+  state.mobileMenuOpen = open;
+  const nav = document.getElementById("primary-nav");
+  const toggle = document.getElementById("mobile-menu-toggle");
+  const focused = document.activeElement;
+  nav?.classList.toggle("is-open", open);
+  toggle?.setAttribute("aria-expanded", String(open));
+  if (focused && (nav?.contains(focused) || focused === toggle) && !focused.getClientRects().length) {
+    (mobileViewport.matches ? toggle : document.querySelector(".brand-link"))?.focus({ preventScroll: true });
+  }
+}
+
+function setStudioToolsOpen(open) {
+  state.studioToolsOpen = open;
+  const controls = document.getElementById("studio-controls");
+  const toggle = document.getElementById("studio-tools-toggle");
+  const focused = document.activeElement;
+  controls?.classList.toggle("is-open", open);
+  toggle?.setAttribute("aria-expanded", String(open));
+  if (focused && (controls?.contains(focused) || focused === toggle) && !focused.getClientRects().length) {
+    (mobileViewport.matches ? toggle : document.querySelector(".studio-back"))?.focus({ preventScroll: true });
+  }
+}
+
 document.addEventListener("click", (e) => {
+  const menuToggle = e.target.closest("[data-toggle-mobile-menu]");
+  if (menuToggle) { setStudioToolsOpen(false); setMobileMenuOpen(!state.mobileMenuOpen); return; }
+  const toolsToggle = e.target.closest("[data-toggle-studio-tools]");
+  if (toolsToggle) { setMobileMenuOpen(false); setStudioToolsOpen(!state.studioToolsOpen); return; }
+  if (state.mobileMenuOpen && !e.target.closest(".site-header")) setMobileMenuOpen(false);
+  if (state.studioToolsOpen && !e.target.closest(".studio-bar, #xray-dialog")) setStudioToolsOpen(false);
+
   const protoBtn = e.target.closest("[data-switch-proto]");
-  if (protoBtn) { state.proto = protoBtn.dataset.switchProto; syncUrl(true); render(); window.scrollTo({ top: 0, behavior: "instant" }); return; }
+  if (protoBtn) { state.proto = protoBtn.dataset.switchProto; state.mobileMenuOpen = false; state.studioToolsOpen = false; syncUrl(true); render(); window.scrollTo({ top: 0, behavior: "instant" }); return; }
 
   const modeBtn = e.target.closest("[data-set-mode]");
   if (modeBtn) { state.colorMode = modeBtn.dataset.setMode; syncUrl(false); render(); return; }
@@ -1439,6 +1496,8 @@ document.addEventListener("click", (e) => {
   if (navEl && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
     e.preventDefault();
     state.page = navEl.dataset.nav;
+    state.mobileMenuOpen = false;
+    state.studioToolsOpen = false;
     if (navEl.dataset.slug) {
       state.slug = navEl.dataset.slug;
       const product = products.find((p) => p.slug === state.slug);
@@ -1538,8 +1597,41 @@ document.addEventListener("input", (e) => {
 
 window.addEventListener("popstate", () => {
   state.xrayOpen = false;
+  state.mobileMenuOpen = false;
+  state.studioToolsOpen = false;
   readParams();
   render({ focusMain: true });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || state.xrayOpen) return;
+  if (state.mobileMenuOpen) {
+    setMobileMenuOpen(false);
+    document.getElementById("mobile-menu-toggle")?.focus();
+    e.preventDefault();
+  } else if (state.studioToolsOpen) {
+    setStudioToolsOpen(false);
+    document.getElementById("studio-tools-toggle")?.focus();
+    e.preventDefault();
+  }
+});
+
+mobileViewport.addEventListener("change", () => {
+  const previousFocus = lastPreviewFocus;
+  setMobileMenuOpen(false);
+  setStudioToolsOpen(state.xrayOpen && mobileViewport.matches);
+  // Responsive CSS can blur a control before the media-query callback runs.
+  if (!state.xrayOpen && previousFocus?.isConnected && !previousFocus.getClientRects().length && document.activeElement === document.body) {
+    const inStudio = previousFocus.closest(".studio-bar");
+    const target = mobileViewport.matches
+      ? document.getElementById(inStudio ? "studio-tools-toggle" : "mobile-menu-toggle")
+      : document.querySelector(inStudio ? ".studio-back" : ".brand-link");
+    target?.focus({ preventScroll: true });
+  }
+});
+
+document.addEventListener("focusin", (e) => {
+  lastPreviewFocus = e.target.closest(".ga-header, .studio-bar") ? e.target : null;
 });
 
 readParams();

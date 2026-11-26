@@ -209,6 +209,8 @@ button { cursor: pointer; }
   gap: 0.45rem 0.85rem; padding: 0.45rem 0;
 }
 .studio-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.studio-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.45rem 0.85rem; width: 100%; }
+.studio-tools-toggle, .mobile-menu-toggle, .mobile-menu-extras { display: none; }
 .studio-back { color: #f2be59; text-decoration: none; font-weight: 800; margin-right: 0.35rem; }
 .studio-back:hover { text-decoration: underline; }
 .studio-pill {
@@ -602,6 +604,53 @@ button { cursor: pointer; }
   .trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-header { position: static; }
   .ga-collage { order: -1; }
+  :root[data-proto="golden-apothecary"] .studio-bar { position: static; }
+  :root[data-proto="golden-apothecary"] .studio-tools-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    width: 100%; min-height: 44px; padding: 0.35rem 0; border: 0;
+    background: transparent; color: #f2be59; font-size: 0.78rem; font-weight: 700;
+  }
+  :root[data-proto="golden-apothecary"] .studio-controls { display: none; }
+  :root[data-proto="golden-apothecary"] .studio-controls.is-open {
+    display: flex; max-height: 65dvh; overflow-y: auto; padding-block: 0.5rem;
+  }
+  :root[data-proto="golden-apothecary"] .studio-group { width: 100%; }
+  :root[data-proto="golden-apothecary"] .studio-controls :is(button, a) { min-height: 44px; display: inline-flex; align-items: center; }
+  .ga-header { position: sticky; top: 0; }
+  .ga-header .header-inner { display: grid; grid-template-columns: minmax(0, 1fr) 44px auto; gap: 0.5rem; padding-block: 0.75rem; }
+  .ga-header .brand-link { min-width: 0; min-height: 44px; }
+  .ga-header .brand-mark { display: none; }
+  .ga-header .brand-text strong { font-size: 1rem; }
+  .ga-header .header-actions { grid-column: 3; grid-row: 1; }
+  .ga-header .header-actions :is(.mode-chip, .call-chip) { display: none; }
+  .ga-header .cart-chip { min-height: 44px; padding-inline: 0.7rem; background: var(--ink); color: var(--bg); }
+  .ga-header .mobile-menu-toggle {
+    display: grid; place-items: center; grid-column: 2; grid-row: 1; width: 44px; height: 44px;
+    border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink);
+  }
+  .ga-header .mobile-menu-toggle[aria-expanded="true"] { background: var(--surface-alt); }
+  .menu-icon { position: relative; width: 18px; height: 16px; }
+  .menu-icon span { position: absolute; left: 0; width: 18px; height: 2px; border-radius: 2px; background: currentColor; transition: transform 0.15s ease, opacity 0.15s ease; }
+  .menu-icon span:nth-child(1) { top: 2px; }
+  .menu-icon span:nth-child(2) { top: 7px; }
+  .menu-icon span:nth-child(3) { top: 12px; }
+  .mobile-menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(1) { top: 7px; transform: rotate(45deg); }
+  .mobile-menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(2) { opacity: 0; }
+  .mobile-menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(3) { top: 7px; transform: rotate(-45deg); }
+  .ga-header .main-nav { display: none; grid-column: 1 / -1; grid-row: 2; }
+  .ga-header .main-nav.is-open {
+    display: flex; flex-direction: column; align-items: stretch; gap: 0.25rem; padding: 0.65rem 0.5rem;
+    max-height: calc(100dvh - 6rem); overflow-y: auto; overscroll-behavior: contain;
+    border-top: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm);
+  }
+  .ga-header .main-nav a { min-height: 44px; }
+  .ga-header .main-nav a[aria-current="page"] { color: var(--ink); }
+  .ga-header .mobile-menu-extras { display: grid; gap: 0.5rem; padding-top: 0.65rem; margin-top: 0.35rem; border-top: 1px solid var(--border); }
+  .ga-header .mobile-menu-extras :is(button, a) { min-height: 44px; justify-content: center; }
+  :root[data-proto="golden-apothecary"] .promo-strip-inner > span:last-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-icon span { transition: none; }
 }
 @media (max-width: 600px) {
   .trust-grid, .variant-row { grid-template-columns: minmax(0, 1fr); }

@@ -18,6 +18,134 @@ const profiles = [
 ];
 const labels = ["Creaminess", "Scent Warmth", "Bar Firmness"];
 
+test("mobile hamburger navigation is compact, keyboard-accessible and closes after navigation", async ({
+  page,
+}) => {
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${root}prototype.html?proto=golden-apothecary&page=home`);
+    const menu = page.getByRole("button", { name: "Menu", exact: true });
+    const nav = page.locator("#primary-nav");
+    await expect(menu).toBeVisible();
+    await expect(menu).toHaveAttribute("aria-expanded", "false");
+    await expect(nav).toBeHidden();
+    await expect(
+      page.getByRole("link", { name: "Cart 0 items" }),
+    ).toBeVisible();
+    expect((await menu.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(
+      (await page.locator(".header-inner").boundingBox())!.height,
+    ).toBeLessThanOrEqual(80);
+    await expect(page.locator(".ga-hero img").first()).toBeInViewport();
+
+    await menu.focus();
+    await menu.press("Enter");
+    await expect(menu).toHaveAttribute("aria-expanded", "true");
+    await expect(nav.getByRole("link")).toHaveText([
+      "Home",
+      "Shop Soaps",
+      "Bee Services",
+      "Our Story",
+      "Contact",
+      "Call (423) 368-2262",
+    ]);
+    await menu.press("Tab");
+    await expect(
+      nav.getByRole("link", { name: "Home", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(nav).toBeHidden();
+    await expect(menu).toBeFocused();
+    await menu.click();
+    await nav.getByRole("link", { name: "Shop Soaps", exact: true }).click();
+    await expect(page).toHaveURL(/page=goods/);
+    await expect(nav).toBeHidden();
+    await expect(menu).toHaveAttribute("aria-expanded", "false");
+    await menu.click();
+    await page.getByRole("heading", { level: 1 }).click();
+    await expect(nav).toBeHidden();
+  }
+});
+
+test("mobile menu retains appearance controls, cart contents and accessible contrast", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    `${root}prototype.html?proto=golden-apothecary&page=product&slug=the-true-soap&variant=the-true-soap-4oz-wolf&mode=dark`,
+  );
+  await page
+    .locator('[data-add-cart="the-true-soap|the-true-soap-4oz-wolf"]')
+    .click();
+  const menu = page.getByRole("button", { name: "Menu", exact: true });
+  await menu.click();
+  const appearance = page.locator("#primary-nav").getByRole("button", {
+    name: /^Appearance:/,
+  });
+  for (const mode of ["system", "light", "dark"]) {
+    await appearance.focus();
+    await appearance.press("Enter");
+    await expect(page.locator("html")).toHaveAttribute("data-color-mode", mode);
+    await expect(appearance).toBeFocused();
+    await expect(menu).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("link", { name: "Cart 1 item" })).toBeVisible();
+    expect(
+      (await new AxeBuilder({ page }).include(".site-header").analyze())
+        .violations,
+    ).toEqual([]);
+  }
+  await page.getByRole("link", { name: "Cart 1 item" }).click();
+  await expect(page.locator("#primary-nav")).toBeHidden();
+  await expect(page.locator(".cart-line")).toContainText("Sculpted Wolf Mold");
+  await expect(page.locator(".cart-line")).toContainText("$12.50");
+});
+
+test("mobile preview tools collapse independently and desktop navigation stays visible", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${root}prototype.html?proto=golden-apothecary&page=home`);
+  const menu = page.locator("#mobile-menu-toggle");
+  const tools = page.getByRole("button", {
+    name: /Preview tools/,
+  });
+  await expect(page.locator("#studio-controls")).toBeHidden();
+  await menu.click();
+  const shop = page.locator("#primary-nav").getByRole("link", {
+    name: "Shop Soaps",
+    exact: true,
+  });
+  await shop.focus();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await expect(menu).toBeHidden();
+  await expect(shop).toBeVisible();
+  await expect(shop).toBeFocused();
+  await expect(page.locator("#studio-controls")).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#primary-nav")).toBeHidden();
+  await expect(menu).toBeFocused();
+  await menu.click();
+  await tools.click();
+  await expect(page.locator("#primary-nav")).toBeHidden();
+  await expect(page.locator("#studio-controls")).toBeVisible();
+  await expect(
+    page.locator("#studio-controls [data-switch-proto]"),
+  ).toHaveCount(5);
+  const inspector = page.getByRole("button", {
+    name: "SEO / AI X-Ray",
+    exact: true,
+  });
+  await inspector.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(inspector).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#studio-controls")).toBeHidden();
+  await expect(tools).toBeFocused();
+});
+
 test("Golden Apothecary leads with stocked soap and keeps bees in a separate lower section", async ({
   page,
 }) => {
@@ -97,9 +225,7 @@ test("hero tiles preserve the advertised soap format through navigation, reload 
   await page
     .locator('[data-add-cart="the-true-soap|the-true-soap-4oz-wolf"]')
     .click();
-  await page
-    .getByRole("link", { name: "Cart with 1 items", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Cart 1 item", exact: true }).click();
   await expect(page.locator(".cart-line")).toHaveCount(1);
   await expect(page.locator(".cart-line")).toContainText("Sculpted Wolf Mold");
   await expect(page.locator(".cart-line")).toContainText("$12.50");
@@ -234,6 +360,7 @@ test("the selected design preserves automatic and manual appearance without mobi
     }
   }
   await page.goto(`${root}prototype.html?proto=golden-apothecary&page=home`);
+  await page.getByRole("button", { name: /Preview tools/ }).click();
   await page
     .getByRole("button", { name: "02 Cinematic Craft", exact: true })
     .click();
