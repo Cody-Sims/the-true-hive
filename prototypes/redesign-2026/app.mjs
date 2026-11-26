@@ -306,7 +306,7 @@ function renderSiteHeader() {
           ` : ""}
         </nav>
         <div class="header-actions">
-          <button type="button" class="mode-chip" data-cycle-mode title="Toggle Light / Dark / System mode">${modeChipLabel()}</button>
+          <button type="button" id="desktop-color-mode" class="mode-chip" data-cycle-mode title="Toggle Light / Dark / System mode">${modeChipLabel()}</button>
           ${isMinimal ? "" : `<a class="call-chip" href="${siteMeta.phoneHref}">Call ${siteMeta.phone}</a>`}
           <a class="cart-chip" href="${navHref("cart")}" data-nav="cart" aria-label="Cart ${count} ${count === 1 ? "item" : "items"}">
             Cart <span class="cart-badge">${count}</span>
@@ -1481,7 +1481,15 @@ document.addEventListener("click", (e) => {
   if (state.studioToolsOpen && !e.target.closest(".studio-bar, #xray-dialog")) setStudioToolsOpen(false);
 
   const protoBtn = e.target.closest("[data-switch-proto]");
-  if (protoBtn) { state.proto = protoBtn.dataset.switchProto; state.mobileMenuOpen = false; state.studioToolsOpen = false; syncUrl(true); render(); window.scrollTo({ top: 0, behavior: "instant" }); return; }
+  if (protoBtn) {
+    state.proto = protoBtn.dataset.switchProto;
+    state.mobileMenuOpen = false;
+    state.studioToolsOpen = false;
+    syncUrl(true);
+    render({ restoreSelector: state.proto === "golden-apothecary" && mobileViewport.matches ? "#studio-tools-toggle" : null });
+    window.scrollTo({ top: 0, behavior: "instant" });
+    return;
+  }
 
   const modeBtn = e.target.closest("[data-set-mode]");
   if (modeBtn) { state.colorMode = modeBtn.dataset.setMode; syncUrl(false); render(); return; }

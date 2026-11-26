@@ -18,6 +18,69 @@ const profiles = [
 ];
 const labels = ["Creaminess", "Scent Warmth", "Bar Firmness"];
 
+test("desktop appearance changes keep focus on the visible header control", async ({
+  page,
+}) => {
+  await page.goto(
+    `${root}prototype.html?proto=golden-apothecary&page=home&mode=dark`,
+  );
+  const appearance = page.locator(".header-actions [data-cycle-mode]");
+  for (const mode of ["system", "light", "dark"]) {
+    await appearance.focus();
+    await appearance.press("Enter");
+    await expect(page.locator("html")).toHaveAttribute("data-color-mode", mode);
+    await expect(appearance).toBeFocused();
+  }
+});
+
+test("returning to Golden Apothecary on mobile focuses the collapsed tools toggle", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${root}prototype.html?proto=story-flagship&page=home`);
+  const golden = page.getByRole("button", {
+    name: "01 Golden Apothecary",
+    exact: true,
+  });
+  await golden.focus();
+  await golden.press("Enter");
+  await expect(page.locator("#studio-controls")).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: /Preview tools/ }),
+  ).toBeFocused();
+});
+
+test("the mobile header accommodates enlarged text without overlapping controls", async ({
+  page,
+}) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${root}prototype.html?proto=golden-apothecary&page=home`);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    const brand = (await page.locator(".brand-text").boundingBox())!;
+    const menu = page.getByRole("button", { name: "Menu", exact: true });
+    const button = (await menu.boundingBox())!;
+    expect(
+      brand.y + brand.height <= button.y || brand.x + brand.width <= button.x,
+    ).toBe(true);
+    expect(
+      await page
+        .locator(".site-header")
+        .evaluate((element) => element.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await menu.click();
+    const call = page
+      .locator("#primary-nav")
+      .getByRole("link", { name: "Call (423) 368-2262", exact: true });
+    await call.focus();
+    await expect(call).toBeInViewport();
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeFocused();
+  }
+});
+
 test("mobile hamburger navigation is compact, keyboard-accessible and closes after navigation", async ({
   page,
 }) => {
