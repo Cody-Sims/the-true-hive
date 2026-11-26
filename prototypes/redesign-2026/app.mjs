@@ -234,12 +234,14 @@ function renderSiteHeader() {
   const banner =
     state.proto === "local-hearth"
       ? `<span><strong>$0 Free Honeybee Colony Rescue</strong> in Monroe, Blount &amp; Knox counties — <a href="${siteMeta.phoneHref}">Call ${siteMeta.phone}</a></span><span>Free US-411 Pickup in Madisonville &amp; Vonore</span>`
+      : state.proto === "golden-apothecary"
+      ? `<span><strong>Local Pickup Only</strong> &middot; Madisonville &amp; Vonore</span><span>Small-batch soaps &middot; Everyday bars from $10</span>`
       : `<span><strong>Free Local Pickup</strong> along US-411 (Madisonville &amp; Vonore) &middot; $0 Shipping</span><span>Need Honeybees Relocated? <a href="${navHref("services")}" data-nav="services">$0 Colony Rescue &rarr;</a></span>`;
 
   const navLinks = [
     ["home", "Home"],
     ["goods", "Shop Soaps"],
-    ["services", "Free Bee Rescue & Pollination"],
+    ["services", state.proto === "golden-apothecary" ? "Bee Services" : "Free Bee Rescue & Pollination"],
     ["about", "Our Story"],
     ["contact", "Contact"],
   ]
@@ -280,7 +282,7 @@ function renderVariantButtons(product) {
       ${product.variants
         .map(
           (v) => `
-        <button type="button" class="variant-btn" data-select-variant="${product.slug}|${v.key}" aria-pressed="${v.key === active.key}">
+        <button type="button" id="format-${esc(v.key)}" class="variant-btn" data-select-variant="${product.slug}|${v.key}" aria-pressed="${v.key === active.key}">
           <strong>${esc(v.shortLabel)} — ${formatMoney(v.priceMinor)}</strong>
           <span>${esc(v.roleTag)}</span>
         </button>
@@ -313,6 +315,7 @@ function renderProductCard(product) {
         </div>
         <p style="margin:0;color:var(--muted);font-size:0.92rem">${esc(product.shortHook)}</p>
         <div class="scent-chips">${product.scentNotes.map((n) => `<span class="scent-chip">${esc(n)}</span>`).join("")}</div>
+        ${state.proto === "golden-apothecary" ? renderSensoryProfile(product) : ""}
         ${renderVariantButtons(product)}
         <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:auto;padding-top:0.35rem">
           <button type="button" class="btn btn-primary" style="flex:1" data-add-cart="${product.slug}|${active.key}">Add to Cart — ${formatMoney(active.priceMinor)}</button>
@@ -320,6 +323,31 @@ function renderProductCard(product) {
         </div>
       </div>
     </article>
+  `;
+}
+
+function renderSensoryProfile(product) {
+  const metrics = [
+    ["Creaminess", product.meters.richness],
+    ["Scent Warmth", product.meters.warmth],
+    ["Bar Firmness", product.meters.firmness],
+  ];
+  return `
+    <div class="ga-sensory-profile" role="group" aria-label="${esc(product.title)} sensory profile">
+      <p class="eyebrow">Scent &amp; lather profile</p>
+      <div class="sf-meters ga-meters">
+        ${metrics.map(([label, value]) => `
+          <div class="sf-meter-row">
+            <span>${label}</span>
+            <div class="sf-meter-track" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}" aria-valuetext="${value} out of 100, illustrative sensory guide">
+              <div class="sf-meter-fill" style="width:${value}%"></div>
+            </div>
+            <span class="ga-meter-value" aria-hidden="true">${value}/100</span>
+          </div>
+        `).join("")}
+      </div>
+      <p class="ga-profile-note">Illustrative sensory guide for this preview, not lab-tested scores.</p>
+    </div>
   `;
 }
 
@@ -446,54 +474,66 @@ function renderFaqSection(list, heading = "Direct Answers — Ingredients, Picku
    5 DISTINCT HOME EXPERIENCES (Prototype 01 = Golden Apothecary + 4 Fresh Brand Directions)
    ============================================================================ */
 function renderHomeGoldenApothecary() {
+  const heroProducts = [
+    { product: products[0], variant: products[0].variants[0] },
+    { product: products[1], variant: products[1].variants[0] },
+    { product: products[1], variant: products[1].variants[1] },
+  ];
   return `
     <section class="ga-hero" aria-labelledby="home-h1">
       <div class="wrap ga-hero-grid">
         <div>
-          <p class="eyebrow">Madisonville, TN &middot; Small-Batch Soaps &amp; Live Beekeeping</p>
-          <h1 id="home-h1">Beeswax &amp; coconut-milk soaps. Free local bee rescue.</h1>
+          <p class="eyebrow">Madisonville, TN &middot; In Stock &amp; Ready for Pickup</p>
+          <h1 id="home-h1">Small-batch soaps.<br />A little everyday luxury.</h1>
           <p style="font-size:1.05rem;color:var(--muted);max-width:56ch;margin:0 0 1.5rem">
-            Hand-poured in Madisonville from honest plant oils and real beeswax — ready for $0 local pickup along US-411. Need honeybees relocated in Monroe, Blount, or Knox County? We rescue colonies at zero cost.
+            Coconut Milk Delight or The True Soap. Find your scent, compare the lather, and choose an everyday bar or sculpted Wolf Mold — with free local pickup along US-411.
           </p>
           <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.4rem">
             <a class="btn btn-primary" href="${navHref("goods")}" data-nav="goods">Shop In-Stock Soaps — From $10 &rarr;</a>
-            <a class="btn btn-secondary" href="${navHref("services")}" data-nav="services">Free Bee Rescue ($0)</a>
+            <a class="btn btn-secondary" href="#in-stock-soaps">Compare the Bars &darr;</a>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
-            <span class="pill-tag">&#10003; Real Beeswax &amp; Plant Oils</span>
-            <span class="pill-tag">&#10003; $0 US-411 Pickup (3 Spots)</span>
-            <span class="pill-tag">&#10003; $0 Live Bee Rescue</span>
+            <span class="pill-tag">&#10003; Every Ingredient Explained</span>
+            <span class="pill-tag">&#10003; Free Local Pickup</span>
+            <span class="pill-tag">&#10003; Bars &amp; Gift Molds</span>
           </div>
         </div>
         <div class="ga-collage">
-          <div class="ga-visual ga-visual-main">
-            <img src="../next/assets/hive.webp" alt="Honeybees tending golden honeycomb at The True Hive" />
-            <div class="ga-caption-pill"><span>East TN Apiary &amp; $0 Rescue</span><strong>Monroe &middot; Blount &middot; Knox</strong></div>
-          </div>
-          <div class="ga-visual ga-visual-mini">
-            <img src="../next/assets/soap-delight-bar.webp" alt="Coconut Milk Delight soap bar" />
-            <div class="ga-caption-pill"><span>Coconut Milk Delight</span><strong>$10.00</strong></div>
-          </div>
-          <div class="ga-visual ga-visual-mini">
-            <img src="../next/assets/soap-true-wolf.webp" alt="The True Soap sculpted Wolf Mold" />
-            <div class="ga-caption-pill"><span>Sculpted Wolf Mold</span><strong>$12.50</strong></div>
-          </div>
+          ${heroProducts.map(({ product, variant }, index) => `
+            <a class="ga-visual ${index === 0 ? "ga-visual-main" : "ga-visual-mini"}" href="${navHref("product", product.slug)}" data-nav="product" data-slug="${product.slug}">
+              <img src="${variant.image}" alt="${esc(variant.alt)}" ${index === 0 ? 'fetchpriority="high"' : ""} />
+              <span class="ai-ref-note">AI styling reference</span>
+              <div class="ga-caption-pill"><span>${index === 2 ? esc(variant.shortLabel) : esc(product.title)}</span><strong>${formatMoney(variant.priceMinor)}</strong></div>
+            </a>
+          `).join("")}
         </div>
       </div>
     </section>
     <section class="trust-bar"><div class="wrap trust-grid">
       <div class="trust-item"><strong>100% Readable Ingredients</strong><span>Every oil, butter &amp; saponified step explained</span></div>
       <div class="trust-item"><strong>$0 Local Pickup Fees</strong><span>Dunkin’ &amp; Pizza Hut Madisonville + Weigel’s Vonore</span></div>
-      <div class="trust-item"><strong>$0 Colony Relocation</strong><span>Live honeybee rescue in Monroe, Blount &amp; Knox</span></div>
-      <div class="trust-item"><strong>+24% Yield-Gap Research</strong><span>Pollination backed by 2016 Science study</span></div>
+      <div class="trust-item"><strong>Two Signature Scents</strong><span>Warm Teawood or vanilla &amp; tonka bean</span></div>
+      <div class="trust-item"><strong>Everyday or Gift-Ready</strong><span>4oz bars or sculpted Wolf Molds</span></div>
     </div></section>
-    <section class="section"><div class="wrap">
-      <div class="section-head"><div><p class="eyebrow">In Stock Now &middot; Ready for Pickup</p><h2>Pick your scent. Pick your shape.</h2></div><p>We lead with what’s ready to pick up — compare the 4oz Everyday Bar ($10) and Sculpted Wolf Gift Mold ($12.50).</p></div>
+    <section id="in-stock-soaps" class="section" aria-labelledby="in-stock-h"><div class="wrap">
+      <div class="section-head"><div><p class="eyebrow">In Stock Now &middot; Ready for Pickup</p><h2 id="in-stock-h">Pick your scent. Pick your shape.</h2></div><p>Compare each recipe’s creaminess, scent warmth, and firmness, then choose the 4oz Everyday Bar ($10) or Sculpted Wolf Gift Mold ($12.50).</p></div>
       <div class="grid-2">${products.map(renderProductCard).join("")}</div>
     </div></section>
     ${renderPickupSection()}
-    <section class="section"><div class="wrap"><div class="section-head"><div><p class="eyebrow">Beekeeping Services</p><h2>For the bees. And our neighbors.</h2></div><p>Real apiary stewardship in Madisonville — saving live colonies and strengthening East Tennessee harvests.</p></div>${renderServicesCards(false)}</div></section>
-    ${renderFaqSection(faqs.slice(0, 4))}
+    <section class="section section-alt ga-beekeeping" aria-labelledby="beekeeping-h"><div class="wrap">
+      <div class="ga-service-intro">
+        <figure class="ga-apiary-photo">
+          <img src="../next/assets/hive.webp" alt="Honeybees tending golden honeycomb at The True Hive apiary" loading="lazy" />
+          <figcaption>Our beekeeping work &middot; East Tennessee</figcaption>
+        </figure>
+        <div class="section-head">
+          <div><p class="eyebrow">Beyond the Soap Shelf &middot; Beekeeping Services</p><h2 id="beekeeping-h">For the bees. And our neighbors.</h2></div>
+          <p>A different side of The True Hive: saving live colonies and supporting local growers with farm pollination across East Tennessee.</p>
+        </div>
+      </div>
+      ${renderServicesCards(false)}
+    </div></section>
+    ${renderFaqSection(faqs, "Commonly Asked Questions")}
   `;
 }
 
@@ -1136,6 +1176,7 @@ function renderProductPage() {
           <h1 style="font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);line-height:1.08;margin:0 0 0.4rem">${esc(p.title)}</h1>
           <p style="font-size:1.55rem;font-weight:800;color:var(--accent);margin:0 0 0.9rem">${formatMoney(v.priceMinor)} <span style="font-size:0.88rem;font-weight:600;color:var(--muted)">&middot; ${esc(v.label)}</span></p>
           <p style="margin:0 0 1rem">${esc(p.story)}</p>
+          ${renderSensoryProfile(p)}
           ${renderVariantButtons(p)}
           <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin:1.2rem 0">
             <button type="button" class="btn btn-primary" style="flex:1" data-add-cart="${p.slug}|${v.key}">Add to Cart — ${formatMoney(v.priceMinor)}</button>

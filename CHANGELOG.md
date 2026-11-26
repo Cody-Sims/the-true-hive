@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Refine the selected Golden Apothecary review with stocked-soap-first imagery, per-recipe sensory profiles, a separate lower bee-rescue and farm-pollination section, and complete bottom FAQs. Preserve adaptive light/dark mode and the public storefront; label sensory scores as illustrative preview guides.
 - Open active sprint tasks directly in the focused editor, with checklist progress and imported notes in an expandable section. Separate signed-in workspace links from the public header with responsive Inventory and Team board shortcuts.
 - Redesign the shared team sprint board with self-contained task cards, custom dropdown controls, Sprint Pulse operational metrics, Board and List triage views with grouping/sorting, capped/collapsible Backlog and mobile stage tabs, interactive subtasks, target dates, blocker/size badges, per-column task creation and drag rank reordering without requiring a schema migration.
 - Distinguish main inventory storage and Stripe Sandbox test inventory from customer meetup points; replace the old pickup address with Weigel's, Dunkin' and Pizza Hut and confirmed-time/2018 Nissan Altima instructions. Preserve stock and order history; meetup drafts have no available pickup times.

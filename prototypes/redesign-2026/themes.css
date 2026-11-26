@@ -336,7 +336,7 @@ button { cursor: pointer; }
 .scent-chip { font-size: 0.74rem; padding: 0.22rem 0.55rem; border-radius: 999px; background: var(--surface-alt); color: var(--ink); border: 1px solid var(--border); }
 
 /* ============================================================================
-   PROTOTYPE 01 — GOLDEN APOTHECARY (Round 1 Liked Hero + Collage + Trust Bar)
+   PROTOTYPE 01 — GOLDEN APOTHECARY (Product-First Hero + Sensory Profiles)
    ============================================================================ */
 .ga-hero { background: var(--hero-bg); padding: clamp(2.5rem, 5vw, 4.5rem) 0 clamp(2.5rem, 4.5vw, 4rem); border-bottom: 1px solid var(--border); }
 .ga-hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr); gap: clamp(1.75rem, 4vw, 3.5rem); align-items: center; }
@@ -345,6 +345,7 @@ button { cursor: pointer; }
 .ga-collage { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 0.85rem; }
 .ga-visual { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); }
 .ga-visual img { width: 100%; height: 100%; object-fit: cover; }
+.ga-visual .ai-ref-note { top: 0.65rem; bottom: auto; }
 .ga-visual-main { grid-row: span 2; min-height: 310px; }
 .ga-visual-mini { min-height: 150px; }
 .ga-caption-pill {
@@ -357,6 +358,17 @@ button { cursor: pointer; }
 .trust-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
 .trust-item strong { display: block; font-size: 0.92rem; }
 .trust-item span { color: var(--muted); font-size: 0.8rem; }
+.ga-sensory-profile { padding-block: 0.8rem; border-block: 1px solid var(--border); }
+.ga-sensory-profile .eyebrow { margin: 0; font-size: 0.7rem; color: var(--ink); }
+.ga-meters .sf-meter-row { grid-template-columns: 95px minmax(0, 1fr) 48px; gap: 0.6rem; }
+.ga-meter-value { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+.ga-profile-note { margin: 0; font-size: 0.72rem; color: var(--muted); }
+.ga-service-intro { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 2.5rem; align-items: center; margin-bottom: 2rem; }
+.ga-service-intro .section-head { display: grid; margin: 0; }
+.ga-apiary-photo { margin: 0; }
+.ga-apiary-photo img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius); }
+.ga-apiary-photo figcaption { margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted); }
+#in-stock-soaps { scroll-margin-top: 10rem; }
 
 /* ============================================================================
    PROTOTYPE 02 — CINEMATIC CRAFT (Full-Bleed Hero + Arched Botanicals + Scent Meters)
@@ -585,12 +597,19 @@ button { cursor: pointer; }
 .xray-code { background: #080b0e; color: #9be8ba; padding: 0.85rem; border-radius: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 0.72rem; overflow-x: auto; white-space: pre-wrap; }
 
 @media (max-width: 940px) {
-  .ga-hero-grid, .sf-arch-card, .dtc-hero-grid, .dtc-contrast-grid, .dtc-pack-bar, .lh-doorways, .lh-corridor, .gm-stage-grid, .gm-plinth-grid, .gm-pdp-split,
+  .ga-hero-grid, .ga-service-intro, .sf-arch-card, .dtc-hero-grid, .dtc-contrast-grid, .dtc-pack-bar, .lh-doorways, .lh-corridor, .gm-stage-grid, .gm-plinth-grid, .gm-pdp-split,
   .grid-2, .grid-3, .bee-options, .footer-grid, .sf-proof-strip { grid-template-columns: minmax(0, 1fr); }
   .trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-header { position: static; }
+  .ga-collage { order: -1; }
 }
 @media (max-width: 600px) {
-  .ga-collage, .trust-grid, .variant-row { grid-template-columns: minmax(0, 1fr); }
+  .trust-grid, .variant-row { grid-template-columns: minmax(0, 1fr); }
   .ga-visual-main { grid-row: auto; min-height: 230px; }
+  .ga-collage { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+  .ga-visual-main { grid-column: 1 / -1; }
+  .ga-visual-mini { min-height: 170px; }
+  .ga-caption-pill { flex-wrap: wrap; gap: 0.15rem; }
+  .ga-visual-mini .ga-caption-pill { font-size: 0.65rem; }
+  :root[data-proto="golden-apothecary"] .product-title-row { flex-wrap: wrap; gap: 0.25rem; }
 }

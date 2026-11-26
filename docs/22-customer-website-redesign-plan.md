@@ -88,7 +88,7 @@ Grounded directly in **Google Search Central's *Optimizing your website for gene
 
 | Existing Asset / Content | Action | Details |
 |---|---|---|
-| `honeybees-on-comb.webp` | **Reuse prominently** | Hero companion visual, About banner, Services visual anchor. |
+| `honeybees-on-comb.webp` | **Reuse with separation** | Dedicated lower beekeeping section in the selected Golden Apothecary homepage, About banner, and Services visual anchor; no bees beside soap in its hero. |
 | `soap-delight-bar.webp`, `soap-delight-wolf.webp`, `soap-true-bar.webp`, `soap-true-wolf.webp` | **Reuse + elevate** | Bring immediately onto Homepage & Storefront; keep honest `"AI styling reference"` disclosure subtle until real photos replace them. |
 | **Coconut Milk Delight** (`$10` / `$12.50`, Teawood, 9 real ingredients) | **Reuse + enhance** | Add plain-English ingredient benefits + saponified lye reassurance + scent note chips. |
 | **The True Soap** (`$10` / `$12.50`, Vanilla & Tonka Bean, 7 real ingredients) | **Reuse + clean up** | Clean `"Beeswax ;)"` → `"Local Beeswax"` (note the playful origin in the story instead of the formal ingredient list). Verify Wolf Mold weight (`1oz` vs URL `4oz-wolf`) before launch. |
@@ -103,7 +103,7 @@ Grounded directly in **Google Search Central's *Optimizing your website for gene
 
 Open `prototypes/redesign-2026/index.html` (`/prototypes/redesign-2026/`). Every prototype honors the user's OS `prefers-color-scheme` automatically plus a manual `Auto / Light / Dark` switch, covers all 7 customer-facing subpages, and includes the live **SEO / AI / Psychology X-Ray Drawer**:
 
-1. **01 — Golden Apothecary (`golden-apothecary`)**: Unites **Golden Direct (Light)** and **Apothecary Noir (Dark)** with the clean 3-photo hero collage, 4-pillar trust strip, Von Restorff CTA contrast, format toggles, US-411 pickup timeline, and dual bee-service cards.
+1. **01 — Golden Apothecary (`golden-apothecary`) — selected direction**: Unites **Golden Direct (Light)** and **Apothecary Noir (Dark)** with a stocked-soap-only hero, product-focused trust strip, format toggles, and **Cinematic Craft's per-recipe sensory profiles** on home, shop, and product pages. Creaminess, scent warmth, and bar firmness scores remain explicitly illustrative preview guides, not lab measurements. Shopping and the US-411 pickup timeline lead; a separate lower bee-rescue and farm-pollination section follows, inspired by **Studio Minimal's** hierarchy, with all common questions at the bottom. This refines the review prototype only; the public Astro storefront rollout remains a separate phase.
 2. **02 — Cinematic Craft (`story-flagship`)**: Full-bleed atmospheric honeycomb hero, translucent proof strip, arched botanical product cards, and tactile **Scent & Lather Visual Meters** (Creaminess / Scent Warmth / Bar Firmness) inspired by Flamingo Estate & Aesop.
 3. **03 — Modern DTC (`modern-dtc`)**: High-velocity modern DTC landing experience featuring an honest 1-click **"Try Both Scents in One Trip — $20.00"** pickup pair builder, bold **"Inside vs. Never Inside"** contrast strip, and punchy thumb-friendly CTAs.
 4. **04 — East TN Hearth (`local-hearth`)**: Neighbor-first dual-doorway hero routing **Local Soap Shoppers** and **Monroe / Blount / Knox Bee & Farm Neighbors** in 2 seconds, plus a visual **3-Stop US-411 Pickup Corridor** (`Weigel's Vonore` → `Dunkin' Madisonville` → `Pizza Hut Madisonville`).
