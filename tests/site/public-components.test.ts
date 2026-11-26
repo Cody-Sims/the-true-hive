@@ -476,7 +476,17 @@ test("current image-led storefront keeps product cards, format links and collect
       assert.match(html, /class="home-hero wrap"/);
       assert.match(html, /alt="Honeybees tending golden honeycomb\."/);
       assert.match(html, /loading="eager" fetchpriority="high"/);
-      assert.match(html, /Explore our soaps, compare ingredients/);
+      assert.match(
+        markup(html),
+        /Find your scent\. Explore every ingredient, compare formats/,
+      );
+      const hero = html.match(
+        /<section class="home-hero wrap"[^>]*>([\s\S]*?)<\/section>/,
+      )?.[1];
+      assert(hero);
+      assert.match(hero, /alt="Soap illustration\."/);
+      assert.match(hero, /href="\/goods\/render-soap\?variant=full-bar"/);
+      assert.doesNotMatch(hero, /Honeybees tending golden honeycomb/);
     } else {
       assert.match(markup(html), /class="result-count">1 product found<\/p>/);
     }

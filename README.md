@@ -1,12 +1,12 @@
 # The True Hive
 
-**The Apiary Market application foundation, ten preserved design directions, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
+**The Golden Apothecary storefront, preserved design studios, and a local-to-growth business plan** for The True Hive in Madisonville, Tennessee.
 
-Updated **November 18, 2026**. Status: **inventory-backed storefront, native Workbench and private pickup scheduling**. Only Stripe test checkout is implemented; real payments are disabled.
+Updated **November 26, 2026**. Status: **Golden Apothecary public design, inventory-backed storefront, native Workbench and private pickup scheduling**. Only Stripe test checkout is implemented; real payments are disabled.
 
 ## Build the actual site
 
-Apiary Market (concept 04) is selected. The application uses **Astro + TypeScript, native Node and our own PostgreSQL inventory**, with **no Shopify or Docker**. It includes collection/detail pages, read APIs, health checks, MFA-gated inventory administration and explicitly gated Stripe test checkout. Real payments are not enabled.
+Golden Apothecary is the selected public design, superseding the original Apiary Market visual treatment. The application still uses **Astro + TypeScript, native Node and our own PostgreSQL inventory**, with **no Shopify or Docker**. It includes collection/detail pages, read APIs, health checks, MFA-gated inventory administration and explicitly gated Stripe test checkout. Real payments are not enabled.
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
@@ -19,7 +19,10 @@ Open `http://127.0.0.1:4321/`. Deliberate showcase mode requires no database and
 
 Signed-in administrators get a separate, responsive **Private workspace** bar
 for Inventory, Team board, Studio and Planning. The public header stays focused
-on Store, Services and About us; anonymous visitors never see workspace links.
+on Store, Services and About us, with persistent cart, contact and appearance
+controls. Mobile navigation collapses behind a hamburger when JavaScript is
+available; without it, the links remain visible. Anonymous visitors never see
+workspace links.
 
 The commerce preparation adds ordered ingredient editing, location-scoped
 low-stock notices, published variant prices and a device-local shopping cart.
@@ -27,9 +30,12 @@ Contact inquiries open an email draft that visitors must send themselves; no
 email provider or submission backend is required. Contact channels and the form
 live together at `/contact`; the collection says **Local Pickup Only** near
 the top, with detailed pickup information in the cart. The global header is
-**Store / Services / About us**. Cart and pickup navigation appear only in the
-store; contact is available through Services and the footer, alongside Privacy
-and Accessibility. Apply migration 004 before
+**Store / Services / About us**. The cart is reachable from every public page;
+pickup details remain in the cart. Golden Apothecary follows the OS appearance
+and supports a device-local Auto/Light/Dark choice. Stocked products lead the
+homepage, bar profiles use published catalog facts rather than illustrative
+sensory scores, and bee services and common questions sit below shopping.
+Contact, Privacy and Accessibility remain in the footer. Apply migration 004 before
 deploying ingredient-aware code, and migration 005 before store controls.
 Authorized inventory administrators can allow or pause new checkouts under
 **Store settings**, while the catalog and cart remain visible. The switch
@@ -246,7 +252,7 @@ The store is **our own primary-domain experience**, with PostgreSQL-authoritativ
 
 **Inventory administration:** [secure inventory administration and connected checkout](docs/15-inventory-admin-and-commerce.md) documents the deployed `inventory.thetruehive.com` workspace, using an isolated Firebase identity project, mandatory app-enforced MFA and PostgreSQL admin membership. Product/location management, audited count changes, Stripe card-only test checkout and Record pickup share the same PostgreSQL authority. Payment admission remains explicitly gated; no live charges or provider upgrades are authorized by repository cleanup.
 
-**Apiary Market is selected.** All ten directions remain available for comparison/history. Selection is an owner decision, not a proven conversion-rate ranking.
+**Golden Apothecary is selected.** The [five-direction redesign studio](prototypes/redesign-2026/index.html) and the original ten directions remain available for comparison/history behind the existing administrator sign-in. Selection is an owner decision, not a proven conversion-rate ranking.
 
 ## Ten design directions
 

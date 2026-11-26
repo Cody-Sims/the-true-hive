@@ -72,8 +72,8 @@ const ChannelHeading = Heading === "h1" ? "h2" : "h3";
     gap: clamp(2rem, 5vw, 5rem);
     align-items: center;
     padding: clamp(1.5rem, 4vw, 3.5rem);
-    color: var(--paper);
-    background: var(--forest);
+    color: var(--inverse-ink, var(--paper));
+    background: var(--inverse-surface, var(--forest));
   }
   .contact-heading {
     margin-block: 1.25rem 1.5rem;
@@ -81,7 +81,7 @@ const ChannelHeading = Heading === "h1" ? "h2" : "h3";
     line-height: 1.08;
   }
   .contact-heading em {
-    color: var(--ochre);
+    color: var(--highlight-ink, var(--ochre));
   }
   .home-connect-copy > p:not(.eyebrow) {
     max-width: 28rem;
@@ -92,7 +92,7 @@ const ChannelHeading = Heading === "h1" ? "h2" : "h3";
     margin-top: 1.5rem;
   }
   .home-connect-copy a:focus-visible {
-    outline-color: var(--ochre);
+    outline-color: var(--highlight-ink, var(--ochre));
   }
   .home-connect-channels {
     min-width: 0;

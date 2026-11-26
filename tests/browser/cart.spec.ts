@@ -90,9 +90,9 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
   await form.getByLabel("Variant").selectOption("cart-test-bar");
   await form.getByLabel("Quantity").fill("1");
   await form.getByRole("button", { name: "Add to cart", exact: true }).click();
-  await expect(page.locator("[data-cart-count]")).toHaveText(" (3)");
+  await expect(page.locator("[data-cart-count]")).toHaveText([" (3)", " (3)"]);
   await form.getByRole("button", { name: "Add to cart", exact: true }).click();
-  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
+  await expect(page.locator("[data-cart-count]")).toHaveText([" (4)", " (4)"]);
   await page
     .getByRole("navigation", { name: "Store navigation" })
     .getByRole("link", { name: /Cart/ })
@@ -116,12 +116,12 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "About us", exact: true })
     .click();
-  await expect(page.locator("[data-cart-count]")).toHaveCount(0);
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
   await page
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "Store", exact: true })
     .click();
-  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
+  await expect(page.locator("[data-cart-count]")).toHaveText([" (4)", " (4)"]);
   await page
     .getByRole("navigation", { name: "Store navigation" })
     .getByRole("link", { name: /^Cart/ })

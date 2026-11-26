@@ -1,16 +1,22 @@
 import { test, expect } from "@playwright/test";
 import { gzipSync } from "node:zlib";
 
-test("the homepage features the hive photograph in a responsive honeycomb cutout", async ({
+test("the homepage leads with product imagery and keeps the hive photograph in services", async ({
   page,
 }) => {
   for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
-    const photo = page.getByRole("img", {
+    const product = page.locator(".home-hero img").first();
+    await expect(product).toHaveAttribute("alt", /soap/i);
+    await expect(
+      page.locator(".home-hero").getByRole("img", { name: /Honeybees/ }),
+    ).toHaveCount(0);
+    const photo = page.locator(".home-services").getByRole("img", {
       name: "Honeybees tending golden honeycomb.",
       exact: true,
     });
+    await photo.scrollIntoViewIfNeeded();
     await expect(photo).toBeVisible();
     await expect(photo).toHaveJSProperty("complete", true);
     expect(
@@ -18,12 +24,7 @@ test("the homepage features the hive photograph in a responsive honeycomb cutout
     ).toBeGreaterThan(0);
     expect(
       await photo.evaluate((image) => getComputedStyle(image).clipPath),
-    ).toMatch(/^polygon\(/);
-    await expect(
-      page
-        .locator(".home-scene")
-        .getByText(/Original illustration|not an actual stall/),
-    ).toHaveCount(0);
+    ).toBe("none");
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);

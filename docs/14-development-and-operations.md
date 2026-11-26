@@ -8,7 +8,7 @@ Status: **owner-approved inventory-backed public catalog and private inventory p
 |---|---|---|---|
 | Complete design/planning studio and raw dependencies | `prototypes/` and documents | Server-only `dist-site/` bundle | Canonical apex, same verified administrator session |
 | Legacy Pages URLs | Fixed redirects only | `dist/` | Existing Pages custom/project domains; no private source |
-| Apiary Market application | `src/` and `migrations/` | `dist-site/` | Existing native Render service at `https://thetruehive.com`; Neon PostgreSQL remains the selected database |
+| Golden Apothecary public application | `src/` and `migrations/` | `dist-site/` | Existing native Render service at `https://thetruehive.com`; Neon PostgreSQL remains the selected database |
 | Private inventory workspace | Same application, `/inventory/` and `/api/admin/` | Same `dist-site/` | `https://thetruehive.com`; same service/database, Google/TOTP and current membership required |
 
 Production uses original prototype illustrations and first-party brand assets in `src/assets/`, not prototype HTML, scripts, demo prices or browser cart. Application public output excludes planning documents, database code and standalone prototype files.
@@ -267,8 +267,12 @@ authorize live payments, new paid resources or fabricated product facts.
   Messages are bounded to 600 characters and encoded draft links to 2,000;
   over-limit content is preserved for manual email rather than truncated.
   Contact channels and the form live at `/contact`, reached from Services and
-  the footer rather than promoted throughout the shopping flow. The global
-  header contains Store, Services and About us. Store pages supply a separate
+  the footer. The global header keeps Store, Services and About us, with
+  persistent cart, contact/call and appearance controls. Mobile navigation
+  collapses only after its script is ready; links remain visible without
+  JavaScript. Auto follows the OS, while Light/Dark are saved under the
+  device-local `true-hive-appearance` key; storage failure does not prevent
+  changes on the current page. Store pages supply a separate
   All products / Pickup / Cart navigation with the persisted cart count.
   The footer retains only Contact us, Privacy and Accessibility. Pickup details
   stay with the collection and cart; neither requires a large homepage section.

@@ -19,7 +19,7 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | F11 | Complete current planning hub and prototypes may be public in Cody-Sims/the-true-hive | Explicit owner publication/visibility choice on 2026-10-28 |
 | F12 | Use preview.thetruehive.com on existing Porkbun DNS; leave the main domain for the future site | Owner's domain choices on 2026-10-29 |
 | F13 | Defer email setup; document contact@thetruehive.com and use phone/socials for now | Latest owner instruction on 2026-10-29; actual phone/profile destinations remain unprovided |
-| F14 | Apiary Market (concept 04) is selected; create our own storefront/inventory, not Shopify | Owner's implementation direction |
+| F14 | Apiary Market (concept 04) was selected for the original foundation; create our own storefront/inventory, not Shopify | Owner's original implementation direction; public visual choice superseded by D26 |
 | F15 | Astro/TypeScript + native Node/PostgreSQL foundation approved; no Docker | Owner's scope confirmation and later no-Docker instruction |
 | F16 | Render selected; owner reports account created and connected to GitHub | Owner's hosting answer; no paid resource provisioning is implied |
 | F17 | Native Render app in a Hobby workspace plus Neon Free PostgreSQL, both in Oregon | Owner's later provider, tier and region approval; no paid Neon or Render database |
@@ -27,6 +27,7 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | F19 | Admin-only inventory at inventory.thetruehive.com; add/update products and increase/reduce stock, connected to purchase-driven inventory changes | Owner's next-phase request on 2026-10-31 |
 | F20 | Isolated True Hive Firebase project and app-enforced MFA before deployment; no paid feature upgrade without approval | Owner's inventory access decisions on 2026-10-31 |
 | F21 | Stripe card-only test checkout; separate physical/held/paid commitments and admin Record pickup | Owner's checkout scope/accounting decisions on 2026-10-31; no live charges |
+| F22 | Golden Apothecary is selected for the public site, with product-first merchandising, bar profiles, lower bee services/FAQs and mobile hamburger navigation | Owner's design choices and implementation instruction on 2026-11-26 |
 
 ## Architecture and design decisions
 
@@ -36,7 +37,7 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | D2 | Accepted | Astro + TypeScript with native Node and PostgreSQL | Proven scaling/operating need, not speculative framework changes |
 | D3 | Recommended | Typed local content before CMS | Owner updates become frequent and developer-mediated publishing is a real bottleneck |
 | D4 | Superseded | Earlier Shopify recommendation rejected; our database/application own inventory | Preserve the rationale as historical comparison, not active instructions |
-| D5 | Accepted | Apiary Market, with all ten prototypes retained separately | Owner-approved changes after real customer feedback |
+| D5 | Superseded by D26 | Apiary Market, with all ten prototypes retained separately | Original visual choice retained as history |
 | D6 | Recommended | Ordinary social links; no live feeds/pixels by default | A measurable need justifies performance/privacy cost |
 | D7 | Recommended | Direct phone/email at initial launch; form later | Owner has a receiving/response workflow |
 | D8 | Accepted | One modular app/repository and an actual custom inventory database; public editing/admin remains gated | Auth/roles and payment/order specification before new mutations |
@@ -57,6 +58,7 @@ Use this register when resuming the project. "Recommended" does not mean the own
 | D23 | Accepted implementation choice | Isolated Firebase project, app-enforced MFA and PostgreSQL admin membership; reuse only the existing integration pattern | Identity Platform/billing setup needs explicit approval; do not weaken MFA or import personal-site access |
 | D24 | Accepted test scope | Stripe card-only test checkout; hold before hosted checkout, paid commitment after verified payment, physical decrement at Record pickup | Live charges/delayed methods, pickup policies and operational activation need separate approval |
 | D25 | Required | Idempotent signed-event settlement and provider-confirmed expiry/reconciliation; refunds do not automatically restock | A local timer, return redirect or refunded amount is not stock authority |
+| D26 | Accepted public design | Golden Apothecary supersedes D5's visual treatment; retain the native foundation and archived studies. Use real catalog stock/prices and factual bar profiles, not prototype sensory scores. Preserve inventory, authentication, pickup, checkout and indexing gates | Owner-approved design or verified product-data changes |
 
 ## Owner decisions by gate
 
@@ -74,7 +76,7 @@ No public pickup address, neighboring service town, acreage capacity, retail hon
 
 | Risk | Impact | Mitigation / trigger |
 |---|---|---|
-| A beautiful product-led page hides service contact | Lost homeowner/grower inquiries | Task-based concept review; services visible from hero/navigation |
+| A beautiful product-led page hides service contact | Lost homeowner/grower inquiries | Dedicated service navigation and a distinct lower homepage services section |
 | Mock store is mistaken for a live store | Customer confusion and loss of trust | Persistent demo/sample labels, read-only checkout, no real payments/orders or offer/rating schema |
 | Unknown contact/social links leak into production | Broken conversion path | Launch-blocking owner confirmation and real-device rehearsal |
 | Generic competitor imitation loses local credibility | Weak differentiation and IP risk | Original design/assets; verified local story; borrow patterns, not branding |

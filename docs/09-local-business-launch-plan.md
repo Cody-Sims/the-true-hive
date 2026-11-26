@@ -80,7 +80,7 @@ Use the business-owned Facebook/Instagram profiles, approved process/product ima
 
 **Purpose:** make a real local business easier to discover and buy from, without a second conflicting stock ledger.
 
-**Actions:** build the selected Apiary Market site and our own Node/PostgreSQL storefront/inventory. Render hosts the application and Neon manages PostgreSQL, not stock rules. Start within the approved app/free-database tiers and reassess quotas/recovery before real orders. Add an authenticated owner workflow and an appropriate payment processor only when ready. Import approved real products and released physical stock; exclude every demo record.
+**Actions:** build the selected Golden Apothecary site on our existing Node/PostgreSQL storefront/inventory. Render hosts the application and Neon manages PostgreSQL, not stock rules. Start within the approved app/free-database tiers and reassess quotas/recovery before real orders. Add an authenticated owner workflow and an appropriate payment processor only when ready. Import approved real products and released physical stock; exclude every demo record.
 
 The catalog, product pages, cart and payment flow must agree on database-authoritative price, variant, sellability and pickup eligibility. Record local sales and adjustments transactionally with audit identity; a browser cart does not reserve stock. Staff access uses verified authentication, authorization and least privilege. The first foundation exposes no editing endpoint or payment.
 

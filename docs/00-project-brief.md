@@ -6,6 +6,12 @@ Source: the owner's requests and follow-ups: Madisonville, TN; ten total concept
 
 **Implementation approval:** Apiary Market (04), our own Astro/TypeScript native Node/PostgreSQL storefront/inventory, no Shopify or Docker. The first slice has no live checkout or public admin. Use a native Render app with Neon Free PostgreSQL in Oregon; preserve the review at `preview.thetruehive.com` and use `thetruehive.com` for the actual site after readiness. See the [current foundation specification](13-production-foundation.md).
 
+**Public design update - 2026-11-26:** Golden Apothecary supersedes the original
+Apiary Market visual choice. The product-first public design, adaptive appearance,
+mobile hamburger and lower bee services/FAQs are implemented on the same native
+foundation. The original scope and later activation boundaries remain recorded
+below; see the [selected redesign](22-customer-website-redesign-plan.md).
+
 **Next-phase direction - 2026-10-31:** build authenticated inventory administration at **`inventory.thetruehive.com`**, accessible only to an authorized admin and excluded from indexing. The owner selected an isolated Firebase project with app-enforced MFA, PostgreSQL admin membership and Stripe card-only test checkout. Admin edits and verified purchases use the same PostgreSQL authority. Payment converts held stock to paid commitments; an admin Record pickup action records physical departure. See the [approved inventory phase](15-inventory-admin-and-commerce.md). Private provider/provisioning, recovery, hostname activation and live-sales readiness remain gates; no paid upgrade or live charges are approved.
 
 ## Objective

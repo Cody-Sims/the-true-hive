@@ -7,7 +7,12 @@ import { render, root } from "../site/barcode-test-helper.ts";
 test("verified workspace navigation stays separate from the public header and remains usable on phones", async ({
   page,
 }) => {
-  const css = await readFile(new URL("src/styles/site.css", root), "utf8");
+  const css = (
+    await Promise.all([
+      readFile(new URL("src/styles/site.css", root), "utf8"),
+      readFile(new URL("src/styles/golden.css", root), "utf8"),
+    ])
+  ).join("\n");
   for (const signedIn of [false, true]) {
     const html = await render(
       "src/layouts/SiteLayout.astro",
@@ -91,14 +96,14 @@ test("packaged startup refuses an unconfigured database before serving", () => {
   expect(result.stdout).not.toContain("Server listening");
 });
 
-test("Apiary Market reflows without horizontal overflow at all required widths", async ({
+test("Golden Apothecary reflows without horizontal overflow at all required widths", async ({
   page,
 }) => {
   for (const width of [320, 375, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      /Good things,.*closer to home/i,
+      /Small-batch soaps.*everyday luxury/i,
     );
     await expect(
       page.getByRole("link", { name: /Shop the collection/ }),

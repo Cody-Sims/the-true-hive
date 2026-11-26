@@ -1512,7 +1512,7 @@ test("soap reference cards disclose generated imagery, show format prices and pr
     key: "coconut-milk-delight",
     slug: "coconut-milk-delight",
     kind: "active",
-    summary: "Long product description belongs on the product page.",
+    summary: "Warm Teawood and a creamy coconut milk lather.",
     variants: [
       {
         ...product.variants[0],
@@ -1541,7 +1541,8 @@ test("soap reference cards disclose generated imagery, show format prices and pr
   assert.match(html, /\$10\.00/);
   assert.match(html, /\$12\.50/);
   assert.match(html, /Only 3 left/);
-  assert.doesNotMatch(html, /Long product description belongs/);
+  assert.match(html, /Warm Teawood and a creamy coconut milk lather/);
+  assert.match(html, /data-product-profile/);
   const real = await render("src/components/ProductCard.astro", {
     product: {
       ...record,

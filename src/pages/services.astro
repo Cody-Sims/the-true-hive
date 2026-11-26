@@ -1,6 +1,8 @@
 ---
 import SiteLayout from "../layouts/SiteLayout.astro";
 import ServiceCards from "../components/ServiceCards.astro";
+import FaqSection from "../components/FaqSection.astro";
+import hivePhoto from "../assets/honeybees-on-comb.webp?url";
 import { readConfig } from "../server/config.ts";
 const { contact } = readConfig();
 ---
@@ -27,6 +29,16 @@ const { contact } = readConfig();
         Explore our services <span aria-hidden="true">&darr;</span>
       </a>
     </div>
+    <img
+      src={hivePhoto}
+      class="services-page-photo"
+      alt="Honeybees tending golden honeycomb."
+      width="1600"
+      height="2133"
+      loading="eager"
+      decoding="async"
+      fetchpriority="high"
+    />
   </section>
   <section
     id="service-paths"
@@ -70,15 +82,20 @@ const { contact } = readConfig();
       </div>
     </div>
   </section>
+  <FaqSection topic="services" />
 </SiteLayout>
 
 <style>
   .services-page-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+    gap: 2rem;
     padding-block: clamp(3rem, 6vw, 5.5rem);
   }
   .services-page-intro h1 {
     margin-block: 1.5rem;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: var(--font-display);
     font-size: clamp(3rem, 5.8vw, 5.75rem);
     font-weight: 400;
     letter-spacing: -0.06em;
@@ -98,7 +115,7 @@ const { contact } = readConfig();
   .services-page-paths {
     padding-block: 4.5rem;
     border-block: 1px solid var(--line);
-    background: #eee9dc;
+    background: var(--surface);
   }
   .services-page-heading {
     margin-bottom: 2.5rem;
@@ -144,6 +161,9 @@ const { contact } = readConfig();
     }
   }
   @media (max-width: 42rem) {
+    .services-page-intro {
+      grid-template-columns: minmax(0, 1fr);
+    }
     .services-page-intro,
     .services-page-paths {
       padding-block: 3rem;
@@ -157,5 +177,11 @@ const { contact } = readConfig();
     .services-page-ending {
       padding-block: 3rem;
     }
+  }
+  .services-page-photo {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 1rem;
+    object-fit: cover;
   }
 </style>

@@ -1,0 +1,84 @@
+---
+interface Props {
+  topic?: "all" | "services";
+}
+const { topic = "all" } = Astro.props;
+const questions = [
+  {
+    topic: "shopping",
+    question: "How does local pickup work?",
+    answer:
+      "Choose a product format and check its current availability. Your cart has the meetup locations and current checkout options. Wait for confirmation before visiting; these are not walk-in shops.",
+  },
+  {
+    topic: "shopping",
+    question: "Why can a soap ingredient list include lye?",
+    answer:
+      "Lye is used during soap-making to turn oils and fats into soap. For questions about a specific formula or finished bar, read the published ingredient list and ask the maker.",
+  },
+  {
+    topic: "services",
+    question: "Is honeybee colony rescue really no-cost?",
+    answer:
+      "The True Hive offers no-cost honeybee relocation in Monroe, Blount, and Knox counties. Give bees space and call with the property address, hive location, and a good time to visit.",
+  },
+  {
+    topic: "services",
+    question: "What is needed for a farm pollination assessment?",
+    answer:
+      "Tell us the farm location, crops, number of hives you would like to rent, and a preferred inspection day. Results vary by farm; our service page links the published pollination research.",
+  },
+  {
+    topic: "shopping",
+    question: "Why do some images say AI styling reference?",
+    answer:
+      "Those images illustrate product styling and are not actual product photographs. Published owner photos are used when available. Always read the current product description, ingredients, and format details.",
+  },
+];
+const list =
+  topic === "services"
+    ? questions.filter((question) => question.topic === topic)
+    : questions;
+const id = topic === "services" ? "service-questions" : "common-questions";
+---
+
+<section class="wrap faq-section" id={id} aria-labelledby={`${id}-title`}>
+  <p class="eyebrow">Clear, straight answers</p>
+  <h2 id={`${id}-title`}>Commonly asked questions</h2>
+  <div class="faq-list">
+    {list.map(({ question, answer }) => (
+      <details>
+        <summary>{question}</summary>
+        <p>{answer}</p>
+      </details>
+    ))}
+  </div>
+</section>
+
+<style>
+  .faq-section {
+    padding-block: 4rem;
+  }
+  h2 {
+    margin-block: 0.75rem 2rem;
+  }
+  .faq-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+  details {
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    background: var(--white);
+  }
+  summary {
+    min-height: 44px;
+    padding: 1rem 1.25rem;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  details p {
+    padding: 0 1.25rem 1.25rem;
+    color: var(--muted);
+  }
+</style>

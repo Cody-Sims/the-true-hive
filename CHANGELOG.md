@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Implement the selected Golden Apothecary design on the public site with OS-aware and persistent Light/Dark appearance, a compact mobile hamburger and always-visible cart. Lead home/shop with genuinely stocked products, show catalog-backed bar profiles, keep bee services below shopping, and add native FAQs. Preserve existing catalog, owner-photo, variant, pickup, checkout, indexing and private-admin boundaries; retain all prototypes separately.
 - Compact the selected Golden Apothecary mobile preview with a sticky wordmark/cart header, accessible hamburger navigation, 44px touch controls, and collapsible preview tools. Keep appearance and call actions inside the mobile menu, wrap enlarged text without overlapping controls, restore focus on dismissal and concept changes, and preserve desktop navigation and other comparison designs.
 - Refine the selected Golden Apothecary review with stocked-soap-first imagery, per-recipe sensory profiles, a separate lower bee-rescue and farm-pollination section, and complete bottom FAQs. Preserve adaptive light/dark mode and the public storefront; label sensory scores as illustrative preview guides. Product tile links retain the pictured format and price through navigation, reload, and the preview cart.
 - Open active sprint tasks directly in the focused editor, with checklist progress and imported notes in an expandable section. Separate signed-in workspace links from the public header with responsive Inventory and Team board shortcuts.

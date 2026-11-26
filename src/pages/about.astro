@@ -162,7 +162,7 @@ import hivePhoto from "../assets/honeybees-on-comb.webp?url";
   }
   .story-page-opening h1 {
     margin-block: 1.5rem;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: var(--font-display);
     font-size: clamp(3rem, 5.5vw, 5.5rem);
     font-weight: 400;
     letter-spacing: -0.06em;
@@ -189,7 +189,7 @@ import hivePhoto from "../assets/honeybees-on-comb.webp?url";
     aspect-ratio: 1.2;
     object-fit: cover;
     border-radius: 45% 45% 0 0;
-    background: #eee7d6;
+    background: var(--surface);
   }
   .story-page-illustration figcaption {
     max-width: 25rem;
@@ -229,8 +229,8 @@ import hivePhoto from "../assets/honeybees-on-comb.webp?url";
   }
   .story-page-directions {
     padding-block: 4.5rem;
-    color: var(--paper);
-    background: var(--forest);
+    color: var(--forest);
+    background: var(--surface);
   }
   .story-page-section-heading {
     margin-bottom: 3rem;
@@ -241,7 +241,7 @@ import hivePhoto from "../assets/honeybees-on-comb.webp?url";
     line-height: 1.1;
   }
   .story-page-section-heading h2 em {
-    color: var(--ochre);
+    color: var(--tomato);
   }
   .story-page-collection {
     display: grid;
@@ -257,7 +257,7 @@ import hivePhoto from "../assets/honeybees-on-comb.webp?url";
     border-top: 1px solid var(--line);
   }
   .story-page-index {
-    color: var(--ochre);
+    color: var(--muted);
     font-size: 0.75rem;
   }
   .story-page-collection h3 {
@@ -274,7 +274,7 @@ import hivePhoto from "../assets/honeybees-on-comb.webp?url";
     margin-top: auto;
   }
   .story-page-collection a:focus-visible {
-    outline-color: var(--ochre);
+    outline-color: var(--forest);
   }
   .story-page-next {
     padding-top: 5rem;

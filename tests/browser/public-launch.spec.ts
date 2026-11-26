@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 test.use({ javaScriptEnabled: false });
 
-test("global navigation stays focused while shopping links stay in the store", async ({
+test("global navigation keeps cart access while pickup links stay in the store", async ({
   page,
 }) => {
   for (const path of [
@@ -54,7 +54,10 @@ test("global navigation stays focused while shopping links stay in the store", a
       else await expect(contact).toHaveCount(0);
     } else {
       await expect(store).toHaveCount(0);
-      await expect(page.locator('a[href="/cart"]')).toHaveCount(0);
+      await expect(page.locator(".header-cart")).toHaveAttribute(
+        "href",
+        "/cart",
+      );
     }
   }
 });
