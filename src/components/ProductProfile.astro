@@ -1,0 +1,63 @@
+---
+import type { Product } from "../domain/catalog.ts";
+import { money, pricedVariants } from "../domain/cart.ts";
+interface Props {
+  product: Product;
+}
+const { product } = Astro.props;
+const prices = pricedVariants(product).map((variant) => variant.priceMinor!);
+const ingredientCount = product.ingredients?.length ?? 0;
+---
+
+{product.kind === "active" && product.category === "soap" && (
+  <section
+    class="product-profile"
+    aria-label={`${product.title} at a glance`}
+    data-product-profile
+  >
+    <p class="eyebrow">Recipe at a glance</p>
+    <dl>
+      <div>
+        <dt>Ingredients</dt>
+        <dd>{ingredientCount ? `${ingredientCount} listed` : "Not listed"}</dd>
+      </div>
+      <div>
+        <dt>Formats</dt>
+        <dd>{product.variants.length || "Not listed"}</dd>
+      </div>
+      <div>
+        <dt>From</dt>
+        <dd>{prices.length ? money(Math.min(...prices)) : "Not listed"}</dd>
+      </div>
+    </dl>
+  </section>
+)}
+
+<style>
+  .product-profile {
+    margin-block: 1rem;
+    padding-block: 1rem;
+    border-block: 1px solid var(--line);
+  }
+  .product-profile > .eyebrow {
+    margin-bottom: 0.65rem;
+    color: var(--muted);
+  }
+  dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+  }
+  dt {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  dd {
+    margin: 0.2rem 0 0;
+    color: var(--tomato);
+    font-size: 1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+</style>

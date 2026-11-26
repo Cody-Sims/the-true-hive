@@ -4,6 +4,7 @@ import ProductGallery from "../../components/ProductGallery.astro";
 import AddToCart from "../../components/AddToCart.astro";
 import ProductPrices from "../../components/ProductPrices.astro";
 import ProductIngredients from "../../components/ProductIngredients.astro";
+import ProductProfile from "../../components/ProductProfile.astro";
 import { getProduct, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import { isRecordKey } from "../../server/inventory/rules.ts";
@@ -80,6 +81,7 @@ const preferredVariantKey =
           )}
           <p class="detail-summary">{product.summary}</p>
           <ProductPrices product={product} compact showStock={false} />
+          <ProductProfile product={product} />
           <AddToCart
             product={product}
             preferredVariantKey={preferredVariantKey}

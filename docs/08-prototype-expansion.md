@@ -2,7 +2,12 @@
 
 Status: review hypotheses, **not ten production websites or proven conversion rankings**.
 
-**Implementation decision:** Apiary Market is now selected. The actual site uses our own Astro/Node/PostgreSQL foundation, not Shopify, and the ten prototypes remain a separate archive. Earlier platform suggestions in art-direction briefs are historical options, superseded by the [approved foundation](13-production-foundation.md).
+**Implementation decision:** Golden Apothecary is now selected for the public
+visual design, superseding the original Apiary Market choice. The actual site
+still uses our own Astro/Node/PostgreSQL foundation, not Shopify, and the ten
+original prototypes remain a separate archive alongside the newer redesign
+studio. Earlier platform suggestions are historical options, superseded by the
+[approved foundation](13-production-foundation.md).
 
 ## Why expand the comparison
 

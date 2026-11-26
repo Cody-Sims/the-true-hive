@@ -1,6 +1,6 @@
 # Architecture: simple now, deliberate expansion later
 
-Decision status: **Astro + TypeScript, native Node and custom PostgreSQL approved on 2026-10-29**. Apiary Market is selected. The ten-concept review studio remains separate. No Docker or Shopify.
+Decision status: **Astro + TypeScript, native Node and custom PostgreSQL approved on 2026-10-29**. Golden Apothecary is the public visual direction selected on 2026-11-26; the earlier Apiary Market foundation and data contracts remain intact. Preserved review studios remain separate and authenticated. No Docker or Shopify.
 
 ## Recommendation
 

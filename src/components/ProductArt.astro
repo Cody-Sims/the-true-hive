@@ -46,6 +46,7 @@ const reference = !photo
   width={photo?.width ?? (reference ? 960 : 420)}
   height={photo?.height ?? (reference ? 960 : 360)}
   loading={eager ? "eager" : "lazy"}
+  fetchpriority={eager ? "high" : undefined}
   decoding="async"
 />
 

@@ -1,5 +1,6 @@
 ---
 import "../styles/site.css";
+import "../styles/golden.css";
 import BrandMark from "../components/BrandMark.astro";
 import favicon from "../assets/favicon.svg?url";
 import shareImage from "../assets/social-card.png?url";
@@ -55,12 +56,19 @@ const schema = JSON.stringify({
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-site-design="golden-apothecary" data-color-mode="system">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} | The True Hive</title>
     <meta name="description" content={description} />
+    <script is:inline nonce={Astro.locals.nonce}>
+      try {
+        const appearance = localStorage.getItem("true-hive-appearance");
+        if (appearance && ["system", "light", "dark"].includes(appearance))
+          document.documentElement.dataset.colorMode = appearance;
+      } catch {}
+    </script>
     <meta
       name="robots"
       content={
@@ -110,7 +118,13 @@ const schema = JSON.stringify({
         </div>
       </aside>
     )}
-    <div class="site-header-frame">
+    <aside class="fulfillment-bar" aria-label="Local fulfillment">
+      <div class="wrap">
+        <strong>Local Pickup Only</strong>
+        <span>Madisonville &amp; Vonore, Tennessee</span>
+      </div>
+    </aside>
+    <div class="site-header-frame golden-shell" data-public-header>
       <header class="site-header wrap">
         <a class="brand" href="/">
           <span class="market-mark">
@@ -120,23 +134,62 @@ const schema = JSON.stringify({
             THE TRUE HIVE<small>Madisonville, Tennessee</small>
           </span>
         </a>
-        <nav class="site-nav" aria-label="Main navigation">
-          <a href="/goods" aria-current={storePage ? "page" : undefined}>
-            Store
-          </a>
-          <a
-            href="/services"
-            aria-current={path === "/services" ? "page" : undefined}
-          >
-            Services
-          </a>
-          <a
-            href="/about"
-            aria-current={path === "/about" ? "page" : undefined}
-          >
-            About us
-          </a>
-        </nav>
+        <button
+          type="button"
+          class="site-menu-toggle"
+          data-site-menu
+          aria-label="Menu"
+          aria-expanded="false"
+          aria-controls="site-header-panel"
+          hidden
+        >
+          <span class="site-menu-icon" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+        <div id="site-header-panel" class="site-header-panel">
+          <nav class="site-nav" aria-label="Main navigation">
+            <a href="/goods" aria-current={storePage ? "page" : undefined}>
+              Store
+            </a>
+            <a
+              href="/services"
+              aria-current={path === "/services" ? "page" : undefined}
+            >
+              Services
+            </a>
+            <a
+              href="/about"
+              aria-current={path === "/about" ? "page" : undefined}
+            >
+              About us
+            </a>
+          </nav>
+          <div class="site-header-controls">
+            <button
+              type="button"
+              class="site-appearance"
+              data-site-appearance
+              title="Change color appearance"
+              hidden
+            >
+              Appearance: Auto
+            </button>
+            <a class="header-contact" href="/contact">
+              Contact
+            </a>
+            {config.contact.phoneHref && (
+              <a class="header-call" href={config.contact.phoneHref}>
+                Call {config.contact.phone}
+              </a>
+            )}
+          </div>
+        </div>
+        <a class="header-cart" href="/cart">
+          Cart<span data-cart-count></span>
+        </a>
       </header>
       {admin && (
         <nav class="workspace-nav wrap" aria-label="Administrator navigation">
@@ -215,6 +268,7 @@ const schema = JSON.stringify({
       import "../client/cart.ts";
       import "../client/inquiry.ts";
       import "../client/product-gallery.ts";
+      import "../client/site-header.ts";
     </script>
   </body>
 </html>

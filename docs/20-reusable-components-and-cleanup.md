@@ -37,6 +37,8 @@ Existing components should be reused before introducing another abstraction.
 | `ServiceCards.astro` | Existing | Home summary and detailed services | Fragment IDs, disclosure behavior, safety wording and telephone/exploration destinations |
 | `ContactSection.astro` + `InquiryForm.astro` | Existing composition | Public contact channels and visitor-sent inquiry drafts | Validation/status hooks and no-JavaScript email fallback; no new submission backend |
 | `ProductIngredients.astro` | Existing | Ordered public ingredient display | Escaped text and omission when no approved ingredient data exists |
+| `ProductProfile.astro` | Added by the Golden public rollout | Catalog-backed ingredient/format counts and starting prices in public soap cards/details | No fabricated sensory scores; absent data remains unlisted, and private editor previews do not gain this panel |
+| `FaqSection.astro` | Added by the Golden public rollout | Shared native disclosure questions on home and services | Factual pickup/service/image guidance, keyboard controls and no claims of laboratory-tested soap ratings |
 | `admin/FormFeedback.astro` | Existing | Mutation status, retry, receipt and authoritative-record presentation | Frozen operation identity, separate original receipt/current record, explicit conflict review |
 | `admin/CountForm.astro` | Cleaned in the second wave | Default correction and compact workspace receiving; obsolete inline mode removed | Server receipts, revision checks, audited reasons and allocation-safe reductions |
 | `admin/Pagination.astro` | Existing | Bounded product/order paging | Encoded query values, preserved inventory filters and result-count semantics |
@@ -45,6 +47,13 @@ Existing components should be reused before introducing another abstraction.
 navbar implementation would duplicate it. Extract further shell subcomponents
 only when independent reuse or maintenance warrants it. Do not force the public
 and inventory shells into one component full of authentication flags.
+
+The Golden public rollout uses `client/site-header.ts` for appearance and mobile
+menu enhancement and `styles/golden.css` for the public-only theme namespace.
+`domain/catalog-presentation.ts` prioritizes genuinely stocked products without
+changing catalog records or treating missing stock as available. The server
+retains price, publication and stock authority; editor and archived study
+surfaces remain separate.
 
 ## First implementation wave
 

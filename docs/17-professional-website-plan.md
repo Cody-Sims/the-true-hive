@@ -5,7 +5,11 @@ Version: WX3 (WX1/WX2 results retained below)
 Date: 2026-11-14  
 Agreement evidence: the owner requested a professional, unique site, a detailed
 phased plan, parallel subagents, and a file recording work that needs authorization.
-The previously selected **Apiary Market** direction remains the starting point.
+The **Apiary Market** visual direction recorded in this historical WX3 plan
+was superseded by the owner's **Golden Apothecary** selection on 2026-11-26.
+The requirements/results below remain the November 14 record; the
+[current redesign](22-customer-website-redesign-plan.md) retains its platform,
+content safety and commerce boundaries.
 Integration and shared-file owner: coordinating assistant.
 
 ## Objective

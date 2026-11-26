@@ -5,6 +5,7 @@ import NoticePanel from "../../components/NoticePanel.astro";
 import { getCatalog, CatalogUnavailableError } from "../../server/catalog.ts";
 import { readConfig } from "../../server/config.ts";
 import type { Catalog, ProductCategory } from "../../domain/catalog.ts";
+import { prioritizeProducts } from "../../domain/catalog-presentation.ts";
 
 const collections: { value: ProductCategory | "all"; label: string }[] = [
   { value: "all", label: "All goods" },
@@ -48,7 +49,7 @@ try {
 if (filtersInvalid && !unavailable) Astro.response.status = 400;
 const products = filtersInvalid
   ? []
-  : (catalog?.products.filter((product) => {
+  : prioritizeProducts(catalog?.products ?? []).filter((product) => {
       if (category !== "all" && product.category !== category) return false;
       const searchable = [
         product.title,
@@ -59,7 +60,7 @@ const products = filtersInvalid
         .join(" ")
         .toLowerCase();
       return !search || searchable.includes(search);
-    }) ?? []);
+    });
 ---
 
 <SiteLayout
@@ -205,7 +206,7 @@ const products = filtersInvalid
   }
   .collection-intro h1 {
     margin-block: 0.75rem 1rem;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: var(--font-display);
     font-size: clamp(2.7rem, 5vw, 4.5rem);
     font-weight: 400;
     letter-spacing: -0.065em;
