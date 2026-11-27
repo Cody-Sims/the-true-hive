@@ -44,6 +44,7 @@
 
 ### Changed
 
+- Keep Golden sensory tracks visible in wrapped cards at 320px with enlarged text, and preserve high-contrast Contact field outlines and invalid-state borders.
 - Restore the explicitly selected Golden scent-and-lather meters and scent chips instead of catalog-count summaries on Home, Store and both soap details. Keep the exact recipe scores (95/78/84 and 82/94/92) and visible illustrative/not-lab-tested disclosure. Match the prototype's service panels, badges, rescue border, compact +24% evidence block, full call/helper actions, hero proportions and compact footer.
 - Match the store's seasonal radar to the prototype's compact, dashed listings instead of image-heavy product cards; keep real prices, stock notices and product-detail links, align desktop collection pills beside the introduction, expose keyboard focus on the visible format labels, and keep format presentation synchronized during a pending add without changing its captured selection.
 - Bring the Golden public pages into prototype layout and interaction parity: sun/moon appearance icons, five-link navigation and grouped footer, phone-left/email-draft-right Contact, real format-aware quick add, collection pills and seasonal radar, coordinated soap thumbnails/prices and ingredient cards, product-first Home with pickup steps, compact About, safe bee helper, and two-column Cart. Preserve authoritative catalog/checkout and no-JavaScript navigation; do not promote demo pickup bookings.

@@ -163,9 +163,12 @@ const { compact = false, headingLevel: Heading = "h3" } = Astro.props;
     line-height: 1.6;
   }
   .inquiry-compact :is(input, select, textarea) {
-    border: 1.5px solid var(--service-border-strong);
+    border: 1.5px solid var(--muted);
     border-radius: 0.65rem;
     padding: 0.7rem 0.85rem;
+  }
+  .inquiry-compact :is(input, select, textarea)[aria-invalid="true"] {
+    border: 2px solid var(--form-error, #8c241b);
   }
   .inquiry-context {
     position: absolute;
