@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { render } from "../site/barcode-test-helper.ts";
+import { render, styles } from "../site/barcode-test-helper.ts";
 
 test("the prototype bee helper keeps uncertain identification safe and updates only the chosen advice", async ({
   page,
@@ -64,13 +64,26 @@ test("quick formats update each real card independently and preserve PDP selecti
       },
     ],
   }));
-  await page.route("**/api/catalog", (route) =>
-    route.fulfill({ json: { source: "database", products } }),
-  );
+  let holdNextCatalog = false;
+  let releaseCatalog!: () => void;
+  const heldCatalog = new Promise<void>((resolve) => {
+    releaseCatalog = resolve;
+  });
+  await page.route("**/api/catalog", async (route) => {
+    if (holdNextCatalog) {
+      holdNextCatalog = false;
+      await heldCatalog;
+    }
+    await route.fulfill({ json: { source: "database", products } });
+  });
   let mutations = 0;
   page.on("request", (request) => {
     if (request.method() !== "GET") mutations++;
   });
+  let fixtureCss = "";
+  await page.route("**/parity-fixture.css", (route) =>
+    route.fulfill({ contentType: "text/css", body: fixtureCss }),
+  );
   await page.route("**/goods?parity-fixture=cards", async (route) => {
     const response = await route.fetch();
     const cards = await Promise.all(
@@ -84,10 +97,16 @@ test("quick formats update each real card independently and preserve PDP selecti
     const form = await render("src/components/AddToCart.astro", {
       product: products[0],
     });
-    const html = (await response.text()).replace(
-      "</main>",
-      `${cards.join("")}<div data-product-detail>${gallery}<span data-detail-price>$10.00</span><span data-detail-format>Single 4oz bar</span>${form}</div></main>`,
-    );
+    fixtureCss = [...styles.values()].flat().join("\n");
+    const html = (await response.text())
+      .replace(
+        "</main>",
+        `${cards.join("")}<div data-product-detail>${gallery}<span data-detail-price>$10.00</span><span data-detail-format>Single 4oz bar</span>${form}</div></main>`,
+      )
+      .replace(
+        "</head>",
+        '<link rel="stylesheet" href="/parity-fixture.css"></head>',
+      );
     await route.fulfill({ response, body: html });
   });
   await page.goto("/goods?parity-fixture=cards");
@@ -102,9 +121,19 @@ test("quick formats update each real card independently and preserve PDP selecti
     detail.getByRole("spinbutton", { name: "Quantity", exact: true }),
   ).toBeVisible();
   await expect(first.locator("[data-quick-add]")).toBeVisible();
-  await first.getByRole("radio", { name: /Unverified format/ }).check();
+  const unknown = first
+    .locator(".format-option")
+    .filter({ hasText: "Unverified format" });
+  await unknown.locator("input").focus();
+  expect(
+    await unknown.evaluate((node) => getComputedStyle(node).outlineStyle),
+  ).toBe("solid");
+  await unknown.click();
   await expect(first.locator(".card-stock")).not.toContainText("In Stock");
-  await first.getByRole("radio", { name: /Single 1oz Wolf Mold/ }).check();
+  await first
+    .locator(".format-option")
+    .filter({ hasText: "Single 1oz Wolf Mold" })
+    .click();
   await expect(first.locator("[data-card-price]")).toHaveText("$12.50");
   await expect(first.locator("[data-card-image-display] img")).toHaveAttribute(
     "src",
@@ -128,12 +157,36 @@ test("quick formats update each real card independently and preserve PDP selecti
   await expect(detail.locator("[data-gallery-note]")).toContainText(
     "wolf-shaped soap",
   );
-  await second.getByRole("radio", { name: /Single 1oz Wolf Mold/ }).check();
+  await second
+    .locator(".format-option")
+    .filter({ hasText: "Single 1oz Wolf Mold" })
+    .click();
   await expect(detail.locator("[data-gallery-art] img")).toHaveAttribute(
     "src",
     /soap-delight-wolf/,
   );
+  holdNextCatalog = true;
   await first.getByRole("button", { name: /Add to Cart/ }).click();
+  await expect(first.locator("[data-quick-add]")).toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
+  try {
+    await first
+      .locator(".format-option")
+      .filter({ hasText: "Single 4oz bar" })
+      .click();
+    await expect(first.locator("[data-card-price]")).toHaveText("$10.00");
+    await expect(
+      first.locator("[data-card-image-display] img"),
+    ).toHaveAttribute("src", /soap-delight-bar/);
+    await expect(first.locator("[data-card-link]").first()).toHaveAttribute(
+      "href",
+      /variant=coconut-milk-delight-4oz-single/,
+    );
+  } finally {
+    releaseCatalog();
+  }
   await expect(first.locator("[data-add-status]")).toContainText(
     "Added to your cart",
   );
@@ -144,6 +197,22 @@ test("quick formats update each real card independently and preserve PDP selecti
   ).toEqual({
     version: 1,
     lines: [{ variantKey: "coconut-milk-delight-4oz-wolf", quantity: 1 }],
+  });
+  await first.getByRole("button", { name: /Add to Cart/ }).click();
+  await expect(first.locator("[data-quick-add]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("true-hive-cart")!),
+    ),
+  ).toEqual({
+    version: 1,
+    lines: [
+      { variantKey: "coconut-milk-delight-4oz-wolf", quantity: 1 },
+      { variantKey: "coconut-milk-delight-4oz-single", quantity: 1 },
+    ],
   });
   expect(mutations).toBe(0);
   await detail.evaluate((node) => node.remove());
@@ -246,6 +315,16 @@ test("the shop exposes prototype collection pills and keeps real server filterin
   await expect(page.locator(".shelf-product")).toHaveCount(0);
   await filters.getByRole("link", { name: /^Seasonal Radar/ }).click();
   await expect(page.locator("[data-seasonal-radar]")).toBeVisible();
+  await expect(page.locator("[data-seasonal-radar] img")).toHaveCount(0);
+  await expect(
+    page.locator("[data-seasonal-radar] .shelf-product"),
+  ).toHaveCount(3);
+  await expect(
+    page
+      .locator("[data-seasonal-radar]")
+      .getByRole("heading", { name: "Seasonal honey", exact: true })
+      .getByRole("link"),
+  ).toHaveAttribute("href", "/goods/seasonal-honey");
 });
 
 test("Golden home retains the prototype's trust strip and shopping-to-pickup-to-apiary order", async ({

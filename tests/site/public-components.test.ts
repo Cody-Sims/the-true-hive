@@ -427,6 +427,80 @@ for (const entry of [
   });
 }
 
+test("compact seasonal listings retain verified, unavailable and unverified stock labels beside real prices", async () => {
+  const ready: Product = {
+    key: "ready-honey",
+    slug: "ready-honey",
+    title: "Ready Honey",
+    category: "honey",
+    imageKey: "soap",
+    kind: "active",
+    summary: "Isolated public rendering fixture",
+    details: [],
+    variants: [
+      {
+        key: "ready-jar",
+        label: "Jar",
+        currency: "USD",
+        priceMinor: 1000,
+        stock: { state: "available" },
+      },
+    ],
+  };
+  const unknown: Product = {
+    ...ready,
+    key: "unknown-candle",
+    slug: "unknown-candle",
+    title: "Unknown Candle",
+    category: "candles",
+    variants: [
+      {
+        key: "unknown-candle-format",
+        label: "Candle",
+        currency: "USD",
+        priceMinor: 1000,
+      },
+    ],
+  };
+  const sold: Product = {
+    ...ready,
+    key: "sold-gift",
+    slug: "sold-gift",
+    title: "Sold Gift",
+    category: "gifts",
+    variants: [
+      {
+        ...ready.variants[0]!,
+        key: "sold-gift-format",
+        stock: { state: "out_of_stock" },
+      },
+    ],
+  };
+  const response = await pageResponse("goods/index", {
+    catalog: [ready, unknown, sold],
+    search: "?view=seasonal",
+  });
+  assert.equal(response.status, 200);
+  const html = await storefrontHtml(response);
+  const cards = [
+    ...html.matchAll(
+      /<article class="shelf-product radar-card"[^>]*>([\s\S]*?)<\/article>/g,
+    ),
+  ].map((match) => match[1]!);
+  assert.equal(cards.length, 3);
+  for (const [title, label] of [
+    ["Ready Honey", /In Stock \/ Local Pickup/],
+    ["Unknown Candle", /Availability unverified/],
+    ["Sold Gift", /Sold out/i],
+  ] as const) {
+    const card = cards.find((entry) => entry.includes(title));
+    assert(card, title);
+    assert.match(card, /\$10\.00/);
+    assert.match(card, label);
+    assert.doesNotMatch(card, /<img/);
+  }
+});
+
 test("current image-led storefront keeps product cards, format links and collection filtering", async () => {
   const product: Product = {
     key: "render-soap",
