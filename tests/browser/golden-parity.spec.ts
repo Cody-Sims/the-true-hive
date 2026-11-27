@@ -101,7 +101,7 @@ test("quick formats update each real card independently and preserve PDP selecti
     const html = (await response.text())
       .replace(
         "</main>",
-        `${cards.join("")}<div data-product-detail>${gallery}<span data-detail-price>$10.00</span><span data-detail-format>Single 4oz bar</span>${form}</div></main>`,
+        `<div class="wrap">${cards.join("")}<div data-product-detail>${gallery}<span data-detail-price>$10.00</span><span data-detail-format>Single 4oz bar</span>${form}</div></div></main>`,
       )
       .replace(
         "</head>",
@@ -250,6 +250,27 @@ test("quick formats update each real card independently and preserve PDP selecti
       await page.evaluate(() => document.documentElement.scrollWidth),
       `active soap cards/${width}/200%`,
     ).toBeLessThanOrEqual(width);
+    for (const meter of await first.getByRole("meter").all()) {
+      expect(
+        (await meter.boundingBox())!.width,
+        "enlarged-text tracks remain visible",
+      ).toBeGreaterThanOrEqual(24);
+      const text = await meter.evaluate((node) => {
+        const row = node.parentElement!;
+        const label = row.querySelector("span")!;
+        const value = row.querySelector(".profile-value")!;
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        return {
+          labelRight: range.getBoundingClientRect().right,
+          valueLeft: value.getBoundingClientRect().left,
+        };
+      });
+      expect(
+        text.labelRight,
+        "enlarged label does not overlap its score",
+      ).toBeLessThanOrEqual(text.valueLeft + 1);
+    }
   }
 });
 
@@ -322,10 +343,46 @@ test("Contact matches the prototype's phone-left and draft-right layout without 
   const left = (await phone.boundingBox())!;
   const right = (await draft.boundingBox())!;
   expect(left.x + left.width).toBeLessThanOrEqual(right.x);
+  const field = draft.locator("#inquiry-name");
+  const colors = await field.evaluate((node) => ({
+    border: getComputedStyle(node).borderTopColor,
+    background: getComputedStyle(node).backgroundColor,
+  }));
   await draft
     .getByRole("button", { name: "Open email draft", exact: true })
     .click();
   await expect(draft.locator("[data-error='name']")).toBeVisible();
+  expect(
+    await field.evaluate((node) => getComputedStyle(node).borderTopColor),
+  ).toBe(
+    await draft
+      .locator("[data-error='name']")
+      .evaluate((node) => getComputedStyle(node).color),
+  );
+  const border = colors.border.match(/[\d.]+/g)!.map(Number);
+  const background = colors.background.match(/[\d.]+/g)!.map(Number);
+  const alpha = border[3] ?? 1;
+  const luminance = (rgb: number[]) =>
+    rgb
+      .slice(0, 3)
+      .map((value) => {
+        const channel = value / 255;
+        return channel <= 0.04045
+          ? channel / 12.92
+          : ((channel + 0.055) / 1.055) ** 2.4;
+      })
+      .reduce(
+        (sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index]!,
+        0,
+      );
+  const blended = border
+    .slice(0, 3)
+    .map((value, index) => value * alpha + background[index]! * (1 - alpha));
+  const lhs = luminance(blended),
+    rhs = luminance(background);
+  expect(
+    (Math.max(lhs, rhs) + 0.05) / (Math.min(lhs, rhs) + 0.05),
+  ).toBeGreaterThanOrEqual(3);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
