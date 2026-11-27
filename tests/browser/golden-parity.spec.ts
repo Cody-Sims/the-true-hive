@@ -255,6 +255,21 @@ test("quick formats update each real card independently and preserve PDP selecti
         (await meter.boundingBox())!.width,
         "enlarged-text tracks remain visible",
       ).toBeGreaterThanOrEqual(24);
+      const text = await meter.evaluate((node) => {
+        const row = node.parentElement!;
+        const label = row.querySelector("span")!;
+        const value = row.querySelector(".profile-value")!;
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        return {
+          labelRight: range.getBoundingClientRect().right,
+          valueLeft: value.getBoundingClientRect().left,
+        };
+      });
+      expect(
+        text.labelRight,
+        "enlarged label does not overlap its score",
+      ).toBeLessThanOrEqual(text.valueLeft + 1);
     }
   }
 });
