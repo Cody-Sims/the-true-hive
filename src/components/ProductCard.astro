@@ -5,6 +5,7 @@ import ProductPrices from "./ProductPrices.astro";
 import StockNotice from "./StockNotice.astro";
 import ProductProfile from "./ProductProfile.astro";
 import AddToCart from "./AddToCart.astro";
+import { soapSensoryProfile } from "../content/soap-sensory.ts";
 import { getSoapReference } from "../content/soap-references.ts";
 import { money, pricedVariants, projectedStock } from "../domain/cart.ts";
 
@@ -39,6 +40,10 @@ const offered = variants.filter(
     ),
 );
 const selected = offered[0] ?? variants[0];
+const sensory =
+  !preview && product.kind === "active" && product.category === "soap"
+    ? soapSensoryProfile(product.key)
+    : null;
 const selectedStock = selected && projectedStock(selected);
 const cardStockLabel = ["available", "low_stock"].includes(
   selectedStock?.state ?? "",
@@ -74,7 +79,15 @@ const productHref = `/goods/${encodeURIComponent(product.slug)}${offered[0] ? `?
         referenceVariantKey={selected?.key}
       />
     </div>
-    {selected && !preview && <span class="card-stock">{cardStockLabel}</span>}
+    {selected && !preview && (
+      <span
+        class="card-stock"
+        data-stock-state={selectedStock?.state ?? "unverified"}
+      >
+        {cardStockLabel}
+      </span>
+    )}
+    {sensory && <span class="card-recipe-badge">{sensory.badge}</span>}
     {reference && <span class="reference-caption">AI styling reference</span>}
     {preview && (
       <span class="art-caption">
@@ -83,7 +96,7 @@ const productHref = `/goods/${encodeURIComponent(product.slug)}${offered[0] ? `?
     )}
   </ArtLink>
   <div class="shelf-copy">
-    <p class="eyebrow">{categories[product.category]}</p>
+    <p class="eyebrow">{sensory?.category ?? categories[product.category]}</p>
     <div class="card-title-row">
       <h3>
         <TitleLink
@@ -96,7 +109,7 @@ const productHref = `/goods/${encodeURIComponent(product.slug)}${offered[0] ? `?
           ) : (
             product.title
           )}
-          <span aria-hidden="true">&nearr;</span>
+          {preview && <span aria-hidden="true">&nearr;</span>}
         </TitleLink>
       </h3>
       {!preview && selected && (
@@ -108,8 +121,8 @@ const productHref = `/goods/${encodeURIComponent(product.slug)}${offered[0] ? `?
     {!preview && !selected && (
       <ProductPrices product={product} compact showStock={!variants.length} />
     )}
-    <p class="shelf-description">{product.summary}</p>
-    {!preview && <ProductProfile product={product} />}
+    <p class="shelf-description">{sensory?.hook ?? product.summary}</p>
+    {!preview && <ProductProfile product={product} showScentNotes />}
     {(preview || product.kind === "concept") && (
       <div class="shelf-meta">
         <span class="pill">
@@ -218,6 +231,33 @@ const productHref = `/goods/${encodeURIComponent(product.slug)}${offered[0] ? `?
     background: var(--white);
     color: var(--forest);
     font-size: 0.75rem;
+  }
+  .card-stock[data-stock-state="available"],
+  .card-stock[data-stock-state="low_stock"] {
+    background: var(--stock-badge-surface);
+    color: var(--stock-badge-ink);
+    border: 1px solid var(--stock-badge-line);
+  }
+  .card-recipe-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 2rem;
+    background: var(--white);
+    color: var(--forest);
+    font-size: 0.73rem;
+    font-weight: 700;
+  }
+  .golden-product .shelf-copy h3 {
+    font-size: 1.45rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .golden-product .shelf-description {
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
   }
   .card-title-row {
     display: flex;

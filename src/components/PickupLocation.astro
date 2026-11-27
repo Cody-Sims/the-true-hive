@@ -3,14 +3,13 @@ import { pickupLocations, pickupInstructions } from "../content/pickup.ts";
 ---
 
 <aside class="pickup-location" aria-label="Pickup locations">
-  <p class="eyebrow">Pickup meetup points</p>
+  <h2>US-411 Pickup Meetup Points</h2>
   <ul class="pickup-meetup-list" role="list">
     {pickupLocations.map((location) => (
       <li>
         <strong>{location.name}</strong>
         <address>
-          {location.street}
-          <br />
+          {location.street},{" "}
           {`${location.city}, ${location.region} ${location.postalCode}`}
         </address>
       </li>
@@ -21,28 +20,39 @@ import { pickupLocations, pickupInstructions } from "../content/pickup.ts";
 
 <style>
   .pickup-location {
-    padding: 1.25rem;
+    padding: 0;
     margin-block: 1.5rem;
-    border: 1px solid currentColor;
+    border: 0;
     overflow-wrap: anywhere;
   }
   address {
-    margin-block: 0.75rem;
-    font-size: 1.1rem;
+    margin-block: 0.2rem 0;
+    font-size: 0.8rem;
+    color: var(--muted);
     font-style: normal;
     line-height: 1.7;
   }
   .pickup-meetup-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
     padding: 0;
     list-style: none;
+  }
+  h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .pickup-meetup-list li {
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    background: var(--paper);
   }
   .pickup-location > p:last-child {
     max-width: 40rem;
     margin-bottom: 0;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     line-height: 1.7;
   }
 </style>

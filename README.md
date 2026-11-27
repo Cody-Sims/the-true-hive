@@ -39,8 +39,14 @@ Seasonal Radar views and canonical format-aware quick add; soap details have
 coordinated thumbnails, price/format selection and ingredient cards. Contact
 pairs phone information with the real email-draft form, About uses a compact
 intro/photo layout, and Services includes a safety-first identification helper.
-Cart items and pickup/checkout occupy coordinated columns. Bar profiles remain
-published catalog facts, not illustrative sensory scores; no demo booking,
+Cart items and pickup/checkout occupy coordinated columns. The owner-selected
+Golden **Scent & Lather Profile** appears on Home, Store and soap details:
+Coconut Milk Delight has Creaminess **95/100**, Scent Warmth **78/100** and Bar
+Firmness **84/100**; The True Soap has **82/100**, **94/100** and **92/100**.
+These are explicitly labeled illustrative sensory guides, not lab-tested scores
+or customer ratings. Recipe-specific scent chips accompany the cards. Service
+panels retain Golden's badges, highlighted rescue border, compact **+24%**
+research callout, primary/secondary call actions and safety banner. No demo booking,
 restock promise or payment activation is implied. Grouped footer links include
 pickup spots; Contact, Privacy and Accessibility remain separately accessible.
 Apply migration 004 before

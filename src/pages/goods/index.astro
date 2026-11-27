@@ -165,51 +165,62 @@ const collectionHref = (nextView: string) => {
   </section>
 
   <div class="wrap">
-    <form class="collection-filters" action="/goods" method="get" role="search">
-      {!viewInvalid && view !== "all" && (
-        <input type="hidden" name="view" value={view} />
-      )}
-      <div class="filter-field">
-        <label for="collection-category">Collection</label>
-        <select
-          id="collection-category"
-          name="category"
-          aria-invalid={categoryInvalid ? "true" : undefined}
-          aria-describedby={categoryInvalid ? "filter-error" : undefined}
-        >
-          {collections.map((collection) => (
-            <option
-              value={collection.value}
-              selected={category === collection.value}
-            >
-              {collection.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div class="filter-field search-field">
-        <label for="collection-query">Search</label>
-        <input
-          id="collection-query"
-          type="search"
-          aria-label="Search the collection"
-          name="q"
-          value={query}
-          maxlength="80"
-          placeholder="Search products"
-          aria-invalid={queryInvalid ? "true" : undefined}
-          aria-describedby={
-            queryInvalid ? "search-help filter-error" : "search-help"
-          }
-        />
-      </div>
-      <button class="button button-primary" type="submit">
-        Find goods <span aria-hidden="true">&rarr;</span>
-      </button>
-      <p id="search-help" class="fine-print filter-help">
-        Up to 80 characters. Search product names and descriptions.
-      </p>
-    </form>
+    <details
+      class="collection-search"
+      open={category !== "all" || Boolean(search) || filtersInvalid}
+    >
+      <summary>Search &amp; refine collection</summary>
+      <form
+        class="collection-filters"
+        action="/goods"
+        method="get"
+        role="search"
+      >
+        {!viewInvalid && view !== "all" && (
+          <input type="hidden" name="view" value={view} />
+        )}
+        <div class="filter-field">
+          <label for="collection-category">Collection</label>
+          <select
+            id="collection-category"
+            name="category"
+            aria-invalid={categoryInvalid ? "true" : undefined}
+            aria-describedby={categoryInvalid ? "filter-error" : undefined}
+          >
+            {collections.map((collection) => (
+              <option
+                value={collection.value}
+                selected={category === collection.value}
+              >
+                {collection.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div class="filter-field search-field">
+          <label for="collection-query">Search</label>
+          <input
+            id="collection-query"
+            type="search"
+            aria-label="Search the collection"
+            name="q"
+            value={query}
+            maxlength="80"
+            placeholder="Search products"
+            aria-invalid={queryInvalid ? "true" : undefined}
+            aria-describedby={
+              queryInvalid ? "search-help filter-error" : "search-help"
+            }
+          />
+        </div>
+        <button class="button button-primary" type="submit">
+          Find goods <span aria-hidden="true">&rarr;</span>
+        </button>
+        <p id="search-help" class="fine-print filter-help">
+          Up to 80 characters. Search product names and descriptions.
+        </p>
+      </form>
+    </details>
   </div>
 
   <section
@@ -352,7 +363,7 @@ const collectionHref = (nextView: string) => {
     gap: 1.5rem;
   }
   .collection-intro > div {
-    flex: 1 1 34rem;
+    flex: 1 1 100%;
     min-width: 0;
   }
   .collection-pills {
@@ -399,6 +410,18 @@ const collectionHref = (nextView: string) => {
     align-items: end;
     padding-block: 1rem;
     border-block: 1px solid var(--line);
+  }
+  .collection-search {
+    margin-block: 0.5rem 1rem;
+  }
+  .collection-search summary {
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: underline;
   }
   .filter-field {
     min-width: 0;

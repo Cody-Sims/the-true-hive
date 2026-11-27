@@ -90,13 +90,10 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
   await form.getByLabel("Variant").selectOption("cart-test-bar");
   await form.getByLabel("Quantity").fill("1");
   await form.getByRole("button", { name: "Add to cart", exact: true }).click();
-  await expect(page.locator("[data-cart-count]")).toHaveText([" (3)", " (3)"]);
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (3)");
   await form.getByRole("button", { name: "Add to cart", exact: true }).click();
-  await expect(page.locator("[data-cart-count]")).toHaveText([" (4)", " (4)"]);
-  await page
-    .getByRole("navigation", { name: "Store navigation" })
-    .getByRole("link", { name: /Cart/ })
-    .click();
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
+  await page.locator(".header-cart").click();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
   await expect(page.locator("[data-cart-lines] > li")).toHaveCount(2);
   expect(
@@ -121,11 +118,8 @@ test("Add to cart saves the selected active priced fixture variant, merges dupli
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "Shop Soaps", exact: true })
     .click();
-  await expect(page.locator("[data-cart-count]")).toHaveText([" (4)", " (4)"]);
-  await page
-    .getByRole("navigation", { name: "Store navigation" })
-    .getByRole("link", { name: /^Cart/ })
-    .click();
+  await expect(page.locator("[data-cart-count]")).toHaveText(" (4)");
+  await page.locator(".header-cart").click();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$42.50");
   expect(checkoutAttempts).toBe(0);
 });
@@ -476,11 +470,7 @@ test("cart navigation and controls fit a narrow viewport without offering real c
   );
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/cart");
-  await expect(
-    page
-      .getByRole("navigation", { name: "Store navigation" })
-      .getByRole("link", { name: /Cart/ }),
-  ).toBeVisible();
+  await expect(page.locator(".header-cart")).toBeVisible();
   await expect(page.locator("[data-cart-subtotal]")).toHaveText("$7.25");
   await expect(
     page.getByRole("button", {

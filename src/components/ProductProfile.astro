@@ -1,63 +1,124 @@
 ---
 import type { Product } from "../domain/catalog.ts";
-import { money, pricedVariants } from "../domain/cart.ts";
+import { soapSensoryProfile } from "../content/soap-sensory.ts";
 interface Props {
   product: Product;
+  showScentNotes?: boolean;
 }
-const { product } = Astro.props;
-const prices = pricedVariants(product).map((variant) => variant.priceMinor!);
-const ingredientCount = product.ingredients?.length ?? 0;
+const { product, showScentNotes = false } = Astro.props;
+const profile =
+  product.kind === "active" && product.category === "soap"
+    ? soapSensoryProfile(product.key)
+    : null;
+const labels = ["Creaminess", "Scent Warmth", "Bar Firmness"];
 ---
 
-{product.kind === "active" && product.category === "soap" && (
-  <section
-    class="product-profile"
-    aria-label={`${product.title} at a glance`}
-    data-product-profile
-  >
-    <p class="eyebrow">Recipe at a glance</p>
-    <dl>
-      <div>
-        <dt>Ingredients</dt>
-        <dd>{ingredientCount ? `${ingredientCount} listed` : "Not listed"}</dd>
+{profile && (
+  <>
+    {showScentNotes && (
+      <div class="scent-chips" aria-label={`${product.title} scent notes`}>
+        {profile.notes.map((note) => (
+          <span>{note}</span>
+        ))}
       </div>
-      <div>
-        <dt>Formats</dt>
-        <dd>{product.variants.length || "Not listed"}</dd>
+    )}
+    <div
+      class="product-profile ga-sensory-profile"
+      role="group"
+      aria-label={`${product.title} sensory profile`}
+      data-product-profile
+    >
+      <p class="eyebrow">Scent &amp; lather profile</p>
+      <div class="profile-meters">
+        {labels.map((label, index) => (
+          <div class="profile-row">
+            <span>{label}</span>
+            <div
+              class="profile-track"
+              role="meter"
+              aria-label={label}
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={profile.scores[index]}
+              aria-valuetext={`${profile.scores[index]} out of 100, illustrative sensory guide`}
+            >
+              <div
+                class="profile-fill"
+                style={`width: ${profile.scores[index]}%`}
+              ></div>
+            </div>
+            <span class="profile-value" aria-hidden="true">
+              {profile.scores[index]}/100
+            </span>
+          </div>
+        ))}
       </div>
-      <div>
-        <dt>From</dt>
-        <dd>{prices.length ? money(Math.min(...prices)) : "Not listed"}</dd>
-      </div>
-    </dl>
-  </section>
+      <p class="profile-note">
+        Illustrative sensory guide, not lab-tested scores.
+      </p>
+    </div>
+  </>
 )}
 
 <style>
   .product-profile {
     margin-block: 1rem;
-    padding-block: 1rem;
+    padding-block: 0.8rem;
     border-block: 1px solid var(--line);
   }
   .product-profile > .eyebrow {
-    margin-bottom: 0.65rem;
-    color: var(--muted);
-  }
-  dl {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
     margin: 0;
+    font-size: 0.7rem;
+    color: var(--forest);
   }
-  dt {
-    color: var(--muted);
-    font-size: 0.75rem;
+  .profile-meters {
+    display: grid;
+    gap: 0.45rem;
+    margin-block: 0.75rem 1rem;
   }
-  dd {
-    margin: 0.2rem 0 0;
-    color: var(--tomato);
-    font-size: 1rem;
+  .profile-row {
+    display: grid;
+    grid-template-columns: 95px minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.78rem;
     font-weight: 700;
+    color: var(--muted);
+  }
+  .profile-track {
+    height: 7px;
+    border-radius: 999px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .profile-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--tomato);
+  }
+  .profile-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--forest);
     overflow-wrap: anywhere;
+  }
+  .profile-note {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .scent-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.8rem;
+  }
+  .scent-chips span {
+    font-size: 0.74rem;
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--forest);
+    border: 1px solid var(--line);
   }
 </style>

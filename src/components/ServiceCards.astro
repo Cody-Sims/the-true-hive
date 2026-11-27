@@ -1,6 +1,5 @@
 ---
 import { readConfig } from "../server/config.ts";
-
 interface Props {
   detailed?: boolean;
 }
@@ -9,102 +8,109 @@ const { contact } = readConfig();
 ---
 
 <div class="service-path-grid">
-  <article id="colony-removal" class="service-path-card">
+  <article id="colony-removal" class="service-path-card rescue-panel">
     <div class="service-path-topline">
-      <p class="eyebrow">No-Cost Service / Homes &amp; properties</p>
-      <span aria-hidden="true">01</span>
+      <span class="service-badge service-free">$0 NO-COST SERVICE</span>
+      <span class="service-area">
+        Monroe &middot; Blount &middot; Knox Counties
+      </span>
     </div>
-    <h3>Colony Rescue</h3>
+    <h3>Live Honeybee Colony Rescue</h3>
     <p>
-      Do your bees need a new home? We'd love to rescue your bees and help them
-      thrive. We come to you for honeybee relocation at no cost in Monroe,
-      Blount, and Knox counties.
+      Found honeybees swarming a branch, porch, or wall? Don't call an
+      exterminator. We come to you and relocate honeybee colonies alive at{" "}
+      <strong>zero cost</strong> so they can keep thriving.
     </p>
-    {detailed ? (
-      <>
-        <details class="service-path-details" open>
-          <summary>For a colony rescue</summary>
-          <ul>
-            <li>
-              <strong>Address:</strong> Where the hive is located.
-            </li>
-            <li>
-              <strong>Location of hive:</strong> Where it is on the property.
-            </li>
-            <li>
-              <strong>A good time to come:</strong> Your preferred time for a
-              visit.
-            </li>
-          </ul>
-        </details>
-        <a class="text-link service-path-link" href={contact.phoneHref}>
-          Call {contact.phone} <span aria-hidden="true">&rarr;</span>
-        </a>
-      </>
-    ) : (
-      <a class="text-link service-path-link" href="/services#colony-removal">
-        Explore colony rescue <span aria-hidden="true">&rarr;</span>
-      </a>
+    {detailed && (
+      <div class="service-path-details">
+        <ul aria-label="For a colony rescue">
+          <li>
+            <strong>Address:</strong> Where the hive is located.
+          </li>
+          <li>
+            <strong>Location of hive:</strong> Where it is on the property.
+          </li>
+          <li>
+            <strong>A good time to come:</strong> Your preferred time for a
+            visit.
+          </li>
+        </ul>
+      </div>
     )}
+    <div class="service-actions">
+      <a class="button button-primary" href={contact.phoneHref}>
+        Call {contact.phone} &mdash; Free Rescue
+      </a>
+      {detailed ? (
+        <a class="button service-secondary" href="/contact#inquiry">
+          Email Draft
+        </a>
+      ) : (
+        <a class="button service-secondary" href="/services#bee-helper">
+          Bee vs. Wasp Helper &rarr;
+        </a>
+      )}
+    </div>
   </article>
   <article id="farm-pollination" class="service-path-card">
     <div class="service-path-topline">
-      <p class="eyebrow">Farms &amp; growers</p>
-      <span aria-hidden="true">02</span>
+      <span class="service-badge">FARMS &amp; GROWERS</span>
+      <span class="service-area">Peer-Reviewed Evidence</span>
     </div>
-    <h3>Farm Pollination</h3>
+    <h3>East Tennessee Farm Pollination</h3>
     <p>
-      Would you like to increase your crop yield? We bring our bees to you,
-      helping your crops thrive as you work toward your <em>best</em> harvest
-      yet.
+      We bring active honeybee colonies to your farm to support peak bloom
+      pollination and stronger harvests.
     </p>
     <div class="pollination-evidence">
-      <strong class="evidence-stat">24%</strong>
+      <strong class="evidence-stat">+24%</strong>
       <p>
-        A{" "}
+        <strong>Median crop yield-gap closure</strong> on fields under 5 acres
+        across 33 crop systems &mdash;{" "}
         <a href="https://doi.org/10.1126/science.aac7287">
           2016 study in <cite>Science</cite>
-        </a>{" "}
-        across 33 pollinator-dependent crop systems found that more visits could
-        close yield gaps by a median of 24% in fields smaller than 2 hectares
-        (about 5 acres). This is study evidence, not a guaranteed result for
-        your farm.
+        </a>
+        .
       </p>
     </div>
-    {detailed ? (
-      <>
-        <details class="service-path-details" open>
-          <summary>For a pollination assessment</summary>
-          <ul>
-            <li>
-              <strong>Farm location:</strong> Where the land is located.
-            </li>
-            <li>
-              <strong>Crops grown on the land.</strong>
-            </li>
-            <li>
-              <strong>Number of hives:</strong> How many you'd like to rent.
-            </li>
-            <li>
-              <strong>Preferred inspection day:</strong> A day of the week that
-              works for an on-site visit.
-            </li>
-          </ul>
-        </details>
-        <a class="text-link service-path-link" href={contact.phoneHref}>
-          Discuss pollination <span aria-hidden="true">&rarr;</span>
-        </a>
-      </>
-    ) : (
-      <a class="text-link service-path-link" href="/services#farm-pollination">
-        Explore farm pollination <span aria-hidden="true">&rarr;</span>
-      </a>
+    {detailed && (
+      <div class="service-path-details">
+        <ul aria-label="For a pollination assessment">
+          <li>
+            <strong>Farm location:</strong> Where the land is located.
+          </li>
+          <li>
+            <strong>Crops grown on the land.</strong>
+          </li>
+          <li>
+            <strong>Number of hives:</strong> How many you'd like to rent.
+          </li>
+          <li>
+            <strong>Preferred inspection day:</strong> A day of the week that
+            works for an on-site visit.
+          </li>
+        </ul>
+      </div>
     )}
+    <div class="service-actions">
+      <a class="button service-farm-action" href={contact.phoneHref}>
+        Discuss Farm Pollination
+      </a>
+      {detailed ? (
+        <a class="button service-secondary" href="/contact#inquiry">
+          Send Farm Details
+        </a>
+      ) : (
+        <a class="button service-secondary" href="/services#farm-pollination">
+          Assessment Checklist &rarr;
+        </a>
+      )}
+    </div>
   </article>
 </div>
-<p class="fine-print service-path-safety">
-  <strong>Give bees space.</strong> Do not disturb a colony or approach it for a
-  photograph.
+<p class="service-path-safety">
+  <strong>Safety First:</strong> Give bees space. Do not disturb a colony or
+  approach it for a photograph.
 </p>
 
 <style>
@@ -117,101 +123,122 @@ const { contact } = readConfig();
     display: flex;
     min-width: 0;
     flex-direction: column;
-    align-items: start;
-    padding: clamp(1.5rem, 3vw, 2.5rem);
-    border: 1px solid var(--forest);
-    background: var(--paper);
+    gap: 0.9rem;
+    padding: 1.65rem;
+    border: 1.5px solid var(--line);
+    border-radius: 1rem;
+    background: var(--white);
+    box-shadow: var(--golden-shadow);
     scroll-margin-top: 2rem;
+  }
+  .rescue-panel {
+    border-color: var(--service-alert);
   }
   .service-path-topline {
     display: flex;
-    width: 100%;
     flex-wrap: wrap;
-    gap: 0.5rem 1rem;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid var(--line);
+    gap: 0.5rem;
   }
-  .service-path-topline > span {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 1.5rem;
-    font-style: italic;
-    line-height: 1;
+  .service-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--forest);
+    font-size: 0.73rem;
+    font-weight: 700;
   }
-  .service-path-card h3 {
-    margin-block: 0.75rem 1.15rem;
+  .service-free {
+    background: var(--service-alert);
+    color: var(--service-alert-ink);
+    border-color: transparent;
+  }
+  .service-area {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  h3 {
+    margin: 0;
     font-size: 1.65rem;
-    line-height: 1.1;
+    line-height: 1.6;
   }
   .service-path-card > p {
-    max-width: 31rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
-    line-height: 1.9;
+    margin: 0;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
   }
-  .service-path-link {
+  .service-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
     margin-top: auto;
   }
-  .service-path-details {
-    width: 100%;
-    margin-bottom: 1.25rem;
-    border-block: 1px solid var(--line);
-    font-size: 0.85rem;
-  }
-  .service-path-details summary {
-    min-height: 3rem;
-    padding-block: 0.85rem;
+  .service-actions :global(.button) {
+    padding: 0.7rem 1.1rem;
+    min-height: 44px;
+    font-size: 0.88rem;
     font-weight: 700;
-    line-height: 1.6;
-    cursor: pointer;
+    text-align: center;
   }
-  .service-path-details summary:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+  .service-secondary {
+    background: transparent;
+    color: var(--forest);
+    border: 1.5px solid var(--service-border-strong);
   }
-  .service-path-details summary:focus-visible {
-    outline: 3px solid var(--forest);
-    outline-offset: 4px;
-  }
-  .service-path-details ul {
-    display: grid;
-    gap: 0.65rem;
-    padding: 0 0 1.25rem 1.25rem;
-    margin: 0;
-    line-height: 1.8;
-  }
-  .service-path-safety {
-    max-width: 57rem;
-    margin-top: 1.5rem;
-    padding-left: 1rem;
-    border-left: 2px solid var(--tomato);
-    font-size: 0.8rem;
+  .service-farm-action {
+    background: var(--service-action);
+    color: var(--service-action-ink);
+    border-color: var(--service-action);
   }
   .pollination-evidence {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
-    border: 1px solid var(--line);
+    padding: 0.95rem 1.1rem;
     border-radius: 0.65rem;
     background: var(--surface);
-    margin-bottom: 1.25rem;
+    border-left: 4px solid var(--tomato);
   }
   .evidence-stat {
+    font-family: var(--font-display);
     font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
     color: var(--tomato);
+    flex-shrink: 0;
   }
   .pollination-evidence p {
     margin: 0;
-    font-size: 0.82rem;
+    color: var(--forest);
+    font-size: 0.84rem;
+    line-height: 1.6;
   }
-  @media (max-width: 46rem) {
+  .service-path-safety {
+    margin-top: 1.25rem;
+    padding: 0.85rem 1rem;
+    border-left: 4px solid var(--service-alert);
+    background: var(--white);
+    border-radius: 0.65rem;
+    font-size: 0.86rem;
+  }
+  .service-path-details {
+    font-size: 0.85rem;
+  }
+  .service-path-details ul {
+    display: grid;
+    gap: 0.4rem;
+    padding-left: 1.2rem;
+    margin-block: 0.5rem;
+  }
+  @media (max-width: 940px) {
     .service-path-grid {
       grid-template-columns: minmax(0, 1fr);
-    }
-    .service-path-card {
-      padding: 1.5rem;
     }
   }
 </style>
