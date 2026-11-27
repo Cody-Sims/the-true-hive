@@ -60,6 +60,9 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
                 value={variant.key}
                 data-variant-price={money(variant.priceMinor!)}
                 data-variant-label={variant.label}
+                data-variant-stock-state={
+                  projectedStock(variant)?.state ?? "unverified"
+                }
                 data-variant-href={
                   unavailable(variant)
                     ? undefined
@@ -123,6 +126,14 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
             {product.ingredients?.length ? "Ingredients" : "Details"}
           </a>
         )}
+        {showPrice && (
+          <a
+            class="button quick-ingredients detail-cart-link"
+            href="/cart#pickup"
+          >
+            Cart &amp; Pickup
+          </a>
+        )}
         <p data-add-status role="status"></p>
       </form>
     ) : (
@@ -130,7 +141,7 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
         <p class="sold-out">{soldOut ? "Sold out" : "Currently unavailable"}</p>
       </>
     )}
-    {!compact && (
+    {!compact && !showPrice && (
       <a class="text-link" href="/cart">
         View your cart &rarr;
       </a>
@@ -200,8 +211,8 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
     cursor: pointer;
   }
   .format-option:has(input:checked) {
-    border-color: var(--forest);
-    background: var(--surface);
+    border-color: var(--tomato);
+    background: var(--paper);
   }
   .format-option:has(input:disabled) {
     color: var(--muted);
@@ -263,6 +274,9 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
     grid-template-columns: minmax(0, 1fr) auto;
     margin-block: 0.75rem 0;
   }
+  .cart-controls-compact button {
+    grid-column: auto;
+  }
   .cart-controls-compact form[hidden] {
     display: none;
   }
@@ -278,13 +292,24 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
     font-size: 0.8rem;
   }
   .quick-ingredients {
-    border-color: var(--line);
-    background: var(--white);
+    border-color: var(--service-border-strong);
+    background: transparent;
     color: var(--forest);
   }
   .cart-controls-detail .format-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
+  }
+  .cart-controls-detail form {
+    grid-template-columns: minmax(4.5rem, 5rem) minmax(0, 1fr) auto;
+  }
+  @media (max-width: 700px) {
+    .cart-controls-detail form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .cart-controls-detail .detail-cart-link {
+      width: 100%;
+    }
   }
   .cart-controls-detail .format-option {
     grid-template-columns: auto minmax(0, 1fr);
@@ -294,5 +319,14 @@ const titleId = compact ? `quick-${product.key}-title` : "add-cart-title";
   }
   .cart-controls-detail .format-option strong {
     grid-column: 2;
+  }
+  @media (max-width: 940px) {
+    .cart-controls-compact .format-options,
+    .cart-controls-detail .format-options {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .cart-controls-compact .format-option {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
   }
 </style>

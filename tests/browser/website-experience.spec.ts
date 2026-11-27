@@ -73,6 +73,7 @@ test("a no-JS search keeps the intent and provides an honest reset", async ({
       .click();
     await expect(page).toHaveURL("http://127.0.0.1:4325/goods");
     await expect(page.locator(".shelf-product")).toHaveCount(3);
+    await page.locator(".collection-search summary").click();
     await page.getByLabel("Search the collection").fill("soap");
     await page.getByRole("button", { name: "Find goods", exact: true }).click();
     await expect(page.locator(".shelf-product")).toHaveCount(1);
@@ -109,6 +110,7 @@ test("public journeys reflow on small screens and with doubled text", async ({
   await page.evaluate(() => {
     document.documentElement.style.fontSize = "200%";
   });
+  await page.locator(".collection-search summary").click();
   await expect(page.getByLabel("Search the collection")).toBeVisible();
   await expect(page.getByRole("button", { name: "Find goods" })).toBeVisible();
   expect(
@@ -127,6 +129,8 @@ test("the public experience respects reduced motion and keyboard discovery", asy
   ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#main$/);
+  await page.locator(".collection-search summary").focus();
+  await page.keyboard.press("Enter");
   const search = page.getByLabel("Search the collection");
   await search.focus();
   await expect(search).toBeFocused();

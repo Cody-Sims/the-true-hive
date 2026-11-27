@@ -38,16 +38,26 @@ const questions = [
 const list =
   topic === "services"
     ? questions.filter((question) => question.topic === topic)
-    : questions;
+    : [
+        questions[2]!,
+        questions[1]!,
+        questions[0]!,
+        questions[3]!,
+        questions[4]!,
+      ];
 const id = topic === "services" ? "service-questions" : "common-questions";
 ---
 
 <section class="wrap faq-section" id={id} aria-labelledby={`${id}-title`}>
   <p class="eyebrow">Clear, straight answers</p>
-  <h2 id={`${id}-title`}>Commonly asked questions</h2>
+  <h2 id={`${id}-title`}>
+    {topic === "services"
+      ? "Colony Rescue & Pollination Questions"
+      : "Commonly asked questions"}
+  </h2>
   <div class="faq-list">
-    {list.map(({ question, answer }) => (
-      <details>
+    {list.map(({ question, answer }, index) => (
+      <details open={index < 2}>
         <summary>{question}</summary>
         <p>{answer}</p>
       </details>
@@ -61,6 +71,8 @@ const id = topic === "services" ? "service-questions" : "common-questions";
   }
   h2 {
     margin-block: 0.75rem 2rem;
+    font-size: clamp(1.75rem, 3.2vw, 2.55rem);
+    line-height: 1.12;
   }
   .faq-list {
     display: grid;

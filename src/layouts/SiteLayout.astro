@@ -243,42 +243,23 @@ const schema = JSON.stringify({
       )}
     </div>
     <main id="main" tabindex="-1">
-      {storePage && (
-        <nav class="store-nav wrap" aria-label="Store navigation">
-          <a
-            href="/goods"
-            aria-current={
-              path === "/goods" || path === "/goods/" ? "page" : undefined
-            }
-          >
-            All products
-          </a>
-          <a href="/cart#pickup">Pickup</a>
-          <a
-            class="store-cart"
-            href="/cart"
-            aria-current={cartPage ? "page" : undefined}
-          >
-            Cart<span data-cart-count></span>
-          </a>
-        </nav>
-      )}
       <slot />
     </main>
     <footer class="site-footer">
       <div class="wrap footer-inner">
         <div class="footer-brand">
-          <p class="eyebrow">The True Hive</p>
-          <strong>
-            Small-batch goods.
-            <br />A local connection.
-          </strong>
-          <p class="fine-print">Madisonville, Tennessee</p>
+          <strong>The True Hive</strong>
+          <p>
+            Small-batch soaps, $0 honeybee colony rescue, and farm pollination
+            in Madisonville, Tennessee.
+          </p>
+          <a href={config.contact.phoneHref}>{config.contact.phone}</a>
         </div>
         <div class="footer-group">
           <h2>Shop</h2>
           <a href="/goods">All Goods</a>
-          <a href="/goods?category=soap">Soap collection</a>
+          <a href="/goods/coconut-milk-delight">Coconut Milk Delight</a>
+          <a href="/goods/the-true-soap">The True Soap</a>
           <a href="/cart#pickup">Cart &amp; Pickup</a>
         </div>
         <div class="footer-group">
@@ -286,6 +267,7 @@ const schema = JSON.stringify({
           <a href="/services#colony-removal">No-Cost Colony Rescue</a>
           <a href="/services#farm-pollination">Farm Pollination</a>
           <a href="/about">Our Story</a>
+          <a href="/contact">Contact</a>
         </div>
         <div class="footer-group">
           <h2>US-411 Pickup Spots</h2>
@@ -299,7 +281,8 @@ const schema = JSON.stringify({
           ))}
         </div>
       </div>
-      <div class="wrap footer-policies">
+      <div class="wrap footer-colophon">
+        <span>The True Hive &middot; Madisonville, Tennessee</span>
         <nav aria-label="Footer navigation">
           <a
             href="/contact"
@@ -320,10 +303,6 @@ const schema = JSON.stringify({
             Accessibility
           </a>
         </nav>
-      </div>
-      <div class="wrap footer-colophon">
-        <span>Local care. A lasting connection.</span>
-        <span>Madisonville, Tennessee</span>
       </div>
     </footer>
     <script>

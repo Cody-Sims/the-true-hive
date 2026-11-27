@@ -129,25 +129,57 @@ test("unavailable and unpriced formats produce generic product tiles, not select
   }
 });
 
-test("public bar profiles render current catalog facts without changing the private editor preview", async () => {
-  const soap = product("facts-soap", [
-    { ...variant("facts-bar", "available"), priceMinor: 725 },
-    { ...variant("facts-wolf", "available"), priceMinor: 1250 },
-  ]);
-  soap.ingredients = ["Coconut Oil", "Beeswax"];
-  const card = await render("src/components/ProductCard.astro", {
-    product: soap,
-  });
+test("public soap cards and details show the exact selected Golden sensory guides without changing private editor previews", async () => {
+  for (const [key, scores] of [
+    ["coconut-milk-delight", [95, 78, 84]],
+    ["the-true-soap", [82, 94, 92]],
+  ] as const) {
+    const soap = product(key, [variant(`${key}-bar`, "available")]);
+    for (const component of ["ProductCard", "ProductProfile"]) {
+      const html = await render(`src/components/${component}.astro`, {
+        product: soap,
+      });
+      const meters = [...html.matchAll(/<[^>]+role="meter"[^>]*>/g)].map(
+        ([meter]) => ({
+          label: meter.match(/aria-label="([^"]+)"/)?.[1],
+          score: Number(meter.match(/aria-valuenow="(\d+)"/)?.[1]),
+        }),
+      );
+      assert.deepEqual(
+        meters,
+        ["Creaminess", "Scent Warmth", "Bar Firmness"].map((label, index) => ({
+          label,
+          score: scores[index],
+        })),
+      );
+      for (const score of scores)
+        assert.match(html, new RegExp(`${score}/100`));
+      assert.match(html, /Scent &amp; lather profile/i);
+      assert.match(html, /Illustrative sensory guide.*not lab-tested scores/);
+      assert.doesNotMatch(html, /Recipe at a glance|listed<\/dd>|<dt>Formats/);
+    }
+    const editor = await render("src/components/ProductCard.astro", {
+      product: soap,
+      preview: true,
+    });
+    assert.doesNotMatch(editor, /role="meter"|data-product-profile/);
+  }
+});
 
-  assert.match(card, /data-product-profile/);
-  assert.match(card, /2 listed/);
-  assert.match(card, /\$7\.25/);
-  assert.doesNotMatch(card, /Creaminess|Scent Warmth|95\/100/);
-  const editor = await render("src/components/ProductCard.astro", {
-    product: soap,
-    preview: true,
-  });
-  assert.doesNotMatch(editor, /data-product-profile/);
+test("sensory guide scores are not invented for unrelated products or concepts", async () => {
+  for (const soap of [
+    product("unknown-soap", [variant("unknown-bar", "available")]),
+    product("coconut-milk-delight", [], "concept"),
+    { ...product("the-true-soap", []), category: "honey" },
+  ]) {
+    const html = await render("src/components/ProductProfile.astro", {
+      product: soap,
+    });
+    assert.doesNotMatch(
+      html,
+      /role="meter"|data-product-profile|Recipe at a glance/,
+    );
+  }
 });
 
 test("public cards expose canonical one-item format selection and quick add without enabling unavailable choices", async () => {

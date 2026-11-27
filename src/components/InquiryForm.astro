@@ -20,11 +20,11 @@ const { compact = false, headingLevel: Heading = "h3" } = Astro.props;
     {compact ? "Prepare an Email Draft" : "Start an email conversation."}
   </Heading>
   <p id="inquiry-explanation">
-    Nothing is sent by this website. The form only prepares a draft in your own
-    email app; you must review and send it there. No inbox or email provider
-    receives a website submission. No booking or availability is confirmed.
+    {compact
+      ? "Nothing is sent by this website. This prepares a draft in your own email app; review and send it there."
+      : "Nothing is sent by this website. The form only prepares a draft in your own email app; you must review and send it there. No inbox or email provider receives a website submission. No booking or availability is confirmed."}
   </p>
-  <p id="inquiry-safety">
+  <p id="inquiry-safety" class={compact ? "inquiry-context" : undefined}>
     <strong>Give bees space.</strong> Do not disturb a colony or approach it for
     a photograph. This is not an urgent-response service. Please leave out home
     or site addresses, sensitive details and photos.
@@ -92,7 +92,7 @@ const { compact = false, headingLevel: Heading = "h3" } = Astro.props;
     <textarea
       id="inquiry-message"
       name="message"
-      rows="5"
+      rows={compact ? "4" : "5"}
       required
       aria-describedby="inquiry-message-help inquiry-message-error"
     ></textarea>
@@ -101,17 +101,30 @@ const { compact = false, headingLevel: Heading = "h3" } = Astro.props;
       class="inquiry-error"
       data-error="message"
     ></p>
-    <button type="submit">Open email draft</button>
+    <button type="submit" class="button button-primary">
+      Open email draft
+    </button>
     <p data-inquiry-status role="status" tabindex="-1"></p>
     <a data-inquiry-draft hidden>
       Reopen the prepared email draft
     </a>
   </form>
   <p class="inquiry-fallback">
-    Prefer to write directly, have JavaScript turned off, or no email app opens?
-    <a href={`mailto:${INQUIRY_EMAIL}`}>Email {INQUIRY_EMAIL}</a>, or copy that
-    address into your email service and include your name, reply-to email,
-    inquiry type and message. Only an email you send reaches us.
+    {compact ? (
+      <>
+        No booking or availability is confirmed. Prefer to write directly?{" "}
+        <a href={`mailto:${INQUIRY_EMAIL}`}>Email {INQUIRY_EMAIL}</a>. Only an
+        email you send reaches us.
+      </>
+    ) : (
+      <>
+        Prefer to write directly, have JavaScript turned off, or no email app
+        opens? <a href={`mailto:${INQUIRY_EMAIL}`}>Email {INQUIRY_EMAIL}</a>, or
+        copy that address into your email service and include your name,
+        reply-to email, inquiry type and message. Only an email you send reaches
+        us.
+      </>
+    )}
   </p>
 </section>
 
@@ -138,6 +151,28 @@ const { compact = false, headingLevel: Heading = "h3" } = Astro.props;
   .inquiry-compact .inquiry-fields {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
+  }
+  .inquiry-compact form {
+    margin-top: 1rem;
+  }
+  .inquiry-compact #inquiry-explanation,
+  .inquiry-compact #inquiry-message-help,
+  .inquiry-compact .inquiry-fallback,
+  .inquiry-compact .inquiry-required {
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+  .inquiry-compact :is(input, select, textarea) {
+    border: 1.5px solid var(--service-border-strong);
+    border-radius: 0.65rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .inquiry-context {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   h3 {
     margin: 0 0 1rem;

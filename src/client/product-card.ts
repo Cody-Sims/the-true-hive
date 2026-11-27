@@ -29,9 +29,14 @@ for (const card of document.querySelectorAll<HTMLElement>(
     ))
       price.textContent = radio.dataset["variantPrice"] ?? "";
     const stock = card.querySelector(".card-stock");
-    if (stock)
+    if (stock) {
       stock.textContent =
         radio.dataset["variantStockLabel"] ?? "Availability unverified";
+      stock.setAttribute(
+        "data-stock-state",
+        radio.dataset["variantStockState"] ?? "unverified",
+      );
+    }
     for (const link of card.querySelectorAll<HTMLAnchorElement>(
       "[data-card-link]",
     ))

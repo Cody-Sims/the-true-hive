@@ -42,10 +42,13 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
           data-cart-lines
           aria-label="Saved cart items"
         ></ul>
-        <p data-cart-empty hidden>
-          Your cart is empty. <a href="/goods">Shop the collection</a> to find
-          your favorite.
-        </p>
+        <section data-cart-empty hidden class="cart-empty-panel">
+          <h2>Your cart is empty</h2>
+          <p>Find your scent and format in the current soap collection.</p>
+          <a class="button button-primary" href="/goods?view=in-stock">
+            Shop In-Stock Soaps &rarr;
+          </a>
+        </section>
         <div class="cart-actions">
           <button type="button" class="button" data-cart-clear disabled>
             Clear cart
@@ -59,12 +62,12 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
         </div>
       </div>
       <aside data-cart-pickup-column>
-        <p class="cart-subtotal">
-          Subtotal: <strong data-cart-subtotal>Not yet verified</strong>
-        </p>
         <div id="pickup" tabindex="-1">
           <PickupLocation />
         </div>
+        <p class="cart-subtotal">
+          Subtotal: <strong data-cart-subtotal>Not yet verified</strong>
+        </p>
         {paymentReady ? (
           <section class="cart-checkout" aria-labelledby="cart-checkout-title">
             <h2 id="cart-checkout-title">Stripe test checkout</h2>
@@ -125,9 +128,27 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
   }
   [data-cart-pickup-column] {
     padding: 1.25rem;
+    border: 1px solid var(--service-border-strong);
+    border-radius: 1rem;
+    background: var(--white);
+  }
+  .cart-empty-panel {
+    padding: 1.5rem;
     border: 1px solid var(--line);
     border-radius: 1rem;
     background: var(--white);
+  }
+  .cart-empty-panel h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.65rem;
+  }
+  .cart-empty-panel p {
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .cart-page .cart-checkout h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
   }
   @media (max-width: 700px) {
     .cart-layout {
@@ -143,6 +164,9 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
     padding: 0;
     margin-block: 1.5rem;
     list-style: none;
+  }
+  .cart-page .cart-lines:empty {
+    display: none;
   }
   .cart-page .cart-line {
     padding: 1rem;
@@ -201,8 +225,8 @@ const storefront = await getStorefrontStatus(readConfig(), paymentReady);
     font-weight: 700;
   }
   .cart-page .cart-checkout {
-    padding: 1rem;
-    margin-block: 2rem;
-    border: 2px solid var(--forest);
+    padding: 0;
+    margin-block: 1rem 0;
+    border: 0;
   }
 </style>

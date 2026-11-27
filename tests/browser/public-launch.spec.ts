@@ -37,16 +37,14 @@ test("global navigation keeps cart access while pickup links stay in the store",
       "Accessibility",
     ]);
     const store = page.getByRole("navigation", { name: "Store navigation" });
+    await expect(store).toHaveCount(0);
+    await expect(page.locator(".header-cart")).toHaveAttribute("href", "/cart");
     if (
       path === "/goods" ||
       path.startsWith("/goods/") ||
       path === "/cart" ||
       path.startsWith("/checkout/")
     ) {
-      await expect(store.getByRole("link", { name: /^Cart/ })).toHaveAttribute(
-        "href",
-        "/cart",
-      );
       await expect(
         header.getByRole("link", { name: "Shop Soaps", exact: true }),
       ).toHaveAttribute("aria-current", "page");
@@ -132,8 +130,8 @@ test("the store shows pickup-only fulfillment while pickup details stay in the c
     .getByRole("link", { name: "Shop Soaps", exact: true })
     .click();
   const pickupLink = page
-    .getByRole("navigation", { name: "Store navigation" })
-    .getByRole("link", { name: "Pickup", exact: true });
+    .locator(".footer-group")
+    .getByRole("link", { name: "Cart & Pickup", exact: true });
   for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect(

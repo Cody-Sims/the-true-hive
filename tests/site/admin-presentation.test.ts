@@ -1539,7 +1539,10 @@ test("soap reference cards disclose generated imagery, show format prices and pr
   assert.match(html, /\$10\.00/);
   assert.match(html, /\$12\.50/);
   assert.match(html, /Only 3 left/);
-  assert.match(html, /Warm Teawood and a creamy coconut milk lather/);
+  assert.match(
+    html,
+    /A Teawood-scented coconut milk bar crafted with shea and mango butter/,
+  );
   assert.match(html, /data-product-profile/);
   const real = await render("src/components/ProductCard.astro", {
     product: {
@@ -1888,7 +1891,7 @@ test("services copy is ready to share without planning-stage notices or booking 
   assert.match(main, /href="https:\/\/doi\.org\/10\.1126\/science\.aac7287"/);
   assert.ok(main.replace(/<[^>]*>/g, "").includes("2016 study in Science"));
   assert.match(copy, /24%/);
-  assert.match(copy, /fields smaller than 2 hectares/);
+  assert.match(copy, /fields under 5 acres/);
   for (const detail of [
     "Address",
     "Location of hive",

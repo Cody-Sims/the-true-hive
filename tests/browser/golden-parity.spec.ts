@@ -121,6 +121,31 @@ test("quick formats update each real card independently and preserve PDP selecti
     detail.getByRole("spinbutton", { name: "Quantity", exact: true }),
   ).toBeVisible();
   await expect(first.locator("[data-quick-add]")).toBeVisible();
+  for (const [card, values] of [
+    [first, [95, 78, 84]],
+    [second, [82, 94, 92]],
+  ] as const) {
+    const guide = card.locator("[data-product-profile]");
+    await expect(guide).toContainText("Scent & lather profile");
+    await expect(guide).not.toContainText("Recipe at a glance");
+    for (const [index, label] of [
+      "Creaminess",
+      "Scent Warmth",
+      "Bar Firmness",
+    ].entries()) {
+      const meter = guide.getByRole("meter", { name: label, exact: true });
+      await expect(meter).toHaveAttribute(
+        "aria-valuenow",
+        String(values[index]),
+      );
+      const fill = await meter.evaluate(
+        (node) =>
+          node.firstElementChild!.getBoundingClientRect().width /
+          node.getBoundingClientRect().width,
+      );
+      expect(fill).toBeCloseTo(values[index]! / 100, 2);
+    }
+  }
   const unknown = first
     .locator(".format-option")
     .filter({ hasText: "Unverified format" });
@@ -273,6 +298,11 @@ test("Golden public chrome matches the prototype navigation and footer groups", 
         .getByRole("heading", { name: heading, exact: true }),
     ).toBeVisible();
   }
+  await page.goto("/goods");
+  await expect(
+    page.getByRole("navigation", { name: "Store navigation" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".header-cart")).toHaveCount(1);
 });
 
 test("Contact matches the prototype's phone-left and draft-right layout without changing submission behavior", async ({

@@ -11,11 +11,12 @@ import hivePhoto from "../assets/honeybees-on-comb.webp";
 import { getCatalog, CatalogUnavailableError } from "../server/catalog.ts";
 import { readConfig } from "../server/config.ts";
 import { homeSelection } from "../domain/catalog-presentation.ts";
-import { money, pricedVariants } from "../domain/cart.ts";
+import { money, pricedVariants, projectedStock } from "../domain/cart.ts";
 import { getSoapReference } from "../content/soap-references.ts";
+import type { Catalog } from "../domain/catalog.ts";
 
 const config = readConfig();
-let catalog;
+let catalog: Catalog | undefined;
 let unavailable = false;
 try {
   catalog = await getCatalog(config);
@@ -25,6 +26,26 @@ try {
   Astro.response.status = 503;
 }
 const selection = homeSelection(catalog?.products ?? []);
+const stockedSoapPrices = (catalog?.products ?? [])
+  .filter((product) => product.category === "soap")
+  .flatMap((product) =>
+    pricedVariants(product)
+      .filter((variant) =>
+        ["available", "low_stock"].includes(
+          projectedStock(variant)?.state ?? "",
+        ),
+      )
+      .map((variant) => variant.priceMinor!),
+  );
+const fromPrice = stockedSoapPrices.length
+  ? money(Math.min(...stockedSoapPrices))
+  : null;
+const hasSignatureSoaps = ["coconut-milk-delight", "the-true-soap"].every(
+  (key) =>
+    catalog?.products.some(
+      (product) => product.key === key && product.kind === "active",
+    ),
+);
 const categories = {
   soap: "Soap",
   honey: "Honey",
@@ -51,29 +72,31 @@ const hasReferences = selection.hero.some(
         <span>Small-batch soaps.</span> <span>A little everyday luxury.</span>
       </h1>
       <p class="home-hero-description">
-        Find your scent. Explore every ingredient, compare formats, and choose a
-        bar for your everyday routine or a sculpted gift.
+        {hasSignatureSoaps
+          ? "Coconut Milk Delight or The True Soap. Find your scent, compare the lather, and choose an everyday bar or sculpted Wolf Mold - with free local pickup along US-411."
+          : "Find your scent. Explore every ingredient, compare formats, and choose a bar for your everyday routine or a sculpted gift."}
       </p>
       <div class="home-actions">
-        <a class="button button-primary" href="/goods">
-          Shop the collection <span aria-hidden="true">&rarr;</span>
+        <a
+          class="button button-primary"
+          href={fromPrice ? "/goods?view=in-stock" : "/goods"}
+        >
+          {fromPrice
+            ? `Shop In-Stock Soaps - From ${fromPrice}`
+            : "Shop the collection"}{" "}
+          <span aria-hidden="true">&rarr;</span>
         </a>
         <a class="button home-compare" href="#goods">
           Compare the Bars <span aria-hidden="true">&darr;</span>
         </a>
       </div>
-      <p class="fine-print home-hero-note">
-        Local pickup only. See your cart for meetup details and current checkout
-        availability.
-      </p>
+      <div class="home-promises">
+        <span>Every Ingredient Explained</span>
+        <span>Free Local Pickup</span>
+        <span>Bars &amp; Gift Molds</span>
+      </div>
     </div>
     <figure class="home-scene">
-      <div class="home-scene-heading" aria-hidden="true">
-        <span>
-          {selection.stocked ? "Ready for local pickup" : "On the shelf"}
-        </span>
-        <span>&#10033;</span>
-      </div>
       <div class="home-scene-art">
         {selection.hero.length ? (
           selection.hero.map(({ product, variant }, index) => (
@@ -186,25 +209,25 @@ const hasReferences = selection.hero.some(
   <section class="home-services" aria-labelledby="services-title">
     <div class="wrap">
       <div class="home-service-intro">
-        <Image
-          src={hivePhoto}
-          alt="Honeybees tending golden honeycomb."
-          widths={[480, 800, 1200]}
-          sizes="(max-width: 60rem) 90vw, 35vw"
-          loading="lazy"
-        />
+        <figure class="home-apiary-photo">
+          <Image
+            src={hivePhoto}
+            alt="Honeybees tending golden honeycomb."
+            widths={[480, 800, 1200]}
+            sizes="(max-width: 60rem) 90vw, 35vw"
+            loading="lazy"
+          />
+          <figcaption>Our beekeeping work &middot; East Tennessee</figcaption>
+        </figure>
         <div class="home-section-heading">
           <div>
             <p class="eyebrow">Beyond the collection</p>
-            <h2 id="services-title">
-              Rooted in East Tennessee.
-              <br />
-              Keeping bees thriving.
-            </h2>
+            <h2 id="services-title">For the bees. And our neighbors.</h2>
           </div>
           <p>
-            Explore no-cost colony rescue in Monroe, Blount, and Knox counties,
-            and pollination support for farms and growers.
+            A different side of The True Hive: saving live colonies and
+            supporting local growers with farm pollination across East
+            Tennessee.
           </p>
         </div>
       </div>
@@ -215,20 +238,35 @@ const hasReferences = selection.hero.some(
 </SiteLayout>
 
 <style>
+  .home-promises {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.4rem;
+  }
+  .home-promises span {
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--forest);
+    font-size: 0.73rem;
+    font-weight: 700;
+  }
   .home-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
-    gap: clamp(2rem, 4vw, 4rem);
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+    gap: clamp(1.75rem, 4vw, 3.5rem);
     align-items: center;
-    padding-block: clamp(3rem, 6vw, 6rem) 4rem;
+    padding-block: clamp(2.5rem, 5vw, 4.5rem) clamp(2.5rem, 4.5vw, 4rem);
   }
   .home-hero-copy h1 {
-    margin-block: 1.5rem 1.75rem;
+    margin-block: 0.5rem 1.1rem;
     font-family: var(--font-display);
     font-size: clamp(2.2rem, 4.6vw, 3.7rem);
     font-weight: 700;
     letter-spacing: -0.025em;
-    line-height: 1.02;
+    line-height: 1.07;
   }
   .home-hero-copy h1 span {
     display: block;
@@ -279,33 +317,16 @@ const hasReferences = selection.hero.some(
   .home-scene {
     min-width: 0;
   }
-  .home-scene-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0 0.5rem 0.85rem;
-    border-bottom: 1px solid var(--forest);
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-  }
-  .home-scene-heading > span:last-child {
-    color: var(--tomato);
-    font-size: 1.7rem;
-    line-height: 1;
-  }
   .home-scene-art {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: 0.85rem;
-    margin-block: 1.5rem;
+    margin-block: 0;
   }
   .home-product-visual {
     position: relative;
     display: block;
-    min-height: 180px;
+    min-height: 150px;
     border: 1px solid var(--line);
     border-radius: 1rem;
     overflow: hidden;
@@ -314,7 +335,7 @@ const hasReferences = selection.hero.some(
   }
   .home-product-visual:first-child {
     grid-row: span 2;
-    min-height: 374px;
+    min-height: 310px;
   }
   .home-product-visual :global(.product-illustration) {
     position: absolute;
@@ -352,8 +373,8 @@ const hasReferences = selection.hero.some(
   }
   .home-service-intro {
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: 2rem;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 2.5rem;
     align-items: center;
     margin-bottom: 2rem;
   }
@@ -365,12 +386,22 @@ const hasReferences = selection.hero.some(
   }
   .home-service-intro .home-section-heading {
     margin: 0;
+    display: grid;
+  }
+  .home-apiary-photo {
+    margin: 0;
+  }
+  .home-apiary-photo figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--muted);
   }
   .home-scene figcaption {
-    max-width: 25rem;
-    margin: 0.9rem auto 0;
-    font-size: 0.7rem;
-    line-height: 1.6;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .home-goods {
     padding-block: 3rem 5.5rem;
@@ -385,9 +416,9 @@ const hasReferences = selection.hero.some(
     margin-bottom: 2rem;
   }
   .home-section-heading h2 {
-    max-width: 35rem;
+    max-width: none;
     margin-top: 0.75rem;
-    font-size: clamp(2.25rem, 4vw, 3.75rem);
+    font-size: clamp(1.75rem, 3.2vw, 2.55rem);
     line-height: 1.1;
   }
   .home-section-heading > p {
@@ -408,7 +439,7 @@ const hasReferences = selection.hero.some(
     border-block: 1px solid var(--line);
     background: var(--surface);
   }
-  @media (max-width: 60rem) {
+  @media (max-width: 940px) {
     .home-hero {
       grid-template-columns: minmax(0, 1fr);
       gap: 2.5rem;
@@ -421,6 +452,7 @@ const hasReferences = selection.hero.some(
     }
     .home-scene {
       width: min(100%, 35rem);
+      order: -1;
       margin-inline: auto;
     }
     .trust-grid {
